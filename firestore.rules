@@ -1,0 +1,13 @@
+rules_version = '2';
+// Every signed-in user gets a private space at /users/{their uid}.
+// Nobody can read or write anyone else's planner.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+      match /{document=**} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
+    }
+  }
+}
