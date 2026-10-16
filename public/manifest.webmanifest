@@ -1,0 +1,15 @@
+{
+  "name": "Zenvora Loop",
+  "short_name": "Zenvora Loop",
+  "description": "Your personal day planner. Plan smarter. Live better.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#F8FAFC",
+  "theme_color": "#3730A3",
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "favicon.svg", "sizes": "any", "type": "image/svg+xml"}
+  ]
+}
