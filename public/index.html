@@ -296,10 +296,57 @@ details.tv th:first-child,details.tv td:first-child{text-align:left}
 .upill.pend{color:var(--prog);border-color:color-mix(in srgb,var(--prog) 50%,transparent)}
 .upill.off{color:var(--muted);border-color:var(--line)}
 .upill.adm{color:var(--accent-ink);border-color:color-mix(in srgb,var(--accent-ink) 45%,transparent)}
+.ks .neg{color:var(--high);font-weight:650}
 .ulast{font-size:11.5px;color:var(--muted);white-space:nowrap}
 .uact{display:flex;gap:4px}
 .uact button{font-size:12px;padding:3px 8px}
 @media (max-width:700px){.adduser{grid-template-columns:1fr}.urow{grid-template-columns:32px 1fr auto}.ulast{display:none}.uact{grid-column:1/-1}}
+/* attendance */
+.punch{display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:10px;border-left:5px solid var(--low)}
+.punch.isin{border-left-color:var(--done)}
+.pg{font-size:17px;font-weight:700}
+.pd{color:var(--muted);font-size:12.5px;margin-top:2px}
+.pstat{margin-top:10px;display:flex;align-items:center;gap:7px;font-weight:600}
+.dot.s-off{background:var(--low)}
+.psess{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.psess span{font-size:12px;padding:2px 8px;border-radius:999px;background:var(--panel);border:1px solid var(--line);font-variant-numeric:tabular-nums}
+.pr{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:200px}
+.ptimer{font-size:34px;font-weight:800;letter-spacing:.02em;font-variant-numeric:tabular-nums}
+.plbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.pbtn{margin-top:8px;border:none;color:#fff;font-weight:700;font-size:15px;padding:11px 26px;border-radius:999px;min-width:170px}
+.pbtn.in{background:var(--done)} .pbtn.out{background:var(--high)}
+.pbtn:disabled{opacity:.6}
+.atbl{width:100%;border-collapse:separate;border-spacing:0;background:var(--paper);border:1px solid var(--line);border-radius:12px;overflow:hidden;font-variant-numeric:tabular-nums}
+.atbl th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:600;padding:8px 10px;border-bottom:1px solid var(--line);background:var(--paper);white-space:nowrap}
+.atbl td{padding:7px 10px;border-bottom:1px solid var(--line);white-space:nowrap;vertical-align:middle}
+.atbl tr:last-child td{border-bottom:none}
+.atbl tr.wk td{background:var(--panel);font-size:11.5px;font-weight:650;color:var(--muted)}
+.atbl tr.clk{cursor:pointer}
+.atbl tr.clk:hover td{background:var(--panel)}
+.atbl tr.tot td{font-weight:700;background:var(--panel)}
+.atbl .num{text-align:right}
+.atbl .ot{color:var(--done);font-weight:650}
+.atbl .neg{color:var(--high);font-weight:650}
+.awrap{overflow-x:auto;margin-top:10px}
+.astat{font-size:11px;font-weight:650;padding:2px 8px;border-radius:999px;border:1px solid var(--line);white-space:nowrap}
+.astat.present{color:var(--done);border-color:color-mix(in srgb,var(--done) 45%,transparent)}
+.astat.in{color:var(--todo);border-color:color-mix(in srgb,var(--todo) 45%,transparent)}
+.astat.leave{color:var(--prog);border-color:color-mix(in srgb,var(--prog) 50%,transparent)}
+.astat.missed{color:var(--high);border-color:color-mix(in srgb,var(--high) 45%,transparent)}
+.astat.notyet,.astat.out{color:var(--muted)}
+.sesx{display:inline-flex;gap:4px;align-items:center;font-size:12px;margin-right:6px;padding:1px 6px;border-radius:6px;background:var(--panel)}
+.sesx.m{outline:1px dashed var(--muted)}
+.sesx button{border:none;background:none;color:var(--high);padding:0 2px;font-size:12px}
+.acards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px;margin:10px 0}
+.aform{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end}
+.aform label{display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.aform input,.aform select{min-width:110px}
+.payrow{display:flex;justify-content:space-between;gap:10px;padding:4px 0;border-bottom:1px dashed var(--line);font-size:12.5px}
+.payrow:last-child{border-bottom:none;font-weight:800;font-size:14px;padding-top:8px}
+.abk{margin-bottom:8px}
+.ahead{display:flex;align-items:center;gap:10px;margin:4px 0 6px}
+.ahead .uav{width:38px;height:38px;font-size:16px}
+.rtag{font-style:normal;font-size:10.5px;font-weight:700;color:var(--accent-ink);border:1px solid color-mix(in srgb,var(--accent-ink) 45%,transparent);border-radius:999px;padding:0 7px;margin-left:6px;vertical-align:1px}
 .localtag{font-size:11px;color:var(--muted);border:1px dashed var(--line);border-radius:999px;padding:1px 8px}
 
 /* ---------- toasts ---------- */
@@ -337,6 +384,7 @@ details.tv th:first-child,details.tv td:first-child{text-align:left}
     <button data-view="calendar" title="Calendar (2)"><svg viewBox="0 0 16 16"><rect x="1.5" y="3" width="13" height="11.5" rx="2" fill="none" stroke-width="1.6"/><path d="M1.5 6.5h13M5 1.5v3M11 1.5v3" fill="none" stroke-width="1.6"/></svg><span class="lbl">Calendar</span></button>
     <button data-view="all" title="All tasks (3)"><svg viewBox="0 0 16 16"><path d="M5.5 4h9M5.5 8h9M5.5 12h9" fill="none" stroke-width="1.6"/><circle cx="2.4" cy="4" r="1.1"/><circle cx="2.4" cy="8" r="1.1"/><circle cx="2.4" cy="12" r="1.1"/></svg><span class="lbl">All Tasks</span></button>
     <button data-view="insights" title="Progress &amp; insights (4)"><svg viewBox="0 0 16 16"><path d="M1.5 14.5h13" fill="none" stroke-width="1.6"/><rect x="2.5" y="8" width="2.6" height="5" rx=".8"/><rect x="6.7" y="5" width="2.6" height="8" rx=".8"/><rect x="10.9" y="2" width="2.6" height="11" rx=".8"/></svg><span class="lbl">Insights</span></button>
+    <button data-view="attendance" id="attTab" title="Attendance (5)" hidden><svg viewBox="0 0 16 16"><circle cx="8" cy="8.5" r="6" fill="none" stroke-width="1.6"/><path d="M8 5v3.7l2.4 1.5M6 1.2h4" fill="none" stroke-width="1.6" stroke-linecap="round"/></svg><span class="lbl">Attendance</span></button>
   </nav>
   <span class="sp"></span>
   <button id="overdueStat" title="Show overdue tasks"></button>
@@ -427,6 +475,18 @@ details.tv th:first-child,details.tv td:first-child{text-align:left}
     <strong id="insTitle"></strong>
   </div>
   <div class="ins" id="insBody"></div>
+</section>
+
+<!-- ATTENDANCE -->
+<section class="view" id="v-attendance" hidden>
+  <div class="vbar">
+    <div class="seg" id="attMode" hidden><button data-m="me">My attendance</button><button data-m="team">Team</button></div>
+    <div class="daynav"><button id="attPrev" title="Previous month">‹</button><button id="attNow">This month</button><button id="attNext" title="Next month">›</button></div>
+    <strong id="attTitle"></strong>
+    <span class="sp"></span>
+    <button id="attExport" hidden title="Download this month for payroll">⬇ Export CSV</button>
+  </div>
+  <div class="ins" id="attBody"></div>
 </section>
 
 <div class="toasts" id="toasts"></div>
@@ -693,10 +753,12 @@ function commit(){ rollover(); escalate(); save(); render(); }
 
 /* ================= render dispatch ================= */
 function render(){
+  if (state.settings.view === 'attendance' && !(mode === 'cloud' && cloud && cloud.uid)) state.settings.view = 'board';
   const v = state.settings.view;
   document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.view === v));
   document.querySelectorAll('.view').forEach(s => s.hidden = s.id !== 'v-' + v);
-  ({board:renderBoard, calendar:renderCalendar, all:renderAll, insights:renderInsights})[v]();
+  $('#addForm').hidden = v === 'attendance';
+  ({board:renderBoard, calendar:renderCalendar, all:renderAll, insights:renderInsights, attendance:renderAttendance})[v]();
   const od = state.items.filter(isPastDue).length;
   $('#overdueStat').textContent = od ? `🔥 ${od} overdue` : '';
   $('#overdueStat').hidden = !od;
@@ -1397,7 +1459,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && ov.classList.contains('on')){ closeModal(); return; }
   const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
   if (!appReady || typing || ov.classList.contains('on') || e.metaKey || e.ctrlKey || e.altKey) return;
-  const v = {'1':'board', '2':'calendar', '3':'all', '4':'insights'}[e.key];
+  const v = {'1':'board', '2':'calendar', '3':'all', '4':'insights', '5':'attendance'}[e.key];
   if (v){ setView(v); e.preventDefault(); }
   if (e.key === 'n'){ $('#newTitle').focus(); e.preventDefault(); }
 });
@@ -1438,7 +1500,7 @@ function startApp(){
   if (!appStarted){
     appStarted = true;
     setInterval(checkReminders, 15000);
-    setInterval(() => { if (appReady && !ov.classList.contains('on') && document.activeElement.tagName !== 'SELECT') render(); }, 60000);
+    setInterval(() => { if (appReady && state.settings.view !== 'attendance' && !ov.classList.contains('on') && document.activeElement.tagName !== 'SELECT') render(); }, 60000);
   }
   $('#newTitle').focus();
 }
@@ -1501,7 +1563,7 @@ async function startUser(user){
     await F.signOut(cloud.auth); return;
   }
   if (cloud.uid !== uid) return;
-  cloud.isAdmin = isAdmin;
+  cloud.isAdmin = isAdmin; cloud.role = isAdmin ? 'admin' : (acc.role || 'user'); cloud.account = acc;
   if (acc.mustChangePassword){
     hideLoading();
     if (!await passwordDialog(true)) return;          // they chose to sign out
@@ -1532,6 +1594,8 @@ async function startUser(user){
     if (!d || d.active !== true || d.removed){ pendingAuthMsg = 'Your access has been turned off. Please contact the administrator.'; doSignOut(); }
   }, () => {}));
   $('#adminBtn').hidden = !isAdmin;
+  $('#attTab').hidden = false; attReset();
+  unsubs.push(F.onSnapshot(accRef, s => { if (s.exists()){ cloud.account = s.data(); if (!isAdmin) cloud.role = s.data().role || 'user'; } }, () => {}));
   updateUserChip(user); $('#userWrap').hidden = false; setSync(navigator.onLine ? 'saved' : 'offline');
   hideLoading();
   startApp();
@@ -1605,6 +1669,7 @@ function updateUserChip(u){
   $('#userBtn').title = u.email || 'Account';
 }
 function signedOut(){
+  attReset(); $('#attTab').hidden = true;
   stopListeners(); appReady = false;
   if (cloud){ cloud.uid = null; cloud.user = null; }
   state = normalize({}); ov.classList.remove('on'); $('#toasts').innerHTML = '';
@@ -1747,10 +1812,10 @@ function renderUsers(list){
     const st = u.role === 'admin' ? ['Admin', 'adm'] : !u.active ? ['Disabled', 'off'] : u.mustChangePassword ? ['Awaiting first sign-in', 'pend'] : ['Active', 'on'];
     return `<div class="urow" data-uid="${esc(u.uid)}" data-email="${esc(u.email)}">
       <div class="uav">${esc((u.name || u.email || '?').trim().charAt(0).toUpperCase())}</div>
-      <div class="uinfo"><b>${esc(u.name || '—')}</b><span>${esc(u.email)}</span></div>
+      <div class="uinfo"><b>${esc(u.name || '—')}${u.role === 'manager' ? '<em class="rtag">Manager</em>' : ''}</b><span>${esc(u.email)}</span></div>
       <span class="upill ${st[1]}">${st[0]}</span>
       <span class="ulast">${u.lastLogin ? 'Last seen ' + esc(fmt(u.lastLogin)) : 'Never signed in'}</span>
-      <div class="uact">${u.role === 'admin' ? '' : `<button data-a="toggle">${u.active ? 'Disable' : 'Enable'}</button><button data-a="reset" title="Email them a link to choose a new password">Reset password</button><button data-a="remove" class="danger">Remove</button>`}</div>
+      <div class="uact">${u.role === 'admin' ? '' : `<button data-a="role" title="Managers (e.g. the Chief Doctor) see everyone's attendance and pay">${u.role === 'manager' ? 'Remove manager' : 'Make manager'}</button><button data-a="toggle">${u.active ? 'Disable' : 'Enable'}</button><button data-a="reset" title="Email them a link to choose a new password">Reset password</button><button data-a="remove" class="danger">Remove</button>`}</div>
     </div>`;
   }).join('') || '<div class="empty">No users yet. Add someone above.</div>';
 }
@@ -1806,6 +1871,11 @@ async function userAction(e){
       await F.updateDoc(ref, {active:enable});
       adminMsg(enable ? `${email} can sign in again.` : `${email} can no longer sign in (signed out immediately).`, true);
     }
+    if (b.dataset.a === 'role'){
+      const mk = b.textContent.trim() === 'Make manager';
+      await F.updateDoc(ref, {role: mk ? 'manager' : 'user'});
+      adminMsg(mk ? `${email} is now a manager: they can see and edit everyone's attendance.` : `${email} is no longer a manager.`, true);
+    }
     if (b.dataset.a === 'reset'){ await F.sendPasswordResetEmail(cloud.auth, email); adminMsg(`Password-reset email sent to ${email}.`, true); }
     if (b.dataset.a === 'remove'){
       if (!confirm(`Remove ${email}?\n\nThey lose access immediately. Their saved tasks are kept, so adding the same email again later restores everything.`)) return;
@@ -1816,8 +1886,300 @@ async function userAction(e){
   finally { b.disabled = false; }
 }
 
+/* ================= attendance: check-in / check-out, team summary, pay ================= */
+const OFFS_PER_MONTH = 4;
+const att = {mode:null, month:todayKey.slice(0, 7), ev:{}, accts:[], detail:null, unsub:null, key:'', tick:null};
+const tsMs = v => v == null ? null : typeof v === 'number' ? v : v.toMillis ? v.toMillis() : v.seconds != null ? v.seconds * 1000 + Math.floor((v.nanoseconds || 0) / 1e6) : +new Date(v);
+const hm = ms => { const m = Math.round((ms || 0) / 60000); return `${Math.floor(m / 60)}h ${pad2(m % 60)}m`; };
+const hms = ms => { const s = Math.max(0, Math.floor(ms / 1000)); return `${pad2(Math.floor(s / 3600))}:${pad2(Math.floor(s / 60) % 60)}:${pad2(s % 60)}`; };
+const inr = n => '₹' + Math.round(n || 0).toLocaleString('en-IN');
+const monthBounds = mk => { const [y, m] = mk.split('-').map(Number); return {s:dayKey(new Date(y, m - 1, 1)), e:dayKey(new Date(y, m, 0)), days:new Date(y, m, 0).getDate()}; };
+const attCfg = a => Object.assign({shiftStart:'09:00', shiftEnd:'18:00', salary:0, otMult:1}, (a && a.att) || {});
+const toMin = s => { const [h, m] = String(s || '0:0').split(':').map(Number); return h * 60 + m; };
+const shiftMs = c => Math.max(1, toMin(c.shiftEnd) - toMin(c.shiftStart)) * 60000;
+const canManageAtt = () => !!(cloud && cloud.uid && (cloud.isAdmin || cloud.role === 'manager'));
+const fullName = a => (a && (a.name || (a.email || '').split('@')[0])) || '';
+
+function attReset(){ if (att.unsub){ att.unsub(); att.unsub = null; } clearInterval(att.tick); Object.assign(att, {mode:null, ev:{}, accts:[], detail:null, key:''}); }
+
+// Pair check-ins with check-outs (several sessions per day are fine)
+function sessionsOf(events){
+  const ev = (events || []).filter(e => e.at != null).sort((a, b) => a.at - b.at), out = [];
+  let open = null;
+  const MAX = 16 * 3600000;                         // a forgotten check-out never runs into the next working day
+  const abandon = () => { out.push({in:open.at, out:null, ids:[open.id], m:open.src === 'manager'}); open = null; };
+  for (const e of ev){
+    if (open && (e.at - open.at > MAX || (e.type === 'in' && dayKey(e.at) !== dayKey(open.at)))) abandon();
+    if (e.type === 'in'){ if (!open) open = e; }
+    else if (open){ out.push({in:open.at, out:e.at, ids:[open.id, e.id], m:open.src === 'manager' || e.src === 'manager'}); open = null; }
+  }
+  if (open) out.push({in:open.at, out:null, ids:[open.id], m:open.src === 'manager'});
+  return out;
+}
+function attSummary(events, mk, acc){
+  const c = attCfg(acc), sh = shiftMs(c), B = monthBounds(mk), now = Date.now();
+  const join = acc && acc.createdAt ? dayKey(acc.createdAt) : B.s;
+  const byDay = {};
+  sessionsOf(events).forEach(s => (byDay[dayKey(s.in)] = byDay[dayKey(s.in)] || []).push(s));
+  const rows = []; let P = 0, L = 0, H = 0, OT = 0, effMonth = 0;
+  for (let k = B.s; k <= B.e; k = shiftDay(k, 1)){
+    if (k >= join) effMonth++;
+    const ss = byDay[k] || [];
+    if (k > todayKey || k < join){ rows.push({k, st:k > todayKey ? 'future' : 'na', ss}); continue; }
+    const open = ss.find(s => !s.out);
+    const worked = ss.reduce((t, s) => t + (s.out ? s.out - s.in : (k === todayKey ? now - s.in : 0)), 0);
+    const ot = Math.max(0, worked - sh);
+    let st;
+    if (ss.length){ st = open ? (k < todayKey ? 'missed' : 'in') : 'present'; P++; }
+    else st = k === todayKey ? 'notyet' : 'leave';
+    if (st === 'leave') L++;
+    H += worked; OT += ot;
+    rows.push({k, st, ss, worked, ot});
+  }
+  const lop = Math.max(0, L - OFFS_PER_MONTH), otDays = Math.max(0, P - (effMonth - OFFS_PER_MONTH));
+  const perDay = (+c.salary || 0) / B.days, perHour = perDay / (sh / 3600000), mult = +c.otMult || 1;
+  const base = perDay * effMonth, lopAmt = lop * perDay, otDayPay = otDays * perDay, otHrPay = (OT / 3600000) * perHour * mult;
+  return {rows, c, sh, B, P, L, H, OT, lop, otDays, offsUsed:Math.min(L, OFFS_PER_MONTH), perDay, perHour, mult, base, lopAmt, otDayPay, otHrPay,
+          pay:base - lopAmt + otDayPay + otHrPay, done:B.e < todayKey, effMonth};
+}
+
+async function attLoad(){
+  if (!cloud || !cloud.uid) return;
+  const key = att.mode + '|' + att.month + '|' + (att.detail || '');
+  if (key === att.key) return;
+  att.key = key;
+  if (att.unsub){ att.unsub(); att.unsub = null; }
+  const {F, fs} = cloud, B = monthBounds(att.month);
+  const from = F.Timestamp.fromDate(parseDay(shiftDay(B.s, -1))), to = F.Timestamp.fromDate(parseDay(shiftDay(B.e, 2)));
+  const q = uid => F.query(F.collection(fs, 'attendance', uid, 'events'), F.where('at', '>=', from), F.where('at', '<', to));
+  const map = d => { const x = d.data({serverTimestamps:'estimate'}); return {id:d.id, type:x.type, src:x.src, at:tsMs(x.at)}; };
+  const watch = uid => { att.unsub = F.onSnapshot(q(uid), qs => { att.ev[uid] = qs.docs.map(map); if (att.key === key) renderAttendance(); }, e => info('Attendance could not load: ' + (e.code || e.message))); };
+  try {
+    if (att.mode === 'me') return watch(cloud.uid);
+    const accs = await F.getDocs(F.collection(fs, 'accounts'));
+    att.accts = accs.docs.map(d => Object.assign({uid:d.id}, d.data())).filter(a => !a.removed && a.role !== 'admin');
+    if (att.detail) return watch(att.detail);
+    await Promise.all(att.accts.map(async a => { const qs = await F.getDocs(q(a.uid)); att.ev[a.uid] = qs.docs.map(map); }));
+    if (att.key === key) renderAttendance();
+  } catch(e){ info('Attendance could not load: ' + (e.code || e.message)); }
+}
+
+function renderAttendance(){
+  if (!cloud || !cloud.uid) return;
+  const mgr = canManageAtt();
+  if (!att.mode || !mgr) att.mode = mgr ? (att.mode || 'team') : 'me';
+  $('#attMode').hidden = !mgr;
+  document.querySelectorAll('#attMode button').forEach(b => b.classList.toggle('on', b.dataset.m === att.mode));
+  const cur = att.month === todayKey.slice(0, 7);
+  $('#attTitle').textContent = parseDay(att.month + '-01').toLocaleDateString([], {month:'long', year:'numeric'});
+  $('#attNow').disabled = cur;
+  $('#attExport').hidden = !(mgr && att.mode === 'team' && !att.detail);
+  attLoad();
+  const body = $('#attBody');
+  if (body.contains(document.activeElement) && /INPUT|SELECT/.test(document.activeElement.tagName)) return;   // don't wipe a form being typed in
+  body.innerHTML = att.mode === 'me' ? attMine() : att.detail ? attDetail() : attTeam();
+  attTick();
+}
+
+function greet(){ const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'; }
+function attMine(){
+  const evs = att.ev[cloud.uid];
+  if (!evs) return '<div class="empty">Loading your attendance…</div>';
+  const S = attSummary(evs, att.month, cloud.account || {}), cur = att.month === todayKey.slice(0, 7);
+  let card = '';
+  if (cur){
+    const t = S.rows.find(r => r.k === todayKey) || {ss:[]}, ss = t.ss, open = ss.find(s => !s.out);
+    const done = ss.filter(s => s.out).reduce((a, s) => a + s.out - s.in, 0);
+    card = `<div class="punch${open ? ' isin' : ''}">
+      <div>
+        <div class="pg">${greet()}, ${esc(fullName(cloud.account || {}) || (cloud.user && cloud.user.displayName) || '')}</div>
+        <div class="pd">${esc(fmtLong(todayKey))} · Shift ${esc(S.c.shiftStart)}–${esc(S.c.shiftEnd)} (${hm(S.sh)})</div>
+        <div class="pstat">${open ? `<i class="dot s-done"></i>Checked in since ${esc(timeOnly(open.in))}` : ss.length ? `<i class="dot s-off"></i>Checked out at ${esc(timeOnly(ss[ss.length - 1].out))}` : '<i class="dot s-off"></i>Not checked in yet'}</div>
+        <div class="psess">${ss.map(s => `<span>${esc(timeOnly(s.in))} → ${s.out ? esc(timeOnly(s.out)) : 'now'}</span>`).join('')}</div>
+      </div>
+      <div class="pr">
+        <div class="ptimer" id="attTimer" data-done="${done}" data-open="${open ? open.in : ''}">${hms(done + (open ? Date.now() - open.in : 0))}</div>
+        <div class="plbl">worked today</div>
+        <button class="pbtn ${open ? 'out' : 'in'}" id="punchBtn" data-t="${open ? 'out' : 'in'}">${open ? 'Check out' : ss.length ? 'Check in again' : 'Check in'}</button>
+      </div></div>`;
+  }
+  return card + attKpis(S, false) + attTable(S, false);
+}
+
+function attKpis(S, pay){
+  const k = (l, v, s, cls = '') => `<div class="kpi"><div class="kl">${l}</div><div class="kv ${cls}">${v}</div><div class="ks">${s}</div></div>`;
+  return `<div class="kpis">
+    ${k('Days present', S.P, S.done ? `of ${S.effMonth} days` : 'so far this month')}
+    ${k('Offs used', `${S.offsUsed}/${OFFS_PER_MONTH}`, S.lop ? `<span class="neg">${S.lop} day${S.lop > 1 ? 's' : ''} loss of pay</span>` : `${OFFS_PER_MONTH - S.offsUsed} paid off${OFFS_PER_MONTH - S.offsUsed === 1 ? '' : 's'} left`)}
+    ${k('Hours worked', hm(S.H), `shift ${hm(S.sh)} / day`)}
+    ${k('Overtime hours', hm(S.OT), 'beyond shift timing')}
+    ${k('Overtime days', S.otDays, 'worked on paid offs')}
+    ${pay ? k(S.done ? 'Payable' : 'Payable so far', inr(S.pay), (+S.c.salary ? `salary ${inr(S.c.salary)}/month` : 'set salary below')) : ''}
+  </div>`;
+}
+
+const ST_LABEL = {present:'Present', in:'Checked in', leave:'Leave', missed:'Missed check-out', notyet:'Not checked in'};
+function attTable(S, edit){
+  const rows = S.rows.filter(r => r.st !== 'future' && r.st !== 'na').reverse();
+  if (!rows.length) return '<div class="empty" style="margin-top:10px">No working days in this month yet.</div>';
+  let html = '', wk = null;
+  const wkTot = w => { const rs = rows.filter(r => weekStart(r.k) === w); return `${hm(rs.reduce((a, r) => a + r.worked, 0))} worked · ${hm(rs.reduce((a, r) => a + r.ot, 0))} overtime · ${rs.filter(r => r.ss.length).length} day(s) present`; };
+  rows.forEach(r => {
+    const w = weekStart(r.k);
+    if (w !== wk){ wk = w; html += `<tr class="wk"><td colspan="${edit ? 7 : 6}">Week of ${esc(fmtDM(w))} – ${esc(fmtDM(shiftDay(w, 6)))} · ${wkTot(w)}</td></tr>`; }
+    const first = r.ss[0], last = r.ss[r.ss.length - 1];
+    html += `<tr>
+      <td>${esc(fmtShort(r.k))}</td>
+      <td><span class="astat ${r.st}">${ST_LABEL[r.st]}</span></td>
+      <td>${first ? esc(timeOnly(first.in)) : '—'}</td>
+      <td>${last && last.out ? esc(timeOnly(last.out)) : last ? '<span class="neg">—</span>' : '—'}</td>
+      <td class="num">${r.ss.length ? hm(r.worked) : '—'}</td>
+      <td class="num ${r.ot ? 'ot' : ''}">${r.ot ? hm(r.ot) : '—'}</td>
+      ${edit ? `<td>${r.ss.map(s => `<span class="sesx${s.m ? ' m' : ''}" title="${s.m ? 'Added by manager' : 'Staff check-in'}">${esc(timeOnly(s.in))}–${s.out ? esc(timeOnly(s.out)) : '…'}<button data-del="${s.ids.join(',')}" title="Delete this entry">✕</button></span>`).join('')}</td>` : ''}
+    </tr>`;
+  });
+  return `<div class="awrap"><table class="atbl"><thead><tr><th>Date</th><th>Status</th><th>First in</th><th>Last out</th><th class="num">Worked</th><th class="num">Overtime</th>${edit ? '<th>Entries</th>' : ''}</tr></thead><tbody>${html}</tbody></table></div>`;
+}
+
+function attTeam(){
+  if (!att.accts.length) return att.key ? '<div class="empty">No staff yet. Add people in avatar → 👥 Manage users, then they can check in here.</div>' : '<div class="empty">Loading team…</div>';
+  const cur = att.month === todayKey.slice(0, 7);
+  let inNow = 0, outNow = 0, notIn = 0, totPay = 0;
+  const rows = att.accts.map(a => {
+    const S = attSummary(att.ev[a.uid] || [], att.month, a), t = S.rows.find(r => r.k === todayKey);
+    let today = '—';
+    if (cur && t){
+      if (t.st === 'in'){ inNow++; today = `<span class="astat in">In since ${esc(timeOnly(t.ss.find(s => !s.out).in))}</span>`; }
+      else if (t.st === 'present'){ outNow++; today = `<span class="astat out">Out · ${hm(t.worked)}</span>`; }
+      else if (t.st === 'notyet'){ notIn++; today = '<span class="astat notyet">Not in yet</span>'; }
+    }
+    if (!a.active) today = '<span class="astat out">Disabled</span>';
+    totPay += S.pay;
+    return `<tr class="clk" data-staff="${esc(a.uid)}">
+      <td><b>${esc(fullName(a))}</b>${a.role === 'manager' ? '<em class="rtag">Manager</em>' : ''}<div class="stat">${esc(attCfg(a).shiftStart)}–${esc(attCfg(a).shiftEnd)}</div></td>
+      <td>${today}</td><td class="num">${S.P}</td><td class="num">${S.offsUsed}/${OFFS_PER_MONTH}</td>
+      <td class="num ${S.lop ? 'neg' : ''}">${S.lop || '—'}</td><td class="num">${hm(S.H)}</td>
+      <td class="num ${S.OT ? 'ot' : ''}">${S.OT ? hm(S.OT) : '—'}</td><td class="num ${S.otDays ? 'ot' : ''}">${S.otDays || '—'}</td>
+      <td class="num">${+S.c.salary ? inr(S.c.salary) : '<span class="stat">not set</span>'}</td><td class="num"><b>${inr(S.pay)}</b></td></tr>`;
+  }).join('');
+  return `${cur ? `<div class="kpis">
+      <div class="kpi"><div class="kl"><i class="dot s-done"></i>Checked in now</div><div class="kv">${inNow}</div><div class="ks">at the clinic</div></div>
+      <div class="kpi"><div class="kl"><i class="dot s-off"></i>Checked out</div><div class="kv">${outNow}</div><div class="ks">done for now</div></div>
+      <div class="kpi"><div class="kl"><i class="dot s-prog"></i>Not in yet</div><div class="kv">${notIn}</div><div class="ks">today</div></div>
+      <div class="kpi"><div class="kl">Team payable</div><div class="kv">${inr(totPay)}</div><div class="ks">${cur ? 'so far this month' : 'this month'}</div></div></div>` : ''}
+    <div class="stat">Click a person to see their daily and weekly hours, fix entries, or set their shift and salary.</div>
+    <div class="awrap"><table class="atbl"><thead><tr><th>Staff</th><th>Today</th><th class="num">Present</th><th class="num">Offs used</th><th class="num">Loss of pay</th><th class="num">Hours</th><th class="num">OT hours</th><th class="num">OT days</th><th class="num">Salary</th><th class="num">Payable</th></tr></thead>
+    <tbody>${rows}<tr class="tot"><td colspan="9">Total payable</td><td class="num">${inr(totPay)}</td></tr></tbody></table></div>`;
+}
+
+function attDetail(){
+  const a = att.accts.find(x => x.uid === att.detail);
+  if (!a) return '<div class="empty">Loading…</div>';
+  if (!att.ev[a.uid]) return '<button class="abk" id="attBack">← Team</button><div class="empty">Loading…</div>';
+  const S = attSummary(att.ev[a.uid], att.month, a), c = S.c;
+  const pr = (l, v) => `<div class="payrow"><span>${l}</span><span>${v}</span></div>`;
+  return `<button class="abk" id="attBack">← Team</button>
+    <div class="ahead"><div class="uav">${esc(fullName(a).charAt(0).toUpperCase())}</div><div><b>${esc(fullName(a))}</b>${a.role === 'manager' ? '<em class="rtag">Manager</em>' : ''}<div class="stat">${esc(a.email || '')}</div></div></div>
+    ${attKpis(S, true)}
+    <div class="acards">
+      <div class="box"><h3>Shift &amp; pay settings</h3>
+        <form class="aform" id="attCfgForm">
+          <label>Shift start<input type="time" id="cfS" value="${esc(c.shiftStart)}"></label>
+          <label>Shift end<input type="time" id="cfE" value="${esc(c.shiftEnd)}"></label>
+          <label>Monthly salary (₹)<input type="number" id="cfSal" min="0" step="100" value="${+c.salary || ''}" placeholder="e.g. 15000"></label>
+          <label>Overtime rate<select id="cfOT">${[1, 1.5, 2].map(m => `<option value="${m}"${+c.otMult === m ? ' selected' : ''}>${m}× hourly</option>`).join('')}</select></label>
+          <button class="primary" type="submit">Save</button>
+        </form>
+        <p class="stat" style="margin:8px 0 0">${OFFS_PER_MONTH} paid offs per month. Hours beyond the shift each day count as overtime; working on unused offs counts as overtime days.</p>
+      </div>
+      <div class="box"><h3>Pay for ${esc(parseDay(att.month + '-01').toLocaleDateString([], {month:'long'}))}${S.done ? '' : ' (so far)'}</h3>
+        ${pr(`Base: ${S.effMonth} days × ${inr(S.perDay)}/day`, inr(S.base))}
+        ${pr(`Loss of pay: ${S.lop} day(s) beyond ${OFFS_PER_MONTH} offs`, S.lop ? '− ' + inr(S.lopAmt) : inr(0))}
+        ${pr(`Overtime days: ${S.otDays} × ${inr(S.perDay)}`, '+ ' + inr(S.otDayPay))}
+        ${pr(`Overtime hours: ${hm(S.OT)} × ${inr(S.perHour)}/h × ${S.mult}`, '+ ' + inr(S.otHrPay))}
+        ${pr('Payable', inr(S.pay))}
+      </div>
+    </div>
+    <div class="box"><h3>Add or correct an entry <span class="sub">e.g. they forgot to check in or out</span></h3>
+      <form class="aform" id="attAddForm">
+        <label>Date<input type="date" id="adD" value="${att.month === todayKey.slice(0, 7) ? todayKey : S.B.e}" min="${S.B.s}" max="${S.B.e < todayKey ? S.B.e : todayKey}"></label>
+        <label>Check-in<input type="time" id="adI" value="${esc(c.shiftStart)}"></label>
+        <label>Check-out<input type="time" id="adO" value="${esc(c.shiftEnd)}"></label>
+        <button class="primary" type="submit">Add entry</button>
+      </form>
+      <p class="stat" style="margin:8px 0 0">Leave Check-out empty to add only a check-in, or fill only Check-out to close a missed check-out.</p>
+    </div>
+    ${attTable(S, true)}`;
+}
+
+function attTick(){
+  clearInterval(att.tick);
+  att.tick = setInterval(() => {
+    const t = document.getElementById('attTimer');
+    if (!t || state.settings.view !== 'attendance'){ clearInterval(att.tick); return; }
+    const open = t.dataset.open ? +t.dataset.open : 0;
+    t.textContent = hms(+t.dataset.done + (open ? Date.now() - open : 0));
+  }, 1000);
+}
+
+async function punch(type, btn){
+  if (!navigator.onLine) return info("You're offline. Connect to the internet to check in or out.");
+  const {F, fs} = cloud; btn.disabled = true;
+  try { await F.addDoc(F.collection(fs, 'attendance', cloud.uid, 'events'), {type, at:F.serverTimestamp(), src:'self'}); info(type === 'in' ? 'Checked in ✔' : 'Checked out ✔'); }
+  catch(e){ info('Could not save: ' + (e.code || e.message)); btn.disabled = false; }
+}
+function attCsv(){
+  const head = ['Staff', 'Email', 'Shift', 'Days present', 'Offs used', 'Loss of pay days', 'Hours worked', 'Overtime hours', 'Overtime days', 'Monthly salary', 'Payable'];
+  const lines = [head].concat(att.accts.map(a => { const S = attSummary(att.ev[a.uid] || [], att.month, a);
+    return [fullName(a), a.email, `${S.c.shiftStart}-${S.c.shiftEnd}`, S.P, S.offsUsed, S.lop, (S.H / 3600000).toFixed(2), (S.OT / 3600000).toFixed(2), S.otDays, +S.c.salary || 0, Math.round(S.pay)]; }));
+  download(new Blob([lines.map(r => r.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\n')], {type:'text/csv'}), `attendance-${att.month}.csv`);
+}
+function attStepMonth(n){ const d = parseDay(att.month + '-01'); d.setMonth(d.getMonth() + n); att.month = dayKey(d).slice(0, 7); renderAttendance(); }
+$('#attPrev').onclick = () => attStepMonth(-1);
+$('#attNext').onclick = () => attStepMonth(1);
+$('#attNow').onclick = () => { att.month = todayKey.slice(0, 7); renderAttendance(); };
+$('#attMode').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ att.mode = b.dataset.m; att.detail = null; renderAttendance(); } });
+$('#attExport').onclick = attCsv;
+$('#attBody').addEventListener('click', async e => {
+  const pb = e.target.closest('#punchBtn'); if (pb) return punch(pb.dataset.t, pb);
+  if (e.target.closest('#attBack')){ att.detail = null; renderAttendance(); return; }
+  const del = e.target.closest('[data-del]');
+  if (del){
+    if (!confirm('Delete this attendance entry?')) return;
+    const {F, fs} = cloud;
+    try { await Promise.all(del.dataset.del.split(',').map(id => F.deleteDoc(F.doc(fs, 'attendance', att.detail, 'events', id)))); info('Entry deleted.'); }
+    catch(err){ info('Could not delete: ' + (err.code || err.message)); }
+    return;
+  }
+  const row = e.target.closest('[data-staff]');
+  if (row){ att.detail = row.dataset.staff; renderAttendance(); }
+});
+$('#attBody').addEventListener('submit', async e => {
+  e.preventDefault();
+  const {F, fs} = cloud, uid = att.detail;
+  if (e.target.id === 'attCfgForm'){
+    const cfg = {shiftStart:$('#cfS').value || '09:00', shiftEnd:$('#cfE').value || '18:00', salary:Math.max(0, +$('#cfSal').value || 0), otMult:+$('#cfOT').value || 1};
+    if (toMin(cfg.shiftEnd) <= toMin(cfg.shiftStart)) return info('Shift end must be after shift start.');
+    try { await F.updateDoc(F.doc(fs, 'accounts', uid), {att:cfg}); const a = att.accts.find(x => x.uid === uid); if (a) a.att = cfg; document.activeElement.blur(); renderAttendance(); info('Saved shift and pay settings.'); }
+    catch(err){ info('Could not save: ' + (err.code || err.message)); }
+  }
+  if (e.target.id === 'attAddForm'){
+    const d = $('#adD').value, i = $('#adI').value, o = $('#adO').value;
+    if (!d || (!i && !o)) return info('Pick a date and at least a check-in or check-out time.');
+    if (d > todayKey) return info("You can't add entries for future days.");
+    const at = t => { const x = parseDay(d); const [hh, mm] = t.split(':').map(Number); x.setHours(hh, mm, 0, 0); return x; };
+    if (i && o && at(o) <= at(i)) return info('Check-out must be after check-in.');
+    const col = F.collection(fs, 'attendance', uid, 'events'), by = cloud.user.email || '';
+    try {
+      if (i) await F.addDoc(col, {type:'in', at:F.Timestamp.fromDate(at(i)), src:'manager', by});
+      if (o) await F.addDoc(col, {type:'out', at:F.Timestamp.fromDate(at(o)), src:'manager', by});
+      document.activeElement.blur(); info('Entry added.');
+    } catch(err){ info('Could not add: ' + (err.code || err.message)); }
+  }
+});
+
 boot();
-window.__zl = {get state(){ return state; }, get mode(){ return mode; }, get ready(){ return appReady; }, shiftDay, parseDay, dayKey, get todayKey(){ return todayKey; }, save};
+window.__zl = {get att(){ return att; }, attSummary, sessionsOf, get state(){ return state; }, get mode(){ return mode; }, get ready(){ return appReady; }, shiftDay, parseDay, dayKey, get todayKey(){ return todayKey; }, save};
 </script>
 </body>
 </html>

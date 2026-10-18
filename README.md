@@ -59,6 +59,24 @@ Only the **admin** (`mohanmd.official@gmail.com`) can create users. Nobody can s
 
 To use a different admin email, change it in **both** `public/firebase-config.js` and `firestore.rules`, then publish the rules again.
 
+## Staff attendance (Attendance tab)
+
+- **Staff:** **Attendance** tab → **Check in** when arriving and **Check out** when leaving. They can check in and out again as often as needed in a day (e.g. lunch, errands). They see a live "worked today" timer, days present, offs used (out of 4), hours, overtime hours and overtime days, and a day-by-day list grouped by week.
+- **Admin & managers (e.g. the Chief Doctor):** open **Attendance → Team** to see who's in right now and each person's monthly totals and payable amount. Click a person to:
+  - set **shift timing**, **monthly salary** and **overtime rate** (1×, 1.5× or 2× the hourly rate)
+  - **add or fix entries** (forgotten check-in or check-out) and delete wrong ones
+  - see the **pay breakdown** for the month
+  - **Export CSV** (Team view) gives the whole month for payroll.
+- **Make someone a manager:** avatar → 👥 Manage users → **Make manager**.
+
+**How the numbers work**
+- **Hours worked** = the sum of all check-in → check-out pairs for the day.
+- **Overtime hours** = hours beyond the person's shift length that day.
+- **4 paid offs per month:** any day with no check-in counts as an off. More than 4 offs → each extra day is **loss of pay**. Working on offs (present more than *days in month − 4* days) → **overtime days**.
+- **Pay** = salary ÷ days in month × days (from the joining date), − loss-of-pay days, + overtime days × day rate, + overtime hours × hourly rate × overtime multiplier.
+- A day with a check-in but no check-out shows **Missed check-out** and counts as present with 0 hours until a manager adds the check-out.
+- Check-in times come from Google's server clock, so staff can't type in or change times. Only managers can add or correct entries.
+
 ## Phase 3: move to zenvoraloop.abbisdentalcare.com (Wix DNS)
 
 1. **Wix**: https://manage.wix.com/account/domains → **⋯** next to `abbisdentalcare.com` → **Manage DNS Records** → **CNAME (Aliases) → + Add Record**

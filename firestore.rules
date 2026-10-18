@@ -1,8 +1,10 @@
 rules_version = '2';
-// Zenvora Loop: invite-only access.
-//  • The admin (email below) manages /accounts: create, disable, remove users.
+// Zenvora Loop: invite-only access + staff attendance.
+//  • The admin (email below) manages /accounts: create, disable, remove users, make managers.
+//  • Managers (e.g. the Chief Doctor) see everyone's attendance and can correct it, and set shift/salary.
 //  • Everyone else can use the app only if the admin created an account for them and it's active.
 //  • Each person's planner lives at /users/{their uid}, and nobody else can read it (not even the admin).
+//  • Staff check-ins are stamped with Google's server clock, so the times can't be faked.
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -10,20 +12,33 @@ service cloud.firestore {
     function isAdmin() {
       return signedIn() && request.auth.token.email == 'mohanmd.official@gmail.com';   // ← admin email
     }
-    function isActiveUser() {
-      return signedIn()
-        && get(/databases/$(database)/documents/accounts/$(request.auth.uid)).data.active == true;
-    }
+    function myAccount() { return get(/databases/$(database)/documents/accounts/$(request.auth.uid)).data; }
+    function isActiveUser() { return signedIn() && myAccount().active == true; }
+    function isManager() { return isActiveUser() && myAccount().role == 'manager'; }
+    function canManage() { return isAdmin() || isManager(); }
 
-    // User directory: managed by the admin
+    // User directory: managed by the admin (managers can read it and set shift/salary)
     match /accounts/{uid} {
-      allow read: if isAdmin() || (signedIn() && request.auth.uid == uid);
+      allow read: if canManage() || (signedIn() && request.auth.uid == uid);
       allow create, delete: if isAdmin();
-      // users may only mark "password changed" and record their last sign-in
       allow update: if isAdmin()
+        || (isManager() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['att']))
+        // users may only mark "password changed" and record their last sign-in
         || (signedIn() && request.auth.uid == uid
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['mustChangePassword', 'lastLogin'])
             && request.resource.data.mustChangePassword == false);
+    }
+
+    // Attendance: staff add their own check-ins (server time only), managers see and correct everything
+    match /attendance/{uid}/events/{eventId} {
+      allow read: if canManage() || (request.auth != null && request.auth.uid == uid && isActiveUser());
+      allow create: if canManage()
+        || (request.auth != null && request.auth.uid == uid && isActiveUser()
+            && request.resource.data.keys().hasOnly(['type', 'at', 'src'])
+            && request.resource.data.type in ['in', 'out']
+            && request.resource.data.src == 'self'
+            && request.resource.data.at == request.time);
+      allow update, delete: if canManage();
     }
 
     // Private planner data
