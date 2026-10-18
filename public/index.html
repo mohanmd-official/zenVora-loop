@@ -247,8 +247,8 @@ details.tv th:first-child,details.tv td:first-child{text-align:left}
 .gbtn{width:100%;padding:10px;font-weight:600;border-radius:10px;font-size:13.5px}
 .or{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:12px;margin:14px 0}
 .or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
-#authForm label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:11px}
-#authForm input{width:100%;margin-top:5px;padding:9px 11px;border-radius:10px;font-size:14px}
+#authForm label,#pwForm label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:11px}
+#authForm input,#pwForm input{width:100%;margin-top:5px;padding:9px 11px;border-radius:10px;font-size:14px}
 .big{width:100%;padding:10px;font-size:14px;font-weight:600;border-radius:10px;margin-top:2px}
 .big:disabled{opacity:.6}
 .auth-err{font-size:12.5px;color:var(--high);background:color-mix(in srgb,var(--high) 8%,var(--paper));border:1px solid color-mix(in srgb,var(--high) 30%,transparent);padding:8px 10px;border-radius:8px;margin-bottom:10px}
@@ -272,6 +272,34 @@ details.tv th:first-child,details.tv td:first-child{text-align:left}
 .umenu .us{font-size:11.5px;color:var(--muted);margin:10px 0;display:flex;gap:7px;align-items:center}
 .umenu .us i{position:static;border:none;width:8px;height:8px;flex:none}
 .umenu button{width:100%}
+.auth-note{margin-top:16px;padding-top:14px;border-top:1px solid var(--line);text-align:center;color:var(--muted);font-size:12.5px}
+#pwScreen{z-index:27}
+.umenu button+button{margin-top:6px}
+.modal.admin{width:min(780px,100%)}
+.ah{display:flex;align-items:center;gap:8px}
+.ah h2{margin:0;font-size:17px}
+.adduser{display:grid;grid-template-columns:1fr 1.3fr 1fr auto;gap:8px}
+.adduser input{width:100%}
+.pwgen{display:flex;gap:4px}
+.pwgen input{flex:1;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.share{margin-top:10px;border:1px solid color-mix(in srgb,var(--mint) 60%,var(--line));background:color-mix(in srgb,var(--mint) 10%,var(--paper));border-radius:10px;padding:10px 12px}
+.share pre{margin:0 0 8px;white-space:pre-wrap;font:12.5px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace}
+#adminMsg{margin-top:10px}
+.ulist{display:flex;flex-direction:column;gap:6px}
+.urow{display:grid;grid-template-columns:32px minmax(0,1fr) auto auto auto;gap:10px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:10px}
+.uav{width:32px;height:32px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:700}
+.uinfo{min-width:0;display:flex;flex-direction:column}
+.uinfo b,.uinfo span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.uinfo span{font-size:12px;color:var(--muted)}
+.upill{font-size:11px;font-weight:650;padding:2px 9px;border-radius:999px;white-space:nowrap;border:1px solid}
+.upill.on{color:var(--done);border-color:color-mix(in srgb,var(--done) 45%,transparent)}
+.upill.pend{color:var(--prog);border-color:color-mix(in srgb,var(--prog) 50%,transparent)}
+.upill.off{color:var(--muted);border-color:var(--line)}
+.upill.adm{color:var(--accent-ink);border-color:color-mix(in srgb,var(--accent-ink) 45%,transparent)}
+.ulast{font-size:11.5px;color:var(--muted);white-space:nowrap}
+.uact{display:flex;gap:4px}
+.uact button{font-size:12px;padding:3px 8px}
+@media (max-width:700px){.adduser{grid-template-columns:1fr}.urow{grid-template-columns:32px 1fr auto}.ulast{display:none}.uact{grid-column:1/-1}}
 .localtag{font-size:11px;color:var(--muted);border:1px dashed var(--line);border-radius:999px;padding:1px 8px}
 
 /* ---------- toasts ---------- */
@@ -323,6 +351,8 @@ details.tv th:first-child,details.tv td:first-child{text-align:left}
       <div class="un" id="userName"></div>
       <div class="ue" id="userEmail"></div>
       <div class="us"><i class="sdot" id="syncDot2"></i><span id="syncText">All changes saved</span></div>
+      <button id="adminBtn" hidden>👥 Manage users</button>
+      <button id="changePwBtn">Change password</button>
       <button id="signOutBtn">Sign out</button>
     </div>
   </div>
@@ -403,22 +433,54 @@ details.tv th:first-child,details.tv td:first-child{text-align:left}
 
 <div class="loading" id="loading" hidden><svg viewBox="0 0 512 512" aria-hidden="true"><defs><linearGradient id="lg3" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4338CA"/><stop offset="1" stop-color="#2E2A7A"/></linearGradient></defs><rect width="512" height="512" rx="114" fill="url(#lg3)"/><path d="M335.5 128.8 A150 150 0 1 1 163.7 137.8" fill="none" stroke="#6EE7B7" stroke-width="26" stroke-linecap="round"/><circle cx="297.3" cy="111.8" r="15" fill="#6EE7B7"/><path d="M192 190 H320 L192 322 H320" fill="none" stroke="#fff" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/></svg><div id="loadingText">Loading…</div></div>
 
+<div class="auth" id="pwScreen" hidden>
+  <div class="auth-card">
+    <div class="auth-brand"><svg viewBox="0 0 512 512" aria-hidden="true"><defs><linearGradient id="lg4" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4338CA"/><stop offset="1" stop-color="#2E2A7A"/></linearGradient></defs><rect width="512" height="512" rx="114" fill="url(#lg4)"/><path d="M335.5 128.8 A150 150 0 1 1 163.7 137.8" fill="none" stroke="#6EE7B7" stroke-width="26" stroke-linecap="round"/><circle cx="297.3" cy="111.8" r="15" fill="#6EE7B7"/><path d="M192 190 H320 L192 322 H320" fill="none" stroke="#fff" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/></svg><div><b>Zenvora <span>Loop</span></b><small>Your personal day planner</small></div></div>
+    <h2 id="pwTitle">Set your new password</h2>
+    <p class="auth-sub" id="pwSub"></p>
+    <form id="pwForm" novalidate>
+      <label>New password<input id="pw1" type="password" autocomplete="new-password" placeholder="At least 8 characters"></label>
+      <label>Confirm new password<input id="pw2" type="password" autocomplete="new-password" placeholder="Type it again"></label>
+      <div class="auth-err" id="pwErr" hidden></div>
+      <button class="primary big" type="submit" id="pwSubmit">Save password &amp; continue</button>
+    </form>
+    <div class="auth-links"><button class="link" id="pwCancel" type="button">Sign out</button></div>
+  </div>
+</div>
+
+<div class="ov" id="adminOv">
+  <div class="modal admin">
+    <div class="ah"><h2>👥 Manage users</h2><span class="sp"></span><button id="adminClose">Close</button></div>
+    <p class="stat" style="margin:2px 0 12px">Create logins for people who should use Zenvora Loop. Each person gets a private board, and nobody, including you, can see another person's tasks.</p>
+    <form id="addUserForm" class="adduser" novalidate>
+      <input id="nuName" placeholder="Full name" autocomplete="off">
+      <input id="nuEmail" type="email" placeholder="Email address" autocomplete="off">
+      <div class="pwgen"><input id="nuPass" placeholder="Temporary password" autocomplete="off"><button type="button" id="nuGen" title="Generate a new password">↻</button></div>
+      <button class="primary" id="nuSubmit" type="submit">Create user</button>
+    </form>
+    <div class="auth-err" id="adminMsg" hidden></div>
+    <div class="share" id="shareBox" hidden><pre id="shareText"></pre><button id="shareCopy" type="button">📋 Copy login details</button></div>
+    <div class="stat" id="userCount" style="margin:14px 0 6px"></div>
+    <div class="ulist" id="userList"></div>
+  </div>
+</div>
+
 <div class="auth" id="auth" hidden>
   <div class="auth-card">
     <div class="auth-brand"><svg viewBox="0 0 512 512" aria-hidden="true"><defs><linearGradient id="lg2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4338CA"/><stop offset="1" stop-color="#2E2A7A"/></linearGradient></defs><rect width="512" height="512" rx="114" fill="url(#lg2)"/><path d="M335.5 128.8 A150 150 0 1 1 163.7 137.8" fill="none" stroke="#6EE7B7" stroke-width="26" stroke-linecap="round"/><circle cx="297.3" cy="111.8" r="15" fill="#6EE7B7"/><path d="M192 190 H320 L192 322 H320" fill="none" stroke="#fff" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/></svg><div><b>Zenvora <span>Loop</span></b><small>Your personal day planner</small></div></div>
     <h2 id="authTitle">Welcome back</h2>
     <p class="auth-sub" id="authSub">Sign in to your planner.</p>
-    <button class="gbtn" id="gBtn" type="button">Continue with Google</button>
-    <div class="or">or use your email</div>
+    <button class="gbtn" id="gBtn" type="button" hidden>Continue with Google</button>
     <form id="authForm" novalidate>
       <label id="nameRow" hidden>Your name<input id="aName" autocomplete="name" placeholder="Mohan"></label>
       <label>Email<input id="aEmail" type="email" autocomplete="email" placeholder="you@example.com"></label>
-      <label>Password<input id="aPass" type="password" autocomplete="current-password" placeholder="At least 6 characters"></label>
+      <label>Password<input id="aPass" type="password" autocomplete="current-password" placeholder="Your password"></label>
       <div class="auth-err" id="authErr" hidden></div>
       <button class="primary big" type="submit" id="authSubmit">Sign in</button>
     </form>
     <div class="auth-links"><button class="link" id="forgot" type="button">Forgot password?</button></div>
-    <div class="auth-switch"><span id="switchText">New to Zenvora Loop?</span> <button class="link" id="switchMode" type="button">Create an account</button></div>
+    <div class="auth-switch" hidden><span id="switchText"></span> <button class="link" id="switchMode" type="button"></button></div>
+    <div class="auth-note">Accounts are created by the administrator. Need access? Ask them for an invite.</div>
   </div>
   <div class="auth-foot">Plan smarter. Live better.</div>
 </div>
@@ -1349,7 +1411,8 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) chec
    Opened as a local file → works exactly as before (data in this browser only). */
 const FB_VER = '12.19.0';
 const FB_CONFIG = null;     // optional: paste a Firebase web config here to sync when NOT served by Firebase Hosting
-let cloud = null, syncTimer = null, pendingWrites = 0, unsubs = [];
+let cloud = null, syncTimer = null, pendingWrites = 0, unsubs = [], pendingAuthMsg = '', adminUnsub = null;
+const ADMIN_EMAIL = String(window.ZL_ADMIN_EMAIL || 'mohanmd.official@gmail.com').trim().toLowerCase();
 const synced = {tasks:new Map(), days:new Map(), settings:''};
 const stable = v => JSON.stringify(v, (k, x) => (x && typeof x === 'object' && !Array.isArray(x)) ? Object.keys(x).sort().reduce((o, kk) => (o[kk] = x[kk], o), {}) : x);
 const plain = o => JSON.parse(JSON.stringify(o));
@@ -1405,7 +1468,7 @@ async function boot(){
     F.connectAuthEmulator(auth, `http://${location.hostname}:9099`, {disableWarnings:true});
     F.connectFirestoreEmulator(fs, location.hostname, 8080);
   }
-  cloud = {F, app, auth, fs, uid:null, user:null};
+  cloud = {F, app, auth, fs, cfg, uid:null, user:null, isAdmin:false};
   bindAuthUI();
   F.onAuthStateChanged(auth, user => user ? startUser(user) : signedOut());
   window.addEventListener('online', () => setSync(pendingWrites ? 'saving' : 'saved'));
@@ -1422,6 +1485,29 @@ async function startUser(user){
   cloud.uid = uid; cloud.user = user; appReady = false;
   synced.tasks.clear(); synced.days.clear(); synced.settings = '';
   $('#auth').hidden = true; showLoading('Loading your planner…');
+
+  // Access gate: only accounts the admin created (and hasn't disabled) may use the app.
+  const isAdmin = (user.email || '').toLowerCase() === ADMIN_EMAIL;
+  const accRef = F.doc(fs, 'accounts', uid);
+  let acc = null;
+  try { const s = await F.getDoc(accRef); acc = s.exists() ? s.data() : null; }
+  catch(e){ console.warn('Account read failed', e); }
+  if (isAdmin && !acc){
+    acc = {email:(user.email || '').toLowerCase(), name:user.displayName || 'Administrator', role:'admin', active:true, mustChangePassword:false, createdAt:Date.now()};
+    try { await F.setDoc(accRef, acc); } catch(e){ cloudError(e); }
+  }
+  if (!isAdmin && (!acc || acc.active !== true || acc.removed)){
+    pendingAuthMsg = acc ? 'Your access has been turned off. Please contact the administrator.' : 'This account has not been set up for Zenvora Loop. Please ask the administrator for an invite.';
+    await F.signOut(cloud.auth); return;
+  }
+  if (cloud.uid !== uid) return;
+  cloud.isAdmin = isAdmin;
+  if (acc.mustChangePassword){
+    hideLoading();
+    if (!await passwordDialog(true)) return;          // they chose to sign out
+    showLoading('Loading your planner…');
+  } else F.updateDoc(accRef, {lastLogin:Date.now()}).catch(() => {});
+
   let settings = {}, isNew = false;
   try { const s = await F.getDoc(F.doc(fs, 'users', uid)); if (s.exists()) settings = s.data().settings || {}; else isNew = true; }
   catch(e){ console.warn('Profile read failed', e); }
@@ -1440,10 +1526,16 @@ async function startUser(user){
   if (cloud.uid !== uid) return;                      // signed out while loading
   state = normalize({items, history, settings});
   synced.settings = isNew ? '' : stable(settings);
+  unsubs.push(F.onSnapshot(accRef, s => {          // kicked out the moment the admin disables or removes them
+    if (isAdmin || cloud.uid !== uid) return;
+    const d = s.exists() ? s.data() : null;
+    if (!d || d.active !== true || d.removed){ pendingAuthMsg = 'Your access has been turned off. Please contact the administrator.'; doSignOut(); }
+  }, () => {}));
+  $('#adminBtn').hidden = !isAdmin;
   updateUserChip(user); $('#userWrap').hidden = false; setSync(navigator.onLine ? 'saved' : 'offline');
   hideLoading();
   startApp();
-  if (isNew) info(`Welcome to Zenvora Loop${user.displayName ? ', ' + user.displayName.split(' ')[0] : ''}! Add your first task above. Have a backup from the desktop app? Use Import.`);
+  if (isNew && !isAdmin) info(`Welcome to Zenvora Loop${user.displayName ? ', ' + user.displayName.split(' ')[0] : ''}! Add your first task above. Have a backup from the desktop app? Use Import.`);
 }
 
 // changes made on another device or tab arrive here
@@ -1517,7 +1609,9 @@ function signedOut(){
   if (cloud){ cloud.uid = null; cloud.user = null; }
   state = normalize({}); ov.classList.remove('on'); $('#toasts').innerHTML = '';
   $('#userWrap').hidden = true; $('#userMenu').hidden = true;
+  closeAdmin(); $('#pwScreen').hidden = true; if (cloud) cloud.isAdmin = false;
   hideLoading(); showAuth('signin');
+  if (pendingAuthMsg){ authMsg(pendingAuthMsg); pendingAuthMsg = ''; }
 }
 async function doSignOut(){
   pushChanges();
@@ -1530,7 +1624,8 @@ let authMode = 'signin';
 const AUTH_ERR = {
   'auth/invalid-credential':'Email or password is incorrect.', 'auth/wrong-password':'Email or password is incorrect.',
   'auth/user-not-found':'No account with that email. Create one below.', 'auth/email-already-in-use':'An account with this email already exists. Sign in instead.',
-  'auth/invalid-email':'Please enter a valid email address.', 'auth/missing-password':'Please enter your password.',
+  'auth/invalid-email':'Please enter a valid email address.', 'auth/user-disabled':'This account has been disabled. Please contact the administrator.',
+  'auth/requires-recent-login':'For security, please sign in again and then change your password.', 'auth/missing-password':'Please enter your password.',
   'auth/weak-password':'Use a password with at least 6 characters.', 'auth/too-many-requests':'Too many attempts. Please wait a minute and try again.',
   'auth/network-request-failed':'No connection. Check your internet and try again.',
   'auth/popup-blocked':'The browser blocked the Google pop-up. Allow pop-ups for this site and try again.',
@@ -1541,7 +1636,7 @@ function showAuth(m){
   authMode = m || authMode; const up = authMode === 'signup';
   $('#auth').hidden = false;
   $('#authTitle').textContent = up ? 'Create your account' : 'Welcome back';
-  $('#authSub').textContent = up ? 'Start planning smarter in under a minute.' : 'Sign in to your planner.';
+  $('#authSub').textContent = 'Sign in with the email and password you were given.';
   $('#nameRow').hidden = !up; $('#forgot').hidden = up;
   $('#authSubmit').textContent = up ? 'Create account' : 'Sign in';
   $('#aPass').setAttribute('autocomplete', up ? 'new-password' : 'current-password');
@@ -1586,6 +1681,139 @@ function bindAuthUI(){
   $('#userBtn').onclick = e => { e.stopPropagation(); $('#userMenu').hidden = !$('#userMenu').hidden; };
   document.addEventListener('click', e => { if (!e.target.closest('#userWrap')) $('#userMenu').hidden = true; });
   $('#signOutBtn').onclick = doSignOut;
+  $('#changePwBtn').onclick = () => { $('#userMenu').hidden = true; passwordDialog(false); };
+  $('#adminBtn').onclick = openAdmin;
+  $('#adminClose').onclick = closeAdmin;
+  $('#adminOv').addEventListener('click', e => { if (e.target.id === 'adminOv') closeAdmin(); });
+  $('#nuGen').onclick = () => { $('#nuPass').value = genPass(); };
+  $('#addUserForm').onsubmit = addUser;
+  $('#userList').addEventListener('click', userAction);
+  $('#shareCopy').onclick = () => navigator.clipboard.writeText($('#shareText').textContent).then(() => info('Login details copied: paste them into WhatsApp or email.'), () => info('Select the text and copy it manually.'));
+}
+
+/* ---------- set / change password (forced on first sign-in) ---------- */
+function pwMsg(t){ const e = $('#pwErr'); e.textContent = t; e.hidden = !t; }
+function passwordDialog(forced){
+  return new Promise(resolve => {
+    const {F} = cloud, scr = $('#pwScreen');
+    $('#pwTitle').textContent = forced ? 'Set your new password' : 'Change your password';
+    $('#pwSub').textContent = forced ? 'Welcome! For security, replace the temporary password you were given with one only you know.' : 'Choose a new password for your account.';
+    $('#pwCancel').textContent = forced ? 'Sign out' : 'Cancel';
+    $('#pw1').value = $('#pw2').value = ''; pwMsg(''); scr.hidden = false; $('#pw1').focus();
+    const done = ok => { scr.hidden = true; $('#pwForm').onsubmit = null; $('#pwCancel').onclick = null; resolve(ok); };
+    $('#pwCancel').onclick = () => { done(false); if (forced) F.signOut(cloud.auth); };
+    $('#pwForm').onsubmit = async e => {
+      e.preventDefault();
+      const a = $('#pw1').value, b = $('#pw2').value;
+      if (a.length < 8) return pwMsg('Use at least 8 characters.');
+      if (a !== b) return pwMsg("The two passwords don't match.");
+      $('#pwSubmit').disabled = true;
+      try {
+        await F.updatePassword(cloud.auth.currentUser, a);
+        await F.updateDoc(F.doc(cloud.fs, 'accounts', cloud.uid), {mustChangePassword:false, lastLogin:Date.now()}).catch(err => console.warn(err));
+        if (!forced) info('Your password has been changed.');
+        done(true);
+      } catch(err){
+        pwMsg(AUTH_ERR[err.code] || err.message);
+        if (err.code === 'auth/requires-recent-login') setTimeout(() => { done(false); F.signOut(cloud.auth); }, 2000);
+      } finally { $('#pwSubmit').disabled = false; }
+    };
+  });
+}
+
+/* ---------- admin console: create / disable / remove users ---------- */
+function genPass(){
+  const c = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789', a = new Uint32Array(10);
+  crypto.getRandomValues(a);
+  return Array.from(a, x => c[x % c.length]).join('') + '#' + (a[0] % 90 + 10);
+}
+function adminMsg(t, ok){ const e = $('#adminMsg'); e.textContent = t; e.hidden = !t; e.classList.toggle('ok', !!ok); }
+function openAdmin(){
+  if (!cloud || !cloud.isAdmin) return;
+  $('#userMenu').hidden = true; $('#adminOv').classList.add('on');
+  $('#nuPass').value = genPass(); adminMsg(''); $('#shareBox').hidden = true; $('#nuName').focus();
+  const {F, fs} = cloud;
+  if (adminUnsub) adminUnsub();
+  adminUnsub = F.onSnapshot(F.collection(fs, 'accounts'),
+    qs => renderUsers(qs.docs.map(d => Object.assign({uid:d.id}, d.data()))),
+    e => adminMsg('Could not load users (' + (e.code || e.message) + '). Check that the latest firestore.rules are published.'));
+}
+function closeAdmin(){ $('#adminOv').classList.remove('on'); if (adminUnsub){ adminUnsub(); adminUnsub = null; } }
+function renderUsers(list){
+  const shown = list.filter(u => !u.removed).sort((a, b) => (b.role === 'admin') - (a.role === 'admin') || (b.createdAt || 0) - (a.createdAt || 0));
+  const people = shown.filter(u => u.role !== 'admin');
+  $('#userCount').textContent = `${plural(people.length, 'user')} · ${people.filter(u => u.active).length} active`;
+  $('#userList').innerHTML = shown.map(u => {
+    const st = u.role === 'admin' ? ['Admin', 'adm'] : !u.active ? ['Disabled', 'off'] : u.mustChangePassword ? ['Awaiting first sign-in', 'pend'] : ['Active', 'on'];
+    return `<div class="urow" data-uid="${esc(u.uid)}" data-email="${esc(u.email)}">
+      <div class="uav">${esc((u.name || u.email || '?').trim().charAt(0).toUpperCase())}</div>
+      <div class="uinfo"><b>${esc(u.name || '—')}</b><span>${esc(u.email)}</span></div>
+      <span class="upill ${st[1]}">${st[0]}</span>
+      <span class="ulast">${u.lastLogin ? 'Last seen ' + esc(fmt(u.lastLogin)) : 'Never signed in'}</span>
+      <div class="uact">${u.role === 'admin' ? '' : `<button data-a="toggle">${u.active ? 'Disable' : 'Enable'}</button><button data-a="reset" title="Email them a link to choose a new password">Reset password</button><button data-a="remove" class="danger">Remove</button>`}</div>
+    </div>`;
+  }).join('') || '<div class="empty">No users yet. Add someone above.</div>';
+}
+async function createAuthUser(name, email, pass){
+  const {F, cfg} = cloud;
+  if (!cloud.secAuth){            // a second, in-memory Firebase instance so the admin stays signed in
+    const sec = F.initializeApp(cfg, 'zl-admin-create');
+    cloud.secAuth = F.initializeAuth(sec, {persistence: F.inMemoryPersistence});
+    if (/^demo-/.test(cfg.projectId || '')) F.connectAuthEmulator(cloud.secAuth, `http://${location.hostname}:9099`, {disableWarnings:true});
+  }
+  const c = await F.createUserWithEmailAndPassword(cloud.secAuth, email, pass);
+  try { if (name) await F.updateProfile(c.user, {displayName:name}); }
+  finally { await F.signOut(cloud.secAuth).catch(() => {}); }
+  return c.user.uid;
+}
+async function addUser(e){
+  e.preventDefault();
+  const {F, fs} = cloud;
+  const name = $('#nuName').value.trim(), email = $('#nuEmail').value.trim().toLowerCase(), pass = $('#nuPass').value;
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return adminMsg('Enter a valid email address.');
+  if (email === ADMIN_EMAIL) return adminMsg('That is the admin account.');
+  if (pass.length < 8) return adminMsg('The temporary password needs at least 8 characters.');
+  $('#nuSubmit').disabled = true; adminMsg(''); $('#shareBox').hidden = true;
+  try {
+    let uid;
+    try { uid = await createAuthUser(name, email, pass); }
+    catch(err){
+      if (err.code !== 'auth/email-already-in-use') throw err;
+      const qs = await F.getDocs(F.query(F.collection(fs, 'accounts'), F.where('email', '==', email)));
+      if (qs.empty) throw Object.assign(new Error('This email already exists in Firebase Authentication but was never set up here. Delete it in Firebase console → Authentication → Users, then add it again.'), {code:'custom'});
+      const upd = {active:true, removed:false}; if (name) upd.name = name;
+      await F.updateDoc(F.doc(fs, 'accounts', qs.docs[0].id), upd);
+      await F.sendPasswordResetEmail(cloud.auth, email);
+      adminMsg(`${email} already had an account. Access is restored and a password-reset email was sent so they can choose a password.`, true);
+      $('#nuName').value = $('#nuEmail').value = ''; $('#nuPass').value = genPass();
+      return;
+    }
+    await F.setDoc(F.doc(fs, 'accounts', uid), {email, name, role:'user', active:true, mustChangePassword:true, createdAt:Date.now(), createdBy:cloud.user.email || ''});
+    $('#shareText').textContent = `You're invited to Zenvora Loop 👋\n\nOpen:  ${location.origin + location.pathname}\nEmail: ${email}\nTemporary password: ${pass}\n\nYou'll be asked to set your own password when you first sign in.`;
+    $('#shareBox').hidden = false;
+    adminMsg(`${name || email} can now sign in. Share the login details below.`, true);
+    $('#nuName').value = $('#nuEmail').value = ''; $('#nuPass').value = genPass();
+  } catch(err){ adminMsg(err.code === 'custom' ? err.message : (AUTH_ERR[err.code] || err.message)); }
+  finally { $('#nuSubmit').disabled = false; }
+}
+async function userAction(e){
+  const b = e.target.closest('[data-a]'); if (!b) return;
+  const row = b.closest('.urow'), email = row.dataset.email, {F, fs} = cloud, ref = F.doc(fs, 'accounts', row.dataset.uid);
+  b.disabled = true;
+  try {
+    if (b.dataset.a === 'toggle'){
+      const enable = b.textContent.trim() === 'Enable';
+      await F.updateDoc(ref, {active:enable});
+      adminMsg(enable ? `${email} can sign in again.` : `${email} can no longer sign in (signed out immediately).`, true);
+    }
+    if (b.dataset.a === 'reset'){ await F.sendPasswordResetEmail(cloud.auth, email); adminMsg(`Password-reset email sent to ${email}.`, true); }
+    if (b.dataset.a === 'remove'){
+      if (!confirm(`Remove ${email}?\n\nThey lose access immediately. Their saved tasks are kept, so adding the same email again later restores everything.`)) return;
+      await F.updateDoc(ref, {active:false, removed:true});
+      adminMsg(`${email} has been removed.`, true);
+    }
+  } catch(err){ adminMsg('That did not work: ' + (AUTH_ERR[err.code] || err.code || err.message)); }
+  finally { b.disabled = false; }
 }
 
 boot();

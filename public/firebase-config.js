@@ -12,3 +12,7 @@ window.ZL_FIREBASE_CONFIG = {
   projectId: "PASTE_PROJECT_ID",
   appId: "PASTE_APP_ID"
 };
+
+// The administrator: can create, disable and remove users.
+// If you change it, change the same email in firestore.rules too.
+window.ZL_ADMIN_EMAIL = "mohanmd.official@gmail.com";

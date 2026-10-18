@@ -3,7 +3,7 @@
 **How it fits together**
 
 - **GitHub Pages** serves the website (free, HTTPS, redeploys on every `git push`).
-- **Firebase Authentication** handles the login page (email/password and Google).
+- **Firebase Authentication** handles the invite-only login page (accounts created by the admin).
 - **Cloud Firestore** is the database: private per user, on the free Spark plan, no card needed.
 
 ```
@@ -33,16 +33,31 @@ At this stage it runs in **Local mode** (there's a badge top-right): no login ye
 
 > On a free GitHub account, Pages requires the repo to be **public**. That's fine here: the code holds no secrets.
 
-## Phase 2: turn on login and the database (10 minutes, Firebase console)
+## Phase 2: turn on the invite-only login and the database (10 minutes, Firebase console)
+
+Only the **admin** (`mohanmd.official@gmail.com`) can create users. Nobody can sign themselves up.
 
 1. **https://console.firebase.google.com** → **Create a project** (e.g. `zenvora-loop`). Analytics is optional.
-2. **Build → Authentication → Get started → Sign-in method**: enable **Email/Password**, and enable **Google** (pick your support email).
-3. **Build → Firestore Database → Create database**: **Standard** edition, location **asia-south1 (Mumbai)** (permanent), **production mode**.
-4. Firestore → **Rules** tab → delete what's there, paste the contents of `firestore.rules`, and click **Publish**.
-5. ⚙ **Project settings → General → Your apps → Web (</>)** → nickname `zenvora-web` → **Register app** (leave "Firebase Hosting" unticked). Copy `apiKey`, `authDomain`, `projectId` and `appId` from the config shown into **`public/firebase-config.js`**.
-6. **Authentication → Settings → Authorized domains → Add domain** → `<your-github-username>.github.io`
-7. Commit and push. About a minute later the site shows the **sign-in page**: create your account and you're on the cloud.
-8. Move your old tasks over: in the desktop copy click **Export**, then on the website click **Import**.
+2. **Build → Authentication → Get started → Sign-in method → Email/Password → Enable → Save.** (Leave Google off.)
+3. **Authentication → Users → Add user**: email `mohanmd.official@gmail.com`, plus a password you choose. This is the admin login.
+4. **Authentication → Settings → Authorized domains → Add domain** → `<your-github-username>.github.io`
+5. **Build → Firestore Database → Create database**: **Standard** edition, location **asia-south1 (Mumbai)** (permanent), **production mode**.
+6. Firestore → **Rules** tab → delete everything, paste the whole of **`firestore.rules`**, and click **Publish**.
+7. ⚙ **Project settings → General → Your apps → Web (</>)** → nickname `zenvora-web` → **Register app** (leave Hosting unticked). Copy `apiKey`, `authDomain`, `projectId` and `appId` into **`public/firebase-config.js`**.
+8. Commit and push. About a minute later the site shows the sign-in page.
+
+### Using it
+
+- **Admin:** sign in with `mohanmd.official@gmail.com`, then avatar → **👥 Manage users**.
+  - **Create user:** enter a name and email (a temporary password is generated for you) → **Create user** → **Copy login details** and send them by WhatsApp or email.
+  - **Disable / Enable:** turns access off or on instantly. A disabled user who's signed in is signed out within seconds.
+  - **Reset password:** emails the user a link to choose a new password.
+  - **Remove:** takes away access and hides them from the list. Their tasks are kept, so adding the same email again restores everything.
+- **New user:** opens the link → signs in with the temporary password → **must set their own password** → their private board opens.
+- **Everyone:** avatar → **Change password**, or **Forgot password?** on the sign-in page.
+- **Privacy:** each person sees only their own board. The admin manages accounts but **cannot see anyone's tasks**.
+
+To use a different admin email, change it in **both** `public/firebase-config.js` and `firestore.rules`, then publish the rules again.
 
 ## Phase 3: move to zenvoraloop.abbisdentalcare.com (Wix DNS)
 

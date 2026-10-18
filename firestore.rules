@@ -1,12 +1,36 @@
 rules_version = '2';
-// Every signed-in user gets a private space at /users/{their uid}.
-// Nobody can read or write anyone else's planner.
+// Zenvora Loop: invite-only access.
+//  • The admin (email below) manages /accounts: create, disable, remove users.
+//  • Everyone else can use the app only if the admin created an account for them and it's active.
+//  • Each person's planner lives at /users/{their uid}, and nobody else can read it (not even the admin).
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function isAdmin() {
+      return signedIn() && request.auth.token.email == 'mohanmd.official@gmail.com';   // ← admin email
+    }
+    function isActiveUser() {
+      return signedIn()
+        && get(/databases/$(database)/documents/accounts/$(request.auth.uid)).data.active == true;
+    }
+
+    // User directory: managed by the admin
+    match /accounts/{uid} {
+      allow read: if isAdmin() || (signedIn() && request.auth.uid == uid);
+      allow create, delete: if isAdmin();
+      // users may only mark "password changed" and record their last sign-in
+      allow update: if isAdmin()
+        || (signedIn() && request.auth.uid == uid
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['mustChangePassword', 'lastLogin'])
+            && request.resource.data.mustChangePassword == false);
+    }
+
+    // Private planner data
     match /users/{uid} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+      allow read, write: if signedIn() && request.auth.uid == uid && (isAdmin() || isActiveUser());
       match /{document=**} {
-        allow read, write: if request.auth != null && request.auth.uid == uid;
+        allow read, write: if signedIn() && request.auth.uid == uid && (isAdmin() || isActiveUser());
       }
     }
   }
