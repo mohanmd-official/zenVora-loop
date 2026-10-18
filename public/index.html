@@ -348,6 +348,50 @@ details.tv th:first-child,details.tv td:first-child{text-align:left}
 .ahead .uav{width:38px;height:38px;font-size:16px}
 .rtag{font-style:normal;font-size:10.5px;font-weight:700;color:var(--accent-ink);border:1px solid color-mix(in srgb,var(--accent-ink) 45%,transparent);border-radius:999px;padding:0 7px;margin-left:6px;vertical-align:1px}
 .localtag{font-size:11px;color:var(--muted);border:1px dashed var(--line);border-radius:999px;padding:1px 8px}
+/* organizations */
+.orgchip{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);font-weight:500;line-height:1.1}
+.sw{display:inline-block;width:10px;height:10px;border-radius:3px;flex:none;vertical-align:-1px}
+.supbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 14px 8px;padding:8px 12px;border-radius:10px;font-size:12.5px;background:color-mix(in srgb,var(--prog) 14%,var(--paper));border:1px solid color-mix(in srgb,var(--prog) 45%,transparent)}
+.supbar b{font-weight:700}
+#reqBell{position:relative;border-color:color-mix(in srgb,var(--prog) 55%,transparent);color:var(--prog);font-weight:650}
+.sect{display:flex;flex-direction:column;gap:10px}
+.otbl td .sub2{display:block;font-size:11px;color:var(--muted)}
+.fchips{display:flex;gap:4px;flex-wrap:wrap}
+.fchip{font-size:10.5px;font-weight:650;padding:1px 7px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.fchip.on{color:var(--accent-ink);border-color:color-mix(in srgb,var(--accent-ink) 45%,transparent)}
+.upill.sus{color:var(--prog);border-color:color-mix(in srgb,var(--prog) 50%,transparent)}
+.upill.gone{color:var(--high);border-color:color-mix(in srgb,var(--high) 45%,transparent)}
+.swatches{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.swatches button{width:24px;height:24px;border-radius:7px;padding:0;border:2px solid transparent}
+.swatches button.on{border-color:var(--ink)}
+.swatches input[type=color]{width:34px;height:26px;padding:0 2px;border-radius:7px}
+.feats{display:flex;gap:12px;flex-wrap:wrap}
+.feats label{flex-direction:row!important;align-items:center;gap:6px!important;text-transform:none!important;letter-spacing:0!important;font-size:12.5px!important;color:var(--ink)!important}
+.feats small{color:var(--muted);font-size:11px}
+.aform input[type=checkbox]{min-width:0;margin:0}
+.aform .swatches input[type=color]{min-width:0;width:34px}
+.feats{padding-top:3px}
+.flbl{display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.feats label{display:inline-flex!important;white-space:nowrap}
+.aform .grow{flex:1;min-width:200px}
+.aform .grow input,.aform .grow select{width:100%}
+.btnrow{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.req{border:1px solid var(--line);border-radius:10px;padding:9px 11px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.req.pending{border-color:color-mix(in srgb,var(--prog) 55%,transparent);background:color-mix(in srgb,var(--prog) 7%,var(--paper))}
+.req .rq{flex:1;min-width:220px}
+.req .rq b{display:block}
+.req .rq span{font-size:12px;color:var(--muted)}
+.grant{padding:10px 12px;border-radius:10px;border:1px solid color-mix(in srgb,var(--done) 45%,transparent);background:color-mix(in srgb,var(--done) 8%,var(--paper));display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.tree,.tree ul{list-style:none;margin:0;padding:0}
+.tree ul{margin-left:22px;padding-left:14px;border-left:1px dashed var(--line)}
+.tree li{margin:6px 0}
+.tnode{display:inline-flex;align-items:center;gap:9px;padding:6px 12px 6px 6px;border:1px solid var(--line);border-radius:999px;background:var(--paper);box-shadow:var(--shadow)}
+.tnode .uav{width:28px;height:28px;font-size:12px}
+.tnode b{font-size:12.5px}
+.tnode span{font-size:11.5px;color:var(--muted)}
+.tnode.off{opacity:.55}
+.peditrow td{background:var(--panel)}
+.legacy{margin-top:6px}
 
 /* ---------- toasts ---------- */
 .toasts{position:fixed;top:12px;right:12px;display:flex;flex-direction:column;gap:8px;z-index:40;width:min(340px,calc(100% - 24px))}
@@ -360,6 +404,7 @@ details.tv th:first-child,details.tv td:first-child{text-align:left}
 .toast .ta button{font-size:12px;padding:3px 8px}
 @keyframes slide{from{transform:translateX(30px);opacity:0}to{transform:none;opacity:1}}
 
+@media (max-width:1320px){.tabs.many .lbl{display:none}.tabs.many button{padding:5px 9px}}
 @media (max-width:900px){.brand .tag{display:none}.tabs .lbl{display:none}.tabs button{padding:5px 9px}}
 @media (max-width:700px){
   body{overflow:auto}
@@ -377,7 +422,7 @@ details.tv th:first-child,details.tv td:first-child{text-align:left}
 <header class="top">
   <div class="brand">
     <svg class="logo" viewBox="0 0 512 512" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4338CA"/><stop offset="1" stop-color="#2E2A7A"/></linearGradient></defs><rect width="512" height="512" rx="114" fill="url(#lg)"/><path d="M335.5 128.8 A150 150 0 1 1 163.7 137.8" fill="none" stroke="#6EE7B7" stroke-width="26" stroke-linecap="round"/><circle cx="297.3" cy="111.8" r="15" fill="#6EE7B7"/><path d="M192 190 H320 L192 322 H320" fill="none" stroke="#fff" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    <div><h1 id="appName" title="Click to rename">Zenvora <span class="w2">Loop</span></h1><div class="tag">Your personal day planner</div></div>
+    <div><h1 id="appName" title="Click to rename">Zenvora <span class="w2">Loop</span></h1><div class="tag" id="brandTag">Your personal day planner</div></div>
   </div>
   <nav class="tabs" id="tabs">
     <button data-view="board" title="Kanban board (1)"><svg viewBox="0 0 16 16"><rect x="1.5" y="2" width="3.5" height="12" rx="1"/><rect x="6.25" y="2" width="3.5" height="8" rx="1"/><rect x="11" y="2" width="3.5" height="10" rx="1"/></svg><span class="lbl">Board</span></button>
@@ -385,9 +430,12 @@ details.tv th:first-child,details.tv td:first-child{text-align:left}
     <button data-view="all" title="All tasks (3)"><svg viewBox="0 0 16 16"><path d="M5.5 4h9M5.5 8h9M5.5 12h9" fill="none" stroke-width="1.6"/><circle cx="2.4" cy="4" r="1.1"/><circle cx="2.4" cy="8" r="1.1"/><circle cx="2.4" cy="12" r="1.1"/></svg><span class="lbl">All Tasks</span></button>
     <button data-view="insights" title="Progress &amp; insights (4)"><svg viewBox="0 0 16 16"><path d="M1.5 14.5h13" fill="none" stroke-width="1.6"/><rect x="2.5" y="8" width="2.6" height="5" rx=".8"/><rect x="6.7" y="5" width="2.6" height="8" rx=".8"/><rect x="10.9" y="2" width="2.6" height="11" rx=".8"/></svg><span class="lbl">Insights</span></button>
     <button data-view="attendance" id="attTab" title="Attendance (5)" hidden><svg viewBox="0 0 16 16"><circle cx="8" cy="8.5" r="6" fill="none" stroke-width="1.6"/><path d="M8 5v3.7l2.4 1.5M6 1.2h4" fill="none" stroke-width="1.6" stroke-linecap="round"/></svg><span class="lbl">Attendance</span></button>
+    <button data-view="org" id="orgTab" title="Organization: people, org chart, support access, billing" hidden><svg viewBox="0 0 16 16"><circle cx="8" cy="3.6" r="2.1"/><circle cx="3" cy="12.4" r="2.1"/><circle cx="13" cy="12.4" r="2.1"/><path d="M8 5.7v2.6M3 10.3V8.3h10v2" fill="none" stroke-width="1.5"/></svg><span class="lbl">Organization</span></button>
+    <button data-view="orgs" id="orgsTab" title="Organizations (Super Admin)" hidden><svg viewBox="0 0 16 16"><rect x="1.5" y="5" width="5.5" height="9.5" rx="1"/><rect x="9" y="1.5" width="5.5" height="13" rx="1"/></svg><span class="lbl">Organizations</span></button>
   </nav>
   <span class="sp"></span>
   <button id="overdueStat" title="Show overdue tasks"></button>
+  <button id="reqBell" hidden title="Zenvora support is asking for access to your organization">🛟 Support request</button>
   <button id="notifBtn" hidden>🔔 Enable alerts</button>
   <button id="exportBtn" title="Download a backup">Export</button>
   <button id="importBtn" title="Restore from a backup">Import</button>
@@ -399,12 +447,13 @@ details.tv th:first-child,details.tv td:first-child{text-align:left}
       <div class="un" id="userName"></div>
       <div class="ue" id="userEmail"></div>
       <div class="us"><i class="sdot" id="syncDot2"></i><span id="syncText">All changes saved</span></div>
-      <button id="adminBtn" hidden>👥 Manage users</button>
+      <div class="us" id="userOrg" hidden></div>
       <button id="changePwBtn">Change password</button>
       <button id="signOutBtn">Sign out</button>
     </div>
   </div>
 </header>
+<div class="supbar" id="supBar" hidden></div>
 
 <form class="add" id="addForm">
   <input id="newTitle" placeholder="Add a task for today…" autocomplete="off">
@@ -489,6 +538,28 @@ details.tv th:first-child,details.tv td:first-child{text-align:left}
   <div class="ins" id="attBody"></div>
 </section>
 
+<!-- ORGANIZATION (Account Manager / managers) -->
+<section class="view" id="v-org" hidden>
+  <div class="vbar">
+    <div class="seg" id="orgSeg"><button data-s="people">People</button><button data-s="chart">Org chart</button><button data-s="support">Support access</button><button data-s="billing">Billing</button></div>
+    <strong id="orgTitle"></strong>
+    <span class="sp"></span>
+    <span class="stat" id="orgStat"></span>
+  </div>
+  <div class="ins" id="orgBody"></div>
+</section>
+
+<!-- ORGANIZATIONS (Super Admin) -->
+<section class="view" id="v-orgs" hidden>
+  <div class="vbar">
+    <strong>Organizations</strong>
+    <span class="stat">Onboard and offboard organizations, choose their features, and manage subscriptions.</span>
+    <span class="sp"></span>
+    <button class="primary" id="onboardBtn">+ Onboard organization</button>
+  </div>
+  <div class="ins" id="orgsBody"></div>
+</section>
+
 <div class="toasts" id="toasts"></div>
 
 <div class="loading" id="loading" hidden><svg viewBox="0 0 512 512" aria-hidden="true"><defs><linearGradient id="lg3" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4338CA"/><stop offset="1" stop-color="#2E2A7A"/></linearGradient></defs><rect width="512" height="512" rx="114" fill="url(#lg3)"/><path d="M335.5 128.8 A150 150 0 1 1 163.7 137.8" fill="none" stroke="#6EE7B7" stroke-width="26" stroke-linecap="round"/><circle cx="297.3" cy="111.8" r="15" fill="#6EE7B7"/><path d="M192 190 H320 L192 322 H320" fill="none" stroke="#fff" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/></svg><div id="loadingText">Loading…</div></div>
@@ -505,23 +576,6 @@ details.tv th:first-child,details.tv td:first-child{text-align:left}
       <button class="primary big" type="submit" id="pwSubmit">Save password &amp; continue</button>
     </form>
     <div class="auth-links"><button class="link" id="pwCancel" type="button">Sign out</button></div>
-  </div>
-</div>
-
-<div class="ov" id="adminOv">
-  <div class="modal admin">
-    <div class="ah"><h2>👥 Manage users</h2><span class="sp"></span><button id="adminClose">Close</button></div>
-    <p class="stat" style="margin:2px 0 12px">Create logins for people who should use Zenvora Loop. Each person gets a private board, and nobody, including you, can see another person's tasks.</p>
-    <form id="addUserForm" class="adduser" novalidate>
-      <input id="nuName" placeholder="Full name" autocomplete="off">
-      <input id="nuEmail" type="email" placeholder="Email address" autocomplete="off">
-      <div class="pwgen"><input id="nuPass" placeholder="Temporary password" autocomplete="off"><button type="button" id="nuGen" title="Generate a new password">↻</button></div>
-      <button class="primary" id="nuSubmit" type="submit">Create user</button>
-    </form>
-    <div class="auth-err" id="adminMsg" hidden></div>
-    <div class="share" id="shareBox" hidden><pre id="shareText"></pre><button id="shareCopy" type="button">📋 Copy login details</button></div>
-    <div class="stat" id="userCount" style="margin:14px 0 6px"></div>
-    <div class="ulist" id="userList"></div>
   </div>
 </div>
 
@@ -752,21 +806,35 @@ function pastDayItems(d){
 function commit(){ rollover(); escalate(); save(); render(); }
 
 /* ================= render dispatch ================= */
+const AGENDA_VIEWS = ['board', 'calendar', 'all', 'insights'];
+const viewAllowed = v => {
+  const t = document.querySelector(`#tabs [data-view="${v}"]`);
+  return !!t && !t.hidden;
+};
 function render(){
-  if (state.settings.view === 'attendance' && !(mode === 'cloud' && cloud && cloud.uid)) state.settings.view = 'board';
-  const v = state.settings.view;
+  if (!viewAllowed(state.settings.view)){
+    const first = [...document.querySelectorAll('#tabs button')].find(b => !b.hidden);
+    state.settings.view = first ? first.dataset.view : 'board';
+  }
+  const v = state.settings.view, agenda = AGENDA_VIEWS.includes(v);
   document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.view === v));
   document.querySelectorAll('.view').forEach(s => s.hidden = s.id !== 'v-' + v);
-  $('#addForm').hidden = v === 'attendance';
-  ({board:renderBoard, calendar:renderCalendar, all:renderAll, insights:renderInsights, attendance:renderAttendance})[v]();
-  const od = state.items.filter(isPastDue).length;
+  $('#addForm').hidden = !agenda;
+  const noTabs = ![...document.querySelectorAll('#tabs button')].some(b => !b.hidden);
+  if (noTabs) document.querySelectorAll('.view').forEach(s => s.hidden = true);
+  else ({board:renderBoard, calendar:renderCalendar, all:renderAll, insights:renderInsights, attendance:renderAttendance, org:renderOrg, orgs:renderOrgs})[v]();
+  const od = agendaOn() ? state.items.filter(isPastDue).length : 0;
   $('#overdueStat').textContent = od ? `🔥 ${od} overdue` : '';
   $('#overdueStat').hidden = !od;
-  const nm = state.settings.name.trim(), sp = nm.lastIndexOf(' ');
+  const oc = orgCtx(), nm = (oc && !oc.support ? oc.org.name : state.settings.name).trim(), sp = nm.lastIndexOf(' ');
   $('#appName').innerHTML = sp > 0 ? `${esc(nm.slice(0, sp))} <span class="w2">${esc(nm.slice(sp + 1))}</span>` : esc(nm);
-  if (!flashTimer) document.title = state.settings.name;
+  $('#appName').title = oc && !oc.support ? '' : 'Click to rename';
+  $('#brandTag').innerHTML = oc && !oc.support ? '<span class="orgchip">on Zenvora Loop</span>' : (cloud && cloud.isSuper ? 'Super Admin · your personal day planner' : 'Your personal day planner');
+  if (!flashTimer) document.title = oc && !oc.support ? oc.org.name + ' · Zenvora Loop' : state.settings.name;
 }
 function setView(v){
+  if (!viewAllowed(v)) return;
+  if (v === 'attendance' && state.settings.view !== 'attendance') att.key = '';     // pick up people added meanwhile
   state.settings.view = v; save();
   if (v === 'board') setAddDay(boardDay >= todayKey ? boardDay : todayKey);
   render();
@@ -1419,6 +1487,7 @@ document.addEventListener('mouseleave', () => tip.hidden = true);
 $('#tabs').addEventListener('click', e => { const b = e.target.closest('button'); if (b) setView(b.dataset.view); });
 $('#overdueStat').onclick = () => { allF.status = 'due'; allF.range = 'all'; setView('all'); };
 $('#appName').onclick = () => {
+  const oc = orgCtx(); if (oc && !oc.support) return;      // organization name is set by Zenvora Loop
   const n = prompt('Name this app:', state.settings.name);
   if (n && n.trim()){ state.settings.name = n.trim().slice(0, 40); save(); render(); }
 };
@@ -1459,7 +1528,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && ov.classList.contains('on')){ closeModal(); return; }
   const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
   if (!appReady || typing || ov.classList.contains('on') || e.metaKey || e.ctrlKey || e.altKey) return;
-  const v = {'1':'board', '2':'calendar', '3':'all', '4':'insights', '5':'attendance'}[e.key];
+  const v = {'1':'board', '2':'calendar', '3':'all', '4':'insights', '5':'attendance', '6':'org'}[e.key];
   if (v){ setView(v); e.preventDefault(); }
   if (e.key === 'n'){ $('#newTitle').focus(); e.preventDefault(); }
 });
@@ -1473,8 +1542,13 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) chec
    Opened as a local file → works exactly as before (data in this browser only). */
 const FB_VER = '12.19.0';
 const FB_CONFIG = null;     // optional: paste a Firebase web config here to sync when NOT served by Firebase Hosting
-let cloud = null, syncTimer = null, pendingWrites = 0, unsubs = [], pendingAuthMsg = '', adminUnsub = null;
-const ADMIN_EMAIL = String(window.ZL_ADMIN_EMAIL || 'mohanmd.official@gmail.com').trim().toLowerCase();
+let cloud = null, syncTimer = null, pendingWrites = 0, unsubs = [], pendingAuthMsg = '';
+const ADMIN_EMAIL = String(window.ZL_ADMIN_EMAIL || 'mohanmd.official@gmail.com').trim().toLowerCase();   // Zenvora Loop Super Admin
+// Organization context: null for the Super Admin's personal space; {orgId, org, me, role, support} inside an organization
+const orgCtx = () => (cloud && cloud.ctx) || null;
+const feat = f => { const c = orgCtx(); return c ? !!((c.org.features || {})[f]) : false; };
+const agendaOn = () => mode !== 'cloud' || !!(cloud && cloud.isSuper) || feat('agenda');
+const ROLE_LABEL = {orgadmin:'Account Manager', manager:'Manager', employee:'Employee'};
 const synced = {tasks:new Map(), days:new Map(), settings:''};
 const stable = v => JSON.stringify(v, (k, x) => (x && typeof x === 'object' && !Array.isArray(x)) ? Object.keys(x).sort().reduce((o, kk) => (o[kk] = x[kk], o), {}) : x);
 const plain = o => JSON.parse(JSON.stringify(o));
@@ -1500,7 +1574,7 @@ function startApp(){
   if (!appStarted){
     appStarted = true;
     setInterval(checkReminders, 15000);
-    setInterval(() => { if (appReady && state.settings.view !== 'attendance' && !ov.classList.contains('on') && document.activeElement.tagName !== 'SELECT') render(); }, 60000);
+    setInterval(() => { if (appReady && AGENDA_VIEWS.includes(state.settings.view) && !ov.classList.contains('on') && document.activeElement.tagName !== 'SELECT') render(); }, 60000);
   }
   $('#newTitle').focus();
 }
@@ -1530,7 +1604,8 @@ async function boot(){
     F.connectAuthEmulator(auth, `http://${location.hostname}:9099`, {disableWarnings:true});
     F.connectFirestoreEmulator(fs, location.hostname, 8080);
   }
-  cloud = {F, app, auth, fs, cfg, uid:null, user:null, isAdmin:false};
+  cloud = {F, app, auth, fs, cfg, uid:null, user:null, isSuper:false, ctx:null};
+  [['#exportBtn', '⬇ Download my planner backup'], ['#importBtn', '⬆ Restore planner backup']].forEach(([id, t]) => { const b = $(id); b.textContent = t; $('#userMenu').insertBefore(b, $('#changePwBtn')); });
   bindAuthUI();
   F.onAuthStateChanged(auth, user => user ? startUser(user) : signedOut());
   window.addEventListener('online', () => setSync(pendingWrites ? 'saving' : 'saved'));
@@ -1544,63 +1619,118 @@ async function startUser(user){
   if (cloud.uid === user.uid && appReady){ updateUserChip(user); return; }
   stopListeners();
   const {F, fs} = cloud, uid = user.uid;
-  cloud.uid = uid; cloud.user = user; appReady = false;
+  cloud.uid = uid; cloud.user = user; cloud.ctx = null; appReady = false;
   synced.tasks.clear(); synced.days.clear(); synced.settings = '';
-  $('#auth').hidden = true; showLoading('Loading your planner…');
+  $('#auth').hidden = true; showLoading('Loading Zenvora Loop…');
 
-  // Access gate: only accounts the admin created (and hasn't disabled) may use the app.
-  const isAdmin = (user.email || '').toLowerCase() === ADMIN_EMAIL;
-  const accRef = F.doc(fs, 'accounts', uid);
-  let acc = null;
-  try { const s = await F.getDoc(accRef); acc = s.exists() ? s.data() : null; }
-  catch(e){ console.warn('Account read failed', e); }
-  if (isAdmin && !acc){
-    acc = {email:(user.email || '').toLowerCase(), name:user.displayName || 'Administrator', role:'admin', active:true, mustChangePassword:false, createdAt:Date.now()};
-    try { await F.setDoc(accRef, acc); } catch(e){ cloudError(e); }
-  }
-  if (!isAdmin && (!acc || acc.active !== true || acc.removed)){
-    pendingAuthMsg = acc ? 'Your access has been turned off. Please contact the administrator.' : 'This account has not been set up for Zenvora Loop. Please ask the administrator for an invite.';
-    await F.signOut(cloud.auth); return;
-  }
-  if (cloud.uid !== uid) return;
-  cloud.isAdmin = isAdmin; cloud.role = isAdmin ? 'admin' : (acc.role || 'user'); cloud.account = acc;
-  if (acc.mustChangePassword){
-    hideLoading();
-    if (!await passwordDialog(true)) return;          // they chose to sign out
-    showLoading('Loading your planner…');
-  } else F.updateDoc(accRef, {lastLogin:Date.now()}).catch(() => {});
+  // Who is this? The Super Admin, or a member of exactly one organization.
+  const isSuper = (user.email || '').toLowerCase() === ADMIN_EMAIL;
+  cloud.isSuper = isSuper;
+  const kick = async msg => { pendingAuthMsg = msg; await F.signOut(cloud.auth); };
+  let memRef = null;
+  if (!isSuper){
+    let acc = null, me = null, org = null;
+    try { const s = await F.getDoc(F.doc(fs, 'accounts', uid)); acc = s.exists() ? s.data() : null; } catch(e){ console.warn('Account read failed', e); }
+    if (!acc || !acc.orgId) return kick('This account has not been set up for Zenvora Loop. Please ask your organization\'s Account Manager for an invite.');
+    memRef = F.doc(fs, 'orgs', acc.orgId, 'members', uid);
+    try { const s = await F.getDoc(memRef); me = s.exists() ? s.data() : null; } catch(e){ console.warn('Member read failed', e); }
+    if (!me || me.active !== true || me.removed) return kick('Your access has been turned off. Please contact your Account Manager.');
+    try { const s = await F.getDoc(F.doc(fs, 'orgs', acc.orgId)); org = s.exists() ? s.data() : null; } catch(e){ org = null; }
+    if (!org || org.status !== 'active') return kick('Your organization\'s Zenvora Loop access is currently paused. Please contact your Account Manager.');
+    if (cloud.uid !== uid) return;
+    cloud.ctx = {orgId:acc.orgId, org, me, role:me.role || 'employee', support:false};
+    applyTheme(org.color);
+    if (me.mustChangePassword){
+      hideLoading();
+      if (!await passwordDialog(true)) return;          // they chose to sign out
+      showLoading('Loading Zenvora Loop…');
+    } else F.updateDoc(memRef, {lastLogin:Date.now()}).catch(() => {});
+  } else applyTheme(null);
 
   let settings = {}, isNew = false;
-  try { const s = await F.getDoc(F.doc(fs, 'users', uid)); if (s.exists()) settings = s.data().settings || {}; else isNew = true; }
-  catch(e){ console.warn('Profile read failed', e); }
   const items = [], history = {};
-  await new Promise(res => {
-    let gotT = false, gotD = false; const done = () => gotT && gotD && res();
-    unsubs.push(F.onSnapshot(F.collection(fs, 'users', uid, 'tasks'), qs => {
-      if (!gotT){ qs.forEach(d => { items.push(d.data()); synced.tasks.set(d.id, stable(d.data())); }); gotT = true; return done(); }
-      applyRemote(qs, 'tasks');
-    }, e => { cloudError(e); gotT = true; done(); }));
-    unsubs.push(F.onSnapshot(F.collection(fs, 'users', uid, 'days'), qs => {
-      if (!gotD){ qs.forEach(d => { history[d.id] = d.data(); synced.days.set(d.id, stable(d.data())); }); gotD = true; return done(); }
-      applyRemote(qs, 'days');
-    }, e => { cloudError(e); gotD = true; done(); }));
-  });
+  if (agendaOn()){                                     // the Agenda planner is private to each person
+    try { const s = await F.getDoc(F.doc(fs, 'users', uid)); if (s.exists()) settings = s.data().settings || {}; else isNew = true; }
+    catch(e){ console.warn('Profile read failed', e); }
+    await new Promise(res => {
+      let gotT = false, gotD = false; const done = () => gotT && gotD && res();
+      unsubs.push(F.onSnapshot(F.collection(fs, 'users', uid, 'tasks'), qs => {
+        if (!gotT){ qs.forEach(d => { items.push(d.data()); synced.tasks.set(d.id, stable(d.data())); }); gotT = true; return done(); }
+        applyRemote(qs, 'tasks');
+      }, e => { cloudError(e); gotT = true; done(); }));
+      unsubs.push(F.onSnapshot(F.collection(fs, 'users', uid, 'days'), qs => {
+        if (!gotD){ qs.forEach(d => { history[d.id] = d.data(); synced.days.set(d.id, stable(d.data())); }); gotD = true; return done(); }
+        applyRemote(qs, 'days');
+      }, e => { cloudError(e); gotD = true; done(); }));
+    });
+  }
   if (cloud.uid !== uid) return;                      // signed out while loading
   state = normalize({items, history, settings});
   synced.settings = isNew ? '' : stable(settings);
-  unsubs.push(F.onSnapshot(accRef, s => {          // kicked out the moment the admin disables or removes them
-    if (isAdmin || cloud.uid !== uid) return;
-    const d = s.exists() ? s.data() : null;
-    if (!d || d.active !== true || d.removed){ pendingAuthMsg = 'Your access has been turned off. Please contact the administrator.'; doSignOut(); }
-  }, () => {}));
-  $('#adminBtn').hidden = !isAdmin;
-  $('#attTab').hidden = false; attReset();
-  unsubs.push(F.onSnapshot(accRef, s => { if (s.exists()){ cloud.account = s.data(); if (!isAdmin) cloud.role = s.data().role || 'user'; } }, () => {}));
+
+  attReset(); orgView.reset(); supers.reset();
+  if (!isSuper){
+    const oc = cloud.ctx;
+    unsubs.push(F.onSnapshot(memRef, s => {           // signed out the moment the Account Manager disables or removes them
+      if (cloud.uid !== uid) return;
+      const d = s.exists() ? s.data() : null;
+      if (!d || d.active !== true || d.removed){ pendingAuthMsg = 'Your access has been turned off. Please contact your Account Manager.'; return doSignOut(); }
+      const roleChanged = d.role !== oc.role; oc.me = d; oc.role = d.role || 'employee';
+      if (roleChanged){ attReset(); orgView.reset(); refreshTabs(); watchSupportRequests(); if (appReady) render(); }
+    }, () => {}));
+    unsubs.push(F.onSnapshot(F.doc(fs, 'orgs', oc.orgId), s => {     // org suspended / offboarded / features changed
+      if (cloud.uid !== uid) return;
+      const d = s.exists() ? s.data() : null;
+      if (!d || d.status !== 'active'){ pendingAuthMsg = 'Your organization\'s Zenvora Loop access is currently paused. Please contact your Account Manager.'; return doSignOut(); }
+      const hadAgenda = agendaOn();
+      oc.org = d; applyTheme(d.color);
+      if (hadAgenda !== agendaOn()){ pushChanges(); setTimeout(() => location.reload(), 300); return; }   // the plan changed: reload to (un)load the planner
+      refreshTabs(); if (appReady) render();
+    }, () => {                                     // can't read the org any more: either they were turned off or the org was paused
+      if (cloud.uid !== uid) return;
+      const off = 'Your access has been turned off. Please contact your Account Manager.', paused = 'Your organization\'s Zenvora Loop access is currently paused. Please contact your Account Manager.';
+      F.getDoc(memRef).then(s => { const d = s.exists() ? s.data() : null; return !d || d.active !== true || d.removed ? off : paused; }, () => paused)
+        .then(m => { if (cloud.uid === uid){ pendingAuthMsg = m; doSignOut(); } });
+    }));
+    watchSupportRequests();
+  }
+  refreshTabs();
   updateUserChip(user); $('#userWrap').hidden = false; setSync(navigator.onLine ? 'saved' : 'offline');
   hideLoading();
   startApp();
-  if (isNew && !isAdmin) info(`Welcome to Zenvora Loop${user.displayName ? ', ' + user.displayName.split(' ')[0] : ''}! Add your first task above. Have a backup from the desktop app? Use Import.`);
+  if (isNew && agendaOn() && !isSuper && feat('agenda') && !state.items.length && state.settings.view === 'board')
+    info(`Welcome to ${cloud.ctx.org.name}${user.displayName ? ', ' + firstName(user.displayName) : ''}! Add your first task above.`);
 }
+
+/* which tabs this person sees: depends on the organization's plan and their role */
+function refreshTabs(){
+  const oc = orgCtx(), isSup = !!(cloud && cloud.isSuper), role = oc ? oc.role : '';
+  const agenda = agendaOn();
+  AGENDA_VIEWS.forEach(v => { document.querySelector(`#tabs [data-view="${v}"]`).hidden = !agenda; });
+  $('#attTab').hidden = !(oc && feat('attendance'));
+  $('#orgTab').hidden = !(oc && (oc.support || role === 'orgadmin' || role === 'manager'));
+  $('#orgsTab').hidden = !isSup;
+  $('#tabs').classList.toggle('many', [...document.querySelectorAll('#tabs button')].filter(b => !b.hidden).length > 6);
+  ['#exportBtn', '#importBtn'].forEach(s => $(s).hidden = !agenda);
+  if (!agenda) $('#notifBtn').hidden = true; else updNotifBtn();
+  const uo = $('#userOrg');
+  if (oc && !oc.support){ uo.hidden = false; uo.innerHTML = `<i class="sw" style="background:${esc(oc.org.color || '#3730A3')}"></i>${esc(oc.org.name)} · ${esc(oc.me.title || ROLE_LABEL[role] || '')}`; }
+  else if (isSup){ uo.hidden = false; uo.innerHTML = '<i class="sw" style="background:#3730A3"></i>Zenvora Loop · Super Admin'; }
+  else uo.hidden = true;
+  const bar = $('#supBar');
+  if (oc && oc.support){
+    bar.hidden = false;
+    bar.innerHTML = `🛟 <span><b>Support view</b> of <b>${esc(oc.org.name)}</b>: read-only, approved by their Account Manager until ${esc(fmt(oc.org.supportUntil))}.</span><span class="sp" style="flex:1"></span><button id="supExit">Exit support view</button>`;
+  } else bar.hidden = true;
+}
+function applyTheme(color){
+  const r = document.documentElement.style;
+  if (!color || !/^#[0-9a-f]{6}$/i.test(color)){ r.removeProperty('--accent'); r.removeProperty('--accent-ink'); return; }
+  const dark = matchMedia('(prefers-color-scheme: dark)').matches;
+  r.setProperty('--accent', color);
+  r.setProperty('--accent-ink', dark ? `color-mix(in srgb, ${color} 45%, #fff)` : color);
+}
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { const oc = orgCtx(); applyTheme(oc ? oc.org.color : null); });
 
 // changes made on another device or tab arrive here
 function applyRemote(qs, kind){
@@ -1629,7 +1759,7 @@ function applyRemote(qs, kind){
 function scheduleSync(){ clearTimeout(syncTimer); syncTimer = setTimeout(pushChanges, 400); setSync(navigator.onLine ? 'saving' : 'offline'); }
 function pushChanges(){
   clearTimeout(syncTimer); syncTimer = null;
-  if (mode !== 'cloud' || !appReady || !cloud.uid) return;
+  if (mode !== 'cloud' || !appReady || !cloud.uid || !agendaOn()) return;
   const {F, fs, uid} = cloud, ops = [], seen = new Set();
   const tref = id => F.doc(fs, 'users', uid, 'tasks', id), dref = k => F.doc(fs, 'users', uid, 'days', k);
   state.items.forEach(it => {
@@ -1669,12 +1799,13 @@ function updateUserChip(u){
   $('#userBtn').title = u.email || 'Account';
 }
 function signedOut(){
-  attReset(); $('#attTab').hidden = true;
+  attReset(); orgView.reset(); supers.reset();
   stopListeners(); appReady = false;
-  if (cloud){ cloud.uid = null; cloud.user = null; }
+  if (cloud){ cloud.uid = null; cloud.user = null; cloud.ctx = null; cloud.isSuper = false; }
+  applyTheme(null); refreshTabs(); $('#reqBell').hidden = true;
   state = normalize({}); ov.classList.remove('on'); $('#toasts').innerHTML = '';
   $('#userWrap').hidden = true; $('#userMenu').hidden = true;
-  closeAdmin(); $('#pwScreen').hidden = true; if (cloud) cloud.isAdmin = false;
+  $('#pwScreen').hidden = true;
   hideLoading(); showAuth('signin');
   if (pendingAuthMsg){ authMsg(pendingAuthMsg); pendingAuthMsg = ''; }
 }
@@ -1747,13 +1878,12 @@ function bindAuthUI(){
   document.addEventListener('click', e => { if (!e.target.closest('#userWrap')) $('#userMenu').hidden = true; });
   $('#signOutBtn').onclick = doSignOut;
   $('#changePwBtn').onclick = () => { $('#userMenu').hidden = true; passwordDialog(false); };
-  $('#adminBtn').onclick = openAdmin;
-  $('#adminClose').onclick = closeAdmin;
-  $('#adminOv').addEventListener('click', e => { if (e.target.id === 'adminOv') closeAdmin(); });
-  $('#nuGen').onclick = () => { $('#nuPass').value = genPass(); };
-  $('#addUserForm').onsubmit = addUser;
-  $('#userList').addEventListener('click', userAction);
-  $('#shareCopy').onclick = () => navigator.clipboard.writeText($('#shareText').textContent).then(() => info('Login details copied: paste them into WhatsApp or email.'), () => info('Select the text and copy it manually.'));
+  $('#reqBell').onclick = () => { document.querySelectorAll('.toast.supreq').forEach(t => t.remove()); orgView.sec = 'support'; setView('org'); };
+  document.addEventListener('click', e => {
+    if (e.target.closest('#supExit')) exitSupport();
+    const c = e.target.closest('[data-copy]');
+    if (c){ const t = document.getElementById(c.dataset.copy); navigator.clipboard.writeText(t.textContent).then(() => info('Login details copied: paste them into WhatsApp or email.'), () => info('Select the text and copy it manually.')); }
+  });
 }
 
 /* ---------- set / change password (forced on first sign-in) ---------- */
@@ -1775,7 +1905,8 @@ function passwordDialog(forced){
       $('#pwSubmit').disabled = true;
       try {
         await F.updatePassword(cloud.auth.currentUser, a);
-        await F.updateDoc(F.doc(cloud.fs, 'accounts', cloud.uid), {mustChangePassword:false, lastLogin:Date.now()}).catch(err => console.warn(err));
+        const oc = orgCtx();
+        if (oc && !oc.support) await F.updateDoc(F.doc(cloud.fs, 'orgs', oc.orgId, 'members', cloud.uid), {mustChangePassword:false, lastLogin:Date.now()}).catch(err => console.warn(err));
         if (!forced) info('Your password has been changed.');
         done(true);
       } catch(err){
@@ -1786,38 +1917,11 @@ function passwordDialog(forced){
   });
 }
 
-/* ---------- admin console: create / disable / remove users ---------- */
+/* ================= creating logins (shared by the Super Admin and Account Managers) ================= */
 function genPass(){
   const c = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789', a = new Uint32Array(10);
   crypto.getRandomValues(a);
   return Array.from(a, x => c[x % c.length]).join('') + '#' + (a[0] % 90 + 10);
-}
-function adminMsg(t, ok){ const e = $('#adminMsg'); e.textContent = t; e.hidden = !t; e.classList.toggle('ok', !!ok); }
-function openAdmin(){
-  if (!cloud || !cloud.isAdmin) return;
-  $('#userMenu').hidden = true; $('#adminOv').classList.add('on');
-  $('#nuPass').value = genPass(); adminMsg(''); $('#shareBox').hidden = true; $('#nuName').focus();
-  const {F, fs} = cloud;
-  if (adminUnsub) adminUnsub();
-  adminUnsub = F.onSnapshot(F.collection(fs, 'accounts'),
-    qs => renderUsers(qs.docs.map(d => Object.assign({uid:d.id}, d.data()))),
-    e => adminMsg('Could not load users (' + (e.code || e.message) + '). Check that the latest firestore.rules are published.'));
-}
-function closeAdmin(){ $('#adminOv').classList.remove('on'); if (adminUnsub){ adminUnsub(); adminUnsub = null; } }
-function renderUsers(list){
-  const shown = list.filter(u => !u.removed).sort((a, b) => (b.role === 'admin') - (a.role === 'admin') || (b.createdAt || 0) - (a.createdAt || 0));
-  const people = shown.filter(u => u.role !== 'admin');
-  $('#userCount').textContent = `${plural(people.length, 'user')} · ${people.filter(u => u.active).length} active`;
-  $('#userList').innerHTML = shown.map(u => {
-    const st = u.role === 'admin' ? ['Admin', 'adm'] : !u.active ? ['Disabled', 'off'] : u.mustChangePassword ? ['Awaiting first sign-in', 'pend'] : ['Active', 'on'];
-    return `<div class="urow" data-uid="${esc(u.uid)}" data-email="${esc(u.email)}">
-      <div class="uav">${esc((u.name || u.email || '?').trim().charAt(0).toUpperCase())}</div>
-      <div class="uinfo"><b>${esc(u.name || '—')}${u.role === 'manager' ? '<em class="rtag">Manager</em>' : ''}</b><span>${esc(u.email)}</span></div>
-      <span class="upill ${st[1]}">${st[0]}</span>
-      <span class="ulast">${u.lastLogin ? 'Last seen ' + esc(fmt(u.lastLogin)) : 'Never signed in'}</span>
-      <div class="uact">${u.role === 'admin' ? '' : `<button data-a="role" title="Managers (e.g. the Chief Doctor) see everyone's attendance and pay">${u.role === 'manager' ? 'Remove manager' : 'Make manager'}</button><button data-a="toggle">${u.active ? 'Disable' : 'Enable'}</button><button data-a="reset" title="Email them a link to choose a new password">Reset password</button><button data-a="remove" class="danger">Remove</button>`}</div>
-    </div>`;
-  }).join('') || '<div class="empty">No users yet. Add someone above.</div>';
 }
 async function createAuthUser(name, email, pass){
   const {F, cfg} = cloud;
@@ -1831,60 +1935,605 @@ async function createAuthUser(name, email, pass){
   finally { await F.signOut(cloud.secAuth).catch(() => {}); }
   return c.user.uid;
 }
-async function addUser(e){
-  e.preventDefault();
-  const {F, fs} = cloud;
-  const name = $('#nuName').value.trim(), email = $('#nuEmail').value.trim().toLowerCase(), pass = $('#nuPass').value;
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return adminMsg('Enter a valid email address.');
-  if (email === ADMIN_EMAIL) return adminMsg('That is the admin account.');
-  if (pass.length < 8) return adminMsg('The temporary password needs at least 8 characters.');
-  $('#nuSubmit').disabled = true; adminMsg(''); $('#shareBox').hidden = true;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const inviteText = (orgName, email, pass) => `You're invited to ${orgName} on Zenvora Loop 👋\n\nOpen:  ${location.origin + location.pathname}\nEmail: ${email}\nTemporary password: ${pass}\n\nYou'll be asked to set your own password when you first sign in.`;
+const shareHtml = (id, text) => text ? `<div class="share"><pre id="${id}">${esc(text)}</pre><button type="button" data-copy="${id}">📋 Copy login details</button></div>` : '';
+const msgHtml = m => m ? `<div class="auth-err${m.ok ? ' ok' : ''}" style="margin-top:8px">${esc(m.t)}</div>` : '';
+const errText = err => err && err.code === 'custom' ? err.message : (AUTH_ERR[err && err.code] || (err && (err.code || err.message)) || 'unknown error');
+const custom = t => Object.assign(new Error(t), {code:'custom'});
+const keepTyping = el => el.contains(document.activeElement) && /INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName);
+const initial = s => esc(String(s || '?').trim().charAt(0).toUpperCase());
+const roleRank = r => ({orgadmin:0, manager:1, employee:2})[r] ?? 3;
+const PALETTE = ['#3730A3', '#0F766E', '#0369A1', '#7C3AED', '#BE185D', '#B45309', '#15803D', '#B91C1C', '#334155'];
+const swatchesHtml = (id, cur) => `<div class="swatches" data-sw="${id}">${PALETTE.map(c => `<button type="button" data-c="${c}" style="background:${c}"${c.toLowerCase() === String(cur).toLowerCase() ? ' class="on"' : ''} title="${c}"></button>`).join('')}<input type="color" id="${id}" value="${esc(cur)}" title="Custom colour"></div>`;
+const FEATURES = [['agenda', 'Agenda Handler', 'boards, calendar, tasks'], ['attendance', 'Attendance', 'check-in / check-out'], ['payroll', 'Payroll', 'salary & payable (needs Attendance)']];
+const featsHtml = (pre, f) => `<div class="feats">${FEATURES.map(([k, l, d]) => `<label><input type="checkbox" id="${pre}_${k}"${f[k] ? ' checked' : ''}> ${l} <small>${d}</small></label>`).join('')}</div>`;
+const readFeats = pre => { const f = {}; FEATURES.forEach(([k]) => f[k] = $(`#${pre}_${k}`).checked); if (f.payroll && !f.attendance) throw custom('Payroll works from attendance: turn on Attendance too.'); return f; };
+document.addEventListener('click', e => {           // colour swatches
+  const b = e.target.closest('[data-sw] button[data-c]'); if (!b) return;
+  const box = b.closest('[data-sw]'); box.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+  document.getElementById(box.dataset.sw).value = b.dataset.c;
+});
+
+/* ================= Organization view: people, org chart, support access, billing ================= */
+const orgView = {sec:'people', members:null, reqs:[], invoices:null, pending:[], unsub:[], edit:null, msg:null, share:'', key:'', tmp:'',
+  reset(){ this.unsub.forEach(u => { try { u(); } catch(e){} }); Object.assign(this, {members:null, invoices:null, pending:[], unsub:[], edit:null, msg:null, share:'', key:''}); }};
+const isOrgAdmin = () => { const oc = orgCtx(); return !!(oc && !oc.support && oc.role === 'orgadmin'); };
+const orgDoc = (...p) => cloud.F.doc(cloud.fs, 'orgs', orgCtx().orgId, ...p);
+const orgCol = (...p) => cloud.F.collection(cloud.fs, 'orgs', orgCtx().orgId, ...p);
+
+function orgLoad(){
+  const oc = orgCtx(); if (!oc) return;
+  const key = oc.orgId + '|' + oc.role + '|' + oc.support;
+  if (orgView.key === key) return;
+  orgView.reset(); orgView.key = key;
+  const {F} = cloud, again = () => { if (state.settings.view === 'org' && orgView.key === key) renderOrg(); };
+  orgView.unsub.push(F.onSnapshot(orgCol('members'), qs => {
+    orgView.members = qs.docs.map(d => Object.assign({uid:d.id}, d.data()));
+    if (isOrgAdmin()){                                  // keep the seat count the Super Admin bills on up to date
+      const seats = orgView.members.filter(m => m.active && !m.removed).length;
+      if (oc.org.seats !== seats) F.updateDoc(F.doc(cloud.fs, 'orgs', oc.orgId), {seats}).catch(() => {});
+    }
+    again();
+  }, e => { orgView.members = []; info('People could not load: ' + (e.code || e.message)); again(); }));
+  if (isOrgAdmin()){
+    orgView.unsub.push(F.onSnapshot(orgCol('invoices'), qs => { orgView.invoices = qs.docs.map(d => Object.assign({id:d.id}, d.data())); again(); }, () => {}));
+    orgView.unsub.push(F.onSnapshot(orgCol('pending'), qs => { orgView.pending = qs.docs.map(d => Object.assign({uid:d.id}, d.data())); again(); }, () => {}));
+  }
+}
+
+function renderOrg(){
+  const oc = orgCtx(); if (!oc) return;
+  const admin = isOrgAdmin(), secs = admin ? ['people', 'chart', 'support', 'billing'] : ['people', 'chart'];
+  if (!secs.includes(orgView.sec)) orgView.sec = 'people';
+  document.querySelectorAll('#orgSeg button').forEach(b => { b.hidden = !secs.includes(b.dataset.s); b.classList.toggle('on', b.dataset.s === orgView.sec); });
+  const pend = (orgView.reqs || []).filter(r => r.status === 'pending').length;
+  $('#orgSeg [data-s=support]').textContent = 'Support access' + (pend ? ` (${pend})` : '');
+  $('#orgTitle').innerHTML = `<span class="sw" style="background:${esc(oc.org.color || '#3730A3')}"></span> ${esc(oc.org.name)}`;
+  orgLoad();
+  const L = orgView.members;
+  $('#orgStat').textContent = L ? `${(n => n + (n === 1 ? ' active person' : ' active people'))(L.filter(m => m.active && !m.removed).length)}${oc.support ? ' · read-only support view' : ''}` : '';
+  const body = $('#orgBody');
+  if (keepTyping(body)) return;
+  body.innerHTML = ({people:orgPeople, chart:orgChart, support:orgSupport, billing:orgBilling})[orgView.sec]();
+}
+
+function orgPeople(){
+  const oc = orgCtx(), admin = isOrgAdmin(), L = orgView.members;
+  if (!L) return '<div class="empty">Loading people…</div>';
+  const list = L.filter(m => !m.removed).sort((a, b) => roleRank(a.role) - roleRank(b.role) || fullName(a).localeCompare(fullName(b)));
+  const byUid = Object.fromEntries(list.map(m => [m.uid, m]));
+  const toOpts = (sel, self) => `<option value="">— Nobody (top of the organization)</option>` + list.filter(m => m.uid !== self).map(m => `<option value="${esc(m.uid)}"${m.uid === sel ? ' selected' : ''}>${esc(fullName(m))}${m.title ? ' · ' + esc(m.title) : ''}</option>`).join('');
+  const roleOpts = sel => ['employee', 'manager', 'orgadmin'].map(r => `<option value="${r}"${r === sel ? ' selected' : ''}>${ROLE_LABEL[r]}</option>`).join('');
+  if (!orgView.tmp) orgView.tmp = genPass();
+  let top = '';
+  if (admin){
+    top = `<div class="box"><h3>Add a person <span class="sub">creates their login for ${esc(oc.org.name)}</span></h3>
+      <form class="aform" id="pAdd" novalidate>
+        <label class="grow">Full name<input id="paName" autocomplete="off" placeholder="e.g. Priya S"></label>
+        <label class="grow">Email<input id="paEmail" type="email" autocomplete="off" placeholder="name@example.com"></label>
+        <label>Job title<input id="paTitle" autocomplete="off" placeholder="e.g. Dental assistant"></label>
+        <label>Reports to<select id="paTo">${toOpts(cloud.uid, '')}</select></label>
+        <label>Role<select id="paRole">${roleOpts('employee')}</select></label>
+        <label>Temporary password<span class="pwgen"><input id="paPass" value="${esc(orgView.tmp)}" autocomplete="off"><button type="button" id="paGen" title="Generate a new password">↻</button></span></label>
+        <button class="primary" type="submit" id="paSubmit">Create login</button>
+      </form>
+      <p class="stat" style="margin:8px 0 0"><b>Account Manager</b>: full admin of ${esc(oc.org.name)} · <b>Manager</b>: sees and corrects everyone's attendance${feat('payroll') ? ' and pay' : ''} · <b>Employee</b>: their own ${[feat('attendance') && 'check-in', feat('agenda') && 'planner'].filter(Boolean).join(' and ') || 'account'}.</p>
+      ${msgHtml(orgView.msg)}${shareHtml('pShare', orgView.share)}
+    </div>`;
+    if (orgView.pending.length) top += `<div class="box legacy"><h3>Waiting to join <span class="sub">existing Zenvora Loop logins moved to your organization by Zenvora support</span></h3>
+      ${orgView.pending.map(p => `<div class="req"><div class="rq"><b>${esc(p.name || p.email)}</b><span>${esc(p.email)}</span></div><button class="primary" data-pend="${esc(p.uid)}">Add to team</button></div>`).join('')}</div>`;
+  }
+  const rows = list.map(m => {
+    const me = m.uid === cloud.uid, mgr = byUid[m.reportsTo];
+    if (admin && orgView.edit === m.uid) return `<tr class="peditrow" data-uid="${esc(m.uid)}"><td colspan="7">
+      <form class="aform" id="pEdit" data-uid="${esc(m.uid)}">
+        <label class="grow">Full name<input id="peName" value="${esc(m.name || '')}"></label>
+        <label>Job title<input id="peTitle" value="${esc(m.title || '')}"></label>
+        <label>Reports to<select id="peTo">${toOpts(m.reportsTo || '', m.uid)}</select></label>
+        <label>Role<select id="peRole"${me ? ' disabled title="You can\'t change your own role"' : ''}>${roleOpts(m.role)}</select></label>
+        <button class="primary" type="submit">Save</button><button type="button" data-pa="cancel">Cancel</button>
+      </form></td></tr>`;
+    const st = !m.active ? ['Disabled', 'off'] : m.mustChangePassword ? ['Awaiting first sign-in', 'pend'] : ['Active', 'on'];
+    return `<tr data-uid="${esc(m.uid)}" data-email="${esc(m.email)}">
+      <td><div style="display:flex;gap:9px;align-items:center"><div class="uav" style="width:28px;height:28px;font-size:12px">${initial(fullName(m))}</div><div><b>${esc(fullName(m))}</b>${me ? ' <span class="stat">(you)</span>' : ''}<span class="sub2">${esc(m.email)}</span></div></div></td>
+      <td>${esc(m.title || '—')}</td>
+      <td>${mgr ? esc(fullName(mgr)) : '<span class="stat">—</span>'}</td>
+      <td>${m.role === 'employee' ? 'Employee' : `<em class="rtag" style="margin:0">${ROLE_LABEL[m.role] || m.role}</em>`}</td>
+      <td><span class="upill ${st[1]}">${st[0]}</span></td>
+      <td class="stat">${m.lastLogin ? esc(fmt(m.lastLogin)) : 'Never'}</td>
+      ${admin ? `<td><div class="uact"><button data-pa="edit">Edit</button>${me ? '' : `<button data-pa="toggle">${m.active ? 'Disable' : 'Enable'}</button><button data-pa="reset" title="Email them a link to choose a new password">Reset password</button><button data-pa="remove" class="danger">Remove</button>`}</div></td>` : ''}
+    </tr>`;
+  }).join('');
+  return `<div class="sect">${top}
+    <div class="awrap" style="margin-top:0"><table class="atbl otbl"><thead><tr><th>Person</th><th>Job title</th><th>Reports to</th><th>Role</th><th>Status</th><th>Last seen</th>${admin ? '<th></th>' : ''}</tr></thead>
+    <tbody>${rows || `<tr><td colspan="7"><div class="empty">Nobody here yet.</div></td></tr>`}</tbody></table></div>
+    ${admin ? '' : '<p class="stat">Only the Account Manager can add people or change roles.</p>'}</div>`;
+}
+
+function orgChart(){
+  const L = orgView.members;
+  if (!L) return '<div class="empty">Loading…</div>';
+  const list = L.filter(m => !m.removed), ids = new Set(list.map(m => m.uid)), kids = {};
+  const roots = [];
+  list.sort((a, b) => roleRank(a.role) - roleRank(b.role) || fullName(a).localeCompare(fullName(b))).forEach(m => {
+    if (m.reportsTo && ids.has(m.reportsTo) && m.reportsTo !== m.uid) (kids[m.reportsTo] = kids[m.reportsTo] || []).push(m); else roots.push(m);
+  });
+  const seen = new Set();
+  const node = m => {
+    if (seen.has(m.uid)) return ''; seen.add(m.uid);
+    const ch = (kids[m.uid] || []).map(node).join('');
+    return `<li><div class="tnode${m.active ? '' : ' off'}"><div class="uav">${initial(fullName(m))}</div><div><b>${esc(fullName(m))}</b>${m.role !== 'employee' ? `<em class="rtag">${ROLE_LABEL[m.role]}</em>` : ''}<br><span>${esc(m.title && m.title !== ROLE_LABEL[m.role] ? m.title : m.role === 'employee' ? 'Employee' : '')}${(kids[m.uid] || []).length ? `${m.title && m.title !== ROLE_LABEL[m.role] || m.role === 'employee' ? ' · ' : ''}${plural(kids[m.uid].length, 'direct report')}` : ''}</span></div></div>${ch ? `<ul>${ch}</ul>` : ''}</li>`;
+  };
+  let html = roots.map(node).join('');
+  const orphans = list.filter(m => !seen.has(m.uid));                // reporting loops: show them anyway
+  if (orphans.length) html += orphans.map(m => { kids[m.uid] = []; return node(m); }).join('');
+  return `<div class="box"><h3>Org chart <span class="sub">who reports to whom${isOrgAdmin() ? ' · change it with Edit → Reports to, in People' : ''}</span></h3>
+    ${html ? `<ul class="tree">${html}</ul>` : '<div class="empty">Nobody here yet.</div>'}</div>`;
+}
+
+const DUR = [[1, '1 hour'], [24, '24 hours'], [168, '7 days']];
+const durLabel = h => (DUR.find(d => d[0] === +h) || [0, `${h} hours`])[1];
+function orgSupport(){
+  const oc = orgCtx(), org = oc.org, now = Date.now(), open = (org.supportUntil || 0) > now;
+  const reqs = (orgView.reqs || []).slice().sort((a, b) => (b.requestedAt || 0) - (a.requestedAt || 0));
+  const ST = {pending:['Waiting for you', 'pend'], approved:['Approved', 'on'], denied:['Denied', 'off'], revoked:['Revoked', 'off'], cancelled:['Withdrawn', 'off']};
+  return `<div class="sect">
+    ${open ? `<div class="grant">✅ <span style="flex:1;min-width:220px"><b>Zenvora Loop support can currently view</b> your people and attendance (read-only) until <b>${esc(fmt(org.supportUntil))}</b>.</span><button class="danger" data-sup="revoke">Revoke now</button></div>`
+      : `<div class="box"><h3>Zenvora Loop support can't see your data</h3><p class="stat" style="margin:0">Zenvora Loop manages your subscription but cannot see your people, attendance or anyone's planner. If they need to look into an issue, they send a request here: you choose whether to allow a <b>read-only</b> view and for how long. You can revoke it at any time.</p></div>`}
+    <div class="box"><h3>Requests</h3>
+      ${reqs.length ? reqs.map(r => `<div class="req ${r.status}" data-req="${esc(r.id)}">
+        <div class="rq"><b>${esc(r.reason || 'Support access')}</b><span>Asked ${esc(fmt(r.requestedAt))} by ${esc(r.by || 'Zenvora Loop')} · for ${esc(durLabel(r.hours))}${r.status === 'approved' && r.until ? ` · until ${esc(fmt(r.until))}` : ''}</span></div>
+        ${r.status === 'pending' ? `<label class="stat">Allow for <select data-h>${DUR.map(([h, l]) => `<option value="${h}"${h === +r.hours ? ' selected' : ''}>${l}</option>`).join('')}</select></label><button class="primary" data-sup="approve">Approve</button><button data-sup="deny">Deny</button>`
+          : `<span class="upill ${ST[r.status] ? ST[r.status][1] : 'off'}">${ST[r.status] ? ST[r.status][0] : esc(r.status)}</span>`}
+      </div>`).join('') : '<div class="empty">No requests yet.</div>'}
+    </div></div>`;
+}
+
+function orgBilling(){
+  const org = orgCtx().org, p = org.plan || {}, inv = orgView.invoices;
+  const due = (inv || []).filter(i => i.status !== 'paid').reduce((a, i) => a + (+i.amount || 0), 0);
+  const on = FEATURES.filter(([k]) => (org.features || {})[k]).map(f => f[1]);
+  return `<div class="sect"><div class="kpis">
+      <div class="kpi"><div class="kl">Plan</div><div class="kv" style="font-size:18px">${esc(p.name || 'Standard')}</div><div class="ks">${esc(on.join(' · ') || 'no features')}</div></div>
+      <div class="kpi"><div class="kl">Subscription</div><div class="kv">${inr(p.fee)}</div><div class="ks">per month</div></div>
+      <div class="kpi"><div class="kl">People</div><div class="kv">${org.seats || 0}</div><div class="ks">active logins</div></div>
+      <div class="kpi"><div class="kl">Outstanding</div><div class="kv ${due ? 'neg' : ''}">${inr(due)}</div><div class="ks">${due ? 'please pay Zenvora Loop' : 'all paid, thank you'}</div></div></div>
+    <div class="awrap" style="margin-top:0"><table class="atbl"><thead><tr><th>Invoice for</th><th class="num">Amount</th><th>Due by</th><th>Status</th><th>Paid on</th></tr></thead><tbody>
+      ${inv === null ? '<tr><td colspan="5">Loading…</td></tr>' : inv.length ? inv.sort((a, b) => String(b.period).localeCompare(String(a.period))).map(i => `<tr><td>${esc(monthName(i.period))}</td><td class="num">${inr(i.amount)}</td><td>${esc(i.due ? fmtShort(i.due) : '—')}</td><td><span class="upill ${i.status === 'paid' ? 'on' : 'pend'}">${i.status === 'paid' ? 'Paid' : 'Due'}</span></td><td>${i.paidAt ? esc(fmt(i.paidAt)) : '—'}</td></tr>`).join('') : '<tr><td colspan="5" class="stat">No invoices yet.</td></tr>'}
+    </tbody></table></div>
+    <p class="stat">Billing questions or plan changes: contact Zenvora Loop at ${esc(ADMIN_EMAIL)}.</p></div>`;
+}
+const monthName = mk => /^\d{4}-\d{2}$/.test(mk || '') ? parseDay(mk + '-01').toLocaleDateString([], {month:'long', year:'numeric'}) : (mk || '—');
+
+function noReportLoop(uid, to){
+  const by = Object.fromEntries((orgView.members || []).map(m => [m.uid, m]));
+  for (let x = to, n = 0; x && n < 100; x = by[x] && by[x].reportsTo, n++) if (x === uid) return false;
+  return true;
+}
+async function addPerson(){
+  const {F, fs} = cloud, oc = orgCtx();
+  const name = $('#paName').value.trim(), email = $('#paEmail').value.trim().toLowerCase(), title = $('#paTitle').value.trim();
+  const reportsTo = $('#paTo').value, role = $('#paRole').value, pass = $('#paPass').value;
+  orgView.share = '';
   try {
+    if (!name) throw custom('Enter their name.');
+    if (!EMAIL_RE.test(email)) throw custom('Enter a valid email address.');
+    if (email === ADMIN_EMAIL) throw custom('That is the Zenvora Loop Super Admin account.');
+    if (pass.length < 8) throw custom('The temporary password needs at least 8 characters.');
+    const ex = (orgView.members || []).find(m => (m.email || '').toLowerCase() === email);
+    if (ex && !ex.removed) throw custom(`${email} is already in ${oc.org.name}.`);
+    $('#paSubmit').disabled = true;
+    if (ex){                                                   // removed earlier: bring them back
+      await F.updateDoc(orgDoc('members', ex.uid), {active:true, removed:false, name, title, reportsTo, role});
+      await F.sendPasswordResetEmail(cloud.auth, email);
+      orgView.msg = {t:`${email} was in ${oc.org.name} before. Access is restored and a password-reset email was sent.`, ok:true};
+    } else {
+      const pend = orgView.pending.find(p => (p.email || '').toLowerCase() === email);
+      if (pend){ await joinPending(pend.uid, {name, title, reportsTo, role}); orgView.msg = {t:`${email} already had a login and has joined ${oc.org.name}.`, ok:true}; }
+      else {
+        let uid;
+        try { uid = await createAuthUser(name, email, pass); }
+        catch(err){ if (err.code === 'auth/email-already-in-use') throw custom(`${email} already has a Zenvora Loop login (possibly in another organization), so it can't be added here. Use a different email, or ask Zenvora Loop support.`); throw err; }
+        const now = Date.now();
+        await F.setDoc(F.doc(fs, 'accounts', uid), {orgId:oc.orgId, email, createdAt:now});
+        await F.setDoc(orgDoc('members', uid), {email, name, title, reportsTo, role, active:true, removed:false, mustChangePassword:true, createdAt:now, createdBy:cloud.user.email || ''});
+        orgView.share = inviteText(oc.org.name, email, pass);
+        orgView.msg = {t:`${name} can now sign in. Share the login details below.`, ok:true};
+      }
+    }
+    orgView.tmp = genPass();
+  } catch(err){ orgView.msg = {t:errText(err)}; }
+  document.activeElement.blur(); renderOrg();
+  if (orgView.msg && orgView.msg.ok){ ['#paName', '#paEmail', '#paTitle'].forEach(s => { const el = $(s); if (el) el.value = ''; }); }
+}
+async function joinPending(uid, extra){
+  const {F} = cloud, p = orgView.pending.find(x => x.uid === uid); if (!p) return;
+  await F.setDoc(orgDoc('members', uid), Object.assign({email:(p.email || '').toLowerCase(), name:p.name || '', title:'', reportsTo:'', role:'employee', active:true, removed:false, mustChangePassword:false, createdAt:Date.now(), createdBy:cloud.user.email || ''}, extra || {}));
+  await F.deleteDoc(orgDoc('pending', uid));
+}
+$('#orgSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ orgView.sec = b.dataset.s; orgView.edit = null; orgView.msg = null; renderOrg(); } });
+$('#orgBody').addEventListener('submit', async e => {
+  e.preventDefault();
+  if (e.target.id === 'pAdd') return addPerson();
+  if (e.target.id === 'pEdit'){
+    const uid = e.target.dataset.uid, upd = {name:$('#peName').value.trim(), title:$('#peTitle').value.trim(), reportsTo:$('#peTo').value};
+    if (!$('#peRole').disabled) upd.role = $('#peRole').value;
+    if (!upd.name) return info('Enter their name.');
+    if (!noReportLoop(uid, upd.reportsTo)) return info("That would make a reporting loop: pick someone who doesn't report to this person.");
+    try { await cloud.F.updateDoc(orgDoc('members', uid), upd); orgView.edit = null; document.activeElement.blur(); renderOrg(); info('Saved.'); }
+    catch(err){ info('Could not save: ' + errText(err)); }
+  }
+});
+$('#orgBody').addEventListener('click', async e => {
+  const {F} = cloud;
+  if (e.target.closest('#paGen')){ $('#paPass').value = orgView.tmp = genPass(); return; }
+  const pend = e.target.closest('[data-pend]');
+  if (pend){ pend.disabled = true; try { await joinPending(pend.dataset.pend); info('Added to the team.'); } catch(err){ info('Could not add: ' + errText(err)); pend.disabled = false; } return; }
+  const pa = e.target.closest('[data-pa]');
+  if (pa){
+    const row = pa.closest('[data-uid]'), uid = row.dataset.uid, m = (orgView.members || []).find(x => x.uid === uid), a = pa.dataset.pa;
+    if (a === 'edit'){ orgView.edit = uid; renderOrg(); return; }
+    if (a === 'cancel'){ orgView.edit = null; document.activeElement.blur(); renderOrg(); return; }
+    pa.disabled = true;
+    try {
+      if (a === 'toggle'){ await F.updateDoc(orgDoc('members', uid), {active:!m.active}); info(m.active ? `${m.email} can no longer sign in (signed out immediately).` : `${m.email} can sign in again.`); }
+      if (a === 'reset'){ await F.sendPasswordResetEmail(cloud.auth, m.email); info(`Password-reset email sent to ${m.email}.`); }
+      if (a === 'remove'){
+        if (!confirm(`Remove ${fullName(m)} from ${orgCtx().org.name}?\n\nThey lose access immediately. Their attendance history is kept, and adding the same email again later restores it.`)){ pa.disabled = false; return; }
+        await F.updateDoc(orgDoc('members', uid), {active:false, removed:true}); info(`${m.email} has been removed.`);
+      }
+    } catch(err){ info('That did not work: ' + errText(err)); pa.disabled = false; }
+    return;
+  }
+  const sup = e.target.closest('[data-sup]');
+  if (sup){
+    const oc = orgCtx(), now = Date.now(), act = sup.dataset.sup, by = cloud.user.email || '';
+    sup.disabled = true;
+    try {
+      if (act === 'revoke'){
+        await F.updateDoc(F.doc(cloud.fs, 'orgs', oc.orgId), {supportUntil:0, supportBy:''});
+        await Promise.all((orgView.reqs || []).filter(r => r.status === 'approved' && (r.until || 0) > now).map(r => F.updateDoc(orgDoc('accessRequests', r.id), {status:'revoked', decidedAt:now, decidedBy:by})));
+        info('Support access revoked.');
+      } else {
+        const box = sup.closest('[data-req]'), r = orgView.reqs.find(x => x.id === box.dataset.req);
+        if (act === 'approve'){
+          const h = +box.querySelector('[data-h]').value || 1, until = now + h * 3600000;
+          await F.updateDoc(F.doc(cloud.fs, 'orgs', oc.orgId), {supportUntil:until, supportBy:r.by || ADMIN_EMAIL});
+          await F.updateDoc(orgDoc('accessRequests', r.id), {status:'approved', hours:h, until, decidedAt:now, decidedBy:by});
+          info(`Approved: Zenvora Loop support can view ${oc.org.name} (read-only) until ${fmt(until)}.`);
+        }
+        if (act === 'deny'){ await F.updateDoc(orgDoc('accessRequests', r.id), {status:'denied', decidedAt:now, decidedBy:by}); info('Request denied.'); }
+      }
+    } catch(err){ info('That did not work: ' + errText(err)); sup.disabled = false; }
+  }
+});
+
+/* the Account Manager is told the moment Zenvora Loop support asks for access */
+function watchSupportRequests(){
+  if (cloud.reqUnsub){ try { cloud.reqUnsub(); } catch(e){} cloud.reqUnsub = null; }
+  $('#reqBell').hidden = true; orgView.reqs = [];
+  if (!isOrgAdmin()) return;
+  const {F} = cloud, seen = new Set();
+  const u = F.onSnapshot(orgCol('accessRequests'), qs => {
+    orgView.reqs = qs.docs.map(d => Object.assign({id:d.id}, d.data()));
+    const pend = orgView.reqs.filter(r => r.status === 'pending');
+    $('#reqBell').hidden = !pend.length;
+    $('#reqBell').textContent = `🛟 Support request${pend.length > 1 ? 's (' + pend.length + ')' : ''}`;
+    pend.forEach(r => {
+      if (seen.has(r.id)) return; seen.add(r.id);
+      const t = document.createElement('div'); t.className = 'toast supreq';
+      t.innerHTML = `<div class="tt">🛟 Zenvora Loop support is asking for access</div><div class="tb">${esc(r.reason || '')} · read-only, for ${esc(durLabel(r.hours))}</div><div class="ta"><button class="primary" data-review>Review</button><button data-x>Later</button></div>`;
+      t.querySelector('[data-review]').onclick = () => { t.remove(); orgView.sec = 'support'; setView('org'); };
+      t.querySelector('[data-x]').onclick = () => t.remove();
+      $('#toasts').appendChild(t);
+      try { if ('Notification' in window && Notification.permission === 'granted') new Notification('Zenvora Loop support is asking for access', {body:(r.reason || '') + ' · open Organization → Support access to decide'}); } catch(e){}
+    });
+    if (state.settings.view === 'org') renderOrg();
+  }, () => {});
+  cloud.reqUnsub = u; unsubs.push(u);
+}
+
+/* ================= Super Admin: organizations, features, billing, support access ================= */
+const supers = {orgs:null, legacy:null, sel:null, inv:null, reqs:null, unsub:null, dUnsub:[], dKey:'', onboard:false, msg:null, share:'', dmsg:null, dshare:'', tmp:'',
+  reset(){ if (this.unsub) try { this.unsub(); } catch(e){} this.dUnsub.forEach(u => { try { u(); } catch(e){} }); clearInterval(supportTimer);
+    Object.assign(this, {orgs:null, legacy:null, sel:null, inv:null, reqs:null, unsub:null, dUnsub:[], dKey:'', onboard:false, msg:null, share:'', dmsg:null, dshare:''}); }};
+let supportTimer = null;
+const slugify = s => String(s || '').toLowerCase().normalize('NFKD').replace(/[^\w\s-]/g, '').replace(/[\s_]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 30);
+const isSupportOpen = o => (o.supportUntil || 0) > Date.now();
+const OST = {active:['Active', 'on'], suspended:['Suspended', 'sus'], offboarded:['Offboarded', 'gone']};
+
+function supersLoad(){
+  if (!cloud || !cloud.isSuper) return;
+  const {F, fs} = cloud;
+  if (!supers.unsub){
+    supers.unsub = F.onSnapshot(F.collection(fs, 'orgs'), qs => {
+      supers.orgs = qs.docs.map(d => Object.assign({id:d.id}, d.data()));
+      const oc = orgCtx();
+      if (oc && oc.support){                                   // keep the support view in step with the org's grant
+        const o = supers.orgs.find(x => x.id === oc.orgId);
+        if (!o || !isSupportOpen(o) || o.status !== 'active') exitSupport(`Support access to ${oc.org.name} has ended.`);
+        else { oc.org = o; refreshTabs(); }
+      }
+      if (state.settings.view === 'orgs') renderOrgs();
+    }, e => { supers.orgs = []; info('Organizations could not load: ' + (e.code || e.message)); });
+    F.getDocs(F.collection(fs, 'accounts')).then(qs => {
+      supers.legacy = qs.docs.map(d => Object.assign({uid:d.id}, d.data())).filter(a => !a.orgId && a.email && a.email !== ADMIN_EMAIL && !a.removed && a.role !== 'admin');
+      if (state.settings.view === 'orgs') renderOrgs();
+    }).catch(() => { supers.legacy = []; });
+  }
+  const key = supers.sel || '';
+  if (supers.dKey !== key){
+    supers.dUnsub.forEach(u => { try { u(); } catch(e){} }); supers.dUnsub = []; supers.dKey = key; supers.inv = supers.reqs = null;
+    if (key){
+      const again = () => { if (state.settings.view === 'orgs' && supers.sel === key) renderOrgs(); };
+      supers.dUnsub.push(F.onSnapshot(F.collection(fs, 'orgs', key, 'invoices'), qs => { supers.inv = qs.docs.map(d => Object.assign({id:d.id}, d.data())); again(); }, () => { supers.inv = []; }));
+      supers.dUnsub.push(F.onSnapshot(F.collection(fs, 'orgs', key, 'accessRequests'), qs => { supers.reqs = qs.docs.map(d => Object.assign({id:d.id}, d.data())); again(); }, () => { supers.reqs = []; }));
+    }
+  }
+}
+
+function renderOrgs(){
+  if (!cloud || !cloud.isSuper) return;
+  supersLoad();
+  $('#onboardBtn').hidden = !!supers.sel;
+  const body = $('#orgsBody');
+  if (keepTyping(body)) return;
+  body.innerHTML = supers.sel ? orgsDetail() : orgsList();
+}
+
+function orgsList(){
+  const L = supers.orgs;
+  if (!L) return '<div class="empty">Loading organizations…</div>';
+  const act = L.filter(o => o.status === 'active');
+  if (!supers.tmp) supers.tmp = genPass();
+  const onboard = supers.onboard ? `<div class="box"><h3>Onboard a new organization</h3>
+    <form class="aform" id="obForm" novalidate>
+      <label class="grow">Organization name<input id="obName" autocomplete="off" placeholder="e.g. Abbi's Dental Care"></label>
+      <label>Organization ID <span class="stat" style="text-transform:none">(permanent)</span><input id="obId" autocomplete="off" placeholder="from the name"></label>
+      <div class="flbl">Theme colour${swatchesHtml('obColor', PALETTE[0])}</div>
+      <div class="flbl grow">Features${featsHtml('obF', {agenda:true, attendance:true, payroll:false})}</div>
+      <label>Plan name<input id="obPlan" value="Standard"></label>
+      <label>Monthly fee (₹)<input id="obFee" type="number" min="0" step="50" placeholder="e.g. 999"></label>
+      <div style="flex-basis:100%;height:0"></div>
+      <label class="grow">Account Manager's name<input id="obAmName" autocomplete="off" placeholder="who runs this organization's account"></label>
+      <label class="grow">Account Manager's email<input id="obAmEmail" type="email" autocomplete="off"></label>
+      <label>Temporary password<span class="pwgen"><input id="obPass" value="${esc(supers.tmp)}" autocomplete="off"><button type="button" id="obGen" title="Generate a new password">↻</button></span></label>
+      <button class="primary" type="submit" id="obSubmit">Onboard</button><button type="button" id="obCancel">Cancel</button>
+    </form>
+    <p class="stat" style="margin:8px 0 0">The Account Manager becomes the admin of this organization only: they add their own people and decide whether Zenvora Loop support may look inside.</p>
+    ${msgHtml(supers.msg)}</div>` : (supers.msg || supers.share ? `<div class="box">${msgHtml(supers.msg)}${shareHtml('obShare', supers.share)}</div>` : '');
+  const rows = L.slice().sort((a, b) => (a.status !== 'active') - (b.status !== 'active') || String(a.name).localeCompare(String(b.name))).map(o => {
+    const st = OST[o.status] || [o.status, 'off'], f = o.features || {};
+    return `<tr class="clk" data-org="${esc(o.id)}">
+      <td><div style="display:flex;gap:9px;align-items:center"><span class="sw" style="width:16px;height:16px;border-radius:5px;background:${esc(o.color || '#3730A3')}"></span><div><b>${esc(o.name)}</b><span class="sub2">${esc(o.id)}</span></div></div></td>
+      <td><span class="upill ${st[1]}">${st[0]}</span></td>
+      <td><div class="fchips">${FEATURES.map(([k, l]) => `<span class="fchip${f[k] ? ' on' : ''}">${f[k] ? '' : '<s>'}${l}${f[k] ? '' : '</s>'}</span>`).join('')}</div></td>
+      <td>${esc(o.adminEmail || '—')}</td>
+      <td class="num">${o.seats || 0}</td>
+      <td class="num">${inr((o.plan || {}).fee)}<span class="sub2">${esc((o.plan || {}).name || '')}</span></td>
+      <td>${isSupportOpen(o) ? `<span class="upill on">Open until ${esc(fmt(o.supportUntil))}</span>` : '<span class="stat">Closed</span>'}</td></tr>`;
+  }).join('');
+  const lg = supers.legacy || [];
+  const legacy = lg.length && act.length ? `<div class="box legacy"><h3>Logins from before organizations <span class="sub">move each person into their organization; its Account Manager then clicks "Add to team"</span></h3>
+    ${lg.map(a => `<div class="req" data-legacy="${esc(a.uid)}"><div class="rq"><b>${esc(a.name || a.email)}</b><span>${esc(a.email)}</span></div><select>${act.map(o => `<option value="${esc(o.id)}">${esc(o.name)}</option>`).join('')}</select><button data-mv>Move</button></div>`).join('')}</div>` : '';
+  return `<div class="sect">
+    <div class="kpis">
+      <div class="kpi"><div class="kl">Active organizations</div><div class="kv">${act.length}</div><div class="ks">${L.length - act.length} suspended or offboarded</div></div>
+      <div class="kpi"><div class="kl">People</div><div class="kv">${act.reduce((a, o) => a + (o.seats || 0), 0)}</div><div class="ks">active logins</div></div>
+      <div class="kpi"><div class="kl">Monthly subscriptions</div><div class="kv">${inr(act.reduce((a, o) => a + (+(o.plan || {}).fee || 0), 0))}</div><div class="ks">active organizations</div></div>
+      <div class="kpi"><div class="kl">Support access open</div><div class="kv">${L.filter(isSupportOpen).length}</div><div class="ks">approved by Account Managers</div></div>
+    </div>
+    ${onboard}
+    ${L.length ? `<div class="stat">Click an organization to change its features, theme, plan and billing, or to request support access.</div>
+    <div class="awrap" style="margin-top:0"><table class="atbl otbl"><thead><tr><th>Organization</th><th>Status</th><th>Features</th><th>Account Manager</th><th class="num">People</th><th class="num">Plan / month</th><th>Support access</th></tr></thead><tbody>${rows}</tbody></table></div>`
+      : (supers.onboard ? '' : '<div class="empty">No organizations yet. Click <b>+ Onboard organization</b> to add your first client.</div>')}
+    ${legacy}</div>`;
+}
+
+function orgsDetail(){
+  const o = (supers.orgs || []).find(x => x.id === supers.sel);
+  if (!o) return '<button class="abk" id="orgsBack">← Organizations</button><div class="empty">Loading…</div>';
+  const st = OST[o.status] || [o.status, 'off'], p = o.plan || {}, open = isSupportOpen(o);
+  const reqs = (supers.reqs || []).slice().sort((a, b) => (b.requestedAt || 0) - (a.requestedAt || 0));
+  const pending = reqs.find(r => r.status === 'pending');
+  const RST = {pending:['Waiting for approval', 'pend'], approved:['Approved', 'on'], denied:['Denied', 'off'], revoked:['Revoked', 'off'], cancelled:['Withdrawn', 'off']};
+  const inv = (supers.inv || []).slice().sort((a, b) => String(b.period).localeCompare(String(a.period)));
+  const due = inv.filter(i => i.status !== 'paid').reduce((a, i) => a + (+i.amount || 0), 0);
+  if (!supers.tmp) supers.tmp = genPass();
+  const nextDue = shiftDay(todayKey, 10);
+  return `<button class="abk" id="orgsBack">← Organizations</button>
+    <div class="ahead"><div class="uav" style="background:${esc(o.color || '#3730A3')};border-radius:10px">${initial(o.name)}</div><div><b style="font-size:16px">${esc(o.name)}</b> <span class="upill ${st[1]}">${st[0]}</span><div class="stat">ID ${esc(o.id)} · onboarded ${o.createdAt ? esc(fmtShort(dayKey(o.createdAt))) : '—'} · ${o.seats || 0} ${o.seats === 1 ? 'person' : 'people'}</div></div></div>
+    ${msgHtml(supers.dmsg)}${shareHtml('amShare', supers.dshare)}
+    <div class="acards">
+      <div class="box"><h3>Plan, features &amp; theme</h3>
+        <form class="aform" id="osForm" novalidate>
+          <label class="grow">Organization name<input id="osName" value="${esc(o.name)}"></label>
+          <div class="flbl">Theme colour${swatchesHtml('osColor', o.color || PALETTE[0])}</div>
+          <div class="flbl grow">Features${featsHtml('osF', o.features || {})}</div>
+          <label>Plan name<input id="osPlan" value="${esc(p.name || 'Standard')}"></label>
+          <label>Monthly fee (₹)<input id="osFee" type="number" min="0" step="50" value="${+p.fee || ''}"></label>
+          <button class="primary" type="submit">Save</button>
+        </form>
+        <p class="stat" style="margin:8px 0 0">Changes apply to everyone in ${esc(o.name)} within seconds.</p>
+      </div>
+      <div class="box"><h3>Status</h3>
+        <p class="stat" style="margin:0 0 8px">${o.status === 'active' ? 'Everyone in this organization can sign in.' : o.status === 'suspended' ? 'Suspended: nobody in this organization can sign in until you reactivate it. Their data is kept.' : 'Offboarded: access is closed. Their data is kept, so you can reactivate them later.'}</p>
+        <div class="btnrow">${o.status === 'active' ? '<button data-st="suspended">Suspend</button>' : '<button class="primary" data-st="active">Reactivate</button>'}${o.status !== 'offboarded' ? '<button class="danger" data-st="offboarded">Offboard</button>' : ''}</div>
+        <h3 style="margin-top:14px">Account Manager</h3>
+        <p class="stat" style="margin:0 0 8px">${esc(o.adminEmail || '—')}. If they leave, give the organization a new Account Manager:</p>
+        <form class="aform" id="amForm" novalidate>
+          <label class="grow">Name<input id="amName" autocomplete="off"></label>
+          <label class="grow">Email<input id="amEmail" type="email" autocomplete="off"></label>
+          <label>Temporary password<span class="pwgen"><input id="amPass" value="${esc(supers.tmp)}" autocomplete="off"><button type="button" id="amGen">↻</button></span></label>
+          <button type="submit">Assign</button>
+        </form>
+      </div>
+      <div class="box"><h3>Support access <span class="sub">read-only, only with the Account Manager's approval</span></h3>
+        ${open ? `<div class="grant" style="margin-bottom:8px">✅ <span style="flex:1">Open until <b>${esc(fmt(o.supportUntil))}</b></span><button class="primary" data-enter="${esc(o.id)}">Open support view</button></div>`
+          : pending ? `<p class="stat" style="margin:0 0 8px">Waiting for ${esc(o.adminEmail || 'the Account Manager')} to approve. They've been notified in the app.</p>`
+          : `<form class="aform" id="rqForm" novalidate>
+              <label class="grow">Reason<input id="rqReason" placeholder="e.g. Checking a payroll mismatch they reported"></label>
+              <label>For<select id="rqHours">${DUR.map(([h, l]) => `<option value="${h}"${h === 24 ? ' selected' : ''}>${l}</option>`).join('')}</select></label>
+              <button class="primary" type="submit"${o.status !== 'active' ? ' disabled title="Reactivate the organization first"' : ''}>Request access</button>
+            </form>`}
+        <div class="sect" style="margin-top:8px;gap:6px">${reqs.slice(0, 6).map(r => `<div class="req ${r.status}" data-rq="${esc(r.id)}"><div class="rq"><b>${esc(r.reason || 'Support access')}</b><span>${esc(fmt(r.requestedAt))} · ${esc(durLabel(r.hours))}${r.decidedBy ? ' · by ' + esc(r.decidedBy) : ''}</span></div><span class="upill ${(RST[r.status] || ['', 'off'])[1]}">${(RST[r.status] || [esc(r.status)])[0]}</span>${r.status === 'pending' ? '<button data-cancel>Withdraw</button>' : ''}</div>`).join('')}</div>
+      </div>
+    </div>
+    <div class="box"><h3>Billing <span class="sub">${due ? `<span class="neg">${inr(due)} outstanding</span>` : 'nothing outstanding'}</span></h3>
+      <form class="aform" id="invForm" novalidate>
+        <label>Invoice for<input type="month" id="ivPer" value="${todayKey.slice(0, 7)}"></label>
+        <label>Amount (₹)<input type="number" id="ivAmt" min="0" step="50" value="${+p.fee || ''}"></label>
+        <label>Due by<input type="date" id="ivDue" value="${nextDue}"></label>
+        <button class="primary" type="submit">Create invoice</button>
+      </form>
+      <div class="awrap"><table class="atbl"><thead><tr><th>Invoice for</th><th class="num">Amount</th><th>Due by</th><th>Status</th><th>Paid on</th><th></th></tr></thead><tbody>
+        ${supers.inv === null ? '<tr><td colspan="6">Loading…</td></tr>' : inv.length ? inv.map(i => `<tr data-inv="${esc(i.id)}"><td>${esc(monthName(i.period))}</td><td class="num">${inr(i.amount)}</td><td>${esc(i.due ? fmtShort(i.due) : '—')}</td><td><span class="upill ${i.status === 'paid' ? 'on' : 'pend'}">${i.status === 'paid' ? 'Paid' : 'Due'}</span></td><td>${i.paidAt ? esc(fmt(i.paidAt)) : '—'}</td>
+          <td><div class="uact">${i.status === 'paid' ? '<button data-iv="due">Mark unpaid</button>' : '<button class="primary" data-iv="paid">Mark paid</button>'}<button class="danger" data-iv="del">Delete</button></div></td></tr>`).join('') : '<tr><td colspan="6" class="stat">No invoices yet.</td></tr>'}
+      </tbody></table></div>
+    </div>`;
+}
+
+async function onboardOrg(){
+  const {F, fs} = cloud;
+  supers.share = '';
+  try {
+    const name = $('#obName').value.trim(), id = slugify($('#obId').value.trim() || name), color = $('#obColor').value;
+    const features = readFeats('obF'), plan = {name:$('#obPlan').value.trim() || 'Standard', fee:Math.max(0, +$('#obFee').value || 0)};
+    const amName = $('#obAmName').value.trim(), amEmail = $('#obAmEmail').value.trim().toLowerCase(), pass = $('#obPass').value;
+    if (!name) throw custom('Enter the organization name.');
+    if (!/^[a-z0-9][a-z0-9-]{1,29}$/.test(id)) throw custom('The organization ID needs 2–30 letters, numbers or dashes.');
+    if (!amName || !EMAIL_RE.test(amEmail)) throw custom("Enter the Account Manager's name and a valid email.");
+    if (amEmail === ADMIN_EMAIL) throw custom('Use a different email for the Account Manager: this one is the Super Admin.');
+    if (pass.length < 8) throw custom('The temporary password needs at least 8 characters.');
+    $('#obSubmit').disabled = true;
+    if ((await F.getDoc(F.doc(fs, 'orgs', id))).exists()) throw custom(`The ID "${id}" is already used by another organization. Choose another.`);
+    let uid;
+    try { uid = await createAuthUser(amName, amEmail, pass); }
+    catch(err){ if (err.code === 'auth/email-already-in-use') throw custom(`${amEmail} already has a Zenvora Loop login. Use a different email for this Account Manager.`); throw err; }
+    const now = Date.now(), by = cloud.user.email || '';
+    await F.setDoc(F.doc(fs, 'orgs', id), {name, color, status:'active', features, plan, adminUid:uid, adminEmail:amEmail, seats:1, supportUntil:0, supportBy:'', createdAt:now, createdBy:by});
+    await F.setDoc(F.doc(fs, 'orgs', id, 'members', uid), {email:amEmail, name:amName, role:'orgadmin', title:'Account Manager', reportsTo:'', active:true, removed:false, mustChangePassword:true, createdAt:now, createdBy:by});
+    await F.setDoc(F.doc(fs, 'accounts', uid), {orgId:id, email:amEmail, createdAt:now});
+    supers.onboard = false; supers.tmp = genPass();
+    supers.share = inviteText(name, amEmail, pass);
+    supers.msg = {t:`${name} is live. Send ${amName} their login details: they'll set their own password and can then add their team.`, ok:true};
+  } catch(err){ supers.msg = {t:errText(err)}; }
+  document.activeElement.blur(); renderOrgs();
+}
+
+async function assignAccountManager(o){
+  const {F, fs} = cloud;
+  supers.dshare = '';
+  try {
+    const name = $('#amName').value.trim(), email = $('#amEmail').value.trim().toLowerCase(), pass = $('#amPass').value;
+    if (!name || !EMAIL_RE.test(email)) throw custom('Enter a name and a valid email.');
+    if (email === ADMIN_EMAIL) throw custom('That is the Super Admin account.');
+    if (pass.length < 8) throw custom('The temporary password needs at least 8 characters.');
     let uid;
     try { uid = await createAuthUser(name, email, pass); }
-    catch(err){
-      if (err.code !== 'auth/email-already-in-use') throw err;
-      const qs = await F.getDocs(F.query(F.collection(fs, 'accounts'), F.where('email', '==', email)));
-      if (qs.empty) throw Object.assign(new Error('This email already exists in Firebase Authentication but was never set up here. Delete it in Firebase console → Authentication → Users, then add it again.'), {code:'custom'});
-      const upd = {active:true, removed:false}; if (name) upd.name = name;
-      await F.updateDoc(F.doc(fs, 'accounts', qs.docs[0].id), upd);
-      await F.sendPasswordResetEmail(cloud.auth, email);
-      adminMsg(`${email} already had an account. Access is restored and a password-reset email was sent so they can choose a password.`, true);
-      $('#nuName').value = $('#nuEmail').value = ''; $('#nuPass').value = genPass();
-      return;
-    }
-    await F.setDoc(F.doc(fs, 'accounts', uid), {email, name, role:'user', active:true, mustChangePassword:true, createdAt:Date.now(), createdBy:cloud.user.email || ''});
-    $('#shareText').textContent = `You're invited to Zenvora Loop 👋\n\nOpen:  ${location.origin + location.pathname}\nEmail: ${email}\nTemporary password: ${pass}\n\nYou'll be asked to set your own password when you first sign in.`;
-    $('#shareBox').hidden = false;
-    adminMsg(`${name || email} can now sign in. Share the login details below.`, true);
-    $('#nuName').value = $('#nuEmail').value = ''; $('#nuPass').value = genPass();
-  } catch(err){ adminMsg(err.code === 'custom' ? err.message : (AUTH_ERR[err.code] || err.message)); }
-  finally { $('#nuSubmit').disabled = false; }
+    catch(err){ if (err.code === 'auth/email-already-in-use') throw custom(`${email} already has a login. If they're already in ${o.name}, ask the current Account Manager to set their role to Account Manager in People.`); throw err; }
+    const now = Date.now(), by = cloud.user.email || '';
+    await F.updateDoc(F.doc(fs, 'orgs', o.id), {adminUid:uid, adminEmail:email});
+    await F.setDoc(F.doc(fs, 'orgs', o.id, 'members', uid), {email, name, role:'orgadmin', title:'Account Manager', reportsTo:'', active:true, removed:false, mustChangePassword:true, createdAt:now, createdBy:by});
+    await F.setDoc(F.doc(fs, 'accounts', uid), {orgId:o.id, email, createdAt:now});
+    supers.tmp = genPass(); supers.dshare = inviteText(o.name, email, pass);
+    supers.dmsg = {t:`${name} is now an Account Manager of ${o.name}.`, ok:true};
+  } catch(err){ supers.dmsg = {t:errText(err)}; }
+  document.activeElement.blur(); renderOrgs();
 }
-async function userAction(e){
-  const b = e.target.closest('[data-a]'); if (!b) return;
-  const row = b.closest('.urow'), email = row.dataset.email, {F, fs} = cloud, ref = F.doc(fs, 'accounts', row.dataset.uid);
-  b.disabled = true;
+
+function enterSupport(id){
+  const o = (supers.orgs || []).find(x => x.id === id);
+  if (!o || !isSupportOpen(o)) return info('Support access is not open for this organization.');
+  cloud.ctx = {orgId:id, org:o, me:{name:'Zenvora Loop support'}, role:'support', support:true};
+  attReset(); orgView.reset(); applyTheme(o.color); refreshTabs();
+  orgView.sec = 'people'; att.mode = 'team';
+  clearInterval(supportTimer);
+  supportTimer = setInterval(() => { const oc = orgCtx(); if (oc && oc.support && !isSupportOpen(oc.org)) exitSupport(`Support access to ${oc.org.name} has ended.`); }, 20000);
+  setView(feat('attendance') ? 'attendance' : 'org');
+  info(`You're viewing ${o.name} as Zenvora Loop support (read-only).`);
+}
+function exitSupport(msg){
+  if (!cloud) return;
+  clearInterval(supportTimer);
+  cloud.ctx = null; attReset(); orgView.reset(); applyTheme(null); refreshTabs();
+  if (msg) info(msg);
+  if (appReady){ state.settings.view = 'orgs'; render(); }
+}
+
+$('#onboardBtn').onclick = () => { supers.onboard = true; supers.msg = null; supers.share = ''; supers.sel = null; renderOrgs(); setTimeout(() => { const n = $('#obName'); if (n) n.focus(); }, 0); };
+$('#orgsBody').addEventListener('input', e => { if (e.target.id === 'obName' && !$('#obId').dataset.touched) $('#obId').value = slugify(e.target.value); if (e.target.id === 'obId') e.target.dataset.touched = '1'; });
+$('#orgsBody').addEventListener('submit', async e => {
+  e.preventDefault();
+  const {F, fs} = cloud, o = (supers.orgs || []).find(x => x.id === supers.sel);
+  if (e.target.id === 'obForm') return onboardOrg();
+  if (!o) return;
+  if (e.target.id === 'amForm') return assignAccountManager(o);
   try {
-    if (b.dataset.a === 'toggle'){
-      const enable = b.textContent.trim() === 'Enable';
-      await F.updateDoc(ref, {active:enable});
-      adminMsg(enable ? `${email} can sign in again.` : `${email} can no longer sign in (signed out immediately).`, true);
+    if (e.target.id === 'osForm'){
+      const name = $('#osName').value.trim(); if (!name) throw custom('Enter the organization name.');
+      await F.updateDoc(F.doc(fs, 'orgs', o.id), {name, color:$('#osColor').value, features:readFeats('osF'), plan:Object.assign({}, o.plan || {}, {name:$('#osPlan').value.trim() || 'Standard', fee:Math.max(0, +$('#osFee').value || 0)})});
+      info(`Saved ${name}.`);
     }
-    if (b.dataset.a === 'role'){
-      const mk = b.textContent.trim() === 'Make manager';
-      await F.updateDoc(ref, {role: mk ? 'manager' : 'user'});
-      adminMsg(mk ? `${email} is now a manager: they can see and edit everyone's attendance.` : `${email} is no longer a manager.`, true);
+    if (e.target.id === 'rqForm'){
+      const reason = $('#rqReason').value.trim(); if (!reason) throw custom('Say why you need access: the Account Manager sees this.');
+      await F.addDoc(F.collection(fs, 'orgs', o.id, 'accessRequests'), {reason, hours:+$('#rqHours').value || 24, status:'pending', requestedAt:Date.now(), by:cloud.user.email || ''});
+      info(`Request sent. ${o.adminEmail || 'The Account Manager'} will see it in the app.`);
     }
-    if (b.dataset.a === 'reset'){ await F.sendPasswordResetEmail(cloud.auth, email); adminMsg(`Password-reset email sent to ${email}.`, true); }
-    if (b.dataset.a === 'remove'){
-      if (!confirm(`Remove ${email}?\n\nThey lose access immediately. Their saved tasks are kept, so adding the same email again later restores everything.`)) return;
-      await F.updateDoc(ref, {active:false, removed:true});
-      adminMsg(`${email} has been removed.`, true);
+    if (e.target.id === 'invForm'){
+      const period = $('#ivPer').value, amount = Math.max(0, +$('#ivAmt').value || 0), due = $('#ivDue').value;
+      if (!/^\d{4}-\d{2}$/.test(period)) throw custom('Pick the month this invoice is for.');
+      if (!amount) throw custom('Enter the amount.');
+      if ((supers.inv || []).some(i => i.period === period)) throw custom(`There is already an invoice for ${monthName(period)}.`);
+      await F.setDoc(F.doc(fs, 'orgs', o.id, 'invoices', period), {period, amount, due, status:'due', createdAt:Date.now()});
+      info(`Invoice for ${monthName(period)} created.`);
     }
-  } catch(err){ adminMsg('That did not work: ' + (AUTH_ERR[err.code] || err.code || err.message)); }
-  finally { b.disabled = false; }
-}
+    document.activeElement.blur(); renderOrgs();
+  } catch(err){ info(errText(err)); }
+});
+$('#orgsBody').addEventListener('click', async e => {
+  const {F, fs} = cloud;
+  if (e.target.closest('#obGen')){ $('#obPass').value = supers.tmp = genPass(); return; }
+  if (e.target.closest('#amGen')){ $('#amPass').value = supers.tmp = genPass(); return; }
+  if (e.target.closest('#obCancel')){ supers.onboard = false; supers.msg = null; document.activeElement.blur(); renderOrgs(); return; }
+  if (e.target.closest('#orgsBack')){ supers.sel = null; supers.dmsg = null; supers.dshare = ''; renderOrgs(); return; }
+  const en = e.target.closest('[data-enter]'); if (en) return enterSupport(en.dataset.enter);
+  const mv = e.target.closest('[data-mv]');
+  if (mv){
+    const box = mv.closest('[data-legacy]'), a = supers.legacy.find(x => x.uid === box.dataset.legacy), orgId = box.querySelector('select').value;
+    mv.disabled = true;
+    try {
+      await F.updateDoc(F.doc(fs, 'accounts', a.uid), {orgId});
+      await F.setDoc(F.doc(fs, 'orgs', orgId, 'pending', a.uid), {email:a.email, name:a.name || '', at:Date.now()});
+      supers.legacy = supers.legacy.filter(x => x.uid !== a.uid);
+      info(`${a.email} moved. The Account Manager will see them under People → "Waiting to join".`); renderOrgs();
+    } catch(err){ info('Could not move: ' + errText(err)); mv.disabled = false; }
+    return;
+  }
+  const row = e.target.closest('[data-org]');
+  if (row){ supers.sel = row.dataset.org; supers.onboard = false; supers.msg = null; supers.share = ''; supers.dmsg = null; supers.dshare = ''; renderOrgs(); return; }
+  const o = (supers.orgs || []).find(x => x.id === supers.sel); if (!o) return;
+  const stb = e.target.closest('[data-st]');
+  if (stb){
+    const to = stb.dataset.st;
+    if (to === 'offboarded' && !confirm(`Offboard ${o.name}?\n\nEveryone in ${o.name} loses access immediately. Their data is kept, so you can reactivate them later.`)) return;
+    if (to === 'suspended' && !confirm(`Suspend ${o.name}? Nobody there can sign in until you reactivate it.`)) return;
+    try { await F.updateDoc(F.doc(fs, 'orgs', o.id), {status:to, statusAt:Date.now()}); info(`${o.name}: ${OST[to][0].toLowerCase()}.`); } catch(err){ info('That did not work: ' + errText(err)); }
+    return;
+  }
+  const cb = e.target.closest('[data-cancel]');
+  if (cb){ try { await F.updateDoc(F.doc(fs, 'orgs', o.id, 'accessRequests', cb.closest('[data-rq]').dataset.rq), {status:'cancelled'}); } catch(err){ info('That did not work: ' + errText(err)); } return; }
+  const iv = e.target.closest('[data-iv]');
+  if (iv){
+    const id = iv.closest('[data-inv]').dataset.inv, ref = F.doc(fs, 'orgs', o.id, 'invoices', id), a = iv.dataset.iv;
+    try {
+      if (a === 'paid') await F.updateDoc(ref, {status:'paid', paidAt:Date.now()});
+      if (a === 'due') await F.updateDoc(ref, {status:'due', paidAt:null});
+      if (a === 'del'){ if (!confirm(`Delete the invoice for ${monthName(id)}?`)) return; await F.deleteDoc(ref); }
+    } catch(err){ info('That did not work: ' + errText(err)); }
+  }
+});
 
 /* ================= attendance: check-in / check-out, team summary, pay ================= */
 const OFFS_PER_MONTH = 4;
@@ -1897,7 +2546,12 @@ const monthBounds = mk => { const [y, m] = mk.split('-').map(Number); return {s:
 const attCfg = a => Object.assign({shiftStart:'09:00', shiftEnd:'18:00', salary:0, otMult:1}, (a && a.att) || {});
 const toMin = s => { const [h, m] = String(s || '0:0').split(':').map(Number); return h * 60 + m; };
 const shiftMs = c => Math.max(1, toMin(c.shiftEnd) - toMin(c.shiftStart)) * 60000;
-const canManageAtt = () => !!(cloud && cloud.uid && (cloud.isAdmin || cloud.role === 'manager'));
+const canManageAtt = () => { const oc = orgCtx(); return !!(oc && (oc.support || oc.role === 'orgadmin' || oc.role === 'manager')); };
+const attRO = () => !!(orgCtx() && orgCtx().support);          // Zenvora support: look, don't touch
+const payOn = () => feat('payroll');
+const attCol = uid => cloud.F.collection(cloud.fs, 'orgs', orgCtx().orgId, 'attendance', uid, 'events');
+const titleOf = a => a && a.title && a.title !== ROLE_LABEL[a.role] ? a.title : '';
+const firstName = n => { const w = String(n || '').trim().split(/\s+/); return /\.$/.test(w[0] || '') && w[1] ? w[0] + ' ' + w[1] : w[0] || ''; };   // "Dr. Ravi" stays "Dr. Ravi"
 const fullName = a => (a && (a.name || (a.email || '').split('@')[0])) || '';
 
 function attReset(){ if (att.unsub){ att.unsub(); att.unsub = null; } clearInterval(att.tick); Object.assign(att, {mode:null, ev:{}, accts:[], detail:null, key:''}); }
@@ -1944,20 +2598,21 @@ function attSummary(events, mk, acc){
 }
 
 async function attLoad(){
-  if (!cloud || !cloud.uid) return;
-  const key = att.mode + '|' + att.month + '|' + (att.detail || '');
+  if (!cloud || !cloud.uid || !orgCtx()) return;
+  const key = orgCtx().orgId + '|' + att.mode + '|' + att.month + '|' + (att.detail || '');
   if (key === att.key) return;
   att.key = key;
   if (att.unsub){ att.unsub(); att.unsub = null; }
   const {F, fs} = cloud, B = monthBounds(att.month);
   const from = F.Timestamp.fromDate(parseDay(shiftDay(B.s, -1))), to = F.Timestamp.fromDate(parseDay(shiftDay(B.e, 2)));
-  const q = uid => F.query(F.collection(fs, 'attendance', uid, 'events'), F.where('at', '>=', from), F.where('at', '<', to));
+  const q = uid => F.query(attCol(uid), F.where('at', '>=', from), F.where('at', '<', to));
   const map = d => { const x = d.data({serverTimestamps:'estimate'}); return {id:d.id, type:x.type, src:x.src, at:tsMs(x.at)}; };
-  const watch = uid => { att.unsub = F.onSnapshot(q(uid), qs => { att.ev[uid] = qs.docs.map(map); if (att.key === key) renderAttendance(); }, e => info('Attendance could not load: ' + (e.code || e.message))); };
+  const watch = uid => { att.unsub = F.onSnapshot(q(uid), qs => { att.ev[uid] = qs.docs.map(map); if (att.key === key) renderAttendance(); }, e => { if (!attRO()) info('Attendance could not load: ' + (e.code || e.message)); }); };
   try {
     if (att.mode === 'me') return watch(cloud.uid);
-    const accs = await F.getDocs(F.collection(fs, 'accounts'));
-    att.accts = accs.docs.map(d => Object.assign({uid:d.id}, d.data())).filter(a => !a.removed && a.role !== 'admin');
+    const accs = await F.getDocs(F.collection(fs, 'orgs', orgCtx().orgId, 'members'));
+    att.accts = accs.docs.map(d => Object.assign({uid:d.id}, d.data())).filter(a => !a.removed)
+      .sort((a, b) => roleRank(a.role) - roleRank(b.role) || fullName(a).localeCompare(fullName(b)));
     if (att.detail) return watch(att.detail);
     await Promise.all(att.accts.map(async a => { const qs = await F.getDocs(q(a.uid)); att.ev[a.uid] = qs.docs.map(map); }));
     if (att.key === key) renderAttendance();
@@ -1965,10 +2620,11 @@ async function attLoad(){
 }
 
 function renderAttendance(){
-  if (!cloud || !cloud.uid) return;
+  if (!cloud || !cloud.uid || !orgCtx()) return;
   const mgr = canManageAtt();
   if (!att.mode || !mgr) att.mode = mgr ? (att.mode || 'team') : 'me';
-  $('#attMode').hidden = !mgr;
+  if (attRO()) att.mode = 'team';
+  $('#attMode').hidden = !mgr || attRO();
   document.querySelectorAll('#attMode button').forEach(b => b.classList.toggle('on', b.dataset.m === att.mode));
   const cur = att.month === todayKey.slice(0, 7);
   $('#attTitle').textContent = parseDay(att.month + '-01').toLocaleDateString([], {month:'long', year:'numeric'});
@@ -1985,14 +2641,14 @@ function greet(){ const h = new Date().getHours(); return h < 12 ? 'Good morning
 function attMine(){
   const evs = att.ev[cloud.uid];
   if (!evs) return '<div class="empty">Loading your attendance…</div>';
-  const S = attSummary(evs, att.month, cloud.account || {}), cur = att.month === todayKey.slice(0, 7);
+  const S = attSummary(evs, att.month, orgCtx().me || {}), cur = att.month === todayKey.slice(0, 7);
   let card = '';
   if (cur){
     const t = S.rows.find(r => r.k === todayKey) || {ss:[]}, ss = t.ss, open = ss.find(s => !s.out);
     const done = ss.filter(s => s.out).reduce((a, s) => a + s.out - s.in, 0);
     card = `<div class="punch${open ? ' isin' : ''}">
       <div>
-        <div class="pg">${greet()}, ${esc(fullName(cloud.account || {}) || (cloud.user && cloud.user.displayName) || '')}</div>
+        <div class="pg">${greet()}, ${esc(firstName(fullName(orgCtx().me || {}) || (cloud.user && cloud.user.displayName) || ''))}</div>
         <div class="pd">${esc(fmtLong(todayKey))} · Shift ${esc(S.c.shiftStart)}–${esc(S.c.shiftEnd)} (${hm(S.sh)})</div>
         <div class="pstat">${open ? `<i class="dot s-done"></i>Checked in since ${esc(timeOnly(open.in))}` : ss.length ? `<i class="dot s-off"></i>Checked out at ${esc(timeOnly(ss[ss.length - 1].out))}` : '<i class="dot s-off"></i>Not checked in yet'}</div>
         <div class="psess">${ss.map(s => `<span>${esc(timeOnly(s.in))} → ${s.out ? esc(timeOnly(s.out)) : 'now'}</span>`).join('')}</div>
@@ -2042,8 +2698,8 @@ function attTable(S, edit){
 }
 
 function attTeam(){
-  if (!att.accts.length) return att.key ? '<div class="empty">No staff yet. Add people in avatar → 👥 Manage users, then they can check in here.</div>' : '<div class="empty">Loading team…</div>';
-  const cur = att.month === todayKey.slice(0, 7);
+  if (!att.accts.length) return att.key ? '<div class="empty">No people yet. The Account Manager adds them in Organization → People, then they can check in here.</div>' : '<div class="empty">Loading team…</div>';
+  const cur = att.month === todayKey.slice(0, 7), pay = payOn();
   let inNow = 0, outNow = 0, notIn = 0, totPay = 0;
   const rows = att.accts.map(a => {
     const S = attSummary(att.ev[a.uid] || [], att.month, a), t = S.rows.find(r => r.k === todayKey);
@@ -2056,51 +2712,51 @@ function attTeam(){
     if (!a.active) today = '<span class="astat out">Disabled</span>';
     totPay += S.pay;
     return `<tr class="clk" data-staff="${esc(a.uid)}">
-      <td><b>${esc(fullName(a))}</b>${a.role === 'manager' ? '<em class="rtag">Manager</em>' : ''}<div class="stat">${esc(attCfg(a).shiftStart)}–${esc(attCfg(a).shiftEnd)}</div></td>
+      <td><b>${esc(fullName(a))}</b>${a.role !== 'employee' && ROLE_LABEL[a.role] ? `<em class="rtag">${ROLE_LABEL[a.role]}</em>` : ''}<div class="stat">${esc(titleOf(a) ? titleOf(a) + ' · ' : '')}${esc(attCfg(a).shiftStart)}–${esc(attCfg(a).shiftEnd)}</div></td>
       <td>${today}</td><td class="num">${S.P}</td><td class="num">${S.offsUsed}/${OFFS_PER_MONTH}</td>
       <td class="num ${S.lop ? 'neg' : ''}">${S.lop || '—'}</td><td class="num">${hm(S.H)}</td>
       <td class="num ${S.OT ? 'ot' : ''}">${S.OT ? hm(S.OT) : '—'}</td><td class="num ${S.otDays ? 'ot' : ''}">${S.otDays || '—'}</td>
-      <td class="num">${+S.c.salary ? inr(S.c.salary) : '<span class="stat">not set</span>'}</td><td class="num"><b>${inr(S.pay)}</b></td></tr>`;
+      ${pay ? `<td class="num">${+S.c.salary ? inr(S.c.salary) : '<span class="stat">not set</span>'}</td><td class="num"><b>${inr(S.pay)}</b></td>` : ''}</tr>`;
   }).join('');
   return `${cur ? `<div class="kpis">
       <div class="kpi"><div class="kl"><i class="dot s-done"></i>Checked in now</div><div class="kv">${inNow}</div><div class="ks">at the clinic</div></div>
       <div class="kpi"><div class="kl"><i class="dot s-off"></i>Checked out</div><div class="kv">${outNow}</div><div class="ks">done for now</div></div>
       <div class="kpi"><div class="kl"><i class="dot s-prog"></i>Not in yet</div><div class="kv">${notIn}</div><div class="ks">today</div></div>
-      <div class="kpi"><div class="kl">Team payable</div><div class="kv">${inr(totPay)}</div><div class="ks">${cur ? 'so far this month' : 'this month'}</div></div></div>` : ''}
-    <div class="stat">Click a person to see their daily and weekly hours, fix entries, or set their shift and salary.</div>
-    <div class="awrap"><table class="atbl"><thead><tr><th>Staff</th><th>Today</th><th class="num">Present</th><th class="num">Offs used</th><th class="num">Loss of pay</th><th class="num">Hours</th><th class="num">OT hours</th><th class="num">OT days</th><th class="num">Salary</th><th class="num">Payable</th></tr></thead>
-    <tbody>${rows}<tr class="tot"><td colspan="9">Total payable</td><td class="num">${inr(totPay)}</td></tr></tbody></table></div>`;
+      ${pay ? `<div class="kpi"><div class="kl">Team payable</div><div class="kv">${inr(totPay)}</div><div class="ks">${cur ? 'so far this month' : 'this month'}</div></div>` : ''}</div>` : ''}
+    <div class="stat">Click a person to see their daily and weekly hours${attRO() ? '' : pay ? ', fix entries, or set their shift and salary' : ', fix entries, or set their shift'}.</div>
+    <div class="awrap"><table class="atbl"><thead><tr><th>Staff</th><th>Today</th><th class="num">Present</th><th class="num">Offs used</th><th class="num">Loss of pay</th><th class="num">Hours</th><th class="num">OT hours</th><th class="num">OT days</th>${pay ? '<th class="num">Salary</th><th class="num">Payable</th>' : ''}</tr></thead>
+    <tbody>${rows}${pay ? `<tr class="tot"><td colspan="9">Total payable</td><td class="num">${inr(totPay)}</td></tr>` : ''}</tbody></table></div>`;
 }
 
 function attDetail(){
   const a = att.accts.find(x => x.uid === att.detail);
   if (!a) return '<div class="empty">Loading…</div>';
   if (!att.ev[a.uid]) return '<button class="abk" id="attBack">← Team</button><div class="empty">Loading…</div>';
-  const S = attSummary(att.ev[a.uid], att.month, a), c = S.c;
+  const S = attSummary(att.ev[a.uid], att.month, a), c = S.c, pay = payOn(), ro = attRO();
   const pr = (l, v) => `<div class="payrow"><span>${l}</span><span>${v}</span></div>`;
   return `<button class="abk" id="attBack">← Team</button>
-    <div class="ahead"><div class="uav">${esc(fullName(a).charAt(0).toUpperCase())}</div><div><b>${esc(fullName(a))}</b>${a.role === 'manager' ? '<em class="rtag">Manager</em>' : ''}<div class="stat">${esc(a.email || '')}</div></div></div>
-    ${attKpis(S, true)}
+    <div class="ahead"><div class="uav">${esc(fullName(a).charAt(0).toUpperCase())}</div><div><b>${esc(fullName(a))}</b>${a.role !== 'employee' && ROLE_LABEL[a.role] ? `<em class="rtag">${ROLE_LABEL[a.role]}</em>` : ''}<div class="stat">${esc(titleOf(a) ? titleOf(a) + ' · ' : '')}${esc(a.email || '')}</div></div></div>
+    ${attKpis(S, pay)}
     <div class="acards">
-      <div class="box"><h3>Shift &amp; pay settings</h3>
+      ${ro ? '' : `<div class="box"><h3>Shift${pay ? ' &amp; pay' : ''} settings</h3>
         <form class="aform" id="attCfgForm">
           <label>Shift start<input type="time" id="cfS" value="${esc(c.shiftStart)}"></label>
           <label>Shift end<input type="time" id="cfE" value="${esc(c.shiftEnd)}"></label>
-          <label>Monthly salary (₹)<input type="number" id="cfSal" min="0" step="100" value="${+c.salary || ''}" placeholder="e.g. 15000"></label>
-          <label>Overtime rate<select id="cfOT">${[1, 1.5, 2].map(m => `<option value="${m}"${+c.otMult === m ? ' selected' : ''}>${m}× hourly</option>`).join('')}</select></label>
+          ${pay ? `<label>Monthly salary (₹)<input type="number" id="cfSal" min="0" step="100" value="${+c.salary || ''}" placeholder="e.g. 15000"></label>
+          <label>Overtime rate<select id="cfOT">${[1, 1.5, 2].map(m => `<option value="${m}"${+c.otMult === m ? ' selected' : ''}>${m}× hourly</option>`).join('')}</select></label>` : ''}
           <button class="primary" type="submit">Save</button>
         </form>
         <p class="stat" style="margin:8px 0 0">${OFFS_PER_MONTH} paid offs per month. Hours beyond the shift each day count as overtime; working on unused offs counts as overtime days.</p>
-      </div>
-      <div class="box"><h3>Pay for ${esc(parseDay(att.month + '-01').toLocaleDateString([], {month:'long'}))}${S.done ? '' : ' (so far)'}</h3>
+      </div>`}
+      ${pay ? `<div class="box"><h3>Pay for ${esc(parseDay(att.month + '-01').toLocaleDateString([], {month:'long'}))}${S.done ? '' : ' (so far)'}</h3>
         ${pr(`Base: ${S.effMonth} days × ${inr(S.perDay)}/day`, inr(S.base))}
         ${pr(`Loss of pay: ${S.lop} day(s) beyond ${OFFS_PER_MONTH} offs`, S.lop ? '− ' + inr(S.lopAmt) : inr(0))}
         ${pr(`Overtime days: ${S.otDays} × ${inr(S.perDay)}`, '+ ' + inr(S.otDayPay))}
         ${pr(`Overtime hours: ${hm(S.OT)} × ${inr(S.perHour)}/h × ${S.mult}`, '+ ' + inr(S.otHrPay))}
         ${pr('Payable', inr(S.pay))}
-      </div>
+      </div>` : ''}
     </div>
-    <div class="box"><h3>Add or correct an entry <span class="sub">e.g. they forgot to check in or out</span></h3>
+    ${ro ? '' : `<div class="box"><h3>Add or correct an entry <span class="sub">e.g. they forgot to check in or out</span></h3>
       <form class="aform" id="attAddForm">
         <label>Date<input type="date" id="adD" value="${att.month === todayKey.slice(0, 7) ? todayKey : S.B.e}" min="${S.B.s}" max="${S.B.e < todayKey ? S.B.e : todayKey}"></label>
         <label>Check-in<input type="time" id="adI" value="${esc(c.shiftStart)}"></label>
@@ -2108,8 +2764,8 @@ function attDetail(){
         <button class="primary" type="submit">Add entry</button>
       </form>
       <p class="stat" style="margin:8px 0 0">Leave Check-out empty to add only a check-in, or fill only Check-out to close a missed check-out.</p>
-    </div>
-    ${attTable(S, true)}`;
+    </div>`}
+    ${attTable(S, !ro)}`;
 }
 
 function attTick(){
@@ -2125,14 +2781,15 @@ function attTick(){
 async function punch(type, btn){
   if (!navigator.onLine) return info("You're offline. Connect to the internet to check in or out.");
   const {F, fs} = cloud; btn.disabled = true;
-  try { await F.addDoc(F.collection(fs, 'attendance', cloud.uid, 'events'), {type, at:F.serverTimestamp(), src:'self'}); info(type === 'in' ? 'Checked in ✔' : 'Checked out ✔'); }
+  try { await F.addDoc(attCol(cloud.uid), {type, at:F.serverTimestamp(), src:'self'}); info(type === 'in' ? 'Checked in ✔' : 'Checked out ✔'); }
   catch(e){ info('Could not save: ' + (e.code || e.message)); btn.disabled = false; }
 }
 function attCsv(){
-  const head = ['Staff', 'Email', 'Shift', 'Days present', 'Offs used', 'Loss of pay days', 'Hours worked', 'Overtime hours', 'Overtime days', 'Monthly salary', 'Payable'];
+  const pay = payOn();
+  const head = ['Staff', 'Email', 'Job title', 'Shift', 'Days present', 'Offs used', 'Loss of pay days', 'Hours worked', 'Overtime hours', 'Overtime days'].concat(pay ? ['Monthly salary', 'Payable'] : []);
   const lines = [head].concat(att.accts.map(a => { const S = attSummary(att.ev[a.uid] || [], att.month, a);
-    return [fullName(a), a.email, `${S.c.shiftStart}-${S.c.shiftEnd}`, S.P, S.offsUsed, S.lop, (S.H / 3600000).toFixed(2), (S.OT / 3600000).toFixed(2), S.otDays, +S.c.salary || 0, Math.round(S.pay)]; }));
-  download(new Blob([lines.map(r => r.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\n')], {type:'text/csv'}), `attendance-${att.month}.csv`);
+    return [fullName(a), a.email, a.title || '', `${S.c.shiftStart}-${S.c.shiftEnd}`, S.P, S.offsUsed, S.lop, (S.H / 3600000).toFixed(2), (S.OT / 3600000).toFixed(2), S.otDays].concat(pay ? [+S.c.salary || 0, Math.round(S.pay)] : []); }));
+  download(new Blob([lines.map(r => r.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\n')], {type:'text/csv'}), `${slugify(orgCtx().org.name) || 'team'}-attendance-${att.month}.csv`);
 }
 function attStepMonth(n){ const d = parseDay(att.month + '-01'); d.setMonth(d.getMonth() + n); att.month = dayKey(d).slice(0, 7); renderAttendance(); }
 $('#attPrev').onclick = () => attStepMonth(-1);
@@ -2147,7 +2804,7 @@ $('#attBody').addEventListener('click', async e => {
   if (del){
     if (!confirm('Delete this attendance entry?')) return;
     const {F, fs} = cloud;
-    try { await Promise.all(del.dataset.del.split(',').map(id => F.deleteDoc(F.doc(fs, 'attendance', att.detail, 'events', id)))); info('Entry deleted.'); }
+    try { await Promise.all(del.dataset.del.split(',').map(id => F.deleteDoc(F.doc(fs, 'orgs', orgCtx().orgId, 'attendance', att.detail, 'events', id)))); info('Entry deleted.'); }
     catch(err){ info('Could not delete: ' + (err.code || err.message)); }
     return;
   }
@@ -2157,10 +2814,13 @@ $('#attBody').addEventListener('click', async e => {
 $('#attBody').addEventListener('submit', async e => {
   e.preventDefault();
   const {F, fs} = cloud, uid = att.detail;
+  if (attRO()) return;
   if (e.target.id === 'attCfgForm'){
-    const cfg = {shiftStart:$('#cfS').value || '09:00', shiftEnd:$('#cfE').value || '18:00', salary:Math.max(0, +$('#cfSal').value || 0), otMult:+$('#cfOT').value || 1};
+    const prev = attCfg(att.accts.find(x => x.uid === uid));
+    const cfg = {shiftStart:$('#cfS').value || '09:00', shiftEnd:$('#cfE').value || '18:00',
+                 salary:$('#cfSal') ? Math.max(0, +$('#cfSal').value || 0) : +prev.salary || 0, otMult:$('#cfOT') ? +$('#cfOT').value || 1 : +prev.otMult || 1};
     if (toMin(cfg.shiftEnd) <= toMin(cfg.shiftStart)) return info('Shift end must be after shift start.');
-    try { await F.updateDoc(F.doc(fs, 'accounts', uid), {att:cfg}); const a = att.accts.find(x => x.uid === uid); if (a) a.att = cfg; document.activeElement.blur(); renderAttendance(); info('Saved shift and pay settings.'); }
+    try { await F.updateDoc(F.doc(fs, 'orgs', orgCtx().orgId, 'members', uid), {att:cfg}); const a = att.accts.find(x => x.uid === uid); if (a) a.att = cfg; document.activeElement.blur(); renderAttendance(); info('Saved shift and pay settings.'); }
     catch(err){ info('Could not save: ' + (err.code || err.message)); }
   }
   if (e.target.id === 'attAddForm'){
@@ -2169,7 +2829,7 @@ $('#attBody').addEventListener('submit', async e => {
     if (d > todayKey) return info("You can't add entries for future days.");
     const at = t => { const x = parseDay(d); const [hh, mm] = t.split(':').map(Number); x.setHours(hh, mm, 0, 0); return x; };
     if (i && o && at(o) <= at(i)) return info('Check-out must be after check-in.');
-    const col = F.collection(fs, 'attendance', uid, 'events'), by = cloud.user.email || '';
+    const col = attCol(uid), by = cloud.user.email || '';
     try {
       if (i) await F.addDoc(col, {type:'in', at:F.Timestamp.fromDate(at(i)), src:'manager', by});
       if (o) await F.addDoc(col, {type:'out', at:F.Timestamp.fromDate(at(o)), src:'manager', by});

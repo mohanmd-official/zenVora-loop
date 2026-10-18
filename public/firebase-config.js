@@ -15,6 +15,6 @@ window.ZL_FIREBASE_CONFIG = {
   appId: "1:927298297371:web:5ea58481332467cdb122be"
 };
 
-// The administrator: can create, disable and remove users.
+// The Zenvora Loop Super Admin: onboards organizations, features and billing.
 // If you change it, change the same email in firestore.rules too.
 window.ZL_ADMIN_EMAIL = "mohanmd.official@gmail.com";
