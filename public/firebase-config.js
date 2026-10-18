@@ -7,10 +7,12 @@
 // sign-in plus the Firestore security rules (firestore.rules), not by hiding this file.
 // While the values still say PASTE, the app runs in "Local mode" (no sign-in, data stays in the browser).
 window.ZL_FIREBASE_CONFIG = {
-  apiKey: "PASTE_API_KEY",
-  authDomain: "PASTE_PROJECT_ID.firebaseapp.com",
-  projectId: "PASTE_PROJECT_ID",
-  appId: "PASTE_APP_ID"
+  apiKey: "AIzaSyARuDNgYnhrQNuZgnCTAorrBYU9zOZYDJI",
+  authDomain: "zenvora-loop.firebaseapp.com",
+  projectId: "zenvora-loop",
+  storageBucket: "zenvora-loop.firebasestorage.app",
+  messagingSenderId: "927298297371",
+  appId: "1:927298297371:web:5ea58481332467cdb122be"
 };
 
 // The administrator: can create, disable and remove users.
