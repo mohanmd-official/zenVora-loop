@@ -1930,7 +1930,12 @@ async function createAuthUser(name, email, pass){
     cloud.secAuth = F.initializeAuth(sec, {persistence: F.inMemoryPersistence});
     if (/^demo-/.test(cfg.projectId || '')) F.connectAuthEmulator(cloud.secAuth, `http://${location.hostname}:9099`, {disableWarnings:true});
   }
-  const c = await F.createUserWithEmailAndPassword(cloud.secAuth, email, pass);
+  let c;
+  try { c = await F.createUserWithEmailAndPassword(cloud.secAuth, email, pass); }
+  catch(err){                      // a previous attempt created the login but stopped before finishing: reuse it if the password matches
+    if (err.code !== 'auth/email-already-in-use') throw err;
+    try { c = await F.signInWithEmailAndPassword(cloud.secAuth, email, pass); } catch(e2){ throw err; }
+  }
   try { if (name) await F.updateProfile(c.user, {displayName:name}); }
   finally { await F.signOut(cloud.secAuth).catch(() => {}); }
   return c.user.uid;
@@ -1939,7 +1944,16 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const inviteText = (orgName, email, pass) => `You're invited to ${orgName} on Zenvora Loop 👋\n\nOpen:  ${location.origin + location.pathname}\nEmail: ${email}\nTemporary password: ${pass}\n\nYou'll be asked to set your own password when you first sign in.`;
 const shareHtml = (id, text) => text ? `<div class="share"><pre id="${id}">${esc(text)}</pre><button type="button" data-copy="${id}">📋 Copy login details</button></div>` : '';
 const msgHtml = m => m ? `<div class="auth-err${m.ok ? ' ok' : ''}" style="margin-top:8px">${esc(m.t)}</div>` : '';
-const errText = err => err && err.code === 'custom' ? err.message : (AUTH_ERR[err && err.code] || (err && (err.code || err.message)) || 'unknown error');
+const errText = err => err && err.code === 'custom' ? err.message
+  : err && err.code === 'permission-denied' ? 'The database refused this (permission-denied). Publish the latest firestore.rules in Firebase console → Firestore Database → Rules, then try again.'
+  : (AUTH_ERR[err && err.code] || (err && (err.code || err.message)) || 'unknown error');
+function formErr(formId, m, btn){                 // show an error under a form without wiping what was typed
+  const f = document.getElementById(formId); if (!f) return;
+  let el = f.parentElement.querySelector(':scope > .auth-err');
+  if (!el){ el = document.createElement('div'); f.parentElement.appendChild(el); }
+  el.outerHTML = msgHtml(m);
+  const b = btn && $(btn); if (b) b.disabled = false;
+}
 const custom = t => Object.assign(new Error(t), {code:'custom'});
 const keepTyping = el => el.contains(document.activeElement) && /INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName);
 const initial = s => esc(String(s || '?').trim().charAt(0).toUpperCase());
@@ -2134,7 +2148,7 @@ async function addPerson(){
       else {
         let uid;
         try { uid = await createAuthUser(name, email, pass); }
-        catch(err){ if (err.code === 'auth/email-already-in-use') throw custom(`${email} already has a Zenvora Loop login (possibly in another organization), so it can't be added here. Use a different email, or ask Zenvora Loop support.`); throw err; }
+        catch(err){ if (err.code === 'auth/email-already-in-use') throw custom(`${email} already has a Zenvora Loop login (from before organizations, or in another organization). Ask Zenvora Loop (${ADMIN_EMAIL}) to move it into ${oc.org.name}: it then appears here under "Waiting to join" and you click Add to team.`); throw err; }
         const now = Date.now();
         await F.setDoc(F.doc(fs, 'accounts', uid), {orgId:oc.orgId, email, createdAt:now});
         await F.setDoc(orgDoc('members', uid), {email, name, title, reportsTo, role, active:true, removed:false, mustChangePassword:true, createdAt:now, createdBy:cloud.user.email || ''});
@@ -2143,7 +2157,7 @@ async function addPerson(){
       }
     }
     orgView.tmp = genPass();
-  } catch(err){ orgView.msg = {t:errText(err)}; }
+  } catch(err){ orgView.msg = {t:errText(err)}; return formErr('pAdd', orgView.msg, '#paSubmit'); }
   document.activeElement.blur(); renderOrg();
   if (orgView.msg && orgView.msg.ok){ ['#paName', '#paEmail', '#paTitle'].forEach(s => { const el = $(s); if (el) el.value = ''; }); }
 }
@@ -2258,7 +2272,7 @@ function supersLoad(){
       if (state.settings.view === 'orgs') renderOrgs();
     }, e => { supers.orgs = []; info('Organizations could not load: ' + (e.code || e.message)); });
     F.getDocs(F.collection(fs, 'accounts')).then(qs => {
-      supers.legacy = qs.docs.map(d => Object.assign({uid:d.id}, d.data())).filter(a => !a.orgId && a.email && a.email !== ADMIN_EMAIL && !a.removed && a.role !== 'admin');
+      supers.legacy = qs.docs.map(d => Object.assign({uid:d.id}, d.data())).filter(a => !a.orgId && a.email && a.email !== ADMIN_EMAIL && a.role !== 'admin');
       if (state.settings.view === 'orgs') renderOrgs();
     }).catch(() => { supers.legacy = []; });
   }
@@ -2411,6 +2425,7 @@ async function onboardOrg(){
     let uid;
     try { uid = await createAuthUser(amName, amEmail, pass); }
     catch(err){ if (err.code === 'auth/email-already-in-use') throw custom(`${amEmail} already has a Zenvora Loop login. Use a different email for this Account Manager.`); throw err; }
+    { const a = await F.getDoc(F.doc(fs, 'accounts', uid)); if (a.exists() && a.data().orgId) throw custom(`${amEmail} already belongs to an organization. Use a different email.`); }
     const now = Date.now(), by = cloud.user.email || '';
     await F.setDoc(F.doc(fs, 'orgs', id), {name, color, status:'active', features, plan, adminUid:uid, adminEmail:amEmail, seats:1, supportUntil:0, supportBy:'', createdAt:now, createdBy:by});
     await F.setDoc(F.doc(fs, 'orgs', id, 'members', uid), {email:amEmail, name:amName, role:'orgadmin', title:'Account Manager', reportsTo:'', active:true, removed:false, mustChangePassword:true, createdAt:now, createdBy:by});
@@ -2418,7 +2433,7 @@ async function onboardOrg(){
     supers.onboard = false; supers.tmp = genPass();
     supers.share = inviteText(name, amEmail, pass);
     supers.msg = {t:`${name} is live. Send ${amName} their login details: they'll set their own password and can then add their team.`, ok:true};
-  } catch(err){ supers.msg = {t:errText(err)}; }
+  } catch(err){ supers.msg = {t:errText(err)}; return formErr('obForm', supers.msg, '#obSubmit'); }
   document.activeElement.blur(); renderOrgs();
 }
 
@@ -2433,13 +2448,14 @@ async function assignAccountManager(o){
     let uid;
     try { uid = await createAuthUser(name, email, pass); }
     catch(err){ if (err.code === 'auth/email-already-in-use') throw custom(`${email} already has a login. If they're already in ${o.name}, ask the current Account Manager to set their role to Account Manager in People.`); throw err; }
+    { const a = await F.getDoc(F.doc(fs, 'accounts', uid)); if (a.exists() && a.data().orgId) throw custom(`${email} already belongs to an organization. If they're in ${o.name}, ask the current Account Manager to make them Account Manager in People.`); }
     const now = Date.now(), by = cloud.user.email || '';
     await F.updateDoc(F.doc(fs, 'orgs', o.id), {adminUid:uid, adminEmail:email});
     await F.setDoc(F.doc(fs, 'orgs', o.id, 'members', uid), {email, name, role:'orgadmin', title:'Account Manager', reportsTo:'', active:true, removed:false, mustChangePassword:true, createdAt:now, createdBy:by});
     await F.setDoc(F.doc(fs, 'accounts', uid), {orgId:o.id, email, createdAt:now});
     supers.tmp = genPass(); supers.dshare = inviteText(o.name, email, pass);
     supers.dmsg = {t:`${name} is now an Account Manager of ${o.name}.`, ok:true};
-  } catch(err){ supers.dmsg = {t:errText(err)}; }
+  } catch(err){ supers.dmsg = {t:errText(err)}; return formErr('amForm', supers.dmsg, '#amForm button[type=submit]'); }
   document.activeElement.blur(); renderOrgs();
 }
 
