@@ -51,7 +51,7 @@ Nobody can sign themselves up: the **Super Admin** (`mohanmd.official@gmail.com`
 | | Can do | Can't do |
 |---|---|---|
 | **Super Admin** (`mohanmd.official@gmail.com`) | Onboard / suspend / offboard organizations · pick each org's features (Agenda Handler, Attendance, Payroll), theme colour, plan and monthly fee · create invoices and mark them paid · assign a new Account Manager · use their own personal planner | See any organization's people or attendance, **unless that org's Account Manager approves a time-limited, read-only support request** · see anyone's planner, ever |
-| **Account Manager** (one or more per org) | Add / disable / remove their own people · job titles, "reports to" and roles (Employee / Manager / Account Manager) · org chart · approve or deny support requests and revoke them · view their billing | Anything in another organization · change their own plan or features |
+| **Account Manager** (one or more per org) | Add / disable / remove their own people · decide each person's Clinic access · job titles, "reports to" and roles (Employee / Manager / Account Manager) · org chart · approve or deny support requests and revoke them · view their billing | Anything in another organization · change their own plan or features |
 | **Manager** (e.g. the Chief Doctor) | See and correct everyone's attendance in their org, set shifts (and salary when Payroll is on) | Add people |
 | **Employee** | Check in / out, see their own attendance, use their private planner (if Agenda is on) | See other people's data |
 
@@ -102,6 +102,39 @@ People created in the earlier single-admin version show up in **Organizations �
 - **Pay** (Payroll) = salary ÷ days in month × days (from the joining date), − loss-of-pay days, + overtime days × day rate, + overtime hours × hourly rate × overtime multiplier.
 - A day with a check-in but no check-out shows **Missed check-out** and counts as present with 0 hours until a manager adds the check-out.
 - Check-in times come from Google's server clock, so staff can't type in or change times. Only managers can add or correct entries.
+
+## Clinic (patient management, when the org has the Clinic feature)
+
+Turn it on per organization: Super Admin → Organizations → the org → tick **Clinic** → Save. The org's Account Manager then sets it up from the **Clinic** tab.
+
+**First-time setup (Account Manager): Clinic → Clinic setup**
+1. **Doctors:** add each doctor as *Clinic doctor* or *Consultant*. For consultants, set their **share %** (what they're paid from the treatments they do).
+2. **Treatment list & prices:** click **Add common dental treatments**, then edit prices. Each treatment is a reporting "vertical".
+3. **Clinic details:** address, phone, GSTIN and patient ID prefix, printed on receipts and statements. Opening hours set the appointment grid.
+
+**Who can do what: Organization → People → Edit → Clinic access.** Pick a preset or tick individual boxes:
+
+| Preset | Gets |
+|---|---|
+| Receptionist | Patients, Appointments (no money, no reports) |
+| Front desk + billing | + Billing (payments and receipts) |
+| Doctor | Patients, Appointments, Treatments & photos |
+| Accountant | Billing, Accounts, Collection & treatment reports, Doctor & consultant reports |
+| Full clinic access | everything, including Clinic setup |
+
+Account Managers always have full access. Changes apply within seconds, and the database rules enforce them too.
+
+**Daily use**
+- **Patients:** search by name, phone or patient ID; **+ New patient** registers name, contact, address, DOB (age is worked out automatically), blood group, allergies (shown in red), medical history, primary doctor and referral. Each patient gets an ID like `PT-000001`.
+- **Patient record tabs:** Profile · Treatments (each one records the doctor who did it, so a consultant appears on the case next to the primary doctor) · Billing (take payments, print receipts, see balance) · Appointments · Pre / post-op photos (grouped per treatment, compressed in the browser) · History (one timeline of everything).
+- **Appointments:** Day grid and Week view, filter by doctor, **+ New appointment** (or click an empty slot). The right-hand queue moves patients through Scheduled → Waiting (check in) → In chair → Completed, or Missed / Cancelled. A new patient can be registered straight from the booking form.
+- **Accounts:** cash in hand, collections by mode, petty cash added, expenses (by category) and bank deposits for any date range.
+- **Reports:** Collection, Treatment-wise earnings, Doctors & consultants (click a doctor for their statement / consultant bill, and record the payout in Accounts), Outstanding balances, Appointments, New patients. Every report works for today, yesterday, this week, this month, last month or custom dates, with CSV and Print.
+
+**Good to know**
+- Planned treatments aren't billed. In-progress and completed ones count towards the patient's balance; completed ones count as earnings in reports.
+- Photos are stored in Firestore (about 100–400 KB each after compression), so no paid storage plan is needed. The free plan's 1 GiB holds a few thousand photos; move to Firebase Storage (Blaze plan) later if you need more.
+- Free plan reads are 50,000/day. A normal clinic day uses a small fraction of that; very large reports (e.g. Outstanding balances across thousands of patients) use more.
 
 ## Phase 3: move to zenvoraloop.abbisdentalcare.com (Wix DNS)
 
