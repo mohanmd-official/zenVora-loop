@@ -108,7 +108,7 @@ People created in the earlier single-admin version show up in **Organizations �
 Turn it on per organization: Super Admin → Organizations → the org → tick **Clinic** → Save. The org's Account Manager then sets it up from the **Clinic** tab.
 
 **First-time setup (Account Manager): Clinic → Clinic setup**
-1. **Doctors:** add each doctor as *Clinic doctor* or *Consultant*. For consultants, set their **share %** (what they're paid from the treatments they do).
+1. **Doctors:** add each doctor as *Clinic doctor* or *Consultant*. When a consultant does a treatment, the treatment form asks for the **consultant fee**, which goes into Accounts automatically.
 2. **Treatment list & prices:** click **Add common dental treatments**, then edit prices. Each treatment is a reporting "vertical".
 3. **Clinic details:** address, phone, GSTIN and patient ID prefix, printed on receipts and statements. Opening hours set the appointment grid.
 
@@ -128,8 +128,13 @@ Account Managers always have full access. Changes apply within seconds, and the 
 - **Patients:** search by name, phone or patient ID; **+ New patient** registers name, contact, address, DOB (age is worked out automatically), blood group, allergies (shown in red), medical history, primary doctor and referral. Each patient gets an ID like `PT-000001`.
 - **Patient record tabs:** Profile · Treatments (each one records the doctor who did it, so a consultant appears on the case next to the primary doctor) · Billing (take payments, print receipts, see balance) · Appointments · Pre / post-op photos (grouped per treatment, compressed in the browser) · History (one timeline of everything).
 - **Appointments:** Day grid and Week view, filter by doctor, **+ New appointment** (or click an empty slot). The right-hand queue moves patients through Scheduled → Waiting (check in) → In chair → Completed, or Missed / Cancelled. A new patient can be registered straight from the booking form.
-- **Accounts:** cash in hand, collections by mode, petty cash added, expenses (by category) and bank deposits for any date range.
-- **Reports:** Collection, Treatment-wise earnings, Doctors & consultants (click a doctor for their statement / consultant bill, and record the payout in Accounts), Outstanding balances, Appointments, New patients. Every report works for today, yesterday, this week, this month, last month or custom dates, with CSV and Print.
+- **Accounts** (pick the month at the top right):
+  - **Overview:** income (collections), clinic expenses, petty cash spent and net for the month; a 6-month income vs expenses chart; where the money went; and the monthly commitments checklist.
+  - **Clinic expenses:** every expense with its category and vendor. Consultant fees from treatments are added automatically.
+  - **Petty cash:** kept separately: money added to the cash box, small spends, and the running balance.
+  - **Vendors & consultants:** add vendors (Materials, Lab, Other) and record their bills (+ Bill). Each consultant shows fees this month, fees to date, paid to date and balance to pay, with **+ Fee** and **Pay**.
+  - **Categories & commitments:** your own expense categories, and monthly commitments (Petty cash, Rent, plus any you add, e.g. Electricity) with expected amounts. Any commitment not entered by the **15th** shows as overdue and adds an "Accounts need to be sorted" task to the Planning Board of everyone with Accounts access; it ticks itself off once entered.
+- **Reports:** Collection, Treatment-wise earnings, Doctors & consultants (click a doctor for their statement, with consultant fees), Outstanding balances, Appointments, New patients. Each report works for **Today** or a **custom From / To** range, with CSV and Print.
 
 **Good to know**
 - Planned treatments aren't billed. In-progress and completed ones count towards the patient's balance; completed ones count as earnings in reports.

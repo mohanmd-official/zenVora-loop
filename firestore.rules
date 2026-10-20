@@ -111,7 +111,7 @@ service cloud.firestore {
         allow write: if perm(o, 'appointments') || perm(o, 'treatments');
       }
       match /treatments/{t} {
-        allow read: if perm(o, 'treatments') || perm(o, 'billing') || perm(o, 'reports') || perm(o, 'doctorReports') || supportOpen(o);
+        allow read: if perm(o, 'treatments') || perm(o, 'billing') || perm(o, 'reports') || perm(o, 'doctorReports') || perm(o, 'accounts') || supportOpen(o);
         allow write: if perm(o, 'treatments');
       }
       match /payments/{p} {
@@ -119,6 +119,10 @@ service cloud.firestore {
         allow write: if perm(o, 'billing');
       }
       match /ledger/{l} {
+        allow read: if perm(o, 'accounts') || perm(o, 'reports') || supportOpen(o);
+        allow write: if perm(o, 'accounts');
+      }
+      match /vendors/{v} {
         allow read: if perm(o, 'accounts') || perm(o, 'reports') || supportOpen(o);
         allow write: if perm(o, 'accounts');
       }
@@ -132,7 +136,8 @@ service cloud.firestore {
       }
       match /clinicMeta/{d} {
         allow read: if clinicMember(o) || supportOpen(o);
-        allow write: if (d == 'counter' && (perm(o, 'patients') || perm(o, 'billing'))) || perm(o, 'setup');
+        allow write: if (d == 'counter' && (perm(o, 'patients') || perm(o, 'billing')))
+          || (d == 'accounts' && perm(o, 'accounts')) || (d == 'settings' && perm(o, 'setup'));
       }
 
       // Subscription billing: Super Admin writes, Account Manager can view
