@@ -573,7 +573,8 @@ details.tv th:first-child,details.tv td:first-child{text-align:left}
 .pdfic{display:grid;place-items:center;background:var(--panel);font-weight:800;color:var(--high);font-size:20px}
 .docm{padding:6px 8px;display:flex;flex-direction:column;font-size:12px}
 .docm span{color:var(--muted)}
-.tally{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px}
+.tally{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:760px){.tally{grid-template-columns:1fr}}
 .tin{width:120px;text-align:right}
 .denoms{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px 18px;margin-bottom:8px}
 .denoms label{display:grid;grid-template-columns:56px 72px 1fr;gap:8px;align-items:center;font-size:13px}
@@ -583,6 +584,13 @@ details.tv th:first-child,details.tv td:first-child{text-align:left}
 .tdiff.ok{background:color-mix(in srgb,var(--done) 12%,var(--paper));color:var(--done)}
 .tdiff.bad{background:color-mix(in srgb,var(--high) 12%,var(--paper));color:var(--high)}
 .ack{display:flex;gap:6px;align-items:center;margin-top:8px;font-size:13px}
+.tdig{grid-column:1/-1}.tdig h3 .stat{font-weight:400;margin-left:6px}
+.dmode{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:10px}
+.dmh{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}.dmh .sp{flex:1}
+.dps{display:grid;gap:2px;margin:8px 0}
+.dp{display:grid;grid-template-columns:20px minmax(120px,1fr) 1.4fr auto;gap:8px;align-items:center;padding:6px 8px;border-radius:8px;font-size:13px;cursor:pointer}
+.dp:hover{background:var(--paper2,rgba(0,0,0,.03))}.dp input{margin:0}.dp:has(input:checked){background:color-mix(in srgb,var(--done) 10%,transparent)}
+.dp b{font-variant-numeric:tabular-nums}.tdiff:empty{display:none}
 
 /* ---------- toasts ---------- */
 .toasts{position:fixed;top:12px;right:12px;display:flex;flex-direction:column;gap:8px;z-index:40;width:min(340px,calc(100% - 24px))}
@@ -3673,7 +3681,8 @@ async function auditPack(fy){
     zip.file('consultant-fees.csv', csvOf([['Date', 'Consultant', 'Patient', 'Treatment', 'Fee']].concat(tr.filter(t => +t.consultantFee > 0).sort(by).map(t => [t.date, dName(t.doctorId), t.patientName, t.typeName, t.consultantFee]))));
     zip.file('consultant-payments.csv', csvOf([['Date', 'Consultant', 'Amount', 'Mode', 'Note']].concat(led.filter(x => x.kind === 'cpayout').sort(by).map(x => [x.date, dName(x.doctorId), x.amount, x.mode, x.note]))));
     zip.file('petty-cash.csv', csvOf([['Date', 'Type', 'Amount', 'Note', 'By']].concat(led.filter(x => x.kind === 'petty' || x.kind === 'pettyspend').sort(by).map(x => [x.date, x.kind === 'petty' ? 'Top-up' : 'Spend', x.amount, x.note, x.by]))));
-    zip.file('daily-tallies.csv', csvOf([['Date', 'Expected', 'Counted', 'Difference', 'Note', 'By']].concat(tal.sort(by).map(t => [t.date, t.expected, t.counted, t.diff, t.note, t.by]))));
+    zip.file('daily-tallies.csv', csvOf([['Date', 'Cash expected', 'Cash counted', 'Cash difference', 'UPI recorded', 'UPI per app', 'Card+bank recorded', 'Card+bank per app', 'Online difference', 'Note', 'By']].concat(tal.sort(by).map(t => { const g = t.digital || {}, v = (k, f) => g[k] ? +g[k][f] || 0 : 0;
+      return [t.date, t.expected, t.counted, t.diff, v('upi', 'system'), v('upi', 'app'), v('card', 'system') + v('bank', 'system'), v('card', 'app') + v('bank', 'app'), t.digitalDiff || 0, t.note, t.by]; }))));
     const months = [...Array(12)].map((_, i) => mShift(`${fy}-04`, i));
     zip.file('summary-by-month.csv', csvOf([['Month', 'Patient payments', 'Other income', 'Clinic expenses', 'Consultant fees', 'Petty cash spent', 'Net']].concat(months.map(m => {
       const inM = x => (x.date || '').slice(0, 7) === m, p = paidSum(pay.filter(inM)), oi = paidSum(led.filter(x => x.kind === 'income' && inM(x))), e = paidSum(led.filter(x => x.kind === 'expense' && inM(x)));
@@ -3690,19 +3699,21 @@ async function auditPack(fy){
   } catch(e){ info('Could not build the audit pack: ' + errText(e)); }
   btn.disabled = false; btn.textContent = '⬇ Download audit pack';
 }
-/* daily tally: count the main cash drawer */
+/* daily tally: count the main cash drawer, and check GPay / UPI, card and bank receipts by hand */
+const DMODES = [['upi', 'GPay / UPI', 'GPay, PhonePe, Paytm or the clinic\'s UPI app'], ['card', 'Card', 'card machine settlement slip'], ['bank', 'Bank transfer', 'bank statement / app']];
 function tallyBase(){
   const a = cl.acc, d = a.d, day = a.tday || todayKey, tallies = (d.tallies || []).slice().sort((x, y) => String(y.date).localeCompare(String(x.date)));
   const done = tallies.find(t => t.date === day), prev = tallies.find(t => t.date < day);
   const pays = (d.tPay || []).filter(x => x.mode === 'cash');
-  return {day, tallies, done, prev, pays, cashIn:paidSum(pays), cashExp:paidSum((d.tExp || []).filter(x => x.mode === 'cash' && x.paid !== false))};
+  const dig = DMODES.map(([k, l, hint]) => { const ps = (d.tPay || []).filter(x => x.mode === k); return {k, l, hint, ps, sys:paidSum(ps)}; }).filter(m => m.k === 'upi' || m.ps.length);
+  return {day, tallies, done, prev, pays, dig, cashIn:paidSum(pays), cashExp:paidSum((d.tExp || []).filter(x => x.mode === 'cash' && x.paid !== false))};
 }
 function accTally(){
   const B = tallyBase(), {day, done, prev, pays} = B, w = canW('tally') || canW('accounts');
   const opening = done ? +done.opening : prev ? +prev.counted : 0, counts = (done && done.counts) || {};
   const inp = (id, v, ph) => w ? `<input type="number" class="tin" id="${id}" value="${v || ''}" placeholder="${ph || 0}">` : inr(v);
   return `<div class="vbar" style="padding:0 0 10px"><div class="daynav"><button data-td="-1">‹</button><button data-td="0"${day === todayKey ? ' disabled' : ''}>Today</button><button data-td="1"${day >= todayKey ? ' disabled' : ''}>›</button></div>
-      <strong>${esc(fmtLong(day))}</strong>${done ? `<span class="upill ${done.diff ? 'gone' : 'on'}">${done.diff ? (done.diff > 0 ? 'Excess ' : 'Short ') + inr(Math.abs(done.diff)) : 'Tallied ✓'} · ${esc((done.by || '').split('@')[0])}</span>` : '<span class="upill pend">Not tallied yet</span>'}</div>
+      <strong>${esc(fmtLong(day))}</strong>${done ? `<span class="upill ${done.diff || done.digitalDiff ? 'gone' : 'on'}">${done.diff || done.digitalDiff ? [done.diff ? 'Cash ' + (done.diff > 0 ? 'excess ' : 'short ') + inr(Math.abs(done.diff)) : '', done.digitalDiff ? 'Online ' + (done.digitalDiff > 0 ? 'excess ' : 'short ') + inr(Math.abs(done.digitalDiff)) : ''].filter(Boolean).join(' · ') : 'Tallied ✓'} · ${esc((done.by || '').split('@')[0])}</span>` : '<span class="upill pend">Not tallied yet</span>'}</div>
     <div class="tally">
       <div class="box"><h3>What the drawer should have</h3>
         <div class="payrow"><span>Opening cash ${prev ? `<span class="stat">(counted on ${esc(fmtDM(prev.date))})</span>` : '<span class="stat">(first tally: enter what was in the drawer)</span>'}</span><span>${inp('tlOpen', opening)}</span></div>
@@ -3716,12 +3727,22 @@ function accTally(){
         <div class="denoms">${DENOMS.map(n => `<label><span>₹${n} ×</span><input type="number" min="0" id="den${n}" data-den="${n}" value="${+counts[n] || ''}" placeholder="0"${w ? '' : ' disabled'}><b id="denT${n}">₹0</b></label>`).join('')}</div>
         <div class="payrow"><span>Counted</span><span id="tlCounted">—</span></div>
         <div class="tdiff" id="tlDiff"></div>
-        ${w ? `<label class="stat" style="display:block;margin-top:8px">Note (required if it doesn't match)<input id="tlNote" style="width:100%" value="${esc(done ? done.note || '' : '')}"></label>
-        <label class="ack"><input type="checkbox" id="tlAck"> I counted this cash myself and confirm the figures</label>
-        <button class="primary" id="tlSave" style="margin-top:8px">${done ? 'Update tally' : 'Save tally'}</button>` : ''}</div>
+        ${w ? `<label class="ack"><input type="checkbox" id="tlAck"> I counted this cash myself and confirm the figures</label>` : ''}</div>
+      <div class="box tdig"><h3>Check GPay / UPI, card &amp; bank <span class="stat">open each app, find every payment, tick it, then enter what the app shows for the day</span></h3>
+        ${B.dig.map(m => { const dm = (done && done.digital && done.digital[m.k]) || {}, seen = dm.seen || [];
+          return `<div class="dmode" data-dmode="${m.k}"><div class="dmh"><b>${esc(m.l)}</b><span class="stat">${esc(m.hint)}</span><span class="sp"></span><span class="stat">System</span><b>${inr(m.sys)}</b></div>
+          ${m.ps.length ? `<div class="dps">${m.ps.map(x => `<label class="dp"><input type="checkbox" data-dseen="${m.k}" value="${esc(x.id)}"${seen.includes(x.id) ? ' checked' : ''}${w ? '' : ' disabled'}><span>${esc(x.patientName || '')}</span><span class="stat">${esc(x.receiptNo || '')}${x.note ? ' · ' + esc(x.note) : ''}</span><b>${inr(x.amount)}</b></label>`).join('')}</div>` : '<p class="stat" style="margin:4px 0">No payments recorded in this mode today. If the app shows money received, enter it below.</p>'}
+          <div class="payrow"><span>Received as per the app</span><span>${w ? `<input type="number" class="tin" id="dg_${m.k}" data-dapp="${m.k}" value="${dm.app != null ? dm.app : ''}" placeholder="${m.sys}">` : inr(dm.app)}</span></div>
+          <div class="tdiff" id="dgDiff_${m.k}"></div></div>`; }).join('')}
+        ${w ? `<label class="ack"><input type="checkbox" id="tlAckD"> I checked every GPay / UPI, card and bank payment in the app myself and confirm the figures</label>
+        <label class="stat" style="display:block;margin-top:10px">Note (required if anything doesn't match)<input id="tlNote" style="width:100%" value="${esc(done ? done.note || '' : '')}"></label>
+        <button class="primary" id="tlSave" style="margin-top:10px">${done ? 'Update tally' : 'Save tally'}</button>` : ''}
+      </div>
     </div>
     <h3 style="font-size:13px;margin:16px 0 6px">Recent tallies</h3>
-    ${tbl(['Date', '₹Expected', '₹Counted', 'Result', 'By'], B.tallies.slice(0, 14).map(x => ({attr:` class="clk" data-tday="${esc(x.date)}"`, c:[esc(fmtShort(x.date)), inr(x.expected), inr(x.counted), x.diff ? `<b class="neg">${x.diff > 0 ? 'Excess' : 'Short'} ${inr(Math.abs(x.diff))}</b>` : '<span class="upill on">Matched</span>', esc((x.by || '').split('@')[0])]})))}`;
+    ${tbl(['Date', '₹Cash expected', '₹Cash counted', '₹GPay / UPI', '₹Card + bank', 'Result', 'By'], B.tallies.slice(0, 14).map(x => { const dg = x.digital || {}, ap = k => dg[k] ? +dg[k].app || 0 : 0;
+      return {attr:` class="clk" data-tday="${esc(x.date)}"`, c:[esc(fmtShort(x.date)), inr(x.expected), inr(x.counted), dg.upi ? inr(ap('upi')) : '—', dg.card || dg.bank ? inr(ap('card') + ap('bank')) : '—',
+        (x.diff ? `<b class="neg">Cash ${x.diff > 0 ? 'excess' : 'short'} ${inr(Math.abs(x.diff))}</b> ` : '') + (x.digitalDiff ? `<b class="neg">Online ${x.digitalDiff > 0 ? 'excess' : 'short'} ${inr(Math.abs(x.digitalDiff))}</b>` : '') || '<span class="upill on">Matched</span>', esc((x.by || '').split('@')[0])]}; }))}`;
 }
 function tallyCalc(){
   if (!$('#tlExpected')) return null;
@@ -3733,17 +3754,29 @@ function tallyCalc(){
   DENOMS.forEach(v => { const b = $('#denT' + v); if (b) b.textContent = inr(v * counts[v]); });
   $('#tlExpected').textContent = inr(expected); $('#tlCounted').textContent = inr(counted);
   const dEl = $('#tlDiff'); dEl.className = 'tdiff ' + (diff === 0 ? 'ok' : 'bad'); dEl.textContent = diff === 0 ? '✓ Matches the system' : diff > 0 ? `Excess of ${inr(diff)}` : `Short by ${inr(-diff)}`;
-  return {B, opening, change, out, counts, expected, counted, diff};
+  const digital = {}; let digitalDiff = 0, unseen = 0, blank = 0;
+  B.dig.forEach(m => {
+    const e = $('#dg_' + m.k), raw = e ? e.value.trim() : '', app = raw === '' ? null : +raw || 0, seen = [...document.querySelectorAll(`[data-dseen="${m.k}"]:checked`)].map(c => c.value);
+    unseen += m.ps.length - seen.length; if (app == null) blank++;
+    const dd = app == null ? 0 : app - m.sys; digitalDiff += dd;
+    digital[m.k] = {system:m.sys, app:app == null ? 0 : app, diff:dd, seen, count:m.ps.length};
+    const de = $('#dgDiff_' + m.k); if (de){ de.className = 'tdiff ' + (app == null ? '' : dd === 0 && seen.length === m.ps.length ? 'ok' : 'bad');
+      de.textContent = app == null ? `Enter the ${m.l} total from the app` : dd ? (dd > 0 ? `App shows ${inr(dd)} more than recorded` : `App shows ${inr(-dd)} less than recorded`) : seen.length < m.ps.length ? `Amount matches · tick ${m.ps.length - seen.length} more payment${m.ps.length - seen.length > 1 ? 's' : ''} after finding ${m.ps.length - seen.length > 1 ? 'them' : 'it'} in the app` : '✓ Matches the app'; }
+  });
+  return {B, opening, change, out, counts, expected, counted, diff, digital, digitalDiff, unseen, blank};
 }
 async function saveTally(){
   const T = tallyCalc(); if (!T) return;
   const note = ($('#tlNote') || {}).value || '';
   if (!$('#tlAck').checked) return info('Tick "I counted this cash myself" to confirm.');
-  if (T.diff && !note.trim()) return info('Add a note explaining the difference.');
+  if (T.blank) return info('Enter the amount each app (GPay / UPI, card, bank) shows for the day. Enter 0 if nothing came in.');
+  if (T.unseen && !note.trim()) return info(`Tick each GPay / UPI, card or bank payment once you have found it in the app (${T.unseen} not ticked), or add a note.`);
+  if (!$('#tlAckD').checked) return info('Tick "I checked every GPay / UPI, card and bank payment" to confirm.');
+  if ((T.diff || T.digitalDiff) && !note.trim()) return info('Add a note explaining the difference.');
   try {
-    await cloud.F.setDoc(cDoc('tallies', T.B.day), {date:T.B.day, opening:T.opening, cashIn:T.B.cashIn, change:T.change, cashExp:T.B.cashExp, out:T.out, expected:T.expected, counts:T.counts, counted:T.counted, diff:T.diff, note:note.trim(), by:cloud.user.email || '', at:Date.now()});
+    await cloud.F.setDoc(cDoc('tallies', T.B.day), {date:T.B.day, opening:T.opening, cashIn:T.B.cashIn, change:T.change, cashExp:T.B.cashExp, out:T.out, expected:T.expected, counts:T.counts, counted:T.counted, diff:T.diff, digital:T.digital, digitalDiff:T.digitalDiff, unseen:T.unseen, note:note.trim(), by:cloud.user.email || '', at:Date.now()});
   } catch(e){ return info('Could not save: ' + errText(e)); }
-  cl.acc.key = ''; cl.clear = true; info(T.diff ? `Tally saved with a ${T.diff > 0 ? 'excess' : 'shortfall'} of ${inr(Math.abs(T.diff))}.` : 'Tally saved: cash matches ✓'); renderClinic(); clinicSync(true);
+  cl.acc.key = ''; cl.clear = true; info(T.diff || T.digitalDiff ? `Tally saved with a difference: cash ${inr(T.diff)}, online ${inr(T.digitalDiff)}.` : 'Tally saved: cash and online payments match ✓'); renderClinic(); clinicSync(true);
 }
 const saveAMeta = m => cloud.F.setDoc(cDoc('clinicMeta', 'accounts'), m);
 async function readFileData(file){
@@ -3933,7 +3966,7 @@ function clSetup(){
 /* ---------- events ---------- */
 $('#clSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ cl.sec = b.dataset.s; if (cl.sec === 'patients' && cl.pid){ cl.pUnsub.forEach(u => { try { u(); } catch(_){} }); cl.pUnsub = []; cl.pid = null; } cl.newP = false; renderClinic(); } });
 $('#clBody').addEventListener('input', e => {
-  if (e.target.matches('#tlOpen,#tlChange,#tlOut,[data-den]')) tallyCalc();
+  if (e.target.matches('#tlOpen,#tlChange,#tlOut,[data-den],[data-dapp],[data-dseen]')) tallyCalc();
   if (e.target.id === 'clQ'){ cl.q = e.target.value; clearTimeout(clQTimer); clQTimer = setTimeout(clDoSearch, 250); }
   if (e.target.id === 'pfDob' && $('#pfAge')){ const a = $('#pfAge'); a.disabled = !!e.target.value; a.value = ''; a.placeholder = e.target.value ? ageOf({dob:e.target.value}) : 'if DOB unknown'; }
 });
@@ -4263,8 +4296,9 @@ async function clinicSyncNow(){
     if (oc.role === 'orgadmin' || chief){
       const days = [1, 2, 3].map(n => shiftDay(todayKey, -n));
       const [pays, tals] = await Promise.all([q('payments', W('date', '>=', days[2]), W('date', '<=', days[0])), q('tallies', W('date', '>=', days[2]), W('date', '<=', days[0]))]);
-      days.forEach(d => { if (pays.some(p => p.date === d && p.mode === 'cash') && !tals.some(t => t.date === d))
-        push('tally-' + d, 'Daily tally', `Daily cash tally not done for ${fmtShort(d)}`, {priority:'high', link:{sec:'accounts', tab:'tally', day:d}}); });
+      days.forEach(d => { if (pays.some(p => p.date === d) && !tals.some(t => t.date === d))
+        push('tally-' + d, 'Daily tally', `Daily tally (cash + GPay / UPI) not done for ${fmtShort(d)}`, {priority:'high', link:{sec:'accounts', tab:'tally', day:d}}); });
+      tals.filter(t => t.digitalDiff).forEach(t => push('tddiff-' + t.date, 'Daily tally', `GPay / UPI, card or bank ${t.digitalDiff > 0 ? 'excess' : 'shortfall'} of ${inr(Math.abs(t.digitalDiff))} on ${fmtShort(t.date)}: review and acknowledge`, {link:{sec:'accounts', tab:'tally', day:t.date}}));
       tals.filter(t => t.diff).forEach(t => push('tdiff-' + t.date, 'Daily tally', `Cash ${t.diff > 0 ? 'excess' : 'shortfall'} of ${inr(Math.abs(t.diff))} on ${fmtShort(t.date)}: review and acknowledge`, {link:{sec:'accounts', tab:'tally', day:t.date}}));
     }
     cl.reminders = R;
