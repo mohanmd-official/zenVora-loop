@@ -81,6 +81,8 @@ People created in the earlier single-admin version show up in **Organizations â†
 
 ### Everyone
 
+- **Menu order:** drag the tabs at the top (Planning Board, All Tasks, Insights, Attendance, Organization) into the order you like; it is remembered.
+- **Planning Board:** Daily (kanban), Weekly and Monthly (calendar) switch at the top of the board.
 - Avatar â†’ **Change password**, or **Forgot password?** on the sign-in page. Planner backup / restore is in the avatar menu too.
 - The Super Admin email is set in **both** `public/firebase-config.js` and `firestore.rules`. If you change it, change both and publish the rules again.
 

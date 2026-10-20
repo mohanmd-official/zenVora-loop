@@ -56,6 +56,8 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent-ink);box-shado
 .tabs button{border:0;background:none;padding:4px 11px;border-radius:7px;color:var(--muted);font-weight:550;display:inline-flex;align-items:center;gap:6px}
 .tabs svg{width:14px;height:14px;fill:currentColor;stroke:currentColor;stroke-width:0}
 .tabs svg [fill=none]{fill:none}
+.tabs button.dragging{opacity:.45}
+.tabs button[draggable=true]{-webkit-user-drag:element}
 .tabs button.on{background:var(--paper);color:var(--accent-ink);box-shadow:var(--shadow),inset 0 -2px 0 var(--mint)}
 #overdueStat{color:var(--high);font-weight:650;font-size:12px;border:none;background:none;padding:2px 4px}
 .add{display:flex;gap:6px;padding:10px 14px 4px}
@@ -425,8 +427,7 @@ details.tv th:first-child,details.tv td:first-child{text-align:left}
     <div><h1 id="appName" title="Click to rename">Zenvora <span class="w2">Loop</span></h1><div class="tag" id="brandTag">Your personal day planner</div></div>
   </div>
   <nav class="tabs" id="tabs">
-    <button data-view="board" title="Kanban board (1)"><svg viewBox="0 0 16 16"><rect x="1.5" y="2" width="3.5" height="12" rx="1"/><rect x="6.25" y="2" width="3.5" height="8" rx="1"/><rect x="11" y="2" width="3.5" height="10" rx="1"/></svg><span class="lbl">Board</span></button>
-    <button data-view="calendar" title="Calendar (2)"><svg viewBox="0 0 16 16"><rect x="1.5" y="3" width="13" height="11.5" rx="2" fill="none" stroke-width="1.6"/><path d="M1.5 6.5h13M5 1.5v3M11 1.5v3" fill="none" stroke-width="1.6"/></svg><span class="lbl">Calendar</span></button>
+    <button data-view="board" title="Planning board: day, week and month (1)"><svg viewBox="0 0 16 16"><rect x="1.5" y="2" width="3.5" height="12" rx="1"/><rect x="6.25" y="2" width="3.5" height="8" rx="1"/><rect x="11" y="2" width="3.5" height="10" rx="1"/></svg><span class="lbl">Planning Board</span></button>
     <button data-view="all" title="All tasks (3)"><svg viewBox="0 0 16 16"><path d="M5.5 4h9M5.5 8h9M5.5 12h9" fill="none" stroke-width="1.6"/><circle cx="2.4" cy="4" r="1.1"/><circle cx="2.4" cy="8" r="1.1"/><circle cx="2.4" cy="12" r="1.1"/></svg><span class="lbl">All Tasks</span></button>
     <button data-view="insights" title="Progress &amp; insights (4)"><svg viewBox="0 0 16 16"><path d="M1.5 14.5h13" fill="none" stroke-width="1.6"/><rect x="2.5" y="8" width="2.6" height="5" rx=".8"/><rect x="6.7" y="5" width="2.6" height="8" rx=".8"/><rect x="10.9" y="2" width="2.6" height="11" rx=".8"/></svg><span class="lbl">Insights</span></button>
     <button data-view="attendance" id="attTab" title="Attendance (5)" hidden><svg viewBox="0 0 16 16"><circle cx="8" cy="8.5" r="6" fill="none" stroke-width="1.6"/><path d="M8 5v3.7l2.4 1.5M6 1.2h4" fill="none" stroke-width="1.6" stroke-linecap="round"/></svg><span class="lbl">Attendance</span></button>
@@ -475,6 +476,7 @@ details.tv th:first-child,details.tv td:first-child{text-align:left}
       <button id="todayBtn">Today</button>
     </div>
     <strong id="boardTitle"></strong>
+    <div class="seg planSeg" title="Planning board view"><button data-m="day">Daily</button><button data-m="week">Weekly</button><button data-m="month">Monthly</button></div>
     <span class="sp"></span>
     <span class="stat" id="boardStat"></span>
   </div>
@@ -489,10 +491,10 @@ details.tv th:first-child,details.tv td:first-child{text-align:left}
       <button id="calPrev">‹</button><button id="calToday">Today</button><button id="calNext">›</button>
     </div>
     <strong id="calTitle"></strong>
+    <div class="seg planSeg" title="Planning board view"><button data-m="day">Daily</button><button data-m="week">Weekly</button><button data-m="month">Monthly</button></div>
     <span class="sp"></span>
-    <div class="seg" id="calMode"><button data-m="month">Month</button><button data-m="week">Week</button></div>
   </div>
-  <div class="hint">Click + (or an empty spot) on a day to add a task to it · drag a task onto another day to reschedule · click a date number to open that day's board</div>
+  <div class="hint">Click + (or an empty spot) on a day to add a task to it · drag a task onto another day to reschedule · click a date number to open that day in Daily view</div>
   <div class="calwrap"><div class="cal-head" id="calHead"></div><div class="cal-grid" id="cal"></div></div>
 </section>
 
@@ -808,6 +810,7 @@ function commit(){ rollover(); escalate(); save(); render(); }
 /* ================= render dispatch ================= */
 const AGENDA_VIEWS = ['board', 'calendar', 'all', 'insights'];
 const viewAllowed = v => {
+  if (v === 'calendar') v = 'board';                       // weekly / monthly live inside the Planning Board
   const t = document.querySelector(`#tabs [data-view="${v}"]`);
   return !!t && !t.hidden;
 };
@@ -817,7 +820,10 @@ function render(){
     state.settings.view = first ? first.dataset.view : 'board';
   }
   const v = state.settings.view, agenda = AGENDA_VIEWS.includes(v);
-  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.view === v));
+  applyTabOrder();
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.view === (v === 'calendar' ? 'board' : v)));
+  const pm = v === 'calendar' ? state.settings.calMode : 'day';
+  document.querySelectorAll('.planSeg button').forEach(b => b.classList.toggle('on', b.dataset.m === pm));
   document.querySelectorAll('.view').forEach(s => s.hidden = s.id !== 'v-' + v);
   $('#addForm').hidden = !agenda;
   const noTabs = ![...document.querySelectorAll('#tabs button')].some(b => !b.hidden);
@@ -834,11 +840,46 @@ function render(){
 }
 function setView(v){
   if (!viewAllowed(v)) return;
+  if (v === 'board') state.settings.planMode = 'day';
+  if (v === 'calendar') state.settings.planMode = state.settings.calMode;
   if (v === 'attendance' && state.settings.view !== 'attendance') att.key = '';     // pick up people added meanwhile
   state.settings.view = v; save();
   if (v === 'board') setAddDay(boardDay >= todayKey ? boardDay : todayKey);
   render();
 }
+
+/* ================= menu order: drag the tabs to arrange them ================= */
+const TAB_KEY = 'zenvora-loop-tab-order';
+function tabOrder(){
+  if (Array.isArray(state.settings.tabOrder) && state.settings.tabOrder.length) return state.settings.tabOrder;
+  try { return JSON.parse(localStorage.getItem(TAB_KEY)) || []; } catch(e){ return []; }
+}
+function applyTabOrder(){
+  const nav = $('#tabs'), ord = tabOrder();
+  if (!ord.length) return;
+  const cur = [...nav.children].map(b => b.dataset.view).join();
+  const want = ord.filter(v => nav.querySelector(`[data-view="${v}"]`)).concat([...nav.children].map(b => b.dataset.view).filter(v => !ord.includes(v)));
+  if (want.join() !== cur) want.forEach(v => nav.appendChild(nav.querySelector(`[data-view="${v}"]`)));
+}
+(() => {
+  const nav = $('#tabs'); let drag = null;
+  nav.querySelectorAll('button').forEach(b => { b.draggable = true; b.title += ' · drag to reorder'; });
+  nav.addEventListener('dragstart', e => { drag = e.target.closest('button'); if (!drag) return; drag.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', drag.dataset.view); } catch(_){} });
+  nav.addEventListener('dragover', e => {
+    if (!drag) return; e.preventDefault();
+    const t = e.target.closest('button'); if (!t || t === drag) return;
+    const r = t.getBoundingClientRect();
+    nav.insertBefore(drag, e.clientX > r.left + r.width / 2 ? t.nextSibling : t);
+  });
+  nav.addEventListener('drop', e => e.preventDefault());
+  nav.addEventListener('dragend', () => {
+    if (!drag) return; drag.classList.remove('dragging'); drag = null;
+    const ord = [...nav.children].map(b => b.dataset.view);
+    try { localStorage.setItem(TAB_KEY, JSON.stringify(ord)); } catch(e){}
+    if (agendaOn()) state.settings.tabOrder = ord;            // follows you to your other devices
+    save();
+  });
+})();
 
 /* ================= kanban ================= */
 function renderBoard(){
@@ -936,7 +977,6 @@ function cardEl(it, opt = {}){
 /* ================= calendar ================= */
 function renderCalendar(){
   const mode = state.settings.calMode;
-  document.querySelectorAll('#calMode button').forEach(b => b.classList.toggle('on', b.dataset.m === mode));
   let start, end, title;
   const a = parseDay(calCursor);
   if (mode === 'month'){
@@ -1484,7 +1524,11 @@ document.addEventListener('mousemove', e => {
 document.addEventListener('mouseleave', () => tip.hidden = true);
 
 /* ================= toolbar & navigation ================= */
-$('#tabs').addEventListener('click', e => { const b = e.target.closest('button'); if (b) setView(b.dataset.view); });
+$('#tabs').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.view === 'board' && state.settings.view !== 'board' && state.settings.view !== 'calendar' && state.settings.planMode && state.settings.planMode !== 'day') return setView('calendar');   // reopen the last Daily / Weekly / Monthly choice
+  setView(b.dataset.view);
+});
 $('#overdueStat').onclick = () => { allF.status = 'due'; allF.range = 'all'; setView('all'); };
 $('#appName').onclick = () => {
   const oc = orgCtx(); if (oc && !oc.support) return;      // organization name is set by Zenvora Loop
@@ -1501,7 +1545,11 @@ const calStep = n => { const d = parseDay(calCursor); calCursor = state.settings
 $('#calPrev').onclick = () => calStep(-1);
 $('#calNext').onclick = () => calStep(1);
 $('#calToday').onclick = () => { calCursor = todayKey; renderCalendar(); };
-$('#calMode').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ state.settings.calMode = b.dataset.m; save(); renderCalendar(); } });
+document.querySelectorAll('.planSeg').forEach(sg => sg.addEventListener('click', e => {      // Daily = kanban · Weekly / Monthly = calendar
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.m === 'day') setView('board');
+  else { state.settings.calMode = b.dataset.m; setView('calendar'); }
+}));
 
 const insStep = n => { const d = parseDay(insCursor); insCursor = state.settings.insMode === 'month' ? dayKey(new Date(d.getFullYear(), d.getMonth() + n, 1)) : shiftDay(insCursor, 7 * n); renderInsights(); };
 $('#insPrev').onclick = () => insStep(-1);
@@ -1706,7 +1754,7 @@ async function startUser(user){
 function refreshTabs(){
   const oc = orgCtx(), isSup = !!(cloud && cloud.isSuper), role = oc ? oc.role : '';
   const agenda = agendaOn();
-  AGENDA_VIEWS.forEach(v => { document.querySelector(`#tabs [data-view="${v}"]`).hidden = !agenda; });
+  AGENDA_VIEWS.forEach(v => { const t = document.querySelector(`#tabs [data-view="${v}"]`); if (t) t.hidden = !agenda; });
   $('#attTab').hidden = !(oc && feat('attendance'));
   $('#orgTab').hidden = !(oc && (oc.support || role === 'orgadmin' || role === 'manager'));
   $('#orgsTab').hidden = !isSup;
