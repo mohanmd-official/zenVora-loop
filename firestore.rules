@@ -51,7 +51,7 @@ service cloud.firestore {
       // Super Admin manages plan/features/status but can't grant itself support access;
       // the Account Manager can only approve/revoke support access and keep the seat count.
       allow update: if (isSuper() && !changed().hasAny(['supportUntil', 'supportBy']))
-        || (isOrgAdmin(o) && changed().hasOnly(['supportUntil', 'supportBy', 'seats']));
+        || (isOrgAdmin(o) && changed().hasOnly(['supportUntil', 'supportBy', 'seats', 'logo']));
 
       match /members/{uid} {
         allow read: if (signedIn() && request.auth.uid == uid) || isOrgManager(o) || supportOpen(o);
@@ -105,6 +105,14 @@ service cloud.firestore {
           allow read: if perm(o, 'treatments') || supportOpen(o);
           allow create, update, delete: if perm(o, 'treatments');
         }
+        match /docs/{dk} {
+          allow read: if perm(o, 'patients') || perm(o, 'treatments') || supportOpen(o);
+          allow create, update, delete: if perm(o, 'patients') || perm(o, 'treatments');
+        }
+        match /docData/{dk} {
+          allow read: if perm(o, 'patients') || perm(o, 'treatments') || supportOpen(o);
+          allow create, update, delete: if perm(o, 'patients') || perm(o, 'treatments');
+        }
       }
       match /appointments/{a} {
         allow read: if perm(o, 'appointments') || perm(o, 'treatments') || perm(o, 'reports') || perm(o, 'doctorReports') || supportOpen(o);
@@ -112,15 +120,28 @@ service cloud.firestore {
       }
       match /treatments/{t} {
         allow read: if perm(o, 'treatments') || perm(o, 'billing') || perm(o, 'reports') || perm(o, 'doctorReports') || perm(o, 'accounts') || supportOpen(o);
-        allow write: if perm(o, 'treatments');
+        allow create, delete: if perm(o, 'treatments');
+        allow update: if perm(o, 'treatments') || (perm(o, 'patients') && changed().hasOnly(['docAttached']));
       }
       match /payments/{p} {
-        allow read: if perm(o, 'billing') || perm(o, 'reports') || perm(o, 'accounts') || supportOpen(o);
+        allow read: if perm(o, 'billing') || perm(o, 'reports') || perm(o, 'accounts') || perm(o, 'tally') || supportOpen(o);
         allow write: if perm(o, 'billing');
       }
+      // Accounts ledger: income, expenses & bills, petty cash, consultant payments.
+      // Front desk may only record petty cash spends; only Accounts (the owner) tops petty cash up.
       match /ledger/{l} {
-        allow read: if perm(o, 'accounts') || perm(o, 'reports') || supportOpen(o);
-        allow write: if perm(o, 'accounts');
+        allow read: if perm(o, 'accounts') || perm(o, 'reports') || supportOpen(o)
+          || (perm(o, 'petty') && resource.data.kind in ['petty', 'pettyspend'])
+          || (perm(o, 'tally') && resource.data.kind == 'expense');
+        allow create: if perm(o, 'accounts') || (perm(o, 'petty') && request.resource.data.kind == 'pettyspend');
+        allow update, delete: if perm(o, 'accounts');
+      }
+      match /ledgerDocs/{l} {
+        allow read, write: if perm(o, 'accounts');
+      }
+      match /tallies/{d} {
+        allow read: if perm(o, 'accounts') || perm(o, 'tally') || perm(o, 'reports') || supportOpen(o);
+        allow write: if perm(o, 'accounts') || perm(o, 'tally');
       }
       match /vendors/{v} {
         allow read: if perm(o, 'accounts') || perm(o, 'reports') || supportOpen(o);

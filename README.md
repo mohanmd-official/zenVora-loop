@@ -103,43 +103,67 @@ People created in the earlier single-admin version show up in **Organizations �
 - A day with a check-in but no check-out shows **Missed check-out** and counts as present with 0 hours until a manager adds the check-out.
 - Check-in times come from Google's server clock, so staff can't type in or change times. Only managers can add or correct entries.
 
+## Home page (everyone in an organization)
+
+Everyone in an organization lands on **Home** when they sign in: the organization's banner and logo, their profile card with a live timer and **Check in / Check out** (when Attendance is on), their reporting manager and reportees, and three tabs: **Today**, **Reminders** (everything the clinic needs from them) and **Appointments** (today's list).
+
 ## Clinic (patient management, when the org has the Clinic feature)
 
-Turn it on per organization: Super Admin → Organizations → the org → tick **Clinic** → Save. The org's Account Manager then sets it up from the **Clinic** tab.
+Turn it on per organization: Super Admin → Organizations → the org → tick **Clinic** → Save. Every new organization needs a **logo** at onboarding; it's shown in their header, on Home, and on receipts. (Existing organizations: Super Admin can add it in the org's settings, or the Account Manager in Clinic setup.)
 
 **First-time setup (Account Manager): Clinic → Clinic setup**
-1. **Doctors:** add each doctor as *Clinic doctor* or *Consultant*. When a consultant does a treatment, the treatment form asks for the **consultant fee**, which goes into Accounts automatically.
-2. **Treatment list & prices:** click **Add common dental treatments**, then edit prices. Each treatment is a reporting "vertical".
-3. **Clinic details:** address, phone, GSTIN and patient ID prefix, printed on receipts and statements. Opening hours set the appointment grid.
+1. **Doctors:** add each one as **Chief doctor**, **Clinic doctor** or **Consultant**. Link the Chief doctor to their Zenvora Loop login (Login column), so they receive the daily-tally reminders.
+2. **Treatment list & prices:** **Add common dental treatments**, then edit prices. **Needs document** marks treatments whose document must be uploaded once billed (OPG → OPG, IOPA → X-ray, Crown → Intraoral scan by default).
+3. **Clinic details:** address, phone, GSTIN, patient ID prefix, opening hours, logo.
 
-**Who can do what: Organization → People → Edit → Clinic access.** Pick a preset or tick individual boxes:
+**Who can do what: Organization → People → Edit → Clinic access**
 
 | Preset | Gets |
 |---|---|
-| Receptionist | Patients, Appointments (no money, no reports) |
-| Front desk + billing | + Billing (payments and receipts) |
+| Receptionist | Patients, Appointments, Petty cash spends |
+| Front desk + billing | + Billing (payments, receipts) and Daily cash tally |
 | Doctor | Patients, Appointments, Treatments & photos |
-| Accountant | Billing, Accounts, Collection & treatment reports, Doctor & consultant reports |
-| Full clinic access | everything, including Clinic setup |
+| Accountant | Billing, Accounts, Petty cash, Daily tally, all reports |
+| Full clinic access | everything |
 
-Account Managers always have full access. Changes apply within seconds, and the database rules enforce them too.
+Account Managers always have full access, and only Accounts (the owner) can top up petty cash.
 
-**Daily use**
-- **Patients:** search by name, phone or patient ID; **+ New patient** registers name, contact, address, DOB (age is worked out automatically), blood group, allergies (shown in red), medical history, primary doctor and referral. Each patient gets an ID like `PT-000001`.
-- **Patient record tabs:** Profile · Treatments (each one records the doctor who did it, so a consultant appears on the case next to the primary doctor) · Billing (take payments, print receipts, see balance) · Appointments · Pre / post-op photos (grouped per treatment, compressed in the browser) · History (one timeline of everything).
-- **Appointments:** Day grid and Week view, filter by doctor, **+ New appointment** (or click an empty slot). The right-hand queue moves patients through Scheduled → Waiting (check in) → In chair → Completed, or Missed / Cancelled. A new patient can be registered straight from the booking form.
-- **Accounts** (pick the month at the top right):
-  - **Overview:** income (collections), clinic expenses, petty cash spent and net for the month; a 6-month income vs expenses chart; where the money went; and the monthly commitments checklist.
-  - **Clinic expenses:** every expense with its category and vendor. Consultant fees from treatments are added automatically.
-  - **Petty cash:** kept separately: money added to the cash box, small spends, and the running balance.
-  - **Vendors & consultants:** add vendors (Materials, Lab, Other) and record their bills (+ Bill). Each consultant shows fees this month, fees to date, paid to date and balance to pay, with **+ Fee** and **Pay**.
-  - **Categories & commitments:** your own expense categories, and monthly commitments (Petty cash, Rent, plus any you add, e.g. Electricity) with expected amounts. Any commitment not entered by the **15th** shows as overdue and adds an "Accounts need to be sorted" task to the Planning Board of everyone with Accounts access; it ticks itself off once entered.
-- **Reports:** Collection, Treatment-wise earnings, Doctors & consultants (click a doctor for their statement, with consultant fees), Outstanding balances, Appointments, New patients. Each report works for **Today** or a **custom From / To** range, with CSV and Print.
+**The patient workflow**
+1. **Add patient** (Patients → + New patient, or straight from the booking form). Age is worked out from the date of birth.
+2. **Book appointment** → the day grid / queue: **Scheduled → Check in (Waiting) → In chair → Done**.
+3. **Done** opens **"What happened in this appointment?"**: write the treatment summary, add the treatments done (each with its doctor, cost, discount, and a consultant fee for consultants), and optionally book the next visit. **Save & complete visit**.
+4. Or **Skip for now**: the visit is completed but an **"Update patient treatment summary"** task goes on the Planning Board until someone adds the summary (Patient → Visits & summaries → Add treatment summary).
+
+**Patient record tabs:** Profile · Treatments · Billing · **Visits & summaries** · **Documents** (OPG, X-ray, intraoral scans, CBCT, blood tests, prescriptions, consent forms, lab reports; photos or PDFs up to 700 KB) · Pre/post-op photos · History (one timeline of everything).
+
+**Clinic ↔ Planning Board (automatic, every sign-in and every 10 minutes)**
+
+| Epic on the Planning Board | When | For |
+|---|---|---|
+| Update patient treatment summary | a visit was completed with "Skip for now" | anyone with Treatments access |
+| Patient documents backlog | a billed treatment needs a document (e.g. OPG) that isn't uploaded yet | Treatments / Billing access |
+| Patient follow-ups | a patient was seen today → appears on **tomorrow's** board | Appointments access |
+| Missed / skipped patients | marked Missed, or still Scheduled/Waiting at the end of the day → **next morning, 9 AM reminder** | Appointments access |
+| Accounts | a monthly commitment (e.g. Rent) not entered by the **15th** | Accounts access |
+| Daily tally | a day with cash payments has no tally, or a tally didn't match | Account Manager and the Chief doctor |
+
+These tasks tick themselves off when the work is done in the clinic (follow-ups stay until you tick them). They also appear on Home → Reminders, and each task has **Open in Clinic →**.
+
+**Accounts (Clinic → Accounts)**
+- **Overview:** income (patient payments **automatically** + any past/other income), clinic expenses, petty cash spent, net and margin, a 6-month chart, commitments, and where the money went.
+- **Daily tally:** opening cash (yesterday's count) + cash from patients + change/float put in − cash expenses − cash taken out = **expected**; then count the drawer by **₹500 / 200 / 100 / 50 / 20 / 10 / 5 / 2 / 1**. It must match, or a note is required, and the person ticks "I counted this cash myself". Missing or mismatched tallies go to the Account Manager's and Chief doctor's Planning Board.
+- **Clinic expenses:** every expense with category, vendor, bill number, GST and an attached bill copy (photo/PDF). Consultant fees from treatments are added automatically.
+- **Petty cash:** a separate cash box. The owner tops it up (note required); front desk records each spend (note required); the balance should equal the cash in the box.
+- **Lab / Materials:** as many vendors as you like (with GSTIN). Add bills (paid or **not paid yet**), filter by vendor, see what's unpaid, **Mark paid**.
+- **Consultants:** every consultant doctor in one table: fees this month, fees to date, paid to date and **to pay now**, with **+ Fee** and **Pay**, and the patient-wise list of their fees.
+- **Commitments & categories:** monthly commitments (Rent + your own, e.g. Electricity, Salary) with expected amounts, and your own expense categories.
+- **Past data & audit:** add past months' income; **paste many rows** from Excel (`date, income|expense, category, amount, note`); and **Download audit pack**: one ZIP per financial year (April–March) with income, expenses (bill no., vendor GSTIN, GST), consultant fees and payments, petty cash, daily tallies, a month-by-month summary, and every attached bill copy, ready to hand to your auditor.
+
+**Reports:** Collection (every payment with date, receipt, **patient**, doctor and mode), Treatment-wise earnings (summary + every treatment with the patient), Doctors & consultants, Outstanding balances, Appointments, New patients. **Today** or custom dates; CSV and Print.
 
 **Good to know**
-- Planned treatments aren't billed. In-progress and completed ones count towards the patient's balance; completed ones count as earnings in reports.
-- Photos are stored in Firestore (about 100–400 KB each after compression), so no paid storage plan is needed. The free plan's 1 GiB holds a few thousand photos; move to Firebase Storage (Blaze plan) later if you need more.
-- Free plan reads are 50,000/day. A normal clinic day uses a small fraction of that; very large reports (e.g. Outstanding balances across thousands of patients) use more.
+- Photos, documents and bill copies are stored in Firestore after compression (no paid storage plan needed). The free plan's 1 GiB holds a few thousand files; PDFs must be under 700 KB.
+- A normal clinic day uses a small part of the free plan's 50,000 reads/day.
 
 ## Phase 3: move to zenvoraloop.abbisdentalcare.com (Wix DNS)
 
