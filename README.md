@@ -81,12 +81,17 @@ People created in the earlier single-admin version show up in **Organizations �
 
 ### Everyone
 
-- **Menu order:** drag the tabs at the top (Planning Board, All Tasks, Insights, Attendance, Organization) into the order you like; it is remembered.
-- **Planning Board:** Daily (kanban), Weekly and Monthly (calendar) switch at the top of the board.
+- **Menu order:** drag the tabs at the top (Home, Planning Board, Clinic, Attendance, Organization) into the order you like; it is remembered.
+- **Planning Board:** a small menu at the top switches between **Board** (Daily kanban, Weekly and Monthly calendar), **All tasks** and **Insights**.
+- **Light / dark mode:** the 🌙 / ☀️ button in the top bar. Avatar → **Follow system light / dark** goes back to the computer's setting. Remembered per device.
+- **Numbered lists:** every table has a **No.** column, so you can say "row 12" on a call.
 - Avatar → **Change password**, or **Forgot password?** on the sign-in page. Planner backup / restore is in the avatar menu too.
 - The Super Admin email is set in **both** `public/firebase-config.js` and `firestore.rules`. If you change it, change both and publish the rules again.
 
-## Staff attendance (Attendance tab, when the org has Attendance)
+## Staff attendance (when the org has Attendance)
+
+Where: the **Attendance** tab, or **Clinic → Attendance** when the organization has the Clinic (there is no separate Attendance tab then). Everyone can also check in and out from **Home**.
+
 
 - **Staff:** **Attendance** tab → **Check in** when arriving and **Check out** when leaving. They can check in and out again as often as needed in a day (e.g. lunch, errands). They see a live "worked today" timer, days present, offs used (out of 4), hours, overtime hours and overtime days, and a day-by-day list grouped by week.
 - **Account Managers & Managers:** **Attendance → Team** shows who's in right now and each person's monthly totals. Click a person to:
@@ -105,7 +110,10 @@ People created in the earlier single-admin version show up in **Organizations �
 
 ## Home page (everyone in an organization)
 
-Everyone in an organization lands on **Home** when they sign in: the organization's banner and logo, their profile card with a live timer and **Check in / Check out** (when Attendance is on), their reporting manager and reportees, and three tabs: **Today**, **Reminders** (everything the clinic needs from them) and **Appointments** (today's list).
+Everyone lands on **Home** when they sign in, including the Super Admin and the personal planner. Home is a set of widgets: Check in / out, My team, Reminders, Today's appointments, Clinic today, My tasks today, Overdue, This week, Coming up, Quick actions, Notes, and for the Super Admin: Organizations and Unpaid invoices.
+
+- **Customize (✎ on Home):** tick the widgets you want, move them up / down, choose **Half** or **Full width**, **Save**. Each person's layout is their own and follows them to any device. **Reset to default** goes back.
+- **Organization default (Account Manager):** in Customize, **Save as default for my organization** sets the starting layout for everyone in the org who hasn't customized theirs.
 
 ## Clinic (patient management, when the org has the Clinic feature)
 
@@ -131,8 +139,10 @@ Account Managers always have full access, and only Accounts (the owner) can top 
 **The patient workflow**
 1. **Add patient** (Patients → + New patient, or straight from the booking form). Age is worked out from the date of birth.
 2. **Book appointment** → the day grid / queue: **Scheduled → Check in (Waiting) → In chair → Done**.
-3. **Done** opens **"What happened in this appointment?"**: write the treatment summary, add the treatments done (each with its doctor, cost, discount, and a consultant fee for consultants), and optionally book the next visit. **Save & complete visit**.
-4. Or **Skip for now**: the visit is completed but an **"Update patient treatment summary"** task goes on the Planning Board until someone adds the summary (Patient → Visits & summaries → Add treatment summary).
+3. **Done** opens **"What happened in this appointment?"**: write the treatment summary, add the treatments done (each with its doctor, cost, discount, and a consultant fee for consultants), and optionally book the next visit. **Continue**.
+4. Or **Skip for now**: an **"Update patient treatment summary"** task goes on the Planning Board until someone adds the summary (Patient → Visits & summaries → Add treatment summary).
+5. Either way the **Bill** opens in the same window: this visit's treatments, earlier balance, **Save payment** (amount, mode), then **Print bill** and **Print receipt**. **Complete visit** is enabled once a payment is saved, or tick **No payment now** (the balance stays due). Only then does the patient move to **Completed**.
+6. If the person doing the summary has no Billing access, the patient waits in the queue as **At billing** (and a **Billing pending** task appears on the Planning Board) until the front desk opens **Bill & print**.
 
 **Patient record tabs:** Profile · Treatments · Billing · **Visits & summaries** · **Documents** (OPG, X-ray, intraoral scans, CBCT, blood tests, prescriptions, consent forms, lab reports; photos or PDFs up to 700 KB) · Pre/post-op photos · History (one timeline of everything).
 
@@ -146,6 +156,7 @@ Account Managers always have full access, and only Accounts (the owner) can top 
 | Missed / skipped patients | marked Missed, or still Scheduled/Waiting at the end of the day → **next morning, 9 AM reminder** | Appointments access |
 | Accounts | a monthly commitment (e.g. Rent) not entered by the **15th** | Accounts access |
 | Daily tally | a day with cash payments has no tally, or a tally didn't match | Account Manager and the Chief doctor |
+| Billing pending | a patient is waiting **At billing** | Billing access |
 
 These tasks tick themselves off when the work is done in the clinic (follow-ups stay until you tick them). They also appear on Home → Reminders, and each task has **Open in Clinic →**.
 

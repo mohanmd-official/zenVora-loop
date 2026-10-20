@@ -51,7 +51,7 @@ service cloud.firestore {
       // Super Admin manages plan/features/status but can't grant itself support access;
       // the Account Manager can only approve/revoke support access and keep the seat count.
       allow update: if (isSuper() && !changed().hasAny(['supportUntil', 'supportBy']))
-        || (isOrgAdmin(o) && changed().hasOnly(['supportUntil', 'supportBy', 'seats', 'logo']));
+        || (isOrgAdmin(o) && changed().hasOnly(['supportUntil', 'supportBy', 'seats', 'logo', 'homeDefault']));
 
       match /members/{uid} {
         allow read: if (signedIn() && request.auth.uid == uid) || isOrgManager(o) || supportOpen(o);
