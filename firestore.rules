@@ -9,6 +9,7 @@ rules_version = '2';
 //                               approves support access, sees their billing.
 //  Manager                    → sees and corrects their organization's attendance.
 //  Employee                   → checks in / out, sees own attendance, uses enabled features.
+//  Attendance proxy (feature)  → chosen staff (e.g. reception) can check others in and out.
 //  Clinic (feature)           → patients, appointments, treatments, photos, billing, accounts, reports;
 //                               each person's clinic access is set by the Account Manager.
 //
@@ -34,6 +35,8 @@ service cloud.firestore {
     function changed() { return request.resource.data.diff(resource.data).affectedKeys(); }
     function clinicOn(o) { return hasFeature(o, 'clinic'); }
     function clinicMember(o) { return isMember(o) && clinicOn(o); }
+    // Attendance proxy (feature attProxy): people the Account Manager picks may check others in and out
+    function isProxy(o) { return isMember(o) && hasFeature(o, 'attendance') && hasFeature(o, 'attProxy') && mem(o).get('attProxy', false) == true; }
     function perm(o, p) { return clinicMember(o) && (mem(o).role == 'orgadmin' || mem(o).get('perms', {}).get(p, false) == true); }
 
     // Login directory: which organization a user belongs to
@@ -54,7 +57,7 @@ service cloud.firestore {
         || (isOrgAdmin(o) && changed().hasOnly(['supportUntil', 'supportBy', 'seats', 'logo', 'homeDefault']));
 
       match /members/{uid} {
-        allow read: if (signedIn() && request.auth.uid == uid) || isOrgManager(o) || supportOpen(o);
+        allow read: if (signedIn() && request.auth.uid == uid) || isOrgManager(o) || supportOpen(o) || isProxy(o);
         // Super Admin may only create the Account Manager it has just assigned on the org
         allow create: if isOrgAdmin(o)
           || (isSuper() && request.resource.data.role == 'orgadmin' && orgDoc(o).get('adminUid', '') == uid);
@@ -67,13 +70,19 @@ service cloud.firestore {
       // Attendance (feature: attendance). Staff check-ins are stamped with server time.
       match /attendance/{uid}/events/{eventId} {
         allow read: if (hasFeature(o, 'attendance')
-                        && (isOrgManager(o) || (signedIn() && request.auth.uid == uid && isMember(o))))
+                        && (isOrgManager(o) || isProxy(o) || (signedIn() && request.auth.uid == uid && isMember(o))))
           || supportOpen(o);
         allow create: if hasFeature(o, 'attendance') && (isOrgManager(o)
           || (signedIn() && request.auth.uid == uid && isMember(o)
               && request.resource.data.keys().hasOnly(['type', 'at', 'src'])
               && request.resource.data.type in ['in', 'out']
               && request.resource.data.src == 'self'
+              && request.resource.data.at == request.time)
+          || (isProxy(o)
+              && request.resource.data.keys().hasOnly(['type', 'at', 'src', 'by'])
+              && request.resource.data.type in ['in', 'out']
+              && request.resource.data.src == 'proxy'
+              && request.resource.data.by == request.auth.uid
               && request.resource.data.at == request.time));
         allow update, delete: if hasFeature(o, 'attendance') && isOrgManager(o);
       }
@@ -155,10 +164,33 @@ service cloud.firestore {
         allow read: if clinicMember(o) || supportOpen(o);
         allow write: if perm(o, 'setup');
       }
+      match /medicines/{m} {
+        allow read: if clinicMember(o) || supportOpen(o);
+        allow write: if perm(o, 'setup');
+      }
       match /clinicMeta/{d} {
         allow read: if clinicMember(o) || supportOpen(o);
+        // 'reminders': patient reminders (follow-ups, summaries, documents, missed patients) shared with everyone in the clinic
         allow write: if (d == 'counter' && (perm(o, 'patients') || perm(o, 'billing')))
-          || (d == 'accounts' && perm(o, 'accounts')) || (d == 'settings' && perm(o, 'setup'));
+          || (d == 'accounts' && perm(o, 'accounts')) || (d == 'settings' && perm(o, 'setup'))
+          || (d == 'reminders' && clinicMember(o));
+      }
+      // Patient assists: staff log who they assisted each day; the Chief doctor (perm assistApprove) approves.
+      // Staff see only their own entries and the approval status, never the incentive amount.
+      match /assists/{x} {
+        allow read: if (clinicMember(o) && resource.data.uid == request.auth.uid)
+          || isOrgAdmin(o) || perm(o, 'assistApprove') || supportOpen(o);
+        allow create: if clinicMember(o) && request.resource.data.uid == request.auth.uid
+          && request.resource.data.status == 'pending';
+        allow update: if (perm(o, 'assistApprove') && changed().hasOnly(['status', 'approvedBy', 'approvedAt', 'approverName']))
+          || (clinicMember(o) && resource.data.uid == request.auth.uid && resource.data.status == 'pending'
+              && request.resource.data.status == 'pending' && request.resource.data.uid == request.auth.uid);
+        allow delete: if isOrgAdmin(o)
+          || (clinicMember(o) && resource.data.uid == request.auth.uid && resource.data.status == 'pending');
+      }
+      // Incentive amounts and rates: Account Manager only
+      match /assistPay/{x} {
+        allow read, write: if isOrgAdmin(o) && clinicOn(o);
       }
 
       // Subscription billing: Super Admin writes, Account Manager can view

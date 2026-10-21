@@ -333,7 +333,8 @@ details.tv th:first-child,details.tv td:first-child{text-align:left}
 .ptimer{font-size:34px;font-weight:800;letter-spacing:.02em;font-variant-numeric:tabular-nums}
 .plbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
 .pbtn{margin-top:8px;border:none;color:#fff;font-weight:700;font-size:15px;padding:11px 26px;border-radius:999px;min-width:170px}
-.pbtn.in{background:var(--done)} .pbtn.out{background:var(--high)}
+.pbtn.in{background:var(--done)} .pbtn.sm{padding:6px 14px;font-size:13px;min-width:0;height:auto;margin-top:0}
+.pbtn.out{background:var(--high)}
 .pbtn:disabled{opacity:.6}
 .atbl{width:100%;border-collapse:separate;border-spacing:0;background:var(--paper);border:1px solid var(--line);border-radius:12px;overflow:hidden;font-variant-numeric:tabular-nums}
 .atbl th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:600;padding:8px 10px;border-bottom:1px solid var(--line);background:var(--paper);white-space:nowrap}
@@ -363,6 +364,7 @@ details.tv th:first-child,details.tv td:first-child{text-align:left}
 .payrow{display:flex;justify-content:space-between;gap:10px;padding:4px 0;border-bottom:1px dashed var(--line);font-size:12.5px}
 .payrow:last-child{border-bottom:none;font-weight:800;font-size:14px;padding-top:8px}
 .abk{margin-bottom:8px}
+[data-ord] > button{cursor:grab}[data-ord] > button:active{cursor:grabbing}[data-ord] > button.dragging{opacity:.45}
 .ahead{display:flex;align-items:center;gap:10px;margin:4px 0 6px}
 .ahead .uav{width:38px;height:38px;font-size:16px}
 .rtag{font-style:normal;font-size:10.5px;font-weight:700;color:var(--accent-ink);border:1px solid color-mix(in srgb,var(--accent-ink) 45%,transparent);border-radius:999px;padding:0 7px;margin-left:6px;vertical-align:1px}
@@ -441,6 +443,13 @@ details.tv th:first-child,details.tv td:first-child{text-align:left}
 .rangebar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
 .rangebar label{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
 .rangebar button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.rangebar .seg button.on{background:var(--paper);color:var(--accent);border-color:transparent}
+.chartw{border:1px solid var(--line);border-radius:14px;padding:12px;background:var(--paper);overflow-x:auto;margin-bottom:12px}
+.chartw svg{display:block;width:100%;height:auto;font-size:10.5px;fill:var(--muted)}.chartw svg .cv{fill:var(--ink);font-weight:600}
+.legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:6px;font-size:12px;color:var(--muted)}.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.hbars{display:grid;gap:6px;border:1px solid var(--line);border-radius:14px;padding:12px;background:var(--paper)}
+.hb{display:grid;grid-template-columns:minmax(120px,220px) 1fr 90px;gap:10px;align-items:center;font-size:13px}.hb div{height:14px;background:color-mix(in srgb,var(--line) 50%,transparent);border-radius:7px;overflow:hidden}
+.hb i{display:block;height:100%;border-radius:7px}.hb b{text-align:right;font-variant-numeric:tabular-nums}
 .mnav{display:flex;align-items:center;gap:8px}
 .mnav b{min-width:130px;text-align:center}
 .nag{margin:0 0 12px;padding:9px 12px;border-radius:10px;font-size:13px;background:color-mix(in srgb,var(--prog) 12%,var(--paper));border:1px solid color-mix(in srgb,var(--prog) 45%,transparent)}
@@ -566,6 +575,14 @@ details.tv th:first-child,details.tv td:first-child{text-align:left}
 #clOvBody textarea{font:inherit;border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--paper);color:var(--ink)}
 .srowf{display:grid;grid-template-columns:2fr 1fr 1.6fr .9fr .9fr 1.2fr .9fr auto;gap:6px;margin-bottom:6px}
 .srowf input,.srowf select{min-width:0;width:100%}
+.mrow{display:grid;grid-template-columns:2.2fr auto 70px 70px 80px auto;gap:6px;align-items:center;margin-bottom:6px}
+.mrow select,.mrow input{min-width:0;width:100%}.mrow b{text-align:right;font-variant-numeric:tabular-nums}
+.dose{display:flex;gap:4px}.dose label{display:flex;align-items:center;gap:3px;font-size:12px;padding:4px 7px;border:1px solid var(--line);border-radius:999px;cursor:pointer;text-transform:none;letter-spacing:0;color:var(--ink)}
+.dose label:has(input:checked){background:color-mix(in srgb,var(--accent) 14%,transparent);border-color:var(--accent)}.dose input{margin:0;width:auto}
+@media (max-width:760px){.mrow{grid-template-columns:1fr 1fr}.dose{grid-column:1/-1}}
+label.ckl{display:flex;flex-direction:row;gap:6px;align-items:center;text-transform:none;letter-spacing:0;font-size:13px;font-weight:500;color:var(--muted);margin:0}
+label.ckl input{width:auto;margin:0}
+button.aback{font-size:12px;color:var(--muted)}
 @media (max-width:760px){.srowf{grid-template-columns:1fr 1fr}}
 .docgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
 .docc{position:relative;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--paper);cursor:zoom-in}
@@ -827,7 +844,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 
 <!-- ATTENDANCE -->
 <section class="view" id="v-attendance" hidden>
   <div class="vbar" id="attBar">
-    <div class="seg" id="attMode" hidden><button data-m="me">My attendance</button><button data-m="team">Team</button></div>
+    <div class="seg" id="attMode" hidden><button data-m="team">Team</button><button data-m="me">My attendance</button><button data-m="mark">Mark attendance</button></div>
     <div class="daynav"><button id="attPrev" title="Previous month">‹</button><button id="attNow">This month</button><button id="attNext" title="Next month">›</button></div>
     <strong id="attTitle"></strong>
     <span class="sp"></span>
@@ -2342,9 +2359,9 @@ const initial = s => esc(String(s || '?').trim().charAt(0).toUpperCase());
 const roleRank = r => ({orgadmin:0, manager:1, employee:2})[r] ?? 3;
 const PALETTE = ['#3730A3', '#0F766E', '#0369A1', '#7C3AED', '#BE185D', '#B45309', '#15803D', '#B91C1C', '#334155'];
 const swatchesHtml = (id, cur) => `<div class="swatches" data-sw="${id}">${PALETTE.map(c => `<button type="button" data-c="${c}" style="background:${c}"${c.toLowerCase() === String(cur).toLowerCase() ? ' class="on"' : ''} title="${c}"></button>`).join('')}<input type="color" id="${id}" value="${esc(cur)}" title="Custom colour"></div>`;
-const FEATURES = [['agenda', 'Agenda Handler', 'boards, calendar, tasks'], ['attendance', 'Attendance', 'check-in / check-out'], ['payroll', 'Payroll', 'salary & payable (needs Attendance)'], ['clinic', 'Clinic', 'patients, appointments, billing, accounts, reports']];
+const FEATURES = [['agenda', 'Agenda Handler', 'boards, calendar, tasks'], ['attendance', 'Attendance', 'check-in / check-out'], ['attProxy', 'Attendance proxy', 'chosen staff can check others in / out (needs Attendance)'], ['payroll', 'Payroll', 'salary & payable (needs Attendance)'], ['clinic', 'Clinic', 'patients, appointments, billing, accounts, reports']];
 const featsHtml = (pre, f) => `<div class="feats">${FEATURES.map(([k, l, d]) => `<label><input type="checkbox" id="${pre}_${k}"${f[k] ? ' checked' : ''}> ${l} <small>${d}</small></label>`).join('')}</div>`;
-const readFeats = pre => { const f = {}; FEATURES.forEach(([k]) => f[k] = $(`#${pre}_${k}`).checked); if (f.payroll && !f.attendance) throw custom('Payroll works from attendance: turn on Attendance too.'); return f; };
+const readFeats = pre => { const f = {}; FEATURES.forEach(([k]) => f[k] = $(`#${pre}_${k}`).checked); if (f.payroll && !f.attendance) throw custom('Payroll works from attendance: turn on Attendance too.'); if (f.attProxy && !f.attendance) throw custom('Attendance proxy needs Attendance: turn on Attendance too.'); return f; };
 document.addEventListener('click', e => {           // colour swatches
   const b = e.target.closest('[data-sw] button[data-c]'); if (!b) return;
   const box = b.closest('[data-sw]'); box.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
@@ -2430,13 +2447,14 @@ function orgPeople(){
         <label>Job title<input id="peTitle" value="${esc(m.title || '')}"></label>
         <label>Reports to<select id="peTo">${toOpts(m.reportsTo || '', m.uid)}</select></label>
         <label>Role<select id="peRole"${me ? ' disabled title="You can\'t change your own role"' : ''}>${roleOpts(m.role)}</select></label>
+        ${feat('attendance') && feat('attProxy') && m.role !== 'orgadmin' ? `<label class="ckl full"><input type="checkbox" id="peProxy"${m.attProxy ? ' checked' : ''}> <b>Attendance proxy</b>: can check other staff in and out (e.g. reception)</label>` : ''}
         ${clinicAccessHtml(m)}
         <button class="primary" type="submit">Save</button><button type="button" data-pa="cancel">Cancel</button>
       </form></td></tr>`;
     const st = !m.active ? ['Disabled', 'off'] : m.mustChangePassword ? ['Awaiting first sign-in', 'pend'] : ['Active', 'on'];
     return `<tr data-uid="${esc(m.uid)}" data-email="${esc(m.email)}">
       <td><div style="display:flex;gap:9px;align-items:center"><div class="uav" style="width:28px;height:28px;font-size:12px">${initial(fullName(m))}</div><div><b>${esc(fullName(m))}</b>${me ? ' <span class="stat">(you)</span>' : ''}<span class="sub2">${esc(m.email)}</span></div></div></td>
-      <td>${esc(m.title || '—')}</td>
+      <td>${esc(m.title || '—')}${m.attProxy && feat('attProxy') ? ' <em class="rtag">Attendance proxy</em>' : ''}</td>
       <td>${mgr ? esc(fullName(mgr)) : '<span class="stat">—</span>'}</td>
       <td>${m.role === 'employee' ? 'Employee' : `<em class="rtag" style="margin:0">${ROLE_LABEL[m.role] || m.role}</em>`}${feat('clinic') ? `<span class="sub2">Clinic: ${esc(m.role === 'orgadmin' ? 'full access' : presetOf(m.perms))}</span>` : ''}</td>
       <td><span class="upill ${st[1]}">${st[0]}</span></td>
@@ -2562,6 +2580,7 @@ $('#orgBody').addEventListener('submit', async e => {
   if (e.target.id === 'pEdit'){
     const uid = e.target.dataset.uid, upd = {name:$('#peName').value.trim(), title:$('#peTitle').value.trim(), reportsTo:$('#peTo').value};
     if (!$('#peRole').disabled) upd.role = $('#peRole').value;
+    if ($('#peProxy')) upd.attProxy = $('#peProxy').checked;
     if (document.querySelector('#pEdit [data-cp]')) upd.perms = Object.fromEntries([...document.querySelectorAll('#pEdit [data-cp]')].map(c => [c.dataset.cp, c.checked]));
     if (!upd.name) return info('Enter their name.');
     if (!noReportLoop(uid, upd.reportsTo)) return info("That would make a reporting loop: pick someone who doesn't report to this person.");
@@ -2963,6 +2982,7 @@ const CPERMS = [
   ['reports', 'Collection & treatment reports', ''],
   ['doctorReports', 'Doctor & consultant reports', 'consultant statements and payouts'],
   ['setup', 'Clinic setup', 'doctors, treatment list and prices'],
+  ['assistApprove', 'Approve patient assists', "Chief doctor: approves the assists staff log each day"],
 ];
 const CPRESETS = [
   ['receptionist', 'Receptionist', ['patients', 'appointments', 'petty']],
@@ -2979,16 +2999,18 @@ const canW = p => can(p) === true;                      // may change things (su
 const clinicAny = () => CPERMS.some(([p]) => can(p));
 const TSTATUS = {planned:['Planned', 'pend'], progress:['In progress', 'prog'], completed:['Completed', 'on']};
 const ASTATUS = {scheduled:'Scheduled', waiting:'Waiting', engaged:'In chair', billing:'At billing', completed:'Completed', missed:'Missed', cancelled:'Cancelled'};
-const PMODES = [['cash', 'Cash'], ['upi', 'UPI'], ['card', 'Card'], ['bank', 'Bank transfer']];
+const PMODES = [['cash', 'Cash'], ['upi', 'UPI / GPay'], ['card', 'Card'], ['cheque', 'Cheque'], ['neft', 'NEFT'], ['rtgs', 'RTGS'], ['bank', 'Bank transfer']];
+const MED_UNITS = ['Tablet', 'Capsule', 'Syrup (bottle)', 'Gel / tube', 'Mouthwash (bottle)', 'Injection', 'Other'];
+const DEFAULT_MEDS = [['Amoxicillin 500 mg', 8, 'Capsule'], ['Amoxicillin + Clavulanate 625 mg', 20, 'Tablet'], ['Metronidazole 400 mg', 2, 'Tablet'], ['Ibuprofen 400 mg', 2, 'Tablet'], ['Paracetamol 650 mg', 2, 'Tablet'], ['Aceclofenac + Paracetamol', 5, 'Tablet'], ['Ketorolac 10 mg', 4, 'Tablet'], ['Pantoprazole 40 mg', 8, 'Tablet'], ['Chlorhexidine mouthwash', 120, 'Mouthwash (bottle)'], ['Metrogyl DG gel', 90, 'Gel / tube']];
 const DEFAULT_TYPES = [['Consultation', 200], ['OPG X-ray', 400], ['IOPA X-ray', 150], ['Scaling & polishing', 1000], ['Filling', 1200], ['Root canal (RCT)', 4500], ['Extraction', 800], ['Crown', 6000], ['Implant', 30000], ['Braces / aligners', 35000], ['Dentures', 12000], ['Teeth whitening', 8000]];
 const cl = {sec:'patients', pid:null, ptab:'profile', doctors:[], types:[], settings:{}, recent:null, search:null, q:'', unsub:[], key:'',
   p:null, pT:null, pP:null, pA:null, pPh:null, pUnsub:[], pKey:'', newP:false, edit:{},
   aDate:todayKey, aMode:'day', aDoc:'', appts:null, aUnsub:null, aKey:'', book:null,
   acc:{month:'', tab:'overview', d:null, key:'', pre:null, tday:'', vf:'', vonly:'month', cf:''}, ameta:null, reminders:[], pD:null, sum:null,
-  rep:{kind:'collection', preset:'today', from:'', to:'', data:null, key:'', doc:null},
+  rep:{kind:'collection', preset:'today', from:'', to:'', data:null, key:'', doc:null, group:'day', view:'table', mode:'', dfil:''},
   reset(){ [...this.unsub, ...this.pUnsub].forEach(u => { try { u(); } catch(e){} }); if (this.aUnsub) try { this.aUnsub(); } catch(e){}
     Object.assign(this, {pid:null, doctors:[], types:[], settings:{}, recent:null, search:null, q:'', unsub:[], key:'', p:null, pT:null, pP:null, pA:null, pPh:null, pUnsub:[], pKey:'',
-      newP:false, edit:{}, appts:null, aUnsub:null, aKey:'', book:null, ameta:null, members:null, mLoading:false, reminders:[], pD:null, sum:null}); this.acc.key = ''; this.rep.key = ''; this.rep.data = null; }};
+      newP:false, edit:{}, appts:null, aUnsub:null, aKey:'', book:null, ameta:null, members:null, mLoading:false, reminders:[], pD:null, sum:null, meds:null, asst:null, asKey:''}); this.acc.key = ''; this.rep.key = ''; this.rep.data = null; }};
 const cCol = (...p) => cloud.F.collection(cloud.fs, 'orgs', orgCtx().orgId, ...p);
 const cDoc = (...p) => cloud.F.doc(cloud.fs, 'orgs', orgCtx().orgId, ...p);
 const docsOf = qs => qs.docs.map(d => Object.assign({id:d.id}, d.data()));
@@ -3030,6 +3052,7 @@ function clLoad(){
   cl.unsub.push(F.onSnapshot(cCol('doctors'), qs => { cl.doctors = docsOf(qs).sort((a, b) => (b.active !== false) - (a.active !== false) || String(a.name).localeCompare(String(b.name))); again(); }, () => {}));
   cl.unsub.push(F.onSnapshot(cCol('treatmentTypes'), qs => { cl.types = docsOf(qs).sort((a, b) => String(a.name).localeCompare(String(b.name))); again(); }, () => {}));
   cl.unsub.push(F.onSnapshot(cDoc('clinicMeta', 'settings'), s => { cl.settings = s.exists() ? s.data() : {}; again(); }, () => {}));
+  cl.unsub.push(F.onSnapshot(cCol('medicines'), qs => { cl.meds = docsOf(qs).sort((a, b) => String(a.name).localeCompare(String(b.name))); again(); }, () => { cl.meds = []; }));
   if (can('accounts')) cl.unsub.push(F.onSnapshot(cDoc('clinicMeta', 'accounts'), s => { cl.ameta = s.exists() ? s.data() : null; again(); }, () => {}));
   if (can('patients') || can('appointments') || can('treatments') || can('billing'))
     cl.unsub.push(F.onSnapshot(F.query(cCol('patients'), F.orderBy('updatedAt', 'desc'), F.limit(30)), qs => { cl.recent = docsOf(qs); again(); }, e => { cl.recent = []; info('Patients could not load: ' + errText(e)); }));
@@ -3040,27 +3063,29 @@ const CI = {
   accounts:'<rect x="1.5" y="4" width="13" height="8.5" rx="1.5"/><circle cx="8" cy="8.2" r="1.8"/><path d="M4 6.2v.1M12 10.2v.1"/>',
   reports:'<path d="M2 14h12M4 11V8M7 11V4.5M10 11V6.5M13 11V3"/>',
   attendance:'<circle cx="8" cy="8.5" r="6"/><path d="M8 5v3.7l2.4 1.5M6 1.2h4"/>',
+  assists:'<path d="M5.5 7.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM1.5 14c.3-2.6 1.8-4 4-4s3.7 1.4 4 4M10.5 8.5l1.6 1.6 3-3.2"/>',
   setup:'<circle cx="8" cy="8" r="2.2"/><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M3.4 12.6l1.4-1.4M11.2 4.8l1.4-1.4"/>'};
 const CSECS = [['patients', 'Patients', () => can('patients') || can('treatments') || can('billing')], ['appointments', 'Appointments', () => can('appointments') || can('treatments')],
-  ['attendance', 'Attendance', () => feat('attendance')], ['accounts', 'Accounts', () => can('accounts') || can('petty') || can('tally')], ['reports', 'Reports', () => can('reports') || can('doctorReports')], ['setup', 'Clinic setup', () => can('setup')]];
+  ['attendance', 'Attendance', () => feat('attendance')], ['accounts', 'Accounts', () => can('accounts') || can('petty') || can('tally')], ['reports', 'Reports', () => can('reports') || can('doctorReports')], ['assists', 'Patient assists', () => !!(orgCtx() && !orgCtx().support)], ['setup', 'Clinic setup', () => can('setup')]];
 
 function renderClinic(){
-  const oc = orgCtx(); if (!oc || !feat('clinic')) return;
+  const oc = orgCtx(); if (!oc || !feat('clinic') || window.__ordDrag) return;
   clLoad();
   const secs = CSECS.filter(s => s[2]());
   if (!secs.some(s => s[0] === cl.sec)) cl.sec = secs.length ? secs[0][0] : '';
-  $('#clSeg').innerHTML = `<div class="clnavt">Clinic</div>` + secs.map(([k, l]) => `<button data-s="${k}" class="${k === cl.sec ? 'on' : ''}"><svg viewBox="0 0 16 16">${CI[k]}</svg><span>${l}</span></button>`).join('')
+  $('#clSeg').dataset.ord = 'csec'; $('#clSeg').dataset.ordattr = 's'; $('#clSeg').dataset.ordv = '1';
+  $('#clSeg').innerHTML = `<div class="clnavt">Clinic</div>` + ordered('csec', secs).map(([k, l]) => `<button draggable="true" data-s="${k}" class="${k === cl.sec ? 'on' : ''}"><svg viewBox="0 0 16 16">${CI[k]}</svg><span>${l}</span></button>`).join('')
     + (oc.support ? '<div class="stat" style="padding:8px 10px">Read-only support view</div>' : '');
   const body = $('#clBody');
   if (keepTyping(body)) return;
   parkAtt();
   if (cl.sec === 'attendance'){ body.innerHTML = '<div class="clhead"><h2>Attendance</h2></div><div id="clAttHost"></div>'; $('#clAttHost').append($('#attBar'), $('#attBody')); att.key = ''; return renderAttendance(); }
   if (!secs.length){ body.innerHTML = '<div class="empty">Your Account Manager hasn\'t given you access to any part of the clinic yet.</div>'; return; }
-  const y = body.scrollTop, fkey = [cl.sec, cl.pid, cl.newP, cl.ptab, cl.acc.tab, cl.acc.month, cl.rep.kind].join('|');
+  const y = body.scrollTop, fkey = [cl.sec, cl.pid, cl.newP, cl.ptab, cl.acc.tab, cl.acc.month, cl.rep.kind, cl.asst ? cl.asst.tab + cl.asst.person : ''].join('|');
   // keep half-typed forms when live data refreshes the page (cleared after a successful save)
   const saved = cl.clear || cl.fkey !== fkey ? null : [...body.querySelectorAll('input[id],select[id],textarea[id]')].filter(e => e.type !== 'file' && !e.disabled).map(e => [e.id, e.type === 'checkbox' ? e.checked : e.value]);
   cl.clear = false; cl.fkey = fkey;
-  body.innerHTML = ({patients:() => cl.pid || cl.newP ? clPatient() : clPatients(), appointments:clAppointments, accounts:clAccounts, reports:clReports, setup:clSetup})[cl.sec]();
+  body.innerHTML = ({patients:() => cl.pid || cl.newP ? clPatient() : clPatients(), appointments:clAppointments, accounts:clAccounts, reports:clReports, assists:clAssists, setup:clSetup})[cl.sec]();
   if (saved) saved.forEach(([id, v]) => { const e = document.getElementById(id); if (e && body.contains(e) && !e.disabled && e.id !== 'clQ'){ if (e.type === 'checkbox') e.checked = v; else e.value = v; } });
   tallyCalc();
   if ($('#tfDoc') && $('#tfFeeWrap')){ const dd = cl.doctors.find(x => x.id === $('#tfDoc').value); $('#tfFeeWrap').hidden = !(dd && dd.type === 'consultant'); }
@@ -3094,7 +3119,7 @@ function clDoSearch(){
 function clOpenPatient(pid){
   cl.pUnsub.forEach(u => { try { u(); } catch(e){} }); cl.pUnsub = [];
   Object.assign(cl, {pid, newP:!pid, p:null, pT:null, pP:null, pA:null, pPh:null, edit:{}});
-  if (pid && !['profile', 'treatments', 'billing', 'appointments', 'docs', 'photos', 'history'].includes(cl.ptab)) cl.ptab = 'profile';
+  if (pid && !['profile', 'treatments', 'rx', 'billing', 'appointments', 'docs', 'photos', 'history'].includes(cl.ptab)) cl.ptab = 'profile';
   cl.pD = null;
   if (!pid){ cl.ptab = 'profile'; return renderClinic(); }
   const {F} = cloud, again = () => { if (state.settings.view === 'clinic' && cl.pid === pid) renderClinic(); };
@@ -3114,10 +3139,10 @@ function clPatient(){
   if (p.missing) return '<button class="abk" id="clBack">← Patients</button><div class="empty">This patient no longer exists.</div>';
   const T = cl.pT || [], P = cl.pP || [], bill = billed(T), paid = paidSum(P);
   const docs = [...new Set([p.primaryDoctorId].concat(T.map(t => t.doctorId), (cl.pA || []).filter(a => a.status !== 'cancelled').map(a => a.doctorId)).filter(Boolean))];
-  const tabs = [['profile', 'Profile', true], ['treatments', 'Treatments', can('treatments') || can('billing')], ['billing', 'Billing', can('billing')], ['appointments', 'Visits & summaries', can('appointments') || can('treatments')], ['docs', 'Documents', can('patients') || can('treatments')],
+  const tabs = [['profile', 'Profile', true], ['treatments', 'Treatments', can('treatments') || can('billing')], ['rx', 'Tablets / prescriptions', can('treatments') || can('billing')], ['billing', 'Billing', can('billing')], ['appointments', 'Visits & summaries', can('appointments') || can('treatments')], ['docs', 'Documents', can('patients') || can('treatments')],
     ['photos', 'Pre / post-op photos', can('treatments')], ['history', 'History', true]].filter(t => t[2]);
   if (!tabs.some(t => t[0] === cl.ptab)) cl.ptab = 'profile';
-  const body = ({profile:() => clProfileForm(p), treatments:clTreatments, billing:clBilling, appointments:clPAppts, docs:clDocs, photos:clPhotos, history:clHistory})[cl.ptab]();
+  const body = ({profile:() => clProfileForm(p), treatments:clTreatments, rx:clRx, billing:clBilling, appointments:clPAppts, docs:clDocs, photos:clPhotos, history:clHistory})[cl.ptab]();
   return `<button class="abk" id="clBack">← Patients</button>
     <div class="phead">
       <div class="uav" style="width:46px;height:46px;font-size:19px">${initial(p.first)}</div>
@@ -3127,7 +3152,7 @@ function clPatient(){
         ${p.allergies ? `<div class="alert">⚠ Allergies / alerts: ${esc(p.allergies)}</div>` : ''}</div>
       ${can('billing') ? `<div class="pmoney"><div><span>Treatment cost</span><b>${inr(bill)}</b></div><div><span>Paid</span><b>${inr(paid)}</b></div><div><span>Balance</span><b class="${bill - paid > 0 ? 'neg' : ''}">${inr(bill - paid)}</b></div></div>` : ''}
     </div>
-    <div class="htabs">${tabs.map(([k, l]) => `<button data-pt="${k}" class="${k === cl.ptab ? 'on' : ''}">${l}</button>`).join('')}</div>
+    <div class="htabs" data-ord="ptab" data-ordattr="pt" title="Drag a tab to put it where you like">${ordered('ptab', tabs).map(([k, l]) => `<button draggable="true" data-pt="${k}" class="${k === cl.ptab ? 'on' : ''}">${l}</button>`).join('')}</div>
     <div style="margin-top:10px">${body}</div>`;
 }
 function clProfileForm(p){
@@ -3178,7 +3203,7 @@ async function clSavePatient(){
 
 /* treatments (each one records the doctor who did it) */
 function clTreatments(){
-  const T = (cl.pT || []).slice().sort((a, b) => String(b.date).localeCompare(String(a.date)) || (b.createdAt || 0) - (a.createdAt || 0));
+  const T = (cl.pT || []).filter(t => !isMed(t)).sort((a, b) => String(b.date).localeCompare(String(a.date)) || (b.createdAt || 0) - (a.createdAt || 0));
   const w = canW('treatments'), money = can('billing') || can('treatments');
   const types = cl.types.filter(t => t.active !== false);
   const lastAppt = (cl.pA || []).filter(a => a.date <= todayKey && a.status !== 'cancelled').sort((a, b) => String(b.date + b.time).localeCompare(String(a.date + a.time)))[0];
@@ -3209,6 +3234,43 @@ function clTreatments(){
     <div class="awrap" style="margin-top:0"><table class="atbl"><thead><tr><th>Treatment</th><th>Doctor</th><th class="num">Cost</th><th class="num">Discount</th><th class="num">Net</th><th>Status</th>${w ? '<th></th>' : ''}</tr></thead>
     <tbody>${cl.pT === null ? '<tr><td colspan="7">Loading…</td></tr>' : html || '<tr><td colspan="7" class="stat">No treatments yet.</td></tr>'}</tbody></table></div>
     <p class="stat">Planned treatments aren't billed. In-progress and completed treatments count towards the patient's balance; completed ones count as earnings in reports.</p></div>`;
+}
+/* tablets / prescriptions */
+function clRx(){
+  const M = (cl.pT || []).filter(isMed).sort((a, b) => String(b.date).localeCompare(String(a.date)) || (b.createdAt || 0) - (a.createdAt || 0)), w = canW('treatments'), money = can('billing') || can('treatments');
+  const groups = []; M.forEach(m => { const k = m.date + '|' + (m.appointmentId || ''); let g = groups.find(x => x.k === k); if (!g) groups.push(g = {k, date:m.date, appt:m.appointmentId, doc:m.doctorId, items:[]}); g.items.push(m); });
+  const lastAppt = (cl.pA || []).filter(a => a.date <= todayKey && a.status !== 'cancelled').sort((a, b) => String(b.date + b.time).localeCompare(String(a.date + a.time)))[0];
+  return `<div class="sect">
+    ${w ? `<div class="box"><h3>Add tablets / medicines <span class="sub">tick Morning / Afternoon / Evening / Night and the days: tablets and cost are worked out and billed</span></h3>
+      <form id="clRxForm" novalidate>
+        <div class="aform" style="margin-bottom:8px"><label>Date<input type="date" id="rxDate" value="${todayKey}" max="${todayKey}"></label><label>Doctor<select id="rxDoc">${docOpts((lastAppt && lastAppt.doctorId) || cl.p.primaryDoctorId || '', '— Select —')}</select></label></div>
+        <div id="rxMeds">${medRow(0)}</div>
+        <div class="btnrow"><button type="button" id="rxAdd">+ Another medicine</button><span class="sp"></span><span class="stat">Total <b id="rxTot">₹0</b></span><button class="primary" type="submit">Save</button></div>
+      </form>${(cl.meds || []).filter(x => x.active !== false).length ? '' : '<p class="stat">Add your medicine price list in Clinic setup first.</p>'}</div>` : ''}
+    ${cl.pT === null ? '<div class="empty">Loading…</div>' : groups.length ? groups.map(g => `<div class="box rxg"><div class="crow"><b>${esc(fmtLong(g.date))}</b><span class="stat">${esc(dName(g.doc) || '')}</span><span class="sp"></span><button data-rxprint="${esc(g.k)}">🖨 Print prescription</button></div>
+      <div class="awrap" style="margin-top:6px"><table class="atbl"><thead><tr><th>Medicine</th><th>When</th><th class="num">Days</th><th class="num">Qty</th>${money ? '<th class="num">Price</th><th class="num">Amount</th>' : ''}${w ? '<th></th>' : ''}</tr></thead><tbody>
+      ${g.items.map(m => `<tr data-tid="${esc(m.id)}"><td><b>${esc(m.typeName)}</b></td><td>${esc(doseTxt(m.dose))} <span class="stat">${esc(DOSE.filter(([k]) => m.dose && m.dose[k]).map(d => d[1]).join(', '))}</span></td><td class="num">${+m.days || '—'}</td><td class="num">${+m.qty || 0}</td>${money ? `<td class="num">${inr(m.unitPrice)}</td><td class="num"><b>${inr(m.cost)}</b></td>` : ''}${w ? '<td><button class="danger" data-tdel title="Delete">✕</button></td>' : ''}</tr>`).join('')}
+      </tbody></table></div></div>`).join('') : '<div class="empty">No tablets or medicines prescribed yet.</div>'}</div>`;
+}
+function printRx(k){
+  const M = (cl.pT || []).filter(m => isMed(m) && m.date + '|' + (m.appointmentId || '') === k), p = cl.p; if (!M.length) return;
+  printDoc('Prescription', `<p><b>Patient:</b> ${esc(pName(p))} (${esc(p.code || '')}) · ${esc([p.gender, ageOf(p)].filter(Boolean).join(', '))}<br><b>Date:</b> ${esc(fmtLong(M[0].date))} · <b>Doctor:</b> ${esc(dName(M[0].doctorId) || '')}</p>
+    <h2>℞</h2><table><tr><th>#</th><th>Medicine</th><th>Morning – Afternoon – Evening – Night</th><th class="n">Days</th><th class="n">Qty</th></tr>
+    ${M.map((m, i) => `<tr><td>${i + 1}</td><td>${esc(m.typeName)}</td><td>${esc(doseTxt(m.dose))}</td><td class="n">${+m.days || ''}</td><td class="n">${+m.qty || ''}</td></tr>`).join('')}</table>
+    ${p.allergies ? `<p><b>Allergies:</b> ${esc(p.allergies)}</p>` : ''}<p style="margin-top:40px">Doctor's signature: ______________________</p>`);
+}
+async function saveRx(){
+  const {F} = cloud, doctorId = $('#rxDoc').value, date = $('#rxDate').value || todayKey, by = cloud.user.email || '', now = Date.now();
+  if (!doctorId) return info('Choose the doctor who prescribed these.');
+  const rows = [...document.querySelectorAll('#rxMeds [data-mr]')].map(r => { const g = k => r.querySelector(`[data-mf="${k}"]`), o = g('med').selectedOptions[0];
+    return {medId:g('med').value, dose:Object.fromEntries(DOSE.map(([k]) => [k, g(k).checked])), days:Math.max(0, +g('days').value || 0), qty:Math.max(0, +g('qty').value || 0), price:o && o.value ? +o.dataset.price || 0 : 0, unit:o && o.value ? o.dataset.unit || '' : ''}; }).filter(m => m.medId);
+  if (!rows.length) return info('Choose a medicine.');
+  if (rows.some(m => !m.qty)) return info('For each medicine, tick when to take it and enter the number of days.');
+  try {
+    for (const m of rows){ const md = (cl.meds || []).find(x => x.id === m.medId) || {name:''};
+      await F.addDoc(cCol('treatments'), {kind:'medicine', patientId:cl.pid, patientName:pName(cl.p), appointmentId:'', date, medId:m.medId, typeId:'', typeName:md.name, unit:m.unit, dose:m.dose, days:m.days, qty:m.qty, unitPrice:m.price, cost:Math.round(m.qty * m.price), discount:0, status:'completed', doctorId, doctorName:dName(doctorId), consultantFee:0, tooth:'', notes:'', createdAt:now, by}); }
+    info(`${plural(rows.length, 'medicine')} added to the bill.`); cl.clear = true; document.activeElement.blur(); renderClinic();
+  } catch(e){ info('Could not save: ' + errText(e)); }
 }
 /* billing */
 function clBilling(){
@@ -3372,9 +3434,9 @@ function clAppointments(){
   }
   const outside = A.filter(a => toMin(a.time) < open || toMin(a.time) >= close);
   const counts = Object.keys(ASTATUS).filter(k => k !== 'cancelled').map(k => `<div class="acnt ${k}"><span>${ASTATUS[k]}</span><b>${A.filter(a => a.status === k).length}</b></div>`).join('');
-  const NEXT = {scheduled:[['waiting', 'Check in'], ['missed', 'Missed']], waiting:[['engaged', 'In chair']], engaged:[['completed', 'Done → summary']], billing:[['bill', 'Bill & print']], missed:[['scheduled', 'Re-open']], completed:[], cancelled:[['scheduled', 'Restore']]};
+  const NEXT = {scheduled:[['waiting', 'Check in'], ['missed', 'Missed']], waiting:[['engaged', 'In chair'], ['scheduled', '↩ Back']], engaged:[['completed', 'Done → summary'], ['waiting', '↩ Back']], billing:[['bill', 'Bill & print'], ['engaged', '↩ Back to In chair']], missed:[['scheduled', 'Re-open']], completed:[], cancelled:[['scheduled', 'Restore']]};
   const side = A.map(a => `<div class="aq ${a.status}" data-appt="${esc(a.id)}"><div class="aqm"><b class="lnk" data-openp="${esc(a.patientId)}">${esc(a.patientName)}</b><span>${esc(hm12(a.time))} · ${esc(a.duration || 15)} min · ${esc(dName(a.doctorId))}</span><span class="ast ${a.status}">${ASTATUS[a.status]}</span></div>
-    ${w ? `<div class="aqa">${NEXT[a.status].map(([s, l]) => `<button data-ast="${s}"${['waiting', 'engaged', 'completed', 'bill'].includes(s) ? ' class="primary"' : ''}>${l}</button>`).join('')}${a.status === 'scheduled' ? '<button data-edit-appt>Edit</button><button class="danger" data-ast="cancelled">Cancel</button>' : ''}</div>` : ''}</div>`).join('');
+    ${w ? `<div class="aqa">${NEXT[a.status].map(([s, l]) => `<button data-ast="${s}"${/^↩/.test(l) ? ' class="aback" title="Go one step back"' : ['waiting', 'engaged', 'completed', 'bill'].includes(s) ? ' class="primary"' : ''}>${l}</button>`).join('')}${a.status === 'scheduled' ? '<button data-edit-appt>Edit</button><button class="danger" data-ast="cancelled">Cancel</button>' : ''}</div>` : ''}</div>`).join('');
   return bar + `<div class="agrid"><div class="aslots">${outside.length ? `<div class="srow"><div class="stime">Other</div><div class="scell">${outside.map(chip).join('')}</div></div>` : ''}${grid}</div>
     <div class="aside"><div class="acnts">${counts}</div>${side || '<div class="empty">No appointments this day.</div>'}</div></div>`;
 }
@@ -3418,10 +3480,72 @@ async function clSaveBook(){
   } catch(e){ info('Could not save: ' + errText(e)); }
 }
 
+/* ---------- sub-menus people can reorder by dragging (Accounts tabs, report tabs, patient tabs, clinic menu) ---------- */
+const ORD_KEY = k => 'zl-ord-' + k + '-' + ((cloud && cloud.uid) || 'local');
+function ordOf(k){ const so = state.settings.subOrder; if (so && Array.isArray(so[k])) return so[k]; try { return JSON.parse(localStorage.getItem(ORD_KEY(k)) || '[]'); } catch(e){ return []; } }
+function ordered(k, list){ const o = ordOf(k); if (!o.length) return list; const ix = x => { const i = o.indexOf(x[0]); return i < 0 ? 999 : i; }; return list.map((x, i) => [x, i]).sort((a, b) => ix(a[0]) - ix(b[0]) || a[1] - b[1]).map(x => x[0]); }
+function saveOrd(k, keys){
+  try { localStorage.setItem(ORD_KEY(k), JSON.stringify(keys)); } catch(e){}
+  if (agendaOn()){ state.settings.subOrder = Object.assign({}, state.settings.subOrder || {}, {[k]:keys}); commit(); }
+}
+(() => {
+  let dragB = null;
+  const host = b => b && b.parentElement && b.parentElement.matches('[data-ord]') ? b.parentElement : null;
+  document.addEventListener('mousedown', e => { const b = e.target.closest('[data-ord] > button'); if (b) b.draggable = true; }, true);
+  document.addEventListener('dragstart', e => { const b = e.target.closest && e.target.closest('[data-ord] > button'); if (!b) return; dragB = b; window.__ordDrag = true; b.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', 'ord'); } catch(_){} });
+  document.addEventListener('dragover', e => {
+    if (!dragB) return; const b = e.target.closest && e.target.closest('[data-ord] > button'), h = host(dragB);
+    if (!b || host(b) !== h || b === dragB) return; e.preventDefault();
+    const r = b.getBoundingClientRect(), vert = h.dataset.ordv === '1', before = vert ? e.clientY < r.top + r.height / 2 : e.clientX < r.left + r.width / 2;
+    h.insertBefore(dragB, before ? b : b.nextSibling);
+  });
+  document.addEventListener('drop', e => { if (dragB) e.preventDefault(); });
+  document.addEventListener('dragend', () => { window.__ordDrag = false; if (!dragB) return; const h = host(dragB); dragB.classList.remove('dragging');
+    if (h) saveOrd(h.dataset.ord, [...h.querySelectorAll(':scope > button')].map(b => b.dataset[h.dataset.ordattr])); dragB = null; });
+})();
+
 /* ---------- date range: Today or a custom From / To ---------- */
 function rangeBar(o, id){
-  return `<div class="rangebar" data-range="${id}"><button data-rp="today" class="${o.preset === 'today' ? 'on' : ''}">Today</button><span class="stat">or custom</span>
-    <label>From <input type="date" data-rf value="${o.from}"></label><label>To <input type="date" data-rt value="${o.to}"></label></div>`;
+  const k = o.kind, grp = ['collection', 'treatments', 'appointments'].includes(k), chart = grp;
+  return `<div class="rangebar" data-range="${id}">
+    ${grp ? `<label>Type<select data-rpgroup>${[['day', 'Daily'], ['month', 'Monthly'], ['year', 'Yearly']].map(([v, l]) => `<option value="${v}"${o.group === v ? ' selected' : ''}>${l}</option>`).join('')}</select></label>` : ''}
+    <button data-rp="today" class="${o.preset === 'today' ? 'on' : ''}">Today</button><span class="stat">or</span>
+    <label>From <input type="date" data-rf value="${o.from}" max="${todayKey}"></label><label>To <input type="date" data-rt value="${o.to}" max="${todayKey}"></label>
+    <button class="primary" data-rpgo>View</button>
+    ${chart ? `<div class="seg rpv"><button data-rpv="table" class="${o.view !== 'chart' ? 'on' : ''}">▦ Tabular</button><button data-rpv="chart" class="${o.view === 'chart' ? 'on' : ''}">📊 Chart</button></div>` : ''}
+    ${k === 'collection' ? `<label>Mode<select data-rpmode><option value="">All modes</option>${PMODES.map(([v, l]) => `<option value="${v}"${o.mode === v ? ' selected' : ''}>${l}</option>`).join('')}</select></label>` : ''}
+    ${grp ? `<label>Doctor<select data-rpdoc><option value="">All doctors</option>${cl.doctors.map(d => `<option value="${esc(d.id)}"${o.dfil === d.id ? ' selected' : ''}>${esc(d.name)}</option>`).join('')}</select></label>` : ''}
+  </div>`;
+}
+/* reports: group by day / month / year, and a stacked bar chart */
+const RP_COLORS = ['#0F766E', '#6366F1', '#F59E0B', '#EC4899', '#0EA5E9', '#84CC16', '#A855F7', '#EF4444'];
+const inrK = n => { n = Math.round(n || 0); return n >= 1e7 ? '₹' + (n / 1e7).toFixed(1) + 'Cr' : n >= 1e5 ? '₹' + (n / 1e5).toFixed(1) + 'L' : n >= 1e3 ? '₹' + (n / 1e3).toFixed(1) + 'k' : '₹' + n; };
+const perOf = (g, day) => g === 'month' ? day.slice(0, 7) : g === 'year' ? day.slice(0, 4) : day;
+const perLabel = (g, k) => g === 'month' ? monthLabel(k) : g === 'year' ? k : fmtShort(k);
+function periodsIn(g, from, to){
+  if (g === 'day') return days(from, to);
+  const out = []; let k = perOf(g, from); const end = perOf(g, to);
+  while (k <= end && out.length < 400){ out.push(k); k = g === 'month' ? mShift(k, 1) : String(+k + 1); }
+  return out;
+}
+function stackChart(cols, keys, names, money){
+  if (!cols.length) return '<div class="empty">Nothing in this period.</div>';
+  const n = cols.length, bw = Math.max(6, Math.min(34, 560 / n * .6)), gap = bw * .7, W = Math.max(360, n * (bw + gap) + 60), H = 220, top = 12;
+  const tot = c => keys.reduce((a, k) => a + (c.parts[k] || 0), 0), max = Math.max(1, ...cols.map(tot));
+  const step = Math.pow(10, Math.floor(Math.log10(max))), nice = Math.ceil(max / step) * step, y = v => top + H - v / nice * H, fmt = money ? inrK : v => Math.round(v);
+  const every = Math.ceil(n / 14);
+  let g = [0, .25, .5, .75, 1].map(f => `<line x1="48" x2="${W}" y1="${y(nice * f)}" y2="${y(nice * f)}" style="stroke:var(--line)"/><text x="44" y="${y(nice * f) + 4}" text-anchor="end">${fmt(nice * f)}</text>`).join('');
+  cols.forEach((c, i) => { const x = 56 + i * (bw + gap); let acc = 0;
+    keys.forEach((k, j) => { const v = c.parts[k] || 0; if (!v) return; const y1 = y(acc + v), h = y(acc) - y1; acc += v;
+      g += `<rect x="${x}" y="${y1}" width="${bw}" height="${Math.max(h, 1)}" rx="${Math.min(4, bw / 4)}" fill="${RP_COLORS[j % RP_COLORS.length]}"><title>${esc(c.label)} · ${esc(names[k] || k)}: ${money ? inr(v) : v}</title></rect>`; });
+    if (acc && n <= 31) g += `<text x="${x + bw / 2}" y="${y(acc) - 4}" text-anchor="middle" class="cv">${fmt(acc)}</text>`;
+    if (i % every === 0) g += `<text x="${x + bw / 2}" y="${top + H + 16}" text-anchor="middle">${esc(c.short || c.label)}</text>`; });
+  return `<div class="chartw"><svg viewBox="0 0 ${W} ${H + top + 26}" style="min-width:${Math.min(W, 900)}px">${g}</svg>
+    <div class="legend">${keys.map((k, j) => `<span><i style="background:${RP_COLORS[j % RP_COLORS.length]}"></i>${esc(names[k] || k)}</span>`).join('')}</div></div>`;
+}
+function hbarChart(items, money){
+  const max = Math.max(1, ...items.map(x => x.v));
+  return `<div class="hbars">${items.map((x, j) => `<div class="hb"><span>${esc(x.label)}</span><div><i style="width:${x.v / max * 100}%;background:${RP_COLORS[j % RP_COLORS.length]}"></i></div><b>${money ? inr(x.v) : x.v}</b></div>`).join('') || '<div class="empty">Nothing in this period.</div>'}</div>`;
 }
 function presetRange(){ return [todayKey, todayKey]; }
 
@@ -3501,7 +3625,7 @@ function clAccounts(){
   clAccLoad();
   const d = a.d, monthly = !['tally', 'import'].includes(a.tab);
   const head = `<div class="clhead"><h2>Accounts</h2>${monthly ? `<div class="mnav"><button data-am2="-1">‹</button><b>${esc(monthLabel(a.month))}</b><button data-am2="1"${a.month >= todayKey.slice(0, 7) ? ' disabled' : ''}>›</button></div>` : ''}</div>
-    <div class="htabs">${tabs.map(([k, l]) => `<button data-at="${k}" class="${a.tab === k ? 'on' : ''}">${l}</button>`).join('')}</div>`;
+    <div class="htabs" data-ord="acc" data-ordattr="at" title="Drag a tab to put it where you like">${ordered('acc', tabs).map(([k, l]) => `<button draggable="true" data-at="${k}" class="${a.tab === k ? 'on' : ''}">${l}</button>`).join('')}</div>`;
   if (!d) return head + '<div class="empty">Loading…</div>';
   if (d.err) return head + `<div class="auth-err">${esc(d.err)}</div>`;
   let banner = '';
@@ -3576,9 +3700,14 @@ function accPetty(d){
   const L = (d.pin || []).concat(d.pout || []).filter(inM).sort((x, y) => String(y.date).localeCompare(String(x.date)) || (y.at || 0) - (x.at || 0));
   const tin = paidSum(L.filter(x => x.kind === 'petty')), tout = paidSum(L.filter(x => x.kind === 'pettyspend'));
   const dflt = a.month === todayKey.slice(0, 7) ? todayKey : mEnd(a.month);
-  return `<div class="kpis">${kpi('Petty cash balance', inr(d.pettyBal), 'should match the cash in the petty box', d.pettyBal < 0 ? 'neg' : '')}
+  const bal = d.pettyBal, everIn = (d.pin || []).length;
+  return `<div class="kpis">${kpi('Cash in the petty box', inr(Math.max(0, bal)), bal < 0 ? `<span class="neg">${inr(-bal)} spent more than was topped up</span>` : 'top-ups minus spends: count the box to check', bal < 0 ? 'neg' : '')}
       ${kpi('Topped up this month', inr(tin), esc(monthLabel(a.month)))}${kpi('Spent this month', inr(tout), plural(L.filter(x => x.kind === 'pettyspend').length, 'spend'))}</div>
+    ${bal < 0 || !everIn ? `<div class="nag${bal < 0 ? ' late' : ''}">${bal < 0 ? `⚠ ${inr(-bal)} more has been recorded as spent than was ever topped up, so the balance can't be right.` : 'No top-up or opening balance has been recorded yet.'} ${owner ? 'Count the cash in the petty box and enter it below: that sets the correct balance.' : 'Ask the clinic owner to count the box and set the opening balance.'}</div>` : ''}
     <div class="acards">
+      ${owner ? `<div class="box"><h3>Count the box / opening balance <span class="sub">enter the cash in the petty box right now</span></h3><form class="aform" id="accPcountForm" novalidate>
+        <label>Cash in the box now (₹) *<input type="number" id="pcAmt" min="0" placeholder="e.g. 2000"></label><button class="primary" type="submit">Set balance</button></form>
+        <p class="stat" style="margin:6px 0 0">The difference is recorded as an opening balance (or a correction), so the balance shown always equals the cash you have.</p></div>` : ''}
       ${owner ? `<div class="box"><h3>Top up petty cash <span class="sub">clinic owner / accounts</span></h3><form class="aform" id="accPinForm" novalidate>
         <label>Date<input type="date" id="piDate" value="${dflt}" max="${todayKey}"></label><label>Amount (₹) *<input type="number" id="piAmt" min="1"></label>
         <label class="grow">Note *<input id="piNote" placeholder="e.g. Weekly top-up handed to Riya"></label><button class="primary" type="submit">Top up</button></form></div>` : ''}
@@ -3587,7 +3716,7 @@ function accPetty(d){
         <label class="grow">Spent on *<input id="poNote" placeholder="e.g. Tea, courier, cleaning supplies"></label><button class="primary" type="submit">Add spend</button></form></div>` : ''}
     </div>
     <div class="awrap"><table class="atbl"><thead><tr><th>Date</th><th>Entry</th><th>Note</th><th class="num">Top-up</th><th class="num">Spent</th><th>By</th><th></th></tr></thead><tbody>
-      ${L.map(x => `<tr data-led="${esc(x.id)}"><td>${esc(fmtShort(x.date))}</td><td>${x.kind === 'petty' ? '<b>Top-up</b>' : 'Spend'}</td><td>${esc(x.note || '')}</td><td class="num">${x.kind === 'petty' ? inr(x.amount) : ''}</td><td class="num">${x.kind === 'pettyspend' ? inr(x.amount) : ''}</td><td class="stat">${esc((x.by || '').split('@')[0])}</td><td>${owner ? '<button class="danger" data-ldel>✕</button>' : ''}</td></tr>`).join('') || '<tr><td colspan="7" class="stat">No petty cash entries this month.</td></tr>'}
+      ${L.map(x => `<tr data-led="${esc(x.id)}"><td>${esc(fmtShort(x.date))}</td><td>${x.kind === 'petty' ? (x.opening ? '<b>Opening / count</b>' : '<b>Top-up</b>') : x.adjust ? 'Count correction' : 'Spend'}</td><td>${esc(x.note || '')}</td><td class="num">${x.kind === 'petty' ? inr(x.amount) : ''}</td><td class="num">${x.kind === 'pettyspend' ? inr(x.amount) : ''}</td><td class="stat">${esc((x.by || '').split('@')[0])}</td><td>${owner ? '<button class="danger" data-ldel>✕</button>' : ''}</td></tr>`).join('') || '<tr><td colspan="7" class="stat">No petty cash entries this month.</td></tr>'}
     </tbody></table></div>`;
 }
 function accVendorTab(type){
@@ -3801,7 +3930,13 @@ async function accSubmit(id, form){
       a.pre = null; info(vt ? 'Bill added.' : 'Expense added.');
     }
     if (id === 'accPinForm'){ if (num('#piAmt') <= 0) return info('Enter the amount.'); if (!val('#piNote')) return info('Add a note for this top-up.'); await add({kind:'petty', date:val('#piDate') || todayKey, mode:'cash', amount:num('#piAmt'), note:val('#piNote')}); info('Petty cash topped up.'); }
-    if (id === 'accPoutForm'){ if (num('#poAmt') <= 0) return info('Enter the amount.'); if (!val('#poNote')) return info('Say what the money was spent on.'); await add({kind:'pettyspend', date:val('#poDate') || todayKey, mode:'cash', amount:num('#poAmt'), note:val('#poNote')}); info('Petty cash spend recorded.'); }
+    if (id === 'accPcountForm'){ const raw = val('#pcAmt'); if (raw === '') return info('Enter how much cash is in the petty box now.');
+      const counted = Math.max(0, Math.round(+raw || 0)), bal = (a.d && a.d.pettyBal) || 0, diff = counted - bal;
+      if (!diff) return info(`The box matches: ${inr(counted)}.`);
+      await add(diff > 0 ? {kind:'petty', date:todayKey, mode:'cash', amount:diff, opening:true, note:`Opening balance / box counted: ${inr(counted)} in the box`} : {kind:'pettyspend', date:todayKey, mode:'cash', amount:-diff, adjust:true, note:`Box count correction: ${inr(counted)} in the box`});
+      info(`Petty cash balance is now ${inr(counted)}.`); }
+    if (id === 'accPoutForm'){ if (num('#poAmt') <= 0) return info('Enter the amount.'); if (!val('#poNote')) return info('Say what the money was spent on.');
+      { const bal = (a.d && a.d.pettyBal) || 0; if (num('#poAmt') > bal && !confirm(`Only ${inr(Math.max(0, bal))} is left in the petty box. Record this spend of ${inr(num('#poAmt'))} anyway? Ask the owner to top up.`)) return; } await add({kind:'pettyspend', date:val('#poDate') || todayKey, mode:'cash', amount:num('#poAmt'), note:val('#poNote')}); info('Petty cash spend recorded.'); }
     if (id === 'accVenForm'){ if (!val('#vnName')) return info('Enter the vendor name.'); await F.addDoc(cCol('vendors'), {name:val('#vnName'), type:form.dataset.vt || 'Other', phone:val('#vnPhone'), gstin:val('#vnGst'), notes:val('#vnNotes'), active:true, createdAt:Date.now()}); info('Vendor added.'); }
     if (id === 'accCmForm'){ const n = val('#cmName'); if (!n) return info('Enter the commitment name.'); const m = ameta(); if (m.commitments.some(c => c.name.toLowerCase() === n.toLowerCase())) return info('Already in the list.'); m.commitments.push({id:'c' + Date.now().toString(36), name:n, amount:num('#cmAmt')}); await saveAMeta(m); }
     if (id === 'accCatForm'){ const n = val('#catName'); if (!n) return; const m = ameta(); if (!m.cats.includes(n)) m.cats.push(n); await saveAMeta(m); }
@@ -3829,7 +3964,7 @@ function clReports(){
   const r = cl.rep, avail = REPORTS.filter(x => can(x[2]));
   if (!avail.some(x => x[0] === r.kind)) r.kind = avail[0][0];
   if (!r.from){ r.preset = 'today'; r.from = r.to = todayKey; }
-  return `<div class="clhead"><h2>Reports</h2></div><div class="htabs">${avail.map(([k, l]) => `<button data-rk="${k}" class="${k === r.kind ? 'on' : ''}">${l}</button>`).join('')}</div>
+  return `<div class="clhead"><h2>Reports</h2></div><div class="htabs" data-ord="rep" data-ordattr="rk">${ordered('rep', avail).map(([k, l]) => `<button draggable="true" data-rk="${k}" class="${k === r.kind ? 'on' : ''}">${l}</button>`).join('')}</div>
     <div>${r.kind === 'outstanding' ? '' : rangeBar(r, 'rep')}</div><div id="repOut"><div class="empty">Loading…</div></div>`;
 }
 async function clRunReport(){
@@ -3861,25 +3996,42 @@ function clReportHtml(){
   const bar = t => `<div class="vbar" style="padding:0 0 8px"><strong>${esc(t)}</strong><span class="stat">${esc(per)}</span><span class="sp"></span><button data-repcsv>⬇ CSV</button><button data-repprint>🖨 Print</button></div>`;
   const k = (l, v, s) => `<div class="kpi"><div class="kl">${l}</div><div class="kv">${v}</div><div class="ks">${s}</div></div>`;
   let html = '';
+  const G = r.group || 'day', chart = r.view === 'chart', drill = (k, label) => ` class="clk" data-drill="${esc(k)}" title="Open ${esc(label)} day by day"`;
   if (r.kind === 'collection'){
-    const P = d.pay.slice().sort((x, y) => String(y.date).localeCompare(String(x.date)) || String(y.receiptNo || '').localeCompare(String(x.receiptNo || ''))), tot = paidSum(P), by = (xs, m) => paidSum(xs.filter(x => x.mode === m));
+    const P = d.pay.filter(x => (!r.mode || x.mode === r.mode) && (!r.dfil || x.doctorId === r.dfil)).sort((x, y) => String(y.date).localeCompare(String(x.date)) || String(y.receiptNo || '').localeCompare(String(x.receiptNo || ''))), tot = paidSum(P), by = (xs, m) => paidSum(xs.filter(x => x.mode === m));
     const mode = x => (PMODES.find(m => m[0] === x.mode) || [0, x.mode])[1];
-    const rows = []; let day = null;
-    P.forEach(x => { if (x.date !== day){ day = x.date; const xs = P.filter(y => y.date === day); rows.push({attr:' class="wk"', c:[`<b>${esc(fmtShort(day))}</b>`, '', `${plural(xs.length, 'payment')}`, '', '', `<b>${inr(paidSum(xs))}</b>`]}); }
-      rows.push({attr:` class="clk" data-openp="${esc(x.patientId)}"`, c:['', esc(x.receiptNo || ''), `<b>${esc(x.patientName || '—')}</b>`, esc(x.doctorId ? dName(x.doctorId) : '—'), esc(mode(x)), inr(x.amount)]}); });
-    repCsv = [['Date', 'Receipt', 'Patient', 'Doctor', 'Mode', 'Amount', 'Note']].concat(P.map(x => [x.date, x.receiptNo, x.patientName, x.doctorId ? dName(x.doctorId) : '', mode(x), x.amount, x.note]));
-    html = bar('Collection report') + `<div class="kpis">${k('Total collected', inr(tot), plural(P.length, 'payment'))}${PMODES.map(([m, l]) => k(l, inr(by(P, m)), tot ? Math.round(by(P, m) / tot * 100) + '%' : '—')).join('')}</div>`
-      + tbl(['Date', 'Receipt', 'Patient', 'Doctor', 'Mode', '₹Amount'], rows, ['Total', '', '', '', '', inr(tot)]);
+    const used = PMODES.filter(([m]) => ['cash', 'upi'].includes(m) || by(P, m) > 0), names = Object.fromEntries(PMODES);
+    const kp = `<div class="kpis">${k('Total collected', inr(tot), plural(P.length, 'payment'))}${used.map(([m, l]) => k(l, inr(by(P, m)), tot ? Math.round(by(P, m) / tot * 100) + '%' : '—')).join('')}</div>`;
+    const title = `Collection report${r.mode ? ' · ' + names[r.mode] : ''}${r.dfil ? ' · ' + dName(r.dfil) : ''}`;
+    const pers = periodsIn(G, r.from, r.to).reverse();
+    if (chart){
+      const cols = pers.slice().reverse().map(pk => { const xs = P.filter(x => perOf(G, x.date) === pk); return {label:perLabel(G, pk), short:G === 'day' ? fmtDM(pk) : G === 'month' ? parseDay(pk + '-01').toLocaleDateString([], {month:'short', year:'2-digit'}) : pk, parts:Object.fromEntries(used.map(([m]) => [m, by(xs, m)]))}; });
+      repCsv = [['Period', ...used.map(u => u[1]), 'Total']].concat(cols.map(c => [c.label, ...used.map(([m]) => c.parts[m]), used.reduce((a, [m]) => a + c.parts[m], 0)]));
+      html = bar(title) + kp + stackChart(cols, used.map(u => u[0]), names, true);
+    } else if (G === 'day'){
+      const rows = []; let day = null;
+      P.forEach(x => { if (x.date !== day){ day = x.date; const xs = P.filter(y => y.date === day); rows.push({attr:' class="wk"', c:[`<b>${esc(fmtShort(day))}</b>`, '', `${plural(xs.length, 'payment')}`, '', '', `<b>${inr(paidSum(xs))}</b>`]}); }
+        rows.push({attr:` class="clk" data-openp="${esc(x.patientId)}"`, c:['', esc(x.receiptNo || ''), `<b>${esc(x.patientName || '—')}</b>`, esc(x.doctorId ? dName(x.doctorId) : '—'), esc(mode(x)), inr(x.amount)]}); });
+      repCsv = [['Date', 'Receipt', 'Patient', 'Doctor', 'Mode', 'Amount', 'Note']].concat(P.map(x => [x.date, x.receiptNo, x.patientName, x.doctorId ? dName(x.doctorId) : '', mode(x), x.amount, x.note]));
+      html = bar(title) + kp + tbl(['Date', 'Receipt', 'Patient', 'Doctor', 'Mode', '₹Amount'], rows, ['Total', '', '', '', '', inr(tot)]);
+    } else {
+      const rows = pers.map(pk => { const xs = P.filter(x => perOf(G, x.date) === pk); return {xs, pk}; }).filter(x => x.xs.length);
+      repCsv = [[G === 'month' ? 'Month' : 'Year', 'Payments', ...used.map(u => u[1]), 'Total']].concat(rows.map(({xs, pk}) => [perLabel(G, pk), xs.length, ...used.map(([m]) => by(xs, m)), paidSum(xs)]));
+      html = bar(title) + kp + tbl([G === 'month' ? 'Month' : 'Year', '#Payments', ...used.map(u => '₹' + u[1]), '₹Total'], rows.map(({xs, pk}) => ({attr:drill(pk, perLabel(G, pk)), c:[`<b>${esc(perLabel(G, pk))}</b>`, xs.length, ...used.map(([m]) => inr(by(xs, m))), `<b>${inr(paidSum(xs))}</b>`]})), ['Total', P.length, ...used.map(([m]) => inr(by(P, m))), inr(tot)]);
+    }
   }
   if (r.kind === 'treatments'){
-    const T = d.t.filter(t => t.status === 'completed'), groups = {};
-    T.forEach(t => { const g = groups[t.typeName] = groups[t.typeName] || {n:0, gross:0, disc:0, net:0, pts:new Set()}; g.n++; g.gross += +t.cost || 0; g.disc += +t.discount || 0; g.net += net(t); g.pts.add(t.patientId); });
+    const T = d.t.filter(t => t.status === 'completed' && (!r.dfil || t.doctorId === r.dfil)), groups = {};
+    T.forEach(t => { const g = groups[isMed(t) ? 'Medicines (tablets)' : t.typeName] = groups[isMed(t) ? 'Medicines (tablets)' : t.typeName] = groups[t.typeName] || {n:0, gross:0, disc:0, net:0, pts:new Set()}; g.n++; g.gross += +t.cost || 0; g.disc += +t.discount || 0; g.net += net(t); g.pts.add(t.patientId); });
     const tot = Object.values(groups).reduce((a, g) => a + g.net, 0);
     const rows = Object.entries(groups).sort((a, b) => b[1].net - a[1].net).map(([n, g]) => ({c:[`<b>${esc(n)}</b>`, g.n, g.pts.size, inr(g.gross), inr(g.disc), `<b>${inr(g.net)}</b>`, `<div class="rbar"><i style="width:${tot ? g.net / tot * 100 : 0}%"></i></div>${tot ? Math.round(g.net / tot * 100) : 0}%`], raw:[n, g.n, g.pts.size, g.gross, g.disc, g.net]}));
     repCsv = [['Treatment', 'Done', 'Patients', 'Gross', 'Discount', 'Net']].concat(rows.map(x => x.raw));
     html = bar('Treatment-wise earnings') + `<div class="kpis">${k('Earned', inr(tot), 'completed treatments')}${k('Treatments done', T.length, plural(new Set(T.map(t => t.patientId)).size, 'patient'))}${k('Planned / in progress', d.t.length - T.length, 'not counted yet')}</div>`
-      + tbl(['Treatment', '#Done', '#Patients', '₹Gross', '₹Discount', '₹Net earned', 'Share'], rows, ['Total', T.length, '', '', '', inr(tot), ''])
-      + `<h3 style="font-size:13px;margin:16px 0 6px">Every treatment, with the patient</h3>` + tbl(['Date', 'Patient', 'Treatment', 'Doctor', '₹Net'], T.slice().sort((a, b) => String(b.date).localeCompare(String(a.date))).map(t => ({attr:` class="clk" data-openp="${esc(t.patientId)}"`, c:[esc(fmtShort(t.date)), `<b>${esc(t.patientName)}</b>`, esc(t.typeName + (t.tooth ? ' (' + t.tooth + ')' : '')), esc(dName(t.doctorId) || t.doctorName || ''), inr(net(t))]})));
+      + (chart ? `<h3 style="font-size:13px;margin:6px 0">Earnings by treatment</h3>` + hbarChart(Object.entries(groups).sort((a, b) => b[1].net - a[1].net).map(([n, g]) => ({label:n, v:g.net})), true)
+          + `<h3 style="font-size:13px;margin:16px 0 6px">Earnings by ${G === 'month' ? 'month' : G === 'year' ? 'year' : 'day'}</h3>` + stackChart(periodsIn(G, r.from, r.to).map(pk => ({label:perLabel(G, pk), short:G === 'day' ? fmtDM(pk) : G === 'month' ? parseDay(pk + '-01').toLocaleDateString([], {month:'short', year:'2-digit'}) : pk, parts:{net:T.filter(t => perOf(G, t.date) === pk).reduce((a, t) => a + net(t), 0)}})), ['net'], {net:'Net earned'}, true)
+        : (G !== 'day' ? tbl([G === 'month' ? 'Month' : 'Year', '#Treatments', '₹Net earned'], periodsIn(G, r.from, r.to).reverse().map(pk => { const xs = T.filter(t => perOf(G, t.date) === pk); return {attr:drill(pk, perLabel(G, pk)), c:[`<b>${esc(perLabel(G, pk))}</b>`, xs.length, `<b>${inr(xs.reduce((a, t) => a + net(t), 0))}</b>`], n:xs.length}; }).filter(x => x.n), ['Total', T.length, inr(tot)]) + '<div style="height:12px"></div>' : '')
+          + tbl(['Treatment', '#Done', '#Patients', '₹Gross', '₹Discount', '₹Net earned', 'Share'], rows, ['Total', T.length, '', '', '', inr(tot), '']))
+      + (chart ? '' : `<h3 style="font-size:13px;margin:16px 0 6px">Every treatment, with the patient</h3>` + tbl(['Date', 'Patient', 'Treatment', 'Doctor', '₹Net'], T.slice().sort((a, b) => String(b.date).localeCompare(String(a.date))).map(t => ({attr:` class="clk" data-openp="${esc(t.patientId)}"`, c:[esc(fmtShort(t.date)), `<b>${esc(t.patientName)}</b>`, esc(t.typeName + (t.tooth ? ' (' + t.tooth + ')' : '')), esc(dName(t.doctorId) || t.doctorName || ''), inr(net(t))]}))));
     repCsv = [['Date', 'Patient', 'Treatment', 'Tooth', 'Doctor', 'Gross', 'Discount', 'Net']].concat(T.map(t => [t.date, t.patientName, t.typeName, t.tooth || '', dName(t.doctorId) || t.doctorName || '', +t.cost || 0, +t.discount || 0, net(t)]));
   }
   if (r.kind === 'doctors'){
@@ -3909,11 +4061,14 @@ function clReportHtml(){
       + tbl(['Patient', 'Phone', '₹Treatment cost', '₹Paid', '₹Balance'], rows.map(x => ({attr:` class="clk" data-openp="${esc(x.p.id)}"`, c:[`<b>${esc(pName(x.p))}</b><span class="sub2">${esc(x.p.code || '')}</span>`, esc(x.p.phone || ''), inr(x.b), inr(x.pd), `<b class="neg">${inr(x.bal)}</b>`]})), ['Total', '', '', '', inr(tot)], 'otbl');
   }
   if (r.kind === 'appointments'){
-    const A = d.a, st = Object.keys(ASTATUS);
-    const rows = days(r.from, r.to).map(day => { const xs = A.filter(a => a.date === day); return {c:[esc(fmtShort(day)), xs.length, ...st.map(s => xs.filter(a => a.status === s).length)], raw:[day, xs.length, ...st.map(s => xs.filter(a => a.status === s).length)]}; }).filter(x => x.raw[1]).reverse();
+    const A = d.a.filter(a => !r.dfil || a.doctorId === r.dfil), st = Object.keys(ASTATUS);
+    const rows = periodsIn(G, r.from, r.to).map(pk => { const xs = A.filter(a => perOf(G, a.date) === pk); return {attr:G === 'day' ? '' : drill(pk, perLabel(G, pk)), c:[esc(perLabel(G, pk)), xs.length, ...st.map(s => xs.filter(a => a.status === s).length)], raw:[pk, xs.length, ...st.map(s => xs.filter(a => a.status === s).length)]}; }).filter(x => x.raw[1]).reverse();
+    if (chart){ const cols = rows.slice().reverse().map(x => ({label:perLabel(G, x.raw[0]), short:G === 'day' ? fmtDM(x.raw[0]) : x.raw[0], parts:Object.fromEntries(st.map((s, i) => [s, x.raw[2 + i]]))}));
+      repCsv = [['Period', 'Total', ...st.map(s => ASTATUS[s])]].concat(rows.map(x => x.raw));
+      return bar('Appointments') + stackChart(cols, st, ASTATUS, false); }
     repCsv = [['Date', 'Total', ...st.map(s => ASTATUS[s])]].concat(rows.map(x => x.raw));
     html = bar('Appointments') + `<div class="kpis">${k('Booked', A.length, 'in this period')}${k('Completed', A.filter(a => a.status === 'completed').length, '')}${k('Missed', A.filter(a => a.status === 'missed').length, A.length ? Math.round(A.filter(a => a.status === 'missed').length / A.length * 100) + '% no-show' : '')}</div>`
-      + tbl(['Date', '#Total', ...st.map(s => '#' + ASTATUS[s])], rows, ['Total', A.length, ...st.map(s => A.filter(a => a.status === s).length)]);
+      + tbl([G === 'month' ? 'Month' : G === 'year' ? 'Year' : 'Date', '#Total', ...st.map(s => '#' + ASTATUS[s])], rows, ['Total', A.length, ...st.map(s => A.filter(a => a.status === s).length)]);
   }
   if (r.kind === 'newpatients'){
     const P = d.p.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
@@ -3951,6 +4106,14 @@ function clSetup(){
         ${cl.types.map(t => `<tr data-ty="${esc(t.id)}"${t.active === false ? ' style="opacity:.55"' : ''}><td>${esc(t.name)}</td><td class="num"><input type="number" data-tycost value="${+t.cost || 0}" min="0" step="50" style="width:100px"></td>
           <td><select data-tyneed><option value="">—</option>${DOC_KINDS.map(k => `<option${k === needsDocOf(t) ? ' selected' : ''}>${k}</option>`).join('')}</select></td><td><button data-tyact>${t.active === false ? 'Activate' : 'Hide'}</button></td></tr>`).join('') || '<tr><td colspan="4" class="stat">No treatments yet.</td></tr>'}
       </tbody></table></div></div>
+    <div class="box"><h3>Medicine price list <span class="sub">price per tablet / unit: used for prescriptions and added to the bill</span></h3>
+      <form class="aform" id="clMedForm" novalidate><label class="grow">Medicine<input id="mdName" placeholder="e.g. Amoxicillin 500 mg"></label><label>Price (₹) per unit<input type="number" id="mdPrice" min="0" step="0.5"></label>
+        <label>Unit<select id="mdUnit">${MED_UNITS.map(u => `<option>${u}</option>`).join('')}</select></label><button class="primary" type="submit">Add</button>
+        ${(cl.meds || []).length ? '' : '<button type="button" id="medSeed">Add common dental medicines</button>'}</form>
+      <div class="awrap"><table class="atbl"><thead><tr><th>Medicine</th><th>Unit</th><th class="num">Price (₹)</th><th></th></tr></thead><tbody>
+        ${(cl.meds || []).map(m => `<tr data-med="${esc(m.id)}"${m.active === false ? ' style="opacity:.55"' : ''}><td>${esc(m.name)}</td><td><select data-medunit>${MED_UNITS.map(u => `<option${u === (m.unit || 'Tablet') ? ' selected' : ''}>${u}</option>`).join('')}</select></td>
+          <td class="num"><input type="number" data-medprice value="${+m.price || 0}" min="0" step="0.5" style="width:90px"></td><td><button data-medact>${m.active === false ? 'Activate' : 'Hide'}</button></td></tr>`).join('') || '<tr><td colspan="4" class="stat">No medicines yet.</td></tr>'}
+      </tbody></table></div></div>
     <div class="box"><h3>Clinic details <span class="sub">printed on receipts and statements</span></h3>
       <form class="aform" id="clSetForm" novalidate>
         <label class="grow">Clinic name<input id="stName" value="${esc(s.clinicName || orgCtx().org.name)}"></label>
@@ -3964,8 +4127,9 @@ function clSetup(){
 }
 
 /* ---------- events ---------- */
-$('#clSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ cl.sec = b.dataset.s; if (cl.sec === 'patients' && cl.pid){ cl.pUnsub.forEach(u => { try { u(); } catch(_){} }); cl.pUnsub = []; cl.pid = null; } cl.newP = false; renderClinic(); } });
+$('#clSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ cl.sec = b.dataset.s; if (cl.sec === 'setup') cl.members = null; if (cl.sec === 'assists') cl.asKey = ''; if (cl.sec === 'patients' && cl.pid){ cl.pUnsub.forEach(u => { try { u(); } catch(_){} }); cl.pUnsub = []; cl.pid = null; } cl.newP = false; renderClinic(); } });
 $('#clBody').addEventListener('input', e => {
+  const mr = e.target.closest('[data-mr]'); if (mr && e.target.matches('[data-mf]')){ medCalc(mr); const tt = $('#rxTot'); if (tt) tt.textContent = inr([...document.querySelectorAll('#rxMeds [data-mr]')].reduce((s, r) => s + parseInt((r.querySelector('b[data-mf="cost"]').textContent || '0').replace(/[^0-9]/g, '') || 0), 0)); }
   if (e.target.matches('#tlOpen,#tlChange,#tlOut,[data-den],[data-dapp],[data-dseen]')) tallyCalc();
   if (e.target.id === 'clQ'){ cl.q = e.target.value; clearTimeout(clQTimer); clQTimer = setTimeout(clDoSearch, 250); }
   if (e.target.id === 'pfDob' && $('#pfAge')){ const a = $('#pfAge'); a.disabled = !!e.target.value; a.value = ''; a.placeholder = e.target.value ? ageOf({dob:e.target.value}) : 'if DOB unknown'; }
@@ -3979,16 +4143,26 @@ $('#clBody').addEventListener('change', async e => {
   if (t.id === 'vOnly'){ cl.acc.vonly = t.value; renderClinic(); }
   if (t.id === 'stLogo' && t.files[0]){ try { const logo = await logoFromFile(t.files[0]); await F.updateDoc(cloud.F.doc(cloud.fs, 'orgs', orgCtx().orgId), {logo}); info('Logo updated.'); } catch(err){ info(errText(err)); } return; }
   if (t.id === 'tfDoc'){ const dd = cl.doctors.find(x => x.id === t.value), f = $('#tfFeeWrap'); if (f) f.hidden = !(dd && dd.type === 'consultant'); }
-  const rg = t.closest('[data-range]');
-  if (rg && (t.matches('[data-rf]') || t.matches('[data-rt]'))){
-    const o = cl.rep, f = rg.querySelector('[data-rf]').value, to = rg.querySelector('[data-rt]').value;
-    if (f && to && f <= to){ o.from = f; o.to = to; o.preset = ''; document.activeElement.blur(); renderClinic(); }
-  }
+  if (t.matches('[data-rpgroup]')){ const o = cl.rep; o.group = t.value;
+    if (o.group === 'month' && o.from.slice(0, 7) === o.to.slice(0, 7)){ o.from = todayKey.slice(0, 4) + '-01-01'; o.to = todayKey; o.preset = ''; }
+    if (o.group === 'year' && o.from.slice(0, 4) === o.to.slice(0, 4)){ o.from = (+todayKey.slice(0, 4) - 4) + '-01-01'; o.to = todayKey; o.preset = ''; }
+    document.activeElement.blur(); return renderClinic(); }
+  if (t.matches('[data-rpmode]')){ cl.rep.mode = t.value; document.activeElement.blur(); return renderClinic(); }
+  if (t.matches('[data-rpdoc]')){ cl.rep.dfil = t.value; document.activeElement.blur(); return renderClinic(); }
   try {
     if (t.matches('[data-tst]')){ await F.updateDoc(cDoc('treatments', t.closest('[data-tid]').dataset.tid), {status:t.value}); }
     if (t.matches('[data-cmamt]')){ const m = ameta(), c = m.commitments.find(x => x.id === t.closest('[data-cm]').dataset.cm); c.amount = Math.max(0, +t.value || 0); await saveAMeta(m); info('Saved.'); }
+    if (t.matches('[data-asrate]')){ const d = cl.asst.d, cur = ((d.pay || []).find(p => p.id === 'rates') || {}).rates || {}, rates = Object.assign({}, cur, {[t.closest('[data-asr]').dataset.asr]:Math.max(0, +t.value || 0)});
+      await F.setDoc(cDoc('assistPay', 'rates'), {rates}); const r = (d.pay || []).find(p => p.id === 'rates'); if (r) r.rates = rates; else (d.pay = d.pay || []).push({id:'rates', rates}); info('Saved.'); document.activeElement.blur(); return renderClinic(); }
+    if (t.matches('[data-aspay]')){ const d = cl.asst.d, id = 'e-' + t.closest('[data-as]').dataset.as, x = {amount:Math.max(0, +t.value || 0), at:Date.now()};
+      await F.setDoc(cDoc('assistPay', id), x); const r = (d.pay || []).find(p => p.id === id); if (r) Object.assign(r, x); else (d.pay = d.pay || []).push(Object.assign({id}, x)); info('Saved.'); document.activeElement.blur(); return renderClinic(); }
+    if (t.matches('[data-medprice]')){ await F.updateDoc(cDoc('medicines', t.closest('[data-med]').dataset.med), {price:Math.max(0, +t.value || 0)}); info('Saved.'); }
+    if (t.matches('[data-medunit]')){ await F.updateDoc(cDoc('medicines', t.closest('[data-med]').dataset.med), {unit:t.value}); info('Saved.'); }
     if (t.matches('[data-tyneed]')){ await F.updateDoc(cDoc('treatmentTypes', t.closest('[data-ty]').dataset.ty), {needsDoc:t.value}); info('Saved.'); clinicSync(true); }
-    if (t.matches('[data-doclogin]')){ await F.updateDoc(cDoc('doctors', t.closest('[data-doc]').dataset.doc), {memberUid:t.value}); info('Saved.'); }
+    if (t.matches('[data-doclogin]')){ const dd = cl.doctors.find(x => x.id === t.closest('[data-doc]').dataset.doc); await F.updateDoc(cDoc('doctors', dd.id), {memberUid:t.value});
+      const m = (cl.members || []).find(x => x.id === t.value);
+      if (m && (dd.type === 'chief') && isOwner() && !(m.perms || {}).assistApprove){ await F.updateDoc(cloud.F.doc(cloud.fs, 'orgs', orgCtx().orgId, 'members', m.id), {perms:Object.assign({}, m.perms || {}, {assistApprove:true})}); m.perms = Object.assign({}, m.perms, {assistApprove:true}); info(`Saved. ${fullName(m)} can now approve patient assists.`); }
+      else info('Saved.'); }
     if (t.matches('[data-dtype]')){ await F.updateDoc(cDoc('doctors', t.closest('[data-doc]').dataset.doc), {type:t.value}); info('Saved.'); }
     if (t.matches('[data-tycost]')){ await F.updateDoc(cDoc('treatmentTypes', t.closest('[data-ty]').dataset.ty), {cost:Math.max(0, +t.value || 0)}); info('Saved.'); }
   } catch(err){ info('Could not save: ' + errText(err)); }
@@ -4014,12 +4188,20 @@ $('#clBody').addEventListener('submit', async e => {
       info(`${inr(amount)} received · ${receiptNo}`); printReceipt(x);
     }
     if (id === 'clPhForm') return clUploadPhotos();
+    if (id === 'clRxForm') return saveRx();
+    if (id === 'clAsForm') return asSubmit();
     if (id.startsWith('acc')) return accSubmit(id, e.target);
     if (id === 'clDocForm2') return clUploadDocs();
     if (id === 'clDocForm'){
       const name = $('#dcName').value.trim(); if (!name) return info('Enter the doctor\'s name.');
       await F.addDoc(cCol('doctors'), {name, type:$('#dcType').value, specialty:$('#dcSpec').value.trim(), phone:$('#dcPhone').value.trim(), active:true, createdAt:Date.now()});
       info(`${name} added.`);
+    }
+    if (id === 'clMedForm'){
+      const name = $('#mdName').value.trim(); if (!name) return info('Enter the medicine name.');
+      if ((cl.meds || []).some(m => m.name.toLowerCase() === name.toLowerCase())) return info('That medicine is already in the list.');
+      await F.addDoc(cCol('medicines'), {name, price:Math.max(0, +$('#mdPrice').value || 0), unit:$('#mdUnit').value, active:true, createdAt:Date.now()});
+      info(`${name} added.`); cl.clear = true; document.activeElement.blur(); return renderClinic();
     }
     if (id === 'clTypeForm'){
       const name = $('#tyName').value.trim(); if (!name) return info('Enter the treatment name.');
@@ -4046,7 +4228,15 @@ $('#clBody').addEventListener('click', async e => {
   const ad = t.closest('[data-ad]'); if (ad){ const n = +ad.dataset.ad; cl.aDate = n ? shiftDay(cl.aDate, n * (cl.aMode === 'week' ? 7 : 1)) : todayKey; return renderClinic(); }
   const am = t.closest('[data-am]'); if (am){ cl.aMode = am.dataset.am; return renderClinic(); }
   const gd = t.closest('[data-goday]'); if (gd){ cl.aDate = gd.dataset.goday; cl.aMode = 'day'; return renderClinic(); }
-  const rp = t.closest('[data-rp]'); if (rp){ const o = cl.rep; o.preset = 'today'; [o.from, o.to] = presetRange(); return renderClinic(); }
+  const rp = t.closest('[data-rp]'); if (rp){ const o = cl.rep; o.preset = 'today'; o.group = 'day'; [o.from, o.to] = presetRange(); return renderClinic(); }
+  if (t.closest('[data-rpgo]')){ const rg = t.closest('[data-range]'), o = cl.rep, f = rg.querySelector('[data-rf]').value, to = rg.querySelector('[data-rt]').value;
+    if (!f || !to) return info('Choose both dates.'); if (f > to) return info('"From" must be on or before "To".');
+    o.from = f; o.to = to > todayKey ? todayKey : to; o.preset = f === todayKey && to === todayKey ? 'today' : ''; return renderClinic(); }
+  const rpv = t.closest('[data-rpv]'); if (rpv){ cl.rep.view = rpv.dataset.rpv; return renderClinic(); }
+  const dr = t.closest('[data-drill]'); if (dr){ const o = cl.rep, k = dr.dataset.drill;
+    if (k.length === 7){ o.from = k + '-01'; o.to = mEnd(k) > todayKey ? todayKey : mEnd(k); o.group = 'day'; }
+    else { o.from = k + '-01-01'; o.to = k + '-12-31' > todayKey ? todayKey : k + '-12-31'; o.group = 'month'; }
+    o.preset = ''; return renderClinic(); }
   const am2 = t.closest('[data-am2]'); if (am2){ cl.acc.month = mShift(cl.acc.month, +am2.dataset.am2); return renderClinic(); }
   const at = t.closest('[data-at]'); if (at){ cl.acc.tab = at.dataset.at; cl.acc.pre = null; return renderClinic(); }
   const cm = t.closest('[data-commit]'); if (cm){ const c = ameta().commitments.find(x => x.id === cm.dataset.commit); if (c.id === 'petty') cl.acc.tab = 'petty'; else { cl.acc.tab = 'expenses'; cl.acc.pre = {category:c.name, amount:c.amount || '', note:`${c.name} · ${monthLabel(cl.acc.month)}`}; } return renderClinic(); }
@@ -4059,6 +4249,16 @@ $('#clBody').addEventListener('click', async e => {
   if (ph && !t.closest('[data-phdel]')) return clViewPhoto(ph.dataset.ph);
   try {
     if (t.closest('[data-phdel]')){ if (!confirm('Delete this photo?')) return; const id = t.closest('[data-ph]').dataset.ph; await F.deleteDoc(cDoc('patients', cl.pid, 'photos', id)); await F.deleteDoc(cDoc('patients', cl.pid, 'photoData', id)); info('Photo deleted.'); }
+    if (t.closest('#rxAdd')){ const box = $('#rxMeds'); box.insertAdjacentHTML('beforeend', medRow(box.children.length)); return; }
+    if (t.closest('[data-mrdel]') && t.closest('#rxMeds')){ t.closest('[data-mr]').remove(); return; }
+    const rxp = t.closest('[data-rxprint]'); if (rxp) return printRx(rxp.dataset.rxprint);
+    const ast = t.closest('[data-astab]'); if (ast){ cl.asst.tab = ast.dataset.astab; cl.asst.person = ''; return renderClinic(); }
+    const asm = t.closest('[data-asm]'); if (asm){ cl.asst.month = mShift(cl.asst.month, +asm.dataset.asm); cl.asKey = ''; return renderClinic(); }
+    const asp = t.closest('[data-asperson]'); if (asp){ cl.asst.person = asp.dataset.asperson; return renderClinic(); }
+    if (t.closest('[data-asok]')) return asDecide([t.closest('[data-as]').dataset.as], 'approved');
+    if (t.closest('[data-asno]')) return asDecide([t.closest('[data-as]').dataset.as], 'rejected');
+    const asd = t.closest('[data-asday]'); if (asd) return asDecide(cl.asst.d.all.filter(x => x.status === 'pending' && x.date === asd.dataset.asday).map(x => x.id), 'approved');
+    if (t.closest('[data-asdel]')){ if (!confirm('Delete this entry?')) return; await F.deleteDoc(cDoc('assists', t.closest('[data-as]').dataset.as)); cl.asKey = ''; info('Deleted.'); return renderClinic(); }
     if (t.closest('[data-tdel]')){ if (!confirm('Delete this treatment?')) return; await F.deleteDoc(cDoc('treatments', t.closest('[data-tid]').dataset.tid)); }
     if (t.closest('[data-pdel]')){ if (!confirm('Delete this payment? Its receipt number will not be reused.')) return; await F.deleteDoc(cDoc('payments', t.closest('[data-pay]').dataset.pay)); }
     if (t.closest('[data-rcpt]')){ const x = (cl.pP || []).find(p => p.id === t.closest('[data-pay]').dataset.pay); if (x) printReceipt(x); }
@@ -4086,7 +4286,7 @@ $('#clBody').addEventListener('click', async e => {
     const dc = t.closest('[data-doc2]'); if (dc && !t.closest('[data-docdel]')){ const x = (cl.pD || []).find(y => y.id === dc.dataset.doc2); return openStoredFile(cDoc('patients', cl.pid, 'docData', dc.dataset.doc2), x ? x.kind : 'Document'); }
     if (t.closest('[data-docdel]')){ if (!confirm('Delete this document?')) return; const id = t.closest('[data-doc2]').dataset.doc2; await F.deleteDoc(cDoc('patients', cl.pid, 'docs', id)); await F.deleteDoc(cDoc('patients', cl.pid, 'docData', id)); info('Document deleted.'); return; }
     const bd = t.closest('[data-billdoc]'); if (bd) return openStoredFile(cDoc('ledgerDocs', bd.dataset.billdoc), 'Bill');
-    if (t.closest('[data-billpay]')){ const id = t.closest('[data-led]').dataset.led, m = prompt('Paid how? Type: cash, upi, card or bank', 'bank'); if (m === null) return; const mode = (PMODES.find(p => p[0] === m.trim().toLowerCase()) || ['bank'])[0];
+    if (t.closest('[data-billpay]')){ const id = t.closest('[data-led]').dataset.led, m = prompt('Paid how? Type: cash, upi, card, cheque, neft, rtgs or bank', 'bank'); if (m === null) return; const mode = (PMODES.find(p => p[0] === m.trim().toLowerCase()) || ['bank'])[0];
       await F.updateDoc(cDoc('ledger', id), {paid:true, paidAt:Date.now(), mode}); info('Bill marked paid.'); cl.acc.key = ''; return renderClinic(); }
     if (t.closest('[data-vfilter]')){ cl.acc.vf = t.closest('[data-ven]').dataset.ven; return renderClinic(); }
     const td = t.closest('[data-td]'); if (td){ const n = +td.dataset.td, d0 = cl.acc.tday || todayKey; cl.acc.tday = n ? shiftDay(d0, n) : todayKey; if (cl.acc.tday > todayKey) cl.acc.tday = todayKey; return renderClinic(); }
@@ -4099,6 +4299,8 @@ $('#clBody').addEventListener('click', async e => {
     const ac = t.closest('.achip[data-appt]'); if (ac){ const a = (cl.appts || []).find(x => x.id === ac.dataset.appt); if (a){ cl.sec = 'patients'; cl.ptab = 'appointments'; clOpenPatient(a.patientId); } return; }
     if (t.closest('[data-docact]')){ const r = t.closest('[data-doc]'), d = cl.doctors.find(x => x.id === r.dataset.doc); await F.updateDoc(cDoc('doctors', d.id), {active:d.active === false}); }
     if (t.closest('[data-tyact]')){ const r = t.closest('[data-ty]'), ty = cl.types.find(x => x.id === r.dataset.ty); await F.updateDoc(cDoc('treatmentTypes', ty.id), {active:ty.active === false}); }
+    if (t.closest('[data-medact]')){ const m = cl.meds.find(x => x.id === t.closest('[data-med]').dataset.med); await F.updateDoc(cDoc('medicines', m.id), {active:m.active === false}); }
+    if (t.closest('#medSeed')){ const b = F.writeBatch(cloud.fs); DEFAULT_MEDS.forEach(([name, price, unit]) => b.set(F.doc(cCol('medicines')), {name, price, unit, active:true, createdAt:Date.now()})); await b.commit(); info('Common dental medicines added: check the prices.'); }
     if (t.closest('#tySeed')){ const b = F.writeBatch(cloud.fs); DEFAULT_TYPES.forEach(([name, cost]) => b.set(F.doc(cCol('treatmentTypes')), {name, cost, active:true})); await b.commit(); info('Common dental treatments added: edit prices as needed.'); }
   } catch(err){ info('That did not work: ' + errText(err)); }
 });
@@ -4107,7 +4309,12 @@ $('#clOv').addEventListener('click', e => {
   if (e.target.id === 'clOv' || e.target.closest('[data-ovclose]')){ $('#clOv').classList.remove('on'); cl.book = null; cl.sum = null; cl.bill = null; cl.cz = null; if (state.settings.view === 'clinic') renderClinic(); return; }
   if (e.target.closest('#smAdd')){ const box = $('#smRows'), n = box.children.length; box.insertAdjacentHTML('beforeend', sumRow(n, cl.sum.appt)); return; }
   if (e.target.closest('[data-srdel]')){ e.target.closest('[data-sr]').remove(); return; }
-  if (e.target.closest('#smSkip')){ return clSaveSummary(true); }
+  if (e.target.closest('#smMedAdd')){ const box = $('#smMeds'); box.insertAdjacentHTML('beforeend', medRow(box.children.length)); return; }
+  if (e.target.closest('[data-mrdel]')){ e.target.closest('[data-mr]').remove(); const t = $('#smMedTot'); if (t) t.textContent = inr(medTotal()); return; }
+  if (e.target.closest('[data-smback]')){ const S = cl.sum; cl.sum = null;
+    if (S && S.back === 'bill') return clOpenBill(S.appt);
+    $('#clOv').classList.remove('on'); if (S && S.completing) info(`${S.appt.patientName} is still In chair.`); if (state.settings.view === 'clinic') renderClinic(); return; }
+  if (e.target.closest('[data-vbback]') && cl.bill){ const a = cl.bill.appt; cl.bill = null; return clOpenSummary(a, false, 'bill'); }
   const r = e.target.closest('[data-pick]');
   if (r){ cl.book.patientId = r.dataset.pick; cl.book.patientName = r.dataset.name; const keep = {doctorId:$('#bkDoc').value, date:$('#bkDate').value, time:$('#bkTime').value, reason:$('#bkReason').value}; Object.assign(cl.book, keep); $('#clOvBody').innerHTML = clBookForm(); }
 });
@@ -4123,8 +4330,11 @@ $('#clOv').addEventListener('input', e => {
     catch(err){ box.textContent = errText(err); }
   }, 250);
 });
-$('#clOv').addEventListener('submit', e => { e.preventDefault(); if (e.target.id === 'clBookForm') clSaveBook(); if (e.target.id === 'clSumForm') clSaveSummary(false); });
+$('#clOv').addEventListener('submit', e => { e.preventDefault(); if (e.target.id === 'clBookForm') clSaveBook(); if (e.target.id === 'clSumForm') clSaveSummary(); });
+const medEv = e => { const mr = e.target.closest('[data-mr]'); if (mr && e.target.matches('[data-mf]')){ medCalc(mr); const t = $('#smMedTot'); if (t) t.textContent = inr(medTotal()); } };
+$('#clOv').addEventListener('input', medEv);
 $('#clOv').addEventListener('change', e => {
+  medEv(e);
   const r = e.target.closest('[data-sr]'); if (!r) return;
   if (e.target.matches('[data-sf="type"]')){ const o = e.target.selectedOptions[0]; r.querySelector('[data-sf="cost"]').value = o ? o.dataset.cost : ''; }
   if (e.target.matches('[data-sf="doc"]')){ const dd = cl.doctors.find(x => x.id === e.target.value); r.querySelector('[data-sf="fee"]').hidden = !(dd && dd.type === 'consultant'); }
@@ -4147,61 +4357,110 @@ const NEEDS_DEFAULT = {'opg x-ray':'OPG', 'iopa x-ray':'X-ray (IOPA)', 'crown':'
 const needsDocOf = t => { if (!t) return ''; if (t.needsDoc !== undefined) return t.needsDoc; return NEEDS_DEFAULT[String(t.name || t.typeName || '').toLowerCase()] || ''; };
 const typeNeeds = tr => needsDocOf(cl.types.find(x => x.id === tr.typeId) || {name:tr.typeName});
 
-/* ---------- visit summary: what happened in this appointment ---------- */
-function clOpenSummary(appt, completing){
-  cl.sum = {appt, completing, rows:canW('treatments') ? 1 : 0};
-  $('#clOv').classList.add('on'); $('#clOvBody').innerHTML = clSummaryForm();
+/* ---------- visit summary: what happened in this appointment ----------
+   The treatment done (with its cost) is required; the written description may be skipped for now,
+   which puts a reminder on everyone's Planning Board. Medicines are billed as tablets × price. */
+const DOSE = [['m', 'Morning'], ['a', 'Afternoon'], ['e', 'Evening'], ['n', 'Night']];
+const isMed = t => !!t && t.kind === 'medicine';
+const doseTxt = d => DOSE.map(([k]) => d && d[k] ? 1 : 0).join('-');
+async function clOpenSummary(appt, completing, back){
+  cl.sum = {appt, completing, back:back || '', T:null};
+  $('#clOv').classList.add('on'); $('#clOvBody').innerHTML = '<div class="empty">Loading…</div>';
+  try { cl.sum.T = (can('treatments') || can('billing')) ? docsOf(await cloud.F.getDocs(cloud.F.query(cCol('treatments'), cloud.F.where('appointmentId', '==', appt.id)))) : []; }
+  catch(e){ if (cl.sum) cl.sum.T = []; }
+  if (cl.sum && cl.sum.appt === appt) $('#clOvBody').innerHTML = clSummaryForm();
 }
-function sumRow(i, a){
-  const types = cl.types.filter(t => t.active !== false);
-  return `<div class="srowf" data-sr="${i}">
-    <select data-sf="type">${types.map(t => `<option value="${esc(t.id)}" data-cost="${+t.cost || 0}">${esc(t.name)}</option>`).join('')}</select>
-    <input data-sf="tooth" placeholder="Tooth / area">
-    <select data-sf="doc">${docOpts(a.doctorId, '— Doctor —')}</select>
-    <input type="number" data-sf="cost" min="0" step="50" value="${types[0] ? +types[0].cost || 0 : ''}" placeholder="Cost">
-    <input type="number" data-sf="disc" min="0" step="50" placeholder="Discount">
-    <select data-sf="status"><option value="completed">Completed</option><option value="progress">In progress</option><option value="planned">Planned (next visit)</option></select>
-    <input type="number" data-sf="fee" min="0" step="50" placeholder="Consultant fee"${(cl.doctors.find(x => x.id === a.doctorId) || {}).type === 'consultant' ? '' : ' hidden'}>
-    <button type="button" class="danger" data-srdel>✕</button></div>`;
+function sumRow(i, a, t){
+  const types = cl.types.filter(x => x.active !== false || (t && x.id === t.typeId));
+  const doc = t ? t.doctorId : a.doctorId, cons = (cl.doctors.find(x => x.id === doc) || {}).type === 'consultant';
+  return `<div class="srowf" data-sr="${i}"${t ? ` data-tid="${esc(t.id)}"` : ''}>
+    <select data-sf="type">${t ? '' : '<option value="">— Treatment * —</option>'}${types.map(x => `<option value="${esc(x.id)}" data-cost="${+x.cost || 0}"${t && x.id === t.typeId ? ' selected' : ''}>${esc(x.name)}</option>`).join('')}</select>
+    <input data-sf="tooth" placeholder="Tooth / area" value="${t ? esc(t.tooth || '') : ''}">
+    <select data-sf="doc">${docOpts(doc, '— Doctor —')}</select>
+    <input type="number" data-sf="cost" min="0" step="50" value="${t ? +t.cost || 0 : ''}" placeholder="Cost ₹ *">
+    <input type="number" data-sf="disc" min="0" step="50" value="${t && +t.discount ? +t.discount : ''}" placeholder="Discount">
+    <select data-sf="status">${[['completed', 'Completed'], ['progress', 'In progress'], ['planned', 'Planned (next visit)']].map(([k, l]) => `<option value="${k}"${t && t.status === k ? ' selected' : ''}>${l}</option>`).join('')}</select>
+    <input type="number" data-sf="fee" min="0" step="50" placeholder="Consultant fee" value="${t && +t.consultantFee ? +t.consultantFee : ''}"${cons ? '' : ' hidden'}>
+    <button type="button" class="danger" data-srdel title="Remove">✕</button></div>`;
 }
+function medRow(i, m){
+  const meds = (cl.meds || []).filter(x => x.active !== false || (m && x.id === m.medId)), d = (m && m.dose) || {};
+  return `<div class="mrow" data-mr="${i}"${m ? ` data-tid="${esc(m.id)}"` : ''}>
+    <select data-mf="med"><option value="">— Medicine —</option>${meds.map(x => `<option value="${esc(x.id)}" data-price="${+x.price || 0}" data-unit="${esc(x.unit || 'Tablet')}"${m && x.id === m.medId ? ' selected' : ''}>${esc(x.name)} · ${inr(x.price)}/${esc((x.unit || 'Tablet').toLowerCase())}</option>`).join('')}</select>
+    <span class="dose">${DOSE.map(([k, l]) => `<label title="${l}"><input type="checkbox" data-mf="${k}"${d[k] ? ' checked' : ''}><span>${l}</span></label>`).join('')}</span>
+    <input type="number" data-mf="days" min="1" max="120" value="${m ? +m.days || '' : ''}" placeholder="Days" title="How many days">
+    <input type="number" data-mf="qty" min="0" value="${m ? +m.qty || '' : ''}" placeholder="Qty" title="Number of tablets: ticks × days (you can change it)">
+    <b data-mf="cost" class="num">${m ? inr(m.cost) : '₹0'}</b>
+    <button type="button" class="danger" data-mrdel title="Remove">✕</button></div>`;
+}
+function medCalc(row){
+  const g = k => row.querySelector(`[data-mf="${k}"]`), o = g('med').selectedOptions[0], price = o && o.value ? +o.dataset.price || 0 : 0, unit = o && o.value ? o.dataset.unit || 'Tablet' : '';
+  const ticks = DOSE.filter(([k]) => g(k).checked).length, days = +g('days').value || 0;
+  if (/tablet|capsule/i.test(unit)){ if (ticks && days) g('qty').value = ticks * days; }
+  else if (unit && !g('qty').value) g('qty').value = 1;
+  g('cost').textContent = inr((+g('qty').value || 0) * price);
+}
+const medTotal = () => [...document.querySelectorAll('#smMeds [data-mr]')].reduce((s, r) => { const o = r.querySelector('[data-mf="med"]').selectedOptions[0]; return s + (o && o.value ? (+r.querySelector('[data-mf="qty"]').value || 0) * (+o.dataset.price || 0) : 0); }, 0);
 function clSummaryForm(){
-  const {appt:a, completing, rows} = cl.sum;
-  return `<div class="ah"><h2 style="font-size:16px;margin:0">What happened in this appointment?</h2><span class="sp"></span><button data-ovclose>Close</button></div>
+  const {appt:a, completing, T, back} = cl.sum, w = canW('treatments');
+  const TT = (T || []).filter(t => !isMed(t)), MM = (T || []).filter(isMed), notes = (a.summary && a.summary.notes) || '';
+  return `<div class="ah"><button type="button" class="abk" data-smback style="margin:0" title="${back === 'bill' ? 'Back to the bill' : 'Back to the queue: the patient stays In chair'}">← Back</button><h2 style="font-size:16px;margin:0">What happened in this appointment?</h2><span class="sp"></span><button data-ovclose>Close</button></div>
     <p class="stat" style="margin:4px 0 10px"><b>${esc(a.patientName)}</b> · ${esc(fmtShort(a.date))} ${esc(hm12(a.time))} · ${esc(dName(a.doctorId))}${a.reason ? ' · ' + esc(a.reason) : ''}</p>
     <form id="clSumForm" novalidate>
-      <label class="stat">Treatment summary / clinical notes *<textarea id="smNotes" rows="4" style="width:100%" placeholder="Complaint, findings, what was done, medicines advised, instructions given…">${esc((a.summary && a.summary.notes) || '')}</textarea></label>
-      ${canW('treatments') ? `<div class="fhead" style="margin:10px 0 4px">Treatments done <span class="stat">(billed to the patient · the doctor here is credited)</span></div>
-        <div id="smRows">${[...Array(rows)].map((_, i) => sumRow(i, a)).join('')}</div>
-        <button type="button" id="smAdd" style="margin-top:4px">+ Add treatment</button>` : '<p class="stat">Treatments will be added by a doctor (you don\'t have Treatments access).</p>'}
-      <div class="fhead" style="margin:12px 0 4px">Next visit</div>
-      <div class="nvrow"><span class="nvck"><input type="checkbox" id="smNext"> Book the next visit</span><input type="date" id="smNDate" value="${shiftDay(todayKey, 7)}" min="${todayKey}"><input type="time" id="smNTime" value="${esc(a.time || '10:00')}" step="300"><input id="smNReason" placeholder="Reason, e.g. RCT 2nd sitting"></div>
-      <div class="btnrow" style="margin-top:14px"><button class="primary" type="submit">${completing ? 'Save & complete visit' : 'Save summary'}</button>
-        ${completing ? '<button type="button" id="smSkip">Skip for now</button><span class="stat">Skipping adds "Update treatment summary" to the Planning Board.</span>' : ''}</div>
+      ${w ? `<div class="fhead" style="margin:0 0 4px">Treatment done * <span class="stat">required, with its cost · billed to the patient · the doctor here is credited</span></div>
+        <div id="smRows">${(TT.length ? TT : [null]).map((t, i) => sumRow(i, a, t)).join('')}</div>
+        <button type="button" id="smAdd" style="margin-top:4px">+ Add treatment</button>
+        <div class="fhead" style="margin:16px 0 4px">💊 Medicines / tablets <span class="stat">tick when to take them and for how many days: the number of tablets and the cost are worked out and added to the bill</span></div>
+        <div id="smMeds">${MM.map((m, i) => medRow(i, m)).join('')}</div>
+        <div class="btnrow"><button type="button" id="smMedAdd">+ Add medicine</button>${(cl.meds || []).filter(x => x.active !== false).length ? '' : '<span class="stat">Add your medicine price list in Clinic setup first.</span>'}<span class="sp"></span><span class="stat">Medicines total <b id="smMedTot">${inr(MM.reduce((s, m) => s + (+m.cost || 0), 0))}</b></span></div>`
+      : '<p class="stat">Treatments and medicines are added by a doctor (you don\'t have Treatments access).</p>'}
+      <label class="stat" style="display:block;margin-top:14px">Treatment plan description / clinical notes<textarea id="smNotes" rows="3" style="width:100%" placeholder="Complaint, findings, what was done, treatment plan, instructions given…">${esc(notes)}</textarea></label>
+      <label class="ckl" style="margin-top:6px"><input type="checkbox" id="smSkipDesc"> Skip the description for now: everyone gets a reminder "Treatment plan description needs to be updated for ${esc(a.patientName)}"</label>
+      ${back === 'bill' ? '' : `<div class="fhead" style="margin:12px 0 4px">Next visit</div>
+      <div class="nvrow"><span class="nvck"><input type="checkbox" id="smNext"> Book the next visit</span><input type="date" id="smNDate" value="${shiftDay(todayKey, 7)}" min="${todayKey}"><input type="time" id="smNTime" value="${esc(a.time || '10:00')}" step="300"><input id="smNReason" placeholder="Reason, e.g. RCT 2nd sitting"></div>`}
+      <div class="btnrow" style="margin-top:14px"><button class="primary" type="submit">${completing || back === 'bill' ? 'Save & go to bill →' : 'Save'}</button></div>
     </form>`;
 }
-async function clSaveSummary(skip){
-  const {F} = cloud, {appt:a, completing} = cl.sum, by = cloud.user.email || '', now = Date.now();
-  const notes = ($('#smNotes') || {}).value.trim();
-  if (!skip && !notes) return info('Write what happened in this appointment, or choose Skip for now.');
-  const rows = skip ? [] : [...document.querySelectorAll('#smRows [data-sr]')].map(r => { const v = k => r.querySelector(`[data-sf="${k}"]`).value; return {typeId:v('type'), tooth:v('tooth').trim(), doctorId:v('doc'), cost:Math.max(0, +v('cost') || 0), discount:Math.max(0, +v('disc') || 0), status:v('status'), fee:Math.max(0, +v('fee') || 0)}; }).filter(r => r.typeId);
-  if (rows.some(r => !r.doctorId)) return info('Choose the doctor for each treatment.');
+async function clSaveSummary(){
+  const {F} = cloud, S = cl.sum; if (!S) return;
+  const {appt:a, completing, back} = S, by = cloud.user.email || '', now = Date.now(), w = canW('treatments'), toBill = completing || back === 'bill';
+  const notes = ($('#smNotes') || {}).value.trim(), skipDesc = !!($('#smSkipDesc') && $('#smSkipDesc').checked);
+  const rows = w ? [...document.querySelectorAll('#smRows [data-sr]')].map(r => { const v = k => r.querySelector(`[data-sf="${k}"]`).value; return {tid:r.dataset.tid || '', typeId:v('type'), tooth:v('tooth').trim(), doctorId:v('doc'), costRaw:v('cost').trim(), cost:Math.max(0, +v('cost') || 0), discount:Math.max(0, +v('disc') || 0), status:v('status'), fee:Math.max(0, +v('fee') || 0)}; }) : [];
+  const filled = rows.filter(r => r.typeId);
+  if (w && toBill && !filled.length) return info('Add the treatment done with its cost: it is required.');
+  if (filled.some(r => r.costRaw === '')) return info('Enter the cost for each treatment.');
+  if (filled.some(r => !r.doctorId)) return info('Choose the doctor for each treatment.');
+  const meds = w ? [...document.querySelectorAll('#smMeds [data-mr]')].map(r => { const g = k => r.querySelector(`[data-mf="${k}"]`), o = g('med').selectedOptions[0];
+    return {tid:r.dataset.tid || '', medId:g('med').value, dose:Object.fromEntries(DOSE.map(([k]) => [k, g(k).checked])), days:Math.max(0, +g('days').value || 0), qty:Math.max(0, +g('qty').value || 0), price:o && o.value ? +o.dataset.price || 0 : 0, unit:o && o.value ? o.dataset.unit || '' : ''}; }).filter(m => m.medId) : [];
+  if (meds.some(m => !m.qty)) return info('For each medicine, tick when to take it and enter the number of days.');
+  if (!notes && !skipDesc) return info('Write the treatment plan description, or tick "Skip the description for now".');
   try {
-    for (const r of rows){
-      const ty = cl.types.find(t => t.id === r.typeId), dd = cl.doctors.find(x => x.id === r.doctorId) || {};
-      await F.addDoc(cCol('treatments'), {patientId:a.patientId, patientName:a.patientName, appointmentId:a.id, date:a.date <= todayKey ? a.date : todayKey, typeId:ty.id, typeName:ty.name, tooth:r.tooth,
-        doctorId:r.doctorId, doctorName:dd.name || '', cost:r.cost, discount:Math.min(r.cost, r.discount), consultantFee:dd.type === 'consultant' ? r.fee : 0, status:r.status, notes:'', createdAt:now, by});
+    if (w){
+      const keep = new Set(filled.map(r => r.tid).concat(meds.map(m => m.tid)).filter(Boolean));
+      for (const t of (S.T || [])) if (!keep.has(t.id)) await F.deleteDoc(cDoc('treatments', t.id));
+      const base = {patientId:a.patientId, patientName:a.patientName, appointmentId:a.id, date:a.date <= todayKey ? a.date : todayKey};
+      for (const r of filled){
+        const ty = cl.types.find(t => t.id === r.typeId) || {id:r.typeId, name:''}, dd = cl.doctors.find(x => x.id === r.doctorId) || {};
+        const d = {typeId:ty.id, typeName:ty.name, tooth:r.tooth, doctorId:r.doctorId, doctorName:dd.name || '', cost:r.cost, discount:Math.min(r.cost, r.discount), consultantFee:dd.type === 'consultant' ? r.fee : 0, status:r.status};
+        if (r.tid) await F.updateDoc(cDoc('treatments', r.tid), d); else await F.addDoc(cCol('treatments'), Object.assign({}, base, d, {notes:'', createdAt:now, by}));
+      }
+      for (const m of meds){
+        const md = (cl.meds || []).find(x => x.id === m.medId) || {name:''};
+        const d = {kind:'medicine', medId:m.medId, typeId:'', typeName:md.name, unit:m.unit, dose:m.dose, days:m.days, qty:m.qty, unitPrice:m.price, cost:Math.round(m.qty * m.price), discount:0, status:'completed', doctorId:a.doctorId, doctorName:dName(a.doctorId), consultantFee:0};
+        if (m.tid) await F.updateDoc(cDoc('treatments', m.tid), d); else await F.addDoc(cCol('treatments'), Object.assign({}, base, d, {tooth:'', notes:'', createdAt:now, by}));
+      }
     }
-    const upd = skip ? {summaryPending:true, skippedBy:by} : {summaryPending:false, summary:{notes, by, at:now}};
+    const upd = notes ? {summaryPending:false, summary:{notes, by, at:now}} : {summaryPending:true, skippedBy:by};
     if (completing) Object.assign(upd, {status:'billing', summarizedAt:now});
     await F.updateDoc(cDoc('appointments', a.id), upd);
-    if (!skip && $('#smNext').checked){
+    if ($('#smNext') && $('#smNext').checked){
       const nd = $('#smNDate').value, nt = $('#smNTime').value;
       if (nd && nt) await F.addDoc(cCol('appointments'), {patientId:a.patientId, patientName:a.patientName, doctorId:a.doctorId, date:nd, time:nt, duration:a.duration || 15, reason:$('#smNReason').value.trim() || 'Follow-up', status:'scheduled', createdAt:now, createdBy:by, followOf:a.id});
     }
     $('#clOv').classList.remove('on'); cl.sum = null;
-    info(skip ? '"Update treatment summary" added to the Planning Board.' : 'Visit summary saved.');
+    info(notes ? 'Visit summary saved.' : `Saved. "Treatment plan description needs to be updated for ${a.patientName}" is on the Planning Board.`);
     clinicSync(true); renderClinic();
-    if (completing){ if (canW('billing')) clOpenBill(Object.assign({}, a, upd)); else info(`${a.patientName} is now "At billing": the front desk will take the payment.`); }
+    if (toBill){ if (canW('billing')) clOpenBill(Object.assign({}, a, upd)); else if (completing) info(`${a.patientName} is now "At billing": the front desk will take the payment.`); }
   } catch(e){ info('Could not save: ' + errText(e)); }
 }
 
@@ -4267,14 +4526,17 @@ async function clinicSyncNow(){
     if (!cl.types.length) cl.types = await q('treatmentTypes').catch(() => []);
     const tAt = (day, h) => { const d = parseDay(day); d.setHours(h, 0, 0, 0); return d.getTime(); };
     const push = (id, epic, title, o = {}) => R.push(Object.assign({id:'zc-' + id, epic, title, day:todayKey, priority:'med'}, o));
-    if (can('treatments') === true){
-      (await q('appointments', W('summaryPending', '==', true))).forEach(a => push('sum-' + a.id, 'Update patient treatment summary', `Add treatment summary: ${a.patientName} (${fmtDM(a.date)}, ${dName(a.doctorId)})`, {priority:'high', link:{pid:a.patientId, tab:'appointments'}}));
-    }
-    if (can('treatments') === true || can('billing') === true){
+    // Patient reminders are shared with everyone in the clinic: whoever can see the data refreshes its part of
+    // clinicMeta/reminders, and everyone (front desk, assistants, doctors, accounts) gets them on their board.
+    const shared = {};
+    const sumList = can('treatments') === true || can('appointments') === true ? await q('appointments', W('summaryPending', '==', true)) : null;
+    if (sumList){ const n = R.length; sumList.forEach(a => push('sum-' + a.id, 'Treatment plan description', `Treatment plan description needs to be updated for ${a.patientName} (${fmtDM(a.date)}, ${dName(a.doctorId)})`, {priority:'high', link:{pid:a.patientId, tab:'appointments'}})); shared.sum = {at:Date.now(), items:R.slice(n, n + 150)}; }
+    if (can('treatments') === true || can('billing') === true){ const n0 = R.length;
       (await q('treatments', W('date', '>=', shiftDay(todayKey, -90)))).filter(t => typeNeeds(t) && !t.docAttached && t.status !== 'planned')
         .forEach(t => push('doc-' + t.id, 'Patient documents backlog', `Upload ${typeNeeds(t)} for ${t.patientName} (${t.typeName}, ${fmtDM(t.date)})`, {link:{pid:t.patientId, tab:'docs'}}));
+      shared.doc = {at:Date.now(), items:R.slice(n0, n0 + 150)};
     }
-    if (can('appointments') === true){
+    if (can('appointments') === true){ const n0 = R.length;
       const A = await q('appointments', W('date', '>=', shiftDay(todayKey, -7)), W('date', '<=', todayKey));
       A.forEach(a => {
         if (a.status === 'completed' && a.date >= y) push('fu-' + a.id, 'Patient follow-ups', `Follow up with ${a.patientName}: seen ${relDay(a.date).toLowerCase()} by ${dName(a.doctorId)}${a.reason ? ' (' + a.reason + ')' : ''}`, {day:shiftDay(a.date, 1), remindAt:tAt(shiftDay(a.date, 1), 10), link:{pid:a.patientId, tab:'appointments'}});
@@ -4282,7 +4544,13 @@ async function clinicSyncNow(){
         if (skipped){ const d1 = shiftDay(a.date, 1) > todayKey ? shiftDay(a.date, 1) : todayKey;
           push('miss-' + a.id, 'Missed / skipped patients', `Call ${a.patientName} to reschedule: missed ${fmtDM(a.date)} ${hm12(a.time)} with ${dName(a.doctorId)}`, {priority:'high', day:d1, remindAt:tAt(d1, 9), link:{pid:a.patientId, tab:'appointments'}}); }
       });
+      shared.pat = {at:Date.now(), items:R.slice(n0, n0 + 200)};
     }
+    try {
+      if (Object.keys(shared).length) await F.setDoc(cDoc('clinicMeta', 'reminders'), shared, {merge:true});
+      const sd = await F.getDoc(cDoc('clinicMeta', 'reminders')), all = sd.exists() ? sd.data() : {}, have = new Set(R.map(r => r.id));
+      ['sum', 'doc', 'pat'].forEach(c => ((all[c] || {}).items || []).forEach(r => { if (!have.has(r.id)){ have.add(r.id); R.push(r); } }));
+    } catch(e){ console.warn('shared reminders', e); }
     if (can('billing') === true){
       (await q('appointments', W('status', '==', 'billing'))).forEach(a => push('bill-' + a.id, 'Billing pending', `Take payment & complete the visit: ${a.patientName} (${fmtDM(a.date)})`, {priority:'high', link:{pid:a.patientId, tab:'appointments'}}));
     }
@@ -4331,7 +4599,7 @@ function homeLoad(){
   const key = (oc ? oc.orgId + oc.role : cloud && cloud.isSuper ? 'super' : 'local') + todayKey;
   if (home.key === key) return; home.key = key;
   if (home.unsub) try { home.unsub(); } catch(e){}
-  Object.assign(home, {unsub:null, ev:null, team:null, appts:null, pay:null, inv:null});
+  Object.assign(home, {unsub:null, ev:null, team:null, appts:null, pay:null, inv:null, px:null});
   const again = () => { if (state.settings.view === 'home') renderHome(); };
   if (cloud && cloud.isSuper && !oc){
     supersLoad();
@@ -4353,7 +4621,8 @@ const isClinicUser = () => !!(orgCtx() && feat('clinic'));
 const myTasks = () => agendaOn() ? state.items : [];
 // the widget catalogue: who can have it, and how it draws
 const WIDGETS = {
-  checkin:{t:'Check in / out', ic:'⏱', d:'Your attendance timer and Check in / Check out button', ok:() => !!(orgCtx() && !orgCtx().support && feat('attendance')), r:wCheckin},
+  checkin:{t:'Check in / out', ic:'⏱', d:'Your attendance timer and Check in / Check out button', ok:() => !!(attSelf() && feat('attendance')), r:wCheckin},
+  mark:{t:'Mark attendance', ic:'🕘', d:'Check other staff in and out (attendance proxy)', ok:() => !!(orgCtx() && feat('attendance') && canMarkAtt()), r:wMark},
   team:{t:'My team', ic:'👥', d:'Your reporting manager and reportees', ok:() => !!(orgCtx() && !orgCtx().support), r:wTeam},
   reminders:{t:'Reminders', ic:'🔔', d:'Everything the clinic needs from you: summaries, documents, follow-ups, tallies', ok:() => isClinicUser(), r:wReminders},
   appts:{t:"Today's appointments", ic:'📅', d:'Who is coming today and where they are in the queue', ok:() => isClinicUser() && !!(can('appointments') || can('treatments')), r:wAppts},
@@ -4371,15 +4640,16 @@ function defaultLayout(){
   const oc = orgCtx();
   if (oc && !oc.support && Array.isArray(oc.org.homeDefault) && oc.org.homeDefault.length) return oc.org.homeDefault;
   const ids = cloud && cloud.isSuper && !oc ? ['orgs', 'invoices', 'tasksToday', 'overdue', 'week', 'quick', 'note']
-    : oc ? ['checkin', 'reminders', 'appts', 'clinicToday', 'tasksToday', 'team', 'quick', 'overdue', 'week']
+    : oc ? ['checkin', 'mark', 'reminders', 'appts', 'clinicToday', 'tasksToday', 'team', 'quick', 'overdue', 'week']
     : ['tasksToday', 'overdue', 'upcoming', 'week', 'quick', 'note'];
-  return ids.map(id => ({id, size:['reminders', 'appts'].includes(id) ? 'full' : 'half'}));
+  return ids.map(id => ({id, size:['reminders', 'appts', 'mark'].includes(id) ? 'full' : 'half'}));
 }
 const LKEY = () => 'zl-home-' + ((cloud && cloud.uid) || 'local');
 function homeLayout(){
   let L = Array.isArray(state.settings.homeLayout) && state.settings.homeLayout.length ? state.settings.homeLayout : null;
   if (!L) try { L = JSON.parse(localStorage.getItem(LKEY())); } catch(e){}
-  return (L && L.length ? L : defaultLayout()).filter(w => WIDGETS[w.id] && WIDGETS[w.id].ok());
+  if (!(L && L.length)){ L = defaultLayout().slice(); if (WIDGETS.mark.ok() && !L.some(w => w.id === 'mark')) L.splice(1, 0, {id:'mark', size:'full'}); }
+  return L.filter(w => WIDGETS[w.id] && WIDGETS[w.id].ok());
 }
 function saveLayout(L){
   try { localStorage.setItem(LKEY(), JSON.stringify(L)); } catch(e){}
@@ -4398,6 +4668,7 @@ function renderHome(){
     <div class="hgridw"><div class="hwtop"><h2>Your day</h2><button id="hCustomize">✎ Customize</button></div>
       <div class="hwgrid">${L.map(w => { const W = WIDGETS[w.id]; let inner = ''; try { inner = W.r(); } catch(e){ inner = `<div class="stat">${esc(e.message)}</div>`; }
         return `<section class="hw ${w.size === 'full' ? 'full' : ''}" data-w="${w.id}"><h3><span class="ic">${W.ic}</span>${esc(W.t)}<span class="sp"></span></h3>${inner}</section>`; }).join('') || '<div class="empty">Your Home is empty. Click Customize to add widgets.</div>'}</div></div>`;
+  numberTables(body);
   attTick();
 }
 /* widgets */
@@ -4408,6 +4679,20 @@ function wCheckin(){
     <div class="htimer" id="attTimer" data-done="${done}" data-open="${open ? open.in : ''}">${hms(done + (open ? Date.now() - open.in : 0)).split(':').map(x => `<span>${x}</span>`).join('<i>:</i>')}</div>
     <button class="pbtn ${open ? 'out' : 'in'}" id="punchBtn" data-t="${open ? 'out' : 'in'}">${open ? 'Check out' : ss.length ? 'Check in again' : 'Check in'}</button>
     ${ss.length ? `<div class="psess" style="justify-content:center">${ss.map(s => `<span>${esc(timeOnly(s.in))} → ${s.out ? esc(timeOnly(s.out)) : 'now'}</span>`).join('')}</div>` : ''}</div>`;
+}
+function wMark(){
+  if (!home.px){ if (!home.pxBusy) pxLoad(); return '<div class="empty">Loading team…</div>'; }
+  return markList(home.px.accts, home.px.ev);
+}
+async function pxLoad(){
+  const {F, fs} = cloud, oc = orgCtx(); home.pxBusy = true;
+  try {
+    const accs = docsOf(await F.getDocs(F.collection(fs, 'orgs', oc.orgId, 'members'))).map(a => Object.assign(a, {uid:a.id})).filter(a => !a.removed && a.active !== false && a.role !== 'orgadmin').sort((a, b) => fullName(a).localeCompare(fullName(b)));
+    const from = F.Timestamp.fromDate(parseDay(todayKey)), ev = {};
+    await Promise.all(accs.map(async a => { const qs = await F.getDocs(F.query(attCol(a.uid), F.where('at', '>=', from))); ev[a.uid] = qs.docs.map(d => { const x = d.data({serverTimestamps:'estimate'}); return {id:d.id, type:x.type, src:x.src, at:tsMs(x.at)}; }); }));
+    home.px = {accts:accs, ev};
+  } catch(e){ home.px = {accts:[], ev:{}}; info('Attendance could not load: ' + errText(e)); }
+  home.pxBusy = false; if (state.settings.view === 'home') renderHome();
 }
 function wTeam(){
   const oc = orgCtx(), me = oc.me, mgr = home.team ? home.team.find(m => m.uid === me.reportsTo) : null;
@@ -4553,10 +4838,10 @@ async function clOpenBill(appt){
 function drawBill(){
   const B = cl.bill, a = B.appt, visitT = B.T.filter(t => t.appointmentId === a.id), visitNet = visitT.filter(t => t.status !== 'planned').reduce((s, t) => s + net(t), 0);
   const due = billed(B.T) - paidSum(B.P), visitPays = B.P.filter(x => x.appointmentId === a.id), w = canW('billing'), done = visitPays.length > 0;
-  $('#clOvBody').innerHTML = `<div class="ah"><h2 style="font-size:16px;margin:0">Bill · ${esc(pName(B.p))} <span class="pcode">${esc(B.p.code || '')}</span></h2><span class="sp"></span><button data-ovclose>Close</button></div>
+  $('#clOvBody').innerHTML = `<div class="ah">${canW('treatments') ? '<button type="button" class="abk" data-vbback style="margin:0" title="Go back and change the treatments or medicines">← Back</button>' : ''}<h2 style="font-size:16px;margin:0">Bill · ${esc(pName(B.p))} <span class="pcode">${esc(B.p.code || '')}</span></h2><span class="sp"></span><button data-ovclose>Close</button></div>
     <p class="stat" style="margin:4px 0 10px">Visit ${esc(fmtShort(a.date))} ${esc(hm12(a.time))} · ${esc(dName(a.doctorId))}</p>
     <div class="awrap" style="margin-top:0"><table class="atbl"><thead><tr><th>Treatment</th><th>Doctor</th><th>Status</th><th class="num">Cost</th><th class="num">Discount</th><th class="num">Net</th></tr></thead><tbody>
-      ${visitT.map(t => `<tr><td><b>${esc(t.typeName)}</b>${t.tooth ? `<span class="sub2">Tooth / area ${esc(t.tooth)}</span>` : ''}</td><td>${esc(dName(t.doctorId))}</td><td>${TSTATUS[t.status][0]}</td><td class="num">${inr(t.cost)}</td><td class="num">${+t.discount ? inr(t.discount) : '—'}</td><td class="num"><b>${t.status === 'planned' ? '<span class="stat">not billed</span>' : inr(net(t))}</b></td></tr>`).join('') || '<tr><td colspan="6" class="stat">No treatments were added for this visit.</td></tr>'}
+      ${visitT.map(t => `<tr><td><b>${isMed(t) ? '💊 ' : ''}${esc(t.typeName)}</b>${t.tooth ? `<span class="sub2">Tooth / area ${esc(t.tooth)}</span>` : ''}${isMed(t) ? `<span class="sub2">${doseTxt(t.dose)} × ${+t.days || 0} days = ${+t.qty || 0} @ ${inr(t.unitPrice)}</span>` : ''}</td><td>${esc(dName(t.doctorId))}</td><td>${TSTATUS[t.status][0]}</td><td class="num">${inr(t.cost)}</td><td class="num">${+t.discount ? inr(t.discount) : '—'}</td><td class="num"><b>${t.status === 'planned' ? '<span class="stat">not billed</span>' : inr(net(t))}</b></td></tr>`).join('') || '<tr><td colspan="6" class="stat">No treatments were added for this visit.</td></tr>'}
     </tbody></table></div>
     <div class="box billbox" style="margin-top:10px">
       <div class="payrow"><span>This visit</span><span>${inr(visitNet)}</span></div>
@@ -4579,7 +4864,7 @@ function printVisitBill(){
   const B = cl.bill, a = B.appt, visitT = B.T.filter(t => t.appointmentId === a.id && t.status !== 'planned'), visitPays = B.P.filter(x => x.appointmentId === a.id), due = billed(B.T) - paidSum(B.P);
   printDoc('Bill', `<p><b>Patient:</b> ${esc(pName(B.p))} (${esc(B.p.code || '')}) · ${esc(B.p.phone || '')}<br><b>Visit:</b> ${esc(fmtLong(a.date))} · ${esc(dName(a.doctorId))}</p>
     <table><tr><th>#</th><th>Treatment</th><th>Doctor</th><th class="n">Cost</th><th class="n">Discount</th><th class="n">Amount</th></tr>
-    ${visitT.map((t, i) => `<tr><td>${i + 1}</td><td>${esc(t.typeName)}${t.tooth ? ' (' + esc(t.tooth) + ')' : ''}</td><td>${esc(dName(t.doctorId))}</td><td class="n">${inr(t.cost)}</td><td class="n">${inr(t.discount)}</td><td class="n">${inr(net(t))}</td></tr>`).join('')}
+    ${visitT.map((t, i) => `<tr><td>${i + 1}</td><td>${esc(t.typeName)}${t.tooth ? ' (' + esc(t.tooth) + ')' : ''}${isMed(t) ? ` <small>${doseTxt(t.dose)} × ${+t.days || 0} days · ${+t.qty || 0} @ ${inr(t.unitPrice)}</small>` : ''}</td><td>${esc(dName(t.doctorId))}</td><td class="n">${inr(t.cost)}</td><td class="n">${inr(t.discount)}</td><td class="n">${inr(net(t))}</td></tr>`).join('')}
     <tr class="tot"><td colspan="5">Total for this visit</td><td class="n">${inr(visitT.reduce((s, t) => s + net(t), 0))}</td></tr></table>
     ${visitPays.length ? `<h2>Payments</h2><table>${visitPays.map(x => `<tr><td>${esc(x.receiptNo)}</td><td>${esc((PMODES.find(m => m[0] === x.mode) || [0, x.mode])[1])}</td><td class="n">${inr(x.amount)}</td></tr>`).join('')}</table>` : ''}
     <p><b>Balance due: ${inr(due)}</b></p>`);
@@ -4606,6 +4891,99 @@ $('#clOv').addEventListener('click', async e => {
   }
 });
 $('#clOv').addEventListener('submit', e => { if (e.target.id === 'clVBill'){ e.preventDefault(); saveVisitPayment(); } });
+
+/* ---------- Patient assists: staff log who they assisted; the Chief doctor approves; the Account Manager sets incentives ----------
+   Staff only ever see their own entries and whether they were approved, never the incentive amount. */
+const AS_ST = {pending:['Pending', 'pend'], approved:['Approved', 'on'], rejected:['Not approved', 'gone']};
+const asApprover = () => canW('assistApprove');
+const asOwner = () => { const oc = orgCtx(); return !!(oc && !oc.support && oc.role === 'orgadmin'); };
+function asTabs(){ return [['mine', 'My assists', !!(orgCtx() && !orgCtx().support)], ['approve', 'Approve', asApprover()], ['incentives', 'Incentives', asOwner()]].filter(t => t[2]); }
+function asLoad(){
+  const {F} = cloud, A = cl.asst || (cl.asst = {tab:'', month:todayKey.slice(0, 7), person:''});
+  const key = orgCtx().orgId + '|' + A.tab + '|' + A.month;
+  if (cl.asKey === key) return; cl.asKey = key; A.d = null;
+  const W = F.where, q = (c, ...w) => F.getDocs(F.query(cCol(c), ...w)).then(docsOf), jobs = {};
+  if (A.tab === 'mine'){ jobs.mine = q('assists', W('uid', '==', cloud.uid)); if (can('appointments') || can('treatments')) jobs.appts = q('appointments', W('date', '>=', shiftDay(todayKey, -7)), W('date', '<=', todayKey)).catch(() => []); }
+  if (A.tab === 'approve') jobs.all = q('assists', W('date', '>=', shiftDay(todayKey, -60)));
+  if (A.tab === 'incentives'){ jobs.all = q('assists', W('status', '==', 'approved')); jobs.pay = q('assistPay'); }
+  const ks = Object.keys(jobs);
+  Promise.all(ks.map(k => jobs[k])).then(v => { if (cl.asKey !== key) return; const d = {}; ks.forEach((k, i) => d[k] = v[i]); A.d = d; if (cl.sec === 'assists') renderClinic(); })
+    .catch(e => { if (cl.asKey === key){ A.d = {err:errText(e)}; if (cl.sec === 'assists') renderClinic(); } });
+}
+function clAssists(){
+  const A = cl.asst || (cl.asst = {tab:'', month:todayKey.slice(0, 7), person:''}), tabs = asTabs();
+  if (!tabs.some(t => t[0] === A.tab)) A.tab = tabs.length ? tabs[0][0] : '';
+  asLoad();
+  const head = `<div class="clhead"><h2>Patient assists</h2>${A.tab === 'incentives' ? `<div class="mnav"><button data-asm="-1">‹</button><b>${esc(monthLabel(A.month))}</b><button data-asm="1"${A.month >= todayKey.slice(0, 7) ? ' disabled' : ''}>›</button></div>` : ''}</div>
+    ${tabs.length > 1 ? `<div class="htabs">${tabs.map(([k, l]) => `<button data-astab="${k}" class="${A.tab === k ? 'on' : ''}">${l}</button>`).join('')}</div>` : ''}`;
+  const d = A.d; if (!d) return head + '<div class="empty">Loading…</div>'; if (d.err) return head + `<div class="auth-err">${esc(d.err)}</div>`;
+  return head + ({mine:asMine, approve:asApprove, incentives:asIncentives})[A.tab](d);
+}
+const asRow = (x, extra) => `<td>${esc(fmtShort(x.date))}</td><td><b>${esc(x.patientName)}</b></td><td>${esc(x.typeName || '—')}</td><td>${esc(dName(x.doctorId) || '—')}</td><td class="stat">${esc(x.note || '')}</td>${extra}`;
+function asMine(d){
+  const M = d.mine.slice().sort((a, b) => String(b.date).localeCompare(String(a.date)) || (b.at || 0) - (a.at || 0)), mk = todayKey.slice(0, 7);
+  const pats = [...new Set((d.appts || []).filter(a => a.status !== 'cancelled').map(a => a.patientName))].sort();
+  const types = cl.types.filter(t => t.active !== false);
+  return `<div class="kpis">${kpi('Approved this month', M.filter(x => x.status === 'approved' && x.date.slice(0, 7) === mk).length, 'patients assisted')}${kpi('Waiting for approval', M.filter(x => x.status === 'pending').length, 'the Chief doctor approves')}${kpi('Logged in total', M.length, 'all time')}</div>
+    <div class="box"><h3>Add a patient you assisted <span class="sub">add each one the same day; the Chief doctor approves them</span></h3>
+    <form class="aform" id="clAsForm" novalidate>
+      <label>Date<input type="date" id="asDate" value="${todayKey}" max="${todayKey}" min="${shiftDay(todayKey, -7)}"></label>
+      <label class="grow">Patient *<input id="asPat" list="asPats" placeholder="Patient name"><datalist id="asPats">${pats.map(n => `<option value="${esc(n)}">`).join('')}</datalist></label>
+      <label>Treatment assisted *<select id="asType"><option value="">— Select —</option>${types.map(t => `<option value="${esc(t.id)}">${esc(t.name)}</option>`).join('')}<option value="other">Other</option></select></label>
+      <label>Doctor<select id="asDoc">${docOpts('', '— Select —')}</select></label>
+      <label class="grow">What you did<input id="asNote" placeholder="e.g. chairside assistance, suction, X-ray"></label>
+      <button class="primary" type="submit">Add</button></form></div>
+    <div class="awrap"><table class="atbl"><thead><tr><th>Date</th><th>Patient</th><th>Treatment</th><th>Doctor</th><th>Note</th><th>Status</th><th></th></tr></thead><tbody>
+      ${M.map(x => `<tr data-as="${esc(x.id)}">${asRow(x, `<td><span class="upill ${AS_ST[x.status][1]}">${AS_ST[x.status][0]}</span></td><td>${x.status === 'pending' ? '<button class="danger" data-asdel title="Delete">✕</button>' : ''}</td>`)}</tr>`).join('') || '<tr><td colspan="7" class="stat">Nothing logged yet.</td></tr>'}
+    </tbody></table></div>`;
+}
+function asApprove(d){
+  const P = d.all.filter(x => x.status === 'pending').sort((a, b) => String(b.date).localeCompare(String(a.date)) || String(a.name).localeCompare(String(b.name)));
+  const done = d.all.filter(x => x.status !== 'pending' && (x.date || '').slice(0, 7) === todayKey.slice(0, 7)).sort((a, b) => (b.approvedAt || 0) - (a.approvedAt || 0));
+  let rows = '', day = null;
+  P.forEach(x => { if (x.date !== day){ day = x.date; rows += `<tr class="wk"><td colspan="7">${esc(fmtShort(day))} · ${plural(P.filter(y => y.date === day).length, 'entry')}<button class="primary" data-asday="${esc(day)}" style="float:right;padding:3px 10px">Approve all for this day</button></td></tr>`; }
+    rows += `<tr data-as="${esc(x.id)}"><td><b>${esc(x.name || '')}</b></td>${asRow(x, `<td style="white-space:nowrap"><button class="primary" data-asok>Approve</button> <button data-asno>Reject</button></td>`)}</tr>`; });
+  return `<div class="kpis">${kpi('Waiting for approval', P.length, 'from the last 60 days')}${kpi('Decided this month', done.length, done.filter(x => x.status === 'approved').length + ' approved')}</div>
+    <div class="awrap"><table class="atbl"><thead><tr><th>Staff</th><th>Date</th><th>Patient</th><th>Treatment</th><th>Doctor</th><th>Note</th><th></th></tr></thead><tbody>${rows || '<tr><td colspan="7" class="stat">Nothing waiting. 👏</td></tr>'}</tbody></table></div>
+    ${done.length ? `<h3 style="font-size:13px;margin:16px 0 6px">Decided this month</h3><div class="awrap"><table class="atbl"><thead><tr><th>Staff</th><th>Date</th><th>Patient</th><th>Treatment</th><th>Doctor</th><th>Note</th><th>Status</th></tr></thead><tbody>
+      ${done.map(x => `<tr><td>${esc(x.name || '')}</td>${asRow(x, `<td><span class="upill ${AS_ST[x.status][1]}">${AS_ST[x.status][0]}</span></td>`)}</tr>`).join('')}</tbody></table></div>` : ''}`;
+}
+function asIncentives(d){
+  const A = cl.asst, pay = Object.fromEntries((d.pay || []).map(p => [p.id, p])), rates = (pay.rates && pay.rates.rates) || {};
+  const amt = x => pay['e-' + x.id] ? +pay['e-' + x.id].amount || 0 : +(rates[x.typeId || 'other'] || 0);
+  const people = {}; d.all.forEach(x => { const p = people[x.uid] = people[x.uid] || {uid:x.uid, name:x.name || '', m:[], all:[]}; p.all.push(x); if ((x.date || '').slice(0, 7) === A.month) p.m.push(x); });
+  const P = Object.values(people).sort((a, b) => a.name.localeCompare(b.name)), sum = xs => xs.reduce((s, x) => s + amt(x), 0);
+  if (A.person){
+    const p = people[A.person] || {name:'', m:[], all:[]}, M = p.m.slice().sort((a, b) => String(a.date).localeCompare(String(b.date)));
+    return `<button class="abk" data-asperson="">← Everyone</button><div class="kpis">${kpi(esc(p.name) + ' · ' + esc(monthLabel(A.month)), inr(sum(M)), plural(M.length, 'approved assist'))}${kpi('Earned so far', inr(sum(p.all)), plural(p.all.length, 'approved assist') + ' in total')}</div>
+      <div class="awrap"><table class="atbl"><thead><tr><th>Date</th><th>Patient</th><th>Treatment</th><th>Doctor</th><th>Note</th><th class="num">Incentive (₹)</th></tr></thead><tbody>
+      ${M.map(x => `<tr data-as="${esc(x.id)}">${asRow(x, `<td class="num"><input type="number" data-aspay min="0" step="10" value="${amt(x)}" style="width:90px"></td>`)}</tr>`).join('') || '<tr><td colspan="6" class="stat">No approved assists this month.</td></tr>'}
+      </tbody></table></div><p class="stat">Each amount starts from the rate for that treatment; change it here for this one entry.</p>`;
+  }
+  return `<div class="kpis">${kpi('Incentives ' + esc(monthLabel(A.month)), inr(P.reduce((s, p) => s + sum(p.m), 0)), plural(P.reduce((s, p) => s + p.m.length, 0), 'approved assist'))}${kpi('Earned so far', inr(P.reduce((s, p) => s + sum(p.all), 0)), 'all approved assists')}</div>
+    <div class="awrap"><table class="atbl"><thead><tr><th>Staff</th><th class="num">Approved (month)</th><th class="num">Incentive (month)</th><th class="num">Approved so far</th><th class="num">Earned so far</th></tr></thead><tbody>
+      ${P.map(p => `<tr class="clk" data-asperson="${esc(p.uid)}"><td><b>${esc(p.name)}</b></td><td class="num">${p.m.length}</td><td class="num"><b>${inr(sum(p.m))}</b></td><td class="num">${p.all.length}</td><td class="num">${inr(sum(p.all))}</td></tr>`).join('') || '<tr><td colspan="5" class="stat">No approved assists yet.</td></tr>'}
+    </tbody></table></div>
+    <div class="box" style="margin-top:12px"><h3>Incentive per assist <span class="sub">by treatment: applied to every approved assist (only you see these)</span></h3>
+      <div class="awrap"><table class="atbl"><thead><tr><th>Treatment</th><th class="num">₹ per assist</th></tr></thead><tbody>
+      ${cl.types.filter(t => t.active !== false).concat([{id:'other', name:'Other'}]).map(t => `<tr data-asr="${esc(t.id)}"><td>${esc(t.name)}</td><td class="num"><input type="number" data-asrate min="0" step="10" value="${+rates[t.id] || 0}" style="width:90px"></td></tr>`).join('')}
+      </tbody></table></div></div>`;
+}
+async function asSubmit(){
+  const {F} = cloud, oc = orgCtx(), ty = $('#asType').value, pat = $('#asPat').value.trim();
+  if (!pat) return info('Enter the patient\'s name.'); if (!ty) return info('Choose the treatment you assisted with.');
+  const t = cl.types.find(x => x.id === ty), ap = ((cl.asst.d && cl.asst.d.appts) || []).find(a => a.patientName === pat);
+  try {
+    await F.addDoc(cCol('assists'), {uid:cloud.uid, name:fullName(oc.me) || cloud.user.email || '', date:$('#asDate').value || todayKey, patientName:pat, patientId:ap ? ap.patientId : '', typeId:t ? t.id : 'other', typeName:t ? t.name : 'Other', doctorId:$('#asDoc').value || (ap ? ap.doctorId : ''), note:$('#asNote').value.trim(), status:'pending', at:Date.now()});
+    info('Added: waiting for the Chief doctor\'s approval.'); cl.asKey = ''; cl.clear = true; document.activeElement.blur(); renderClinic();
+  } catch(e){ info('Could not save: ' + errText(e)); }
+}
+async function asDecide(ids, status){
+  const {F} = cloud, by = cloud.user.email || '', nm = fullName(orgCtx().me);
+  try { for (const id of ids) await F.updateDoc(cDoc('assists', id), {status, approvedBy:by, approverName:nm, approvedAt:Date.now()});
+    info(`${plural(ids.length, 'entry')} ${status === 'approved' ? 'approved' : 'not approved'}.`); cl.asKey = ''; renderClinic(); }
+  catch(e){ info('Could not save: ' + errText(e)); }
+}
 
 /* ---------- serial numbers in every table ---------- */
 function numberTables(root){
@@ -4638,6 +5016,9 @@ const toMin = s => { const [h, m] = String(s || '0:0').split(':').map(Number); r
 const shiftMs = c => Math.max(1, toMin(c.shiftEnd) - toMin(c.shiftStart)) * 60000;
 const canManageAtt = () => { const oc = orgCtx(); return !!(oc && (oc.support || oc.role === 'orgadmin' || oc.role === 'manager')); };
 const attRO = () => !!(orgCtx() && orgCtx().support);          // Zenvora support: look, don't touch
+const isProxyMe = () => { const oc = orgCtx(); return !!(oc && !oc.support && feat('attendance') && feat('attProxy') && oc.me && oc.me.attProxy); };
+const canMarkAtt = () => !attRO() && (isProxyMe() || canManageAtt());
+const attSelf = () => { const oc = orgCtx(); return !!(oc && !oc.support && oc.role !== 'orgadmin'); };   // Account Managers don't check in
 const payOn = () => feat('payroll');
 const attCol = uid => cloud.F.collection(cloud.fs, 'orgs', orgCtx().orgId, 'attendance', uid, 'events');
 const titleOf = a => a && a.title && a.title !== ROLE_LABEL[a.role] ? a.title : '';
@@ -4701,7 +5082,7 @@ async function attLoad(){
   try {
     if (att.mode === 'me') return watch(cloud.uid);
     const accs = await F.getDocs(F.collection(fs, 'orgs', orgCtx().orgId, 'members'));
-    att.accts = accs.docs.map(d => Object.assign({uid:d.id}, d.data())).filter(a => !a.removed)
+    att.accts = accs.docs.map(d => Object.assign({uid:d.id}, d.data())).filter(a => !a.removed && a.role !== 'orgadmin')
       .sort((a, b) => roleRank(a.role) - roleRank(b.role) || fullName(a).localeCompare(fullName(b)));
     if (att.detail) return watch(att.detail);
     await Promise.all(att.accts.map(async a => { const qs = await F.getDocs(q(a.uid)); att.ev[a.uid] = qs.docs.map(map); }));
@@ -4711,11 +5092,10 @@ async function attLoad(){
 
 function renderAttendance(){
   if (!cloud || !cloud.uid || !orgCtx()) return;
-  const mgr = canManageAtt();
-  if (!att.mode || !mgr) att.mode = mgr ? (att.mode || 'team') : 'me';
-  if (attRO()) att.mode = 'team';
-  $('#attMode').hidden = !mgr || attRO();
-  document.querySelectorAll('#attMode button').forEach(b => b.classList.toggle('on', b.dataset.m === att.mode));
+  const mgr = canManageAtt(), modes = [mgr && 'team', attSelf() && 'me', canMarkAtt() && 'mark'].filter(Boolean);
+  if (attRO()) att.mode = 'team'; else if (!modes.includes(att.mode)) att.mode = modes[0] || 'me';
+  $('#attMode').hidden = modes.length < 2 || attRO();
+  document.querySelectorAll('#attMode button').forEach(b => { b.hidden = !modes.includes(b.dataset.m); b.classList.toggle('on', b.dataset.m === att.mode); });
   const cur = att.month === todayKey.slice(0, 7);
   $('#attTitle').textContent = parseDay(att.month + '-01').toLocaleDateString([], {month:'long', year:'numeric'});
   $('#attNow').disabled = cur;
@@ -4723,7 +5103,7 @@ function renderAttendance(){
   attLoad();
   const body = $('#attBody');
   if (body.contains(document.activeElement) && /INPUT|SELECT/.test(document.activeElement.tagName)) return;   // don't wipe a form being typed in
-  body.innerHTML = att.mode === 'me' ? attMine() : att.detail ? attDetail() : attTeam();
+  body.innerHTML = att.mode === 'me' ? attMine() : att.mode === 'mark' ? attMark() : att.detail ? attDetail() : attTeam();
   numberTables(body);
   attTick();
 }
@@ -4753,6 +5133,32 @@ function attMine(){
   return card + attKpis(S, false) + attTable(S, false);
 }
 
+/* Mark attendance: an attendance proxy (or a manager) checks staff in and out */
+function markList(accts, ev){
+  const rows = accts.filter(a => a.active !== false).map(a => {
+    const ss = sessionsOf(ev[a.uid] || []).filter(x => dayKey(x.in) === todayKey), open = ss.find(x => !x.out), last = ss[ss.length - 1];
+    return `<tr data-mk="${esc(a.uid)}"><td><b>${esc(fullName(a))}</b>${a.uid === cloud.uid ? ' <span class="stat">(you)</span>' : ''}<div class="stat">${esc(titleOf(a) || ROLE_LABEL[a.role] || '')}</div></td>
+      <td>${open ? `<span class="astat in">In since ${esc(timeOnly(open.in))}</span>` : ss.length ? `<span class="astat out">Out at ${esc(timeOnly(last.out))}</span>` : '<span class="astat notyet">Not in yet</span>'}</td>
+      <td class="stat">${ss.map(x => `${esc(timeOnly(x.in))}–${x.out ? esc(timeOnly(x.out)) : '…'}`).join(', ') || '—'}</td>
+      <td style="text-align:right"><button class="pbtn sm ${open ? 'out' : 'in'}" data-mkt="${open ? 'out' : 'in'}">${open ? 'Check out' : ss.length ? 'Check in again' : 'Check in'}</button></td></tr>`; }).join('');
+  return `<div class="awrap"><table class="atbl"><thead><tr><th>Staff</th><th>Now</th><th>Today</th><th></th></tr></thead><tbody>${rows || '<tr><td colspan="4" class="stat">No staff yet.</td></tr>'}</tbody></table></div>`;
+}
+function attMark(){
+  if (!att.accts.length) return att.key ? '<div class="empty">No staff yet.</div>' : '<div class="empty">Loading team…</div>';
+  return `<p class="stat" style="margin:0 0 8px">Check staff in or out when they can't do it themselves. The time is taken from the server clock and the entry is marked as done by you.</p>` + markList(att.accts, att.ev);
+}
+async function proxyPunch(uid, type, btn){
+  if (!navigator.onLine) return info("You're offline. Connect to the internet first.");
+  const {F} = cloud; if (btn) btn.disabled = true;
+  try { await F.addDoc(attCol(uid), {type, at:F.serverTimestamp(), src:'proxy', by:cloud.uid}); info(type === 'in' ? 'Checked in ✔' : 'Checked out ✔'); return true; }
+  catch(e){ info('Could not save: ' + (e.code || e.message)); if (btn) btn.disabled = false; return false; }
+}
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-mkt]'); if (!b) return;
+  const uid = b.closest('[data-mk]').dataset.mk;
+  if (!(await proxyPunch(uid, b.dataset.mkt, b))) return;
+  if (state.settings.view === 'home'){ home.px = null; renderHome(); } else { att.key = ''; renderAttendance(); }
+});
 function attKpis(S, pay){
   const k = (l, v, s, cls = '') => `<div class="kpi"><div class="kl">${l}</div><div class="kv ${cls}">${v}</div><div class="ks">${s}</div></div>`;
   return `<div class="kpis">

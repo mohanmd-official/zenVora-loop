@@ -85,12 +85,16 @@ People created in the earlier single-admin version show up in **Organizations �
 - **Planning Board:** a small menu at the top switches between **Board** (Daily kanban, Weekly and Monthly calendar), **All tasks** and **Insights**.
 - **Light / dark mode:** the 🌙 / ☀️ button in the top bar. Avatar → **Follow system light / dark** goes back to the computer's setting. Remembered per device.
 - **Numbered lists:** every table has a **No.** column, so you can say "row 12" on a call.
+- **Sub-menus are movable too:** drag the Clinic menu items, the Accounts tabs, the Report tabs and the patient tabs into your own order; it is remembered.
 - Avatar → **Change password**, or **Forgot password?** on the sign-in page. Planner backup / restore is in the avatar menu too.
 - The Super Admin email is set in **both** `public/firebase-config.js` and `firestore.rules`. If you change it, change both and publish the rules again.
 
 ## Staff attendance (when the org has Attendance)
 
 Where: the **Attendance** tab, or **Clinic → Attendance** when the organization has the Clinic (there is no separate Attendance tab then). Everyone can also check in and out from **Home**.
+
+- **Account Managers don't check in:** attendance, payroll and the team lists are for staff only.
+- **Attendance proxy** (Super Admin turns on the **Attendance proxy** feature for the org; Account Manager → Organization → People → Edit → tick **Attendance proxy**): that person, for example reception, gets **Mark attendance** (on Home and in Attendance) to check other staff in and out. The time is the server's clock and each entry records who marked it.
 
 
 - **Staff:** **Attendance** tab → **Check in** when arriving and **Check out** when leaving. They can check in and out again as often as needed in a day (e.g. lunch, errands). They see a live "worked today" timer, days present, offs used (out of 4), hours, overtime hours and overtime days, and a day-by-day list grouped by week.
@@ -121,7 +125,8 @@ Turn it on per organization: Super Admin → Organizations → the org → tick 
 
 **First-time setup (Account Manager): Clinic → Clinic setup**
 1. **Doctors:** add each one as **Chief doctor**, **Clinic doctor** or **Consultant**. Link the Chief doctor to their Zenvora Loop login (Login column), so they receive the daily-tally reminders.
-2. **Treatment list & prices:** **Add common dental treatments**, then edit prices. **Needs document** marks treatments whose document must be uploaded once billed (OPG → OPG, IOPA → X-ray, Crown → Intraoral scan by default).
+2. **Treatment list & prices:** **Add common dental treatments**, then edit prices. **Medicine price list:** **Add common dental medicines** (or your own), with the price per tablet / capsule / bottle.
+   - Link the Chief doctor's login: they automatically get **Approve patient assists**. **Needs document** marks treatments whose document must be uploaded once billed (OPG → OPG, IOPA → X-ray, Crown → Intraoral scan by default).
 3. **Clinic details:** address, phone, GSTIN, patient ID prefix, opening hours, logo.
 
 **Who can do what: Organization → People → Edit → Clinic access**
@@ -133,27 +138,31 @@ Turn it on per organization: Super Admin → Organizations → the org → tick 
 | Doctor | Patients, Appointments, Treatments & photos |
 | Accountant | Billing, Accounts, Petty cash, Daily tally, all reports |
 | Full clinic access | everything |
+| (extra tick) Approve patient assists | for the Chief doctor: approves the assists staff log each day |
 
 Account Managers always have full access, and only Accounts (the owner) can top up petty cash.
 
 **The patient workflow**
 1. **Add patient** (Patients → + New patient, or straight from the booking form). Age is worked out from the date of birth.
-2. **Book appointment** → the day grid / queue: **Scheduled → Check in (Waiting) → In chair → Done**.
-3. **Done** opens **"What happened in this appointment?"**: write the treatment summary, add the treatments done (each with its doctor, cost, discount, and a consultant fee for consultants), and optionally book the next visit. **Continue**.
-4. Or **Skip for now**: an **"Update patient treatment summary"** task goes on the Planning Board until someone adds the summary (Patient → Visits & summaries → Add treatment summary).
-5. Either way the **Bill** opens in the same window: this visit's treatments, earlier balance, **Save payment** (amount, mode), then **Print bill** and **Print receipt**. **Complete visit** is enabled once a payment is saved, or tick **No payment now** (the balance stays due). Only then does the patient move to **Completed**.
-6. If the person doing the summary has no Billing access, the patient waits in the queue as **At billing** (and a **Billing pending** task appears on the Planning Board) until the front desk opens **Bill & print**.
+2. **Book appointment** → the day grid / queue: **Scheduled → Check in (Waiting) → In chair → Done**. Each step has **↩ Back** to undo one step (e.g. At billing → In chair).
+3. **Done** opens **"What happened in this appointment?"**:
+   - **Treatment done (required):** each treatment with its doctor and **cost** (filled from the price list), discount, and a consultant fee for consultants.
+   - **Medicines / tablets:** pick the medicine, tick **Morning / Afternoon / Evening / Night** and enter the **days**; the number of tablets (ticks × days) and the cost are worked out and added to the bill.
+   - **Treatment plan description:** write it, or tick **Skip the description for now**: everyone in the clinic then gets a reminder "Treatment plan description needs to be updated for <patient>" until it's written (Patient → Visits & summaries).
+   - Optionally book the next visit. **← Back** returns to the queue (the patient stays In chair).
+4. **Save & go to bill →** opens the **Bill** in the same window: this visit's treatments, earlier balance, **Save payment** (amount, mode), then **Print bill** and **Print receipt**. **Complete visit** is enabled once a payment is saved, or tick **No payment now** (the balance stays due). Only then does the patient move to **Completed**. **← Back** on the bill reopens the treatments and medicines to correct them.
+5. If the person doing the summary has no Billing access, the patient waits in the queue as **At billing** (and a **Billing pending** task appears on the Planning Board) until the front desk opens **Bill & print**.
 
-**Patient record tabs:** Profile · Treatments · Billing · **Visits & summaries** · **Documents** (OPG, X-ray, intraoral scans, CBCT, blood tests, prescriptions, consent forms, lab reports; photos or PDFs up to 700 KB) · Pre/post-op photos · History (one timeline of everything).
+**Patient record tabs:** Profile · Treatments · **Tablets / prescriptions** (add medicines outside a visit, **Print prescription** per visit) · Billing · **Visits & summaries** · **Documents** (OPG, X-ray, intraoral scans, CBCT, blood tests, prescriptions, consent forms, lab reports; photos or PDFs up to 700 KB) · Pre/post-op photos · History (one timeline of everything).
 
 **Clinic ↔ Planning Board (automatic, every sign-in and every 10 minutes)**
 
 | Epic on the Planning Board | When | For |
 |---|---|---|
-| Update patient treatment summary | a visit was completed with "Skip for now" | anyone with Treatments access |
-| Patient documents backlog | a billed treatment needs a document (e.g. OPG) that isn't uploaded yet | Treatments / Billing access |
-| Patient follow-ups | a patient was seen today → appears on **tomorrow's** board | Appointments access |
-| Missed / skipped patients | marked Missed, or still Scheduled/Waiting at the end of the day → **next morning, 9 AM reminder** | Appointments access |
+| Treatment plan description | the description was skipped | **everyone in the clinic** |
+| Patient documents backlog | a billed treatment needs a document (e.g. OPG) that isn't uploaded yet | **everyone in the clinic** |
+| Patient follow-ups | a patient was seen today → appears on **tomorrow's** board | **everyone in the clinic** |
+| Missed / skipped patients | marked Missed, or still Scheduled/Waiting at the end of the day → **next morning, 9 AM reminder** | **everyone in the clinic** |
 | Accounts | a monthly commitment (e.g. Rent) not entered by the **15th** | Accounts access |
 | Daily tally | a day with cash payments has no tally, or a tally didn't match | Account Manager and the Chief doctor |
 | Billing pending | a patient is waiting **At billing** | Billing access |
@@ -164,13 +173,19 @@ These tasks tick themselves off when the work is done in the clinic (follow-ups 
 - **Overview:** income (patient payments **automatically** + any past/other income), clinic expenses, petty cash spent, net and margin, a 6-month chart, commitments, and where the money went.
 - **Daily tally:** opening cash (yesterday's count) + cash from patients + change/float put in − cash expenses − cash taken out = **expected**; then count the drawer by **₹500 / 200 / 100 / 50 / 20 / 10 / 5 / 2 / 1**. It must match, or a note is required, and the person ticks "I counted this cash myself". **GPay / UPI, card & bank:** every online payment of the day is listed; the person opens the app, finds each one and ticks it, enters the total the app shows (0 if nothing), and ticks "I checked every GPay / UPI, card and bank payment myself". Any difference needs a note. Missing tallies (any day with payments) and cash or online differences go to the Account Manager's and Chief doctor's Planning Board.
 - **Clinic expenses:** every expense with category, vendor, bill number, GST and an attached bill copy (photo/PDF). Consultant fees from treatments are added automatically.
-- **Petty cash:** a separate cash box. The owner tops it up (note required); front desk records each spend (note required); the balance should equal the cash in the box.
+- **Petty cash:** a separate cash box. The owner tops it up (note required); front desk records each spend (note required). **Count the box / opening balance:** the owner enters the cash actually in the box and the balance is set to it (the difference is recorded as an opening balance or a correction). A warning shows if spends are more than top-ups.
 - **Lab / Materials:** as many vendors as you like (with GSTIN). Add bills (paid or **not paid yet**), filter by vendor, see what's unpaid, **Mark paid**.
 - **Consultants:** every consultant doctor in one table: fees this month, fees to date, paid to date and **to pay now**, with **+ Fee** and **Pay**, and the patient-wise list of their fees.
 - **Commitments & categories:** monthly commitments (Rent + your own, e.g. Electricity, Salary) with expected amounts, and your own expense categories.
 - **Past data & audit:** add past months' income; **paste many rows** from Excel (`date, income|expense, category, amount, note`); and **Download audit pack**: one ZIP per financial year (April–March) with income, expenses (bill no., vendor GSTIN, GST), consultant fees and payments, petty cash, daily tallies, a month-by-month summary, and every attached bill copy, ready to hand to your auditor.
 
-**Reports:** Collection (every payment with date, receipt, **patient**, doctor and mode), Treatment-wise earnings (summary + every treatment with the patient), Doctors & consultants, Outstanding balances, Appointments, New patients. **Today** or custom dates; CSV and Print.
+**Reports:** Collection (every payment with date, receipt, **patient**, doctor and mode), Treatment-wise earnings (summary + every treatment with the patient; medicines as one line), Doctors & consultants, Outstanding balances, Appointments, New patients.
+- Toolbar: **Type** Daily / Monthly / Yearly · **Today** or **From / To** then **View** · **Tabular / Chart** · **Mode** (Cash, UPI / GPay, Card, Cheque, NEFT, RTGS, Bank transfer) · **Doctor**. Click a month or year row to open it day by day. CSV and Print.
+
+**Patient assists (Clinic → Patient assists)**
+- **My assists (assistants, reception, anyone):** each day, add the patients you assisted (patient, treatment, doctor, what you did). You see only your own entries and whether they're **Pending / Approved / Not approved**, never the amounts.
+- **Approve (Chief doctor):** pending entries by day: **Approve**, **Reject** or **Approve all for this day**.
+- **Incentives (Account Manager only):** set the **₹ per assist** for each treatment; see each person's approved assists and incentive for the month and **earned so far**; open a person to change the amount for a single entry.
 
 **Good to know**
 - Photos, documents and bill copies are stored in Firestore after compression (no paid storage plan needed). The free plan's 1 GiB holds a few thousand files; PDFs must be under 700 KB.
