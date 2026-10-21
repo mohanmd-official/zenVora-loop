@@ -148,7 +148,7 @@ Account Managers always have full access, and only Accounts (the owner) can top 
 2. **Book appointment** → the day grid / queue: **Scheduled → Check in (Waiting) → In chair → Done**. Each step has **↩ Back** to undo one step (e.g. At billing → In chair).
 3. **Done** opens **"What happened in this appointment?"**:
    - **Treatment done (required):** each treatment with its doctor and **cost** (filled from the price list), discount, and a consultant fee for consultants.
-   - **Medicines / tablets:** pick the medicine, tick **Morning / Afternoon / Evening / Night** and enter the **days**; the number of tablets (ticks × days) and the cost are worked out and added to the bill.
+   - **Medicines / tablets** (shown on the bill as a separate Medicines table): pick the medicine, tick **Morning / Afternoon / Evening / Night** and enter the **days**; the number of tablets (ticks × days) and the cost are worked out and added to the bill.
    - **Treatment plan description:** write it, or tick **Skip the description for now**: everyone in the clinic then gets a reminder "Treatment plan description needs to be updated for <patient>" until it's written (Patient → Visits & summaries).
    - Optionally book the next visit. **← Back** returns to the queue (the patient stays In chair).
 4. **Save & go to bill →** opens the **Bill** in the same window: this visit's treatments, earlier balance, **Save payment** (amount, mode), then **Print bill** and **Print receipt**. **Complete visit** is enabled once a payment is saved, or tick **No payment now** (the balance stays due). Only then does the patient move to **Completed**. **← Back** on the bill reopens the treatments and medicines to correct them.
@@ -158,17 +158,21 @@ Account Managers always have full access, and only Accounts (the owner) can top 
 
 **Clinic ↔ Planning Board (automatic, every sign-in and every 10 minutes)**
 
-| Epic on the Planning Board | When | For |
-|---|---|---|
-| Treatment plan description | the description was skipped | **everyone in the clinic** |
-| Patient documents backlog | a billed treatment needs a document (e.g. OPG) that isn't uploaded yet | **everyone in the clinic** |
-| Patient follow-ups | a patient was seen today → appears on **tomorrow's** board | **everyone in the clinic** |
-| Missed / skipped patients | marked Missed, or still Scheduled/Waiting at the end of the day → **next morning, 9 AM reminder** | **everyone in the clinic** |
-| Accounts | a monthly commitment (e.g. Rent) not entered by the **15th** | Accounts access |
-| Daily tally | a day with cash payments has no tally, or a tally didn't match | Account Manager and the Chief doctor |
-| Billing pending | a patient is waiting **At billing** | Billing access |
+The Planning Board has a separate, expandable **Organization reminders** panel above your own tasks. There is **one shared copy** of each organization reminder: when anyone closes it (**✓ Close**), it closes for everyone and shows **"✓ Closed by <name> · time"** in the Closed column (kept 14 days), so the Chief doctor can see who closed what and follow up on what's still open (each open item shows how long it has been open). **Reopen** undoes a close. Reminders whose work is done in the clinic close themselves ("Done in the clinic"). Your personal tasks stay on the board below and are never mixed in.
 
-These tasks tick themselves off when the work is done in the clinic (follow-ups stay until you tick them). They also appear on Home → Reminders, and each task has **Open in Clinic →**.
+| Reminder | When | Who sees it |
+|---|---|---|
+| Patient follow-ups | a patient was seen → appears the next day; stays until someone closes it | **everyone** in the organization |
+| Patient follow-ups (missed) | marked Missed, or still Scheduled/Waiting at the end of the day → call to reschedule | **everyone** |
+| Patient documents | a billed treatment needs a document (e.g. OPG) that isn't uploaded yet | **everyone** (closes itself when uploaded) |
+| Treatment plan description | the description was skipped | **everyone** (closes itself when written) |
+| Accounts: close last month | from the 1st until the **Close <month> accounts** button (Accounts) is pressed; due by the **5th** | **Account Manager & Chief doctor only** |
+| Accounts: commitments | a monthly commitment (e.g. Rent) not entered by the 15th | Account Manager & Chief doctor only |
+| Vendor payments / Lab payments | a vendor or lab bill is marked **not paid yet** (one reminder per vendor) | Account Manager & Chief doctor only |
+| Daily tally | a day with payments has no tally, or a tally didn't match | Account Manager & Chief doctor only |
+| Billing pending | a patient is waiting **At billing** | personal, for people with Billing access |
+
+Home → **Reminders** shows the open organization reminders (with **✓ Close**) and your own. Each reminder has **Open** to jump to the right place in the Clinic.
 
 **Accounts (Clinic → Accounts)**
 - **Overview:** income (patient payments **automatically** + any past/other income), clinic expenses, petty cash spent, net and margin, a 6-month chart, commitments, and where the money went.

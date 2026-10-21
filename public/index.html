@@ -335,6 +335,17 @@ details.tv th:first-child,details.tv td:first-child{text-align:left}
 .pbtn{margin-top:8px;border:none;color:#fff;font-weight:700;font-size:15px;padding:11px 26px;border-radius:999px;min-width:170px}
 .pbtn.in{background:var(--done)} .pbtn.sm{padding:6px 14px;font-size:13px;min-width:0;height:auto;margin-top:0}
 .pbtn.out{background:var(--high)}
+.orgrem{border:1px solid var(--line);border-radius:14px;background:var(--paper);margin:0 0 12px;overflow:hidden}
+.orh{display:flex;align-items:center;gap:10px;width:100%;border:none;background:none;padding:11px 14px;text-align:left;cursor:pointer;flex-wrap:wrap}
+.orh .chev{color:var(--muted);width:12px}.orn{font-size:12px;font-weight:700;padding:2px 9px;border-radius:999px;background:color-mix(in srgb,var(--line) 60%,transparent);color:var(--muted)}
+.orn.on{background:color-mix(in srgb,var(--high) 14%,transparent);color:var(--high)}
+.orb{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 14px 14px}@media (max-width:800px){.orb{grid-template-columns:1fr}}
+.orct{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:2px 0 8px;display:flex;align-items:center;gap:6px}
+.otr{display:flex;gap:8px;align-items:center;padding:9px 10px;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:10px;margin-bottom:6px;background:var(--paper)}
+.otr.hi{border-left-color:var(--high)}.otr.done{border-left-color:var(--done);opacity:.85}.otr.done b{text-decoration:line-through;color:var(--muted);font-weight:500}
+.otm{flex:1;min-width:0}.otm b{font-size:13.5px}.otc{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:3px;font-size:12px}
+.otby{color:var(--done);font-weight:600}.otown{font-size:11px;padding:1px 7px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.otr button{padding:4px 10px;font-size:12px;white-space:nowrap}
 button.linkb{border:none;background:none;padding:0 2px;color:var(--accent);font-size:12px;font-weight:600;text-decoration:underline;cursor:pointer}
 .pbtn:disabled{opacity:.6}
 .atbl{width:100%;border-collapse:separate;border-spacing:0;background:var(--paper);border:1px solid var(--line);border-radius:12px;overflow:hidden;font-variant-numeric:tabular-nums}
@@ -791,6 +802,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 
     <span class="sp"></span>
     <span class="stat" id="boardStat"></span>
   </div>
+  <div id="orgRem"></div>
   <div class="ro" id="roBanner" hidden></div>
   <div class="board" id="board"></div>
 </section>
@@ -1227,6 +1239,7 @@ const nearHost = (host, e, vert) => { const r = host.getBoundingClientRect(), pa
 
 /* ================= kanban ================= */
 function renderBoard(){
+  renderOrgRem();
   const past = boardDay < todayKey;
   const items = past ? pastDayItems(boardDay) : state.items.filter(i => i.day === boardDay);
   document.body.classList.toggle('readonly', past);
@@ -3026,7 +3039,7 @@ const cl = {sec:'patients', pid:null, ptab:'profile', doctors:[], types:[], sett
   aDate:todayKey, aMode:'day', aDoc:'', appts:null, aUnsub:null, aKey:'', book:null,
   acc:{month:'', tab:'overview', d:null, key:'', pre:null, tday:'', vf:'', vonly:'month', cf:''}, ameta:null, reminders:[], pD:null, sum:null,
   rep:{kind:'collection', preset:'today', from:'', to:'', data:null, key:'', doc:null, group:'day', view:'table', mode:'', dfil:''},
-  reset(){ [...this.unsub, ...this.pUnsub].forEach(u => { try { u(); } catch(e){} }); if (this.aUnsub) try { this.aUnsub(); } catch(e){}
+  reset(){ [...this.unsub, ...this.pUnsub, ...(this.otUnsub || [])].forEach(u => { try { u(); } catch(e){} }); if (this.aUnsub) try { this.aUnsub(); } catch(e){} this.otUnsub = []; this.otKey = ''; this.orgT = null; this.ownT = null;
     Object.assign(this, {pid:null, doctors:[], types:[], settings:{}, recent:null, search:null, q:'', unsub:[], key:'', p:null, pT:null, pP:null, pA:null, pPh:null, pUnsub:[], pKey:'',
       newP:false, edit:{}, appts:null, aUnsub:null, aKey:'', book:null, ameta:null, members:null, mLoading:false, reminders:[], pD:null, sum:null, meds:null, asst:null, asKey:''}); this.acc.key = ''; this.rep.key = ''; this.rep.data = null; }};
 const cCol = (...p) => cloud.F.collection(cloud.fs, 'orgs', orgCtx().orgId, ...p);
@@ -3267,7 +3280,7 @@ function clRx(){
       </form>${(cl.meds || []).filter(x => x.active !== false).length ? '' : '<p class="stat">Add your medicine price list in Clinic setup first.</p>'}</div>` : ''}
     ${cl.pT === null ? '<div class="empty">Loading…</div>' : groups.length ? groups.map(g => `<div class="box rxg"><div class="crow"><b>${esc(fmtLong(g.date))}</b><span class="stat">${esc(dName(g.doc) || '')}</span><span class="sp"></span><button data-rxprint="${esc(g.k)}">🖨 Print prescription</button></div>
       <div class="awrap" style="margin-top:6px"><table class="atbl"><thead><tr><th>Medicine</th><th>When</th><th class="num">Days</th><th class="num">Qty</th>${money ? '<th class="num">Price</th><th class="num">Amount</th>' : ''}${w ? '<th></th>' : ''}</tr></thead><tbody>
-      ${g.items.map(m => `<tr data-tid="${esc(m.id)}"><td><b>${esc(m.typeName)}</b></td><td>${esc(doseTxt(m.dose))} <span class="stat">${esc(DOSE.filter(([k]) => m.dose && m.dose[k]).map(d => d[1]).join(', '))}</span></td><td class="num">${+m.days || '—'}</td><td class="num">${+m.qty || 0}</td>${money ? `<td class="num">${inr(m.unitPrice)}</td><td class="num"><b>${inr(m.cost)}</b></td>` : ''}${w ? '<td><button class="danger" data-tdel title="Delete">✕</button></td>' : ''}</tr>`).join('')}
+      ${g.items.map(m => `<tr data-tid="${esc(m.id)}"><td><b>${esc(m.typeName)}</b></td><td>${medDose(m)}</td><td class="num">${+m.days || '—'}</td><td class="num">${+m.qty || 0}</td>${money ? `<td class="num">${inr(m.unitPrice)}</td><td class="num"><b>${inr(m.cost)}</b></td>` : ''}${w ? '<td><button class="danger" data-tdel title="Delete">✕</button></td>' : ''}</tr>`).join('')}
       </tbody></table></div></div>`).join('') : '<div class="empty">No tablets or medicines prescribed yet.</div>'}</div>`;
 }
 function printRx(k){
@@ -3646,9 +3659,12 @@ function clAccounts(){
   if (!d) return head + '<div class="empty">Loading…</div>';
   if (d.err) return head + `<div class="auth-err">${esc(d.err)}</div>`;
   let banner = '';
+  { const pm = mShift(todayKey.slice(0, 7), -1), cm = (ameta().closed || {})[pm];
+    if (canW('accounts') && !cm) banner += `<div class="nag${+todayKey.slice(8) > 5 ? ' late' : ''}">${+todayKey.slice(8) > 5 ? '⚠ ' : ''}${esc(monthLabel(pm))} accounts aren't closed yet (due by the 5th). Check its expenses, bills and tallies, then <button class="primary" data-closem="${pm}" style="padding:3px 10px;margin-left:6px">Close ${esc(parseDay(pm + '-01').toLocaleDateString([], {month:'long'}))} accounts</button></div>`;
+    else if (cm && a.month === pm) banner += `<div class="nag" style="border-color:var(--done)">✓ ${esc(monthLabel(pm))} accounts closed by ${esc(cm.name || '')} on ${esc(fmtShort(dayKey(cm.at)))}</div>`; }
   if (can('accounts') && d.led && monthly){
     const cs = commitStatus(a.month, d.led), late = cs.filter(x => x.late), due = cs.filter(x => !x.done && !x.late);
-    banner = late.length ? `<div class="nag late">⚠ Overdue for ${esc(monthLabel(a.month))}: ${late.map(x => esc(x.c.name)).join(', ')}: these should be entered by the ${DUE_DAY}th.</div>`
+    banner += late.length ? `<div class="nag late">⚠ Overdue for ${esc(monthLabel(a.month))}: ${late.map(x => esc(x.c.name)).join(', ')}: these should be entered by the ${DUE_DAY}th.</div>`
       : due.length ? `<div class="nag">Due by ${DUE_DAY} ${esc(parseDay(a.month + '-01').toLocaleDateString([], {month:'short'}))}: ${due.map(x => esc(x.c.name)).join(', ')}</div>` : '';
   }
   return head + banner + ({overview:accOverview, tally:accTally, expenses:accExpenses, petty:accPetty, lab:() => accVendorTab('Lab'), materials:() => accVendorTab('Materials'), consultants:accConsultants, setup:accSetup, import:accImport})[a.tab](d);
@@ -4254,6 +4270,9 @@ $('#clBody').addEventListener('click', async e => {
     if (k.length === 7){ o.from = k + '-01'; o.to = mEnd(k) > todayKey ? todayKey : mEnd(k); o.group = 'day'; }
     else { o.from = k + '-01-01'; o.to = k + '-12-31' > todayKey ? todayKey : k + '-12-31'; o.group = 'month'; }
     o.preset = ''; return renderClinic(); }
+  const cmb = t.closest('[data-closem]'); if (cmb){ const pm = cmb.dataset.closem; if (!confirm(`Close the accounts for ${monthLabel(pm)}? This tells the team the month is checked and done.`)) return;
+    const m = ameta(); m.closed = Object.assign({}, m.closed || {}, {[pm]:{by:cloud.uid, name:fullName(orgCtx().me) || '', at:Date.now()}});
+    try { await saveAMeta(m); cl.ameta = m; info(`${monthLabel(pm)} accounts closed.`); clinicSync(true); } catch(err){ info(errText(err)); } return renderClinic(); }
   const am2 = t.closest('[data-am2]'); if (am2){ cl.acc.month = mShift(cl.acc.month, +am2.dataset.am2); return renderClinic(); }
   const at = t.closest('[data-at]'); if (at){ cl.acc.tab = at.dataset.at; cl.acc.pre = null; return renderClinic(); }
   const cm = t.closest('[data-commit]'); if (cm){ const c = ameta().commitments.find(x => x.id === cm.dataset.commit); if (c.id === 'petty') cl.acc.tab = 'petty'; else { cl.acc.tab = 'expenses'; cl.acc.pre = {category:c.name, amount:c.amount || '', note:`${c.name} · ${monthLabel(cl.acc.month)}`}; } return renderClinic(); }
@@ -4380,6 +4399,7 @@ const typeNeeds = tr => needsDocOf(cl.types.find(x => x.id === tr.typeId) || {na
 const DOSE = [['m', 'Morning'], ['a', 'Afternoon'], ['e', 'Evening'], ['n', 'Night']];
 const isMed = t => !!t && t.kind === 'medicine';
 const doseTxt = d => DOSE.map(([k]) => d && d[k] ? 1 : 0).join('-');
+const medDose = t => DOSE.some(([k]) => t.dose && t.dose[k]) ? `${doseTxt(t.dose)} <span class="stat">${esc(DOSE.filter(([k]) => t.dose[k]).map(d => d[1]).join(', '))}</span>` : '<span class="stat">—</span>';
 async function clOpenSummary(appt, completing, back){
   cl.sum = {appt, completing, back:back || '', T:null};
   $('#clOv').classList.add('on'); $('#clOvBody').innerHTML = '<div class="empty">Loading…</div>';
@@ -4427,7 +4447,7 @@ function clSummaryForm(){
       ${w ? `<div class="fhead" style="margin:0 0 4px">Treatment done * <span class="stat">required, with its cost · billed to the patient · the doctor here is credited</span></div>
         <div id="smRows">${(TT.length ? TT : [null]).map((t, i) => sumRow(i, a, t)).join('')}</div>
         <button type="button" id="smAdd" style="margin-top:4px">+ Add treatment</button>
-        <div class="fhead" style="margin:16px 0 4px">💊 Medicines / tablets <span class="stat">tick when to take them and for how many days: the number of tablets and the cost are worked out and added to the bill</span></div>
+        <div class="fhead" style="margin:16px 0 4px">Medicines / tablets <span class="stat">tick when to take them and for how many days: the number of tablets and the cost are worked out and added to the bill</span></div>
         <div id="smMeds">${MM.map((m, i) => medRow(i, m)).join('')}</div>
         <div class="btnrow"><button type="button" id="smMedAdd">+ Add medicine</button>${(cl.meds || []).filter(x => x.active !== false).length ? '' : '<span class="stat">Add your medicine price list in Clinic setup first.</span>'}<span class="sp"></span><span class="stat">Medicines total <b id="smMedTot">${inr(MM.reduce((s, m) => s + (+m.cost || 0), 0))}</b></span></div>`
       : '<p class="stat">Treatments and medicines are added by a doctor (you don\'t have Treatments access).</p>'}
@@ -4543,70 +4563,162 @@ async function clinicSyncNow(){
     if (!cl.types.length) cl.types = await q('treatmentTypes').catch(() => []);
     const tAt = (day, h) => { const d = parseDay(day); d.setHours(h, 0, 0, 0); return d.getTime(); };
     const push = (id, epic, title, o = {}) => R.push(Object.assign({id:'zc-' + id, epic, title, day:todayKey, priority:'med'}, o));
-    // Patient reminders are shared with everyone in the clinic: whoever can see the data refreshes its part of
-    // clinicMeta/reminders, and everyone (front desk, assistants, doctors, accounts) gets them on their board.
-    const shared = {};
-    const sumList = can('treatments') === true || can('appointments') === true ? await q('appointments', W('summaryPending', '==', true)) : null;
-    if (sumList){ const n = R.length; sumList.forEach(a => push('sum-' + a.id, 'Treatment plan description', `Treatment plan description needs to be updated for ${a.patientName} (${fmtDM(a.date)}, ${dName(a.doctorId)})`, {priority:'high', link:{pid:a.patientId, tab:'appointments'}})); shared.sum = {at:Date.now(), items:R.slice(n, n + 150)}; }
-    if (can('treatments') === true || can('billing') === true){ const n0 = R.length;
-      (await q('treatments', W('date', '>=', shiftDay(todayKey, -90)))).filter(t => typeNeeds(t) && !t.docAttached && t.status !== 'planned')
-        .forEach(t => push('doc-' + t.id, 'Patient documents backlog', `Upload ${typeNeeds(t)} for ${t.patientName} (${t.typeName}, ${fmtDM(t.date)})`, {link:{pid:t.patientId, tab:'docs'}}));
-      shared.doc = {at:Date.now(), items:R.slice(n0, n0 + 150)};
+    // ---- organization reminders (one shared copy; anyone can close it for everyone) ----
+    const ORG = [], OWN = [], cats = new Set(), ocats = new Set();
+    const opush = (cat, id, epic, title, o = {}) => ORG.push(Object.assign({id:'zc-' + id, cat, epic, title, day:todayKey, priority:'med'}, o));
+    const wpush = (cat, id, epic, title, o = {}) => OWN.push(Object.assign({id:'zc-' + id, cat, epic, title, day:todayKey, priority:'high'}, o));
+    if (can('treatments') === true || can('appointments') === true){ cats.add('sum');
+      (await q('appointments', W('summaryPending', '==', true))).forEach(a => opush('sum', 'sum-' + a.id, 'Treatment plan description', `Treatment plan description needs to be updated for ${a.patientName} (${fmtDM(a.date)}, ${dName(a.doctorId)})`, {priority:'high', link:{pid:a.patientId, tab:'appointments'}})); }
+    if (can('treatments') === true || can('billing') === true){ cats.add('doc');
+      (await q('treatments', W('date', '>=', shiftDay(todayKey, -90)))).filter(t => !isMed(t) && typeNeeds(t) && !t.docAttached && t.status !== 'planned')
+        .forEach(t => opush('doc', 'doc-' + t.id, 'Patient documents', `Upload ${typeNeeds(t)} for ${t.patientName} (${t.typeName}, ${fmtDM(t.date)})`, {link:{pid:t.patientId, tab:'docs'}})); }
+    if (can('appointments') === true){ cats.add('fu'); cats.add('miss');
+      (await q('appointments', W('date', '>=', shiftDay(todayKey, -7)), W('date', '<=', todayKey))).forEach(a => {
+        if (a.status === 'completed' && a.date >= y) opush('fu', 'fu-' + a.id, 'Patient follow-ups', `Follow up with ${a.patientName}: seen on ${fmtDM(a.date)} by ${dName(a.doctorId)}${a.reason ? ' (' + a.reason + ')' : ''}`, {day:shiftDay(a.date, 1), link:{pid:a.patientId, tab:'appointments'}});
+        if (a.status === 'missed' || (a.date < todayKey && ['scheduled', 'waiting'].includes(a.status))){ const d1 = shiftDay(a.date, 1) > todayKey ? shiftDay(a.date, 1) : todayKey;
+          opush('miss', 'miss-' + a.id, 'Patient follow-ups', `Call ${a.patientName} to reschedule: missed ${fmtDM(a.date)} ${hm12(a.time)} with ${dName(a.doctorId)}`, {priority:'high', day:d1, link:{pid:a.patientId, tab:'appointments'}}); }
+      }); }
+    // ---- owner reminders: Account Manager and Chief doctor only ----
+    const owner = isOwnerLike();
+    if (owner){
+      if (oc.role === 'orgadmin') await ensureChiefFlag();
+      const pm = mShift(mk, -1), am = cl.ameta || await F.getDoc(cDoc('clinicMeta', 'accounts')).then(s => s.exists() ? s.data() : null).catch(() => null);
+      if (am) cl.ameta = am;
+      ocats.add('close');
+      if (!((am && am.closed) || {})[pm]) wpush('close', 'close-' + pm, 'Accounts', `Close the accounts for ${monthLabel(pm)}${+todayKey.slice(8) > 5 ? ' (was due by the 5th)' : ' by the 5th of this month'}`, {link:{sec:'accounts', tab:'overview', month:pm}});
+      if (can('accounts') === true){
+        ['commit', 'vendor', 'lab', 'tally'].forEach(c => ocats.add(c));
+        if (+todayKey.slice(8) >= DUE_DAY){
+          const led = await q('ledger', W('date', '>=', mk + '-01'), W('date', '<=', mEnd(mk)));
+          const missing = commitStatus(mk, led).filter(x => !x.done).map(x => x.c.name);
+          if (missing.length) wpush('commit', 'acct-' + mk, 'Accounts', `Accounts need to be sorted for ${monthLabel(mk)}: ${missing.join(', ')}`, {link:{sec:'accounts'}});
+        }
+        const [vens, unpaid] = await Promise.all([q('vendors'), q('ledger', W('kind', '==', 'expense'), W('paid', '==', false))]);
+        const byV = {}; unpaid.filter(x => x.vendorId).forEach(x => (byV[x.vendorId] = byV[x.vendorId] || []).push(x));
+        Object.entries(byV).forEach(([vid, xs]) => { const v = vens.find(z => z.id === vid) || {name:'Vendor', type:'Other'}, lab = v.type === 'Lab';
+          wpush(lab ? 'lab' : 'vendor', (lab ? 'lab-' : 'vend-') + vid, lab ? 'Lab payments' : 'Vendor payments', `${lab ? 'Lab' : 'Vendor'} payment to be updated: ${v.name}, ${plural(xs.length, 'unpaid bill')} (${inr(paidSum(xs))})`, {link:{sec:'accounts', tab:lab ? 'lab' : 'materials'}}); });
+        const days = [1, 2, 3].map(n => shiftDay(todayKey, -n));
+        const [pays, tals] = await Promise.all([q('payments', W('date', '>=', days[2]), W('date', '<=', days[0])), q('tallies', W('date', '>=', days[2]), W('date', '<=', days[0]))]);
+        days.forEach(d => { if (pays.some(p => p.date === d) && !tals.some(t => t.date === d)) wpush('tally', 'tally-' + d, 'Daily tally', `Daily tally (cash + GPay / UPI) not done for ${fmtShort(d)}`, {link:{sec:'accounts', tab:'tally', day:d}}); });
+        tals.filter(t => t.digitalDiff).forEach(t => wpush('tally', 'tddiff-' + t.date, 'Daily tally', `GPay / UPI, card or bank ${t.digitalDiff > 0 ? 'excess' : 'shortfall'} of ${inr(Math.abs(t.digitalDiff))} on ${fmtShort(t.date)}: review`, {link:{sec:'accounts', tab:'tally', day:t.date}}));
+        tals.filter(t => t.diff).forEach(t => wpush('tally', 'tdiff-' + t.date, 'Daily tally', `Cash ${t.diff > 0 ? 'excess' : 'shortfall'} of ${inr(Math.abs(t.diff))} on ${fmtShort(t.date)}: review`, {link:{sec:'accounts', tab:'tally', day:t.date}}));
+      }
     }
-    if (can('appointments') === true){ const n0 = R.length;
-      const A = await q('appointments', W('date', '>=', shiftDay(todayKey, -7)), W('date', '<=', todayKey));
-      A.forEach(a => {
-        if (a.status === 'completed' && a.date >= y) push('fu-' + a.id, 'Patient follow-ups', `Follow up with ${a.patientName}: seen ${relDay(a.date).toLowerCase()} by ${dName(a.doctorId)}${a.reason ? ' (' + a.reason + ')' : ''}`, {day:shiftDay(a.date, 1), remindAt:tAt(shiftDay(a.date, 1), 10), link:{pid:a.patientId, tab:'appointments'}});
-        const skipped = a.status === 'missed' || (a.date < todayKey && ['scheduled', 'waiting'].includes(a.status));
-        if (skipped){ const d1 = shiftDay(a.date, 1) > todayKey ? shiftDay(a.date, 1) : todayKey;
-          push('miss-' + a.id, 'Missed / skipped patients', `Call ${a.patientName} to reschedule: missed ${fmtDM(a.date)} ${hm12(a.time)} with ${dName(a.doctorId)}`, {priority:'high', day:d1, remindAt:tAt(d1, 9), link:{pid:a.patientId, tab:'appointments'}}); }
-      });
-      shared.pat = {at:Date.now(), items:R.slice(n0, n0 + 200)};
-    }
-    try {
-      if (Object.keys(shared).length) await F.setDoc(cDoc('clinicMeta', 'reminders'), shared, {merge:true});
-      const sd = await F.getDoc(cDoc('clinicMeta', 'reminders')), all = sd.exists() ? sd.data() : {}, have = new Set(R.map(r => r.id));
-      ['sum', 'doc', 'pat'].forEach(c => ((all[c] || {}).items || []).forEach(r => { if (!have.has(r.id)){ have.add(r.id); R.push(r); } }));
-    } catch(e){ console.warn('shared reminders', e); }
+    await otMerge('orgTasks', ORG, cats, ['fu']);
+    if (owner) await otMerge('ownerTasks', OWN, ocats, []);
+    // ---- personal: only the visits waiting for your payment ----
     if (can('billing') === true){
       (await q('appointments', W('status', '==', 'billing'))).forEach(a => push('bill-' + a.id, 'Billing pending', `Take payment & complete the visit: ${a.patientName} (${fmtDM(a.date)})`, {priority:'high', link:{pid:a.patientId, tab:'appointments'}}));
-    }
-    if (can('accounts') === true && +todayKey.slice(8) >= DUE_DAY){
-      if (!cl.ameta){ const s = await F.getDoc(cDoc('clinicMeta', 'accounts')); cl.ameta = s.exists() ? s.data() : null; }
-      const led = await q('ledger', W('date', '>=', mk + '-01'), W('date', '<=', mEnd(mk)));
-      const missing = commitStatus(mk, led).filter(x => !x.done).map(x => x.c.name);
-      if (missing.length) push('acct-' + mk, 'Accounts', `Accounts need to be sorted for ${monthLabel(mk)}: ${missing.join(', ')}`, {priority:'high', link:{sec:'accounts'}});
-    }
-    const chief = cl.doctors.some(d => d.type === 'chief' && d.memberUid === cloud.uid);
-    if (oc.role === 'orgadmin' || chief){
-      const days = [1, 2, 3].map(n => shiftDay(todayKey, -n));
-      const [pays, tals] = await Promise.all([q('payments', W('date', '>=', days[2]), W('date', '<=', days[0])), q('tallies', W('date', '>=', days[2]), W('date', '<=', days[0]))]);
-      days.forEach(d => { if (pays.some(p => p.date === d) && !tals.some(t => t.date === d))
-        push('tally-' + d, 'Daily tally', `Daily tally (cash + GPay / UPI) not done for ${fmtShort(d)}`, {priority:'high', link:{sec:'accounts', tab:'tally', day:d}}); });
-      tals.filter(t => t.digitalDiff).forEach(t => push('tddiff-' + t.date, 'Daily tally', `GPay / UPI, card or bank ${t.digitalDiff > 0 ? 'excess' : 'shortfall'} of ${inr(Math.abs(t.digitalDiff))} on ${fmtShort(t.date)}: review and acknowledge`, {link:{sec:'accounts', tab:'tally', day:t.date}}));
-      tals.filter(t => t.diff).forEach(t => push('tdiff-' + t.date, 'Daily tally', `Cash ${t.diff > 0 ? 'excess' : 'shortfall'} of ${inr(Math.abs(t.diff))} on ${fmtShort(t.date)}: review and acknowledge`, {link:{sec:'accounts', tab:'tally', day:t.date}}));
     }
     const remChanged = stable(R.map(r => r.id + r.title)) !== stable((cl.reminders || []).map(r => r.id + r.title));
     cl.reminders = R;
     if (remChanged && state.settings.view === 'home') renderSoon('home', () => { if (state.settings.view === 'home') renderHome(); });
     if (!agendaOn()) return;
     let changed = false;
+    // older versions copied every clinic reminder onto each person's board: those copies go; the shared ones live in "Organization reminders"
+    const before = state.items.length;
+    state.items = state.items.filter(it => !/^zc-/.test(it.id) || /^zc-bill-/.test(it.id));
+    if (state.items.length !== before) changed = true;
     R.forEach(r => {
       const it = state.items.find(i => i.id === r.id);
-      if (!it){ state.items.push({id:r.id, title:r.title, epic:r.epic, link:r.link, priority:r.priority, status:'todo', desc:'Added automatically from the clinic. It ticks itself off when done.', comments:[], created:Date.now(), day:r.day, plannedDay:r.day, ord:nextOrd(), ...(r.remindAt && r.remindAt > Date.now() ? {remindAt:r.remindAt, reminded:false} : {})}); changed = true; }
+      if (!it){ state.items.push({id:r.id, title:r.title, epic:r.epic, link:r.link, priority:r.priority, status:'todo', desc:'Added automatically from the clinic. It ticks itself off when done.', comments:[], created:Date.now(), day:r.day, plannedDay:r.day, ord:nextOrd()}); changed = true; }
       else if (it.status !== 'done' && it.title !== r.title){ it.title = r.title; changed = true; }
     });
-    const live = new Set(R.map(r => r.id)), ours = id => /^zc-/.test(id) && !/^zc-(fu)-/.test(id);   // follow-ups stay until the person ticks them
-    state.items.forEach(it => { if (ours(it.id) && !live.has(it.id) && it.status !== 'done' && it.day <= todayKey){ it.status = 'done'; it.doneAt = Date.now(); changed = true; } });
+    const live = new Set(R.map(r => r.id));
+    state.items.forEach(it => { if (/^zc-/.test(it.id) && !live.has(it.id) && it.status !== 'done' && it.day <= todayKey){ it.status = 'done'; it.doneAt = Date.now(); changed = true; } });
     if (changed) commit();
   } catch(e){ console.warn('clinic sync', e); }
   finally { syncBusy = false; }
 }
+/* Merge freshly worked-out reminders into the shared list (in a transaction, so two people syncing never undo each other):
+   new ones are added open; ones whose work is done in the clinic close themselves ("auto"), except follow-ups,
+   which stay until a person closes them; closed ones are kept 14 days so everyone can see who closed them. */
+async function otMerge(docId, items, cats, manualCats){
+  if (!cats.size) return;
+  const {F, fs} = cloud, ref = cDoc('clinicMeta', docId), now = Date.now(), me = fullName(orgCtx().me) || cloud.user.email || '';
+  try {
+    await F.runTransaction(fs, async tx => {
+      const s = await tx.get(ref), cur = (s.exists() && s.data().items) || {}, live = new Set(items.map(i => i.id));
+      let ch = false;
+      items.forEach(i => { const c = cur[i.id];
+        if (!c){ cur[i.id] = {cat:i.cat, epic:i.epic, title:i.title, day:i.day, priority:i.priority, link:i.link || null, status:'open', createdAt:now}; ch = true; }
+        else if (c.status === 'open' && (c.title !== i.title || c.day !== i.day)){ c.title = i.title; c.day = i.day; ch = true; } });
+      Object.entries(cur).forEach(([id, c]) => {
+        if (c.status === 'open' && cats.has(c.cat) && !manualCats.includes(c.cat) && !live.has(id)){ Object.assign(c, {status:'done', doneHow:'auto', doneBy:cloud.uid, doneName:'Done in the clinic', doneAt:now}); ch = true; }
+        if (c.status === 'done' && !live.has(id) && now - (c.doneAt || 0) > 14 * 86400000){ delete cur[id]; ch = true; } });
+      if (ch) tx.set(ref, {items:cur, at:now});
+    });
+  } catch(e){ console.warn('reminders', docId, e); }
+}
+async function otSet(docId, id, done){
+  const {F, fs} = cloud, ref = cDoc('clinicMeta', docId), me = fullName(orgCtx().me) || cloud.user.email || '';
+  try {
+    await F.runTransaction(fs, async tx => {
+      const s = await tx.get(ref), cur = (s.exists() && s.data().items) || {}; if (!cur[id]) return;
+      if (done) Object.assign(cur[id], {status:'done', doneHow:'manual', doneBy:cloud.uid, doneName:me, doneAt:Date.now()});
+      else Object.assign(cur[id], {status:'open', doneHow:'', doneBy:'', doneName:'', doneAt:0});
+      tx.set(ref, {items:cur, at:Date.now()});
+    });
+    info(done ? 'Closed for everyone in the organization.' : 'Reopened.');
+  } catch(e){ info('Could not save: ' + errText(e)); }
+}
+const isOwnerLike = () => { const oc = orgCtx(); return !!(oc && !oc.support && (oc.role === 'orgadmin' || (oc.me && oc.me.isChief) || cl.doctors.some(d => d.type === 'chief' && d.memberUid === cloud.uid))); };
+let chiefChecked = false;
+async function ensureChiefFlag(){            // the Chief doctor's login is marked so the rules can show them owner reminders
+  if (chiefChecked) return; chiefChecked = true;
+  const {F, fs} = cloud, oc = orgCtx();
+  for (const d of cl.doctors.filter(x => x.type === 'chief' && x.memberUid)){
+    try { const r = F.doc(fs, 'orgs', oc.orgId, 'members', d.memberUid), s = await F.getDoc(r); if (s.exists() && !s.data().isChief) await F.updateDoc(r, {isChief:true}); } catch(e){}
+  }
+}
+/* live copy of the shared reminders for the Planning Board and Home */
+function otWatch(){
+  const oc = orgCtx(); if (!oc || oc.support || !feat('clinic')) return;
+  const key = oc.orgId + '|' + cloud.uid + '|' + isOwnerLike(); if (cl.otKey === key) return; cl.otKey = key;
+  (cl.otUnsub || []).forEach(u => { try { u(); } catch(e){} }); cl.otUnsub = [];
+  const {F} = cloud, again = () => {
+    const v = state.settings.view;
+    if (v === 'board') renderSoon('orgrem', renderOrgRem);
+    if (v === 'home') renderSoon('home', () => { if (state.settings.view === 'home') renderHome(); });
+  };
+  cl.otUnsub.push(F.onSnapshot(cDoc('clinicMeta', 'orgTasks'), s => { cl.orgT = (s.exists() && s.data().items) || {}; again(); }, () => { cl.orgT = {}; }));
+  if (isOwnerLike()) cl.otUnsub.push(F.onSnapshot(cDoc('clinicMeta', 'ownerTasks'), s => { cl.ownT = (s.exists() && s.data().items) || {}; again(); }, () => { cl.ownT = {}; }));
+}
+const otList = () => [...Object.entries(cl.orgT || {}).map(([id, t]) => Object.assign({id, src:'orgTasks'}, t)), ...Object.entries(cl.ownT || {}).map(([id, t]) => Object.assign({id, src:'ownerTasks', owner:true}, t))];
+const otOpen = () => otList().filter(t => t.status === 'open' && (t.day || '') <= todayKey).sort((a, b) => (b.priority === 'high') - (a.priority === 'high') || (a.createdAt || 0) - (b.createdAt || 0));
+const agoTxt = ms => { const h = Math.floor((Date.now() - ms) / 3600000); return h < 1 ? 'just now' : h < 24 ? h + 'h ago' : Math.floor(h / 24) + 'd ago'; };
+function otRow(t){
+  const open = t.status === 'open';
+  return `<div class="otr${open ? '' : ' done'}${t.priority === 'high' && open ? ' hi' : ''}" data-ot="${esc(t.id)}" data-otsrc="${t.src}">
+    <div class="otm"><b>${esc(t.title)}</b><div class="otc"><span class="epic">${esc(t.epic)}</span>${t.owner ? '<span class="otown">Account Manager &amp; Chief only</span>' : ''}
+      ${open ? `<span class="stat">open since ${esc(agoTxt(t.createdAt || Date.now()))}</span>` : `<span class="otby">✓ ${t.doneHow === 'auto' ? 'Done in the clinic' : 'Closed by ' + esc(t.doneName || '')} · ${esc(fmtTime(t.doneAt))}</span>`}</div></div>
+    ${t.link ? '<button data-otopen>Open</button>' : ''}${open ? '<button class="primary" data-otdone>✓ Close</button>' : (t.doneHow === 'auto' ? '' : '<button data-otreopen title="Reopen for everyone">Reopen</button>')}</div>`;
+}
+let orgRemOpen = (() => { try { return localStorage.getItem('zl-orgrem') !== '0'; } catch(e){ return true; } })();
+function renderOrgRem(){
+  const host = $('#orgRem'); if (!host) return;
+  const oc = orgCtx(); if (!oc || oc.support || !feat('clinic')){ host.innerHTML = ''; return; }
+  clLoad(); otWatch();
+  const L = otList(), open = otOpen(), done = L.filter(t => t.status === 'done').sort((a, b) => (b.doneAt || 0) - (a.doneAt || 0)).slice(0, 30);
+  host.innerHTML = `<div class="orgrem${orgRemOpen ? ' open' : ''}">
+    <button class="orh" data-ortoggle><span class="chev">${orgRemOpen ? '▾' : '▸'}</span><b>Organization reminders</b><span class="orn${open.length ? ' on' : ''}">${open.length} open</span>
+      <span class="stat">shared by everyone in ${esc(oc.org.name)}: when one person closes it, it closes for all</span><span class="sp"></span>${done.length ? `<span class="stat">${done.length} closed recently</span>` : ''}</button>
+    ${orgRemOpen ? `<div class="orb"><div class="orcol"><div class="orct"><i class="dot s-todo"></i>Open · ${open.length}</div>${open.map(otRow).join('') || '<div class="empty">Nothing open. 🎉</div>'}</div>
+      <div class="orcol"><div class="orct"><i class="dot s-done"></i>Closed · last 14 days</div>${done.map(otRow).join('') || '<div class="empty">Nothing closed yet.</div>'}</div></div>` : ''}</div>`;
+}
+document.addEventListener('click', e => {
+  if (e.target.closest('[data-ortoggle]')){ orgRemOpen = !orgRemOpen; try { localStorage.setItem('zl-orgrem', orgRemOpen ? '1' : '0'); } catch(_){} return renderOrgRem(); }
+  const r = e.target.closest('[data-ot]'); if (!r) return;
+  const t = otList().find(x => x.id === r.dataset.ot && x.src === r.dataset.otsrc); if (!t) return;
+  if (e.target.closest('[data-otdone]')) return otSet(t.src, t.id, true);
+  if (e.target.closest('[data-otreopen]')) return otSet(t.src, t.id, false);
+  if (e.target.closest('[data-otopen]') && t.link) return openLink(t.link);
+});
 setInterval(() => { if (orgCtx() && appReady) clinicSync(); }, 10 * 60000);
 function openLink(link){
   if (!link) return;
   setView('clinic');
-  if (link.sec === 'accounts'){ cl.sec = 'accounts'; if (link.tab) cl.acc.tab = link.tab; if (link.day) cl.acc.tday = link.day; cl.acc.key = ''; return renderClinic(); }
+  if (link.sec === 'accounts'){ cl.sec = 'accounts'; if (link.tab) cl.acc.tab = link.tab; if (link.day) cl.acc.tday = link.day; if (link.month) cl.acc.month = link.month; cl.acc.key = ''; return renderClinic(); }
   if (link.pid){ cl.sec = 'patients'; cl.ptab = link.tab || 'profile'; clOpenPatient(link.pid); }
 }
 
@@ -4724,7 +4836,8 @@ function wTeam(){
     ${reportees.length ? `<div class="hh">Reportees</div>${reportees.map(m => `<div class="hrow"><div class="uav">${initial(fullName(m))}</div><div><b>${esc(fullName(m))}</b><span class="stat">${esc(m.title || ROLE_LABEL[m.role])}</span></div></div>`).join('')}` : ''}`;
 }
 const remList = list => list.map(r => `<div class="hrem" data-rem="${esc(r.id)}"><span class="epic">${esc(r.epic)}</span><b>${esc(r.title)}</b>${r.link ? '<button>Open</button>' : ''}</div>`).join('') || '<div class="empty">Nothing waiting on you. 🎉</div>';
-function wReminders(){ return remList(cl.reminders || []); }
+function wReminders(){ otWatch(); const O = otOpen(); return (O.length ? `<div class="stat" style="margin:0 0 6px">Organization reminders: closing one closes it for everyone</div>${O.slice(0, 12).map(otRow).join('')}${O.length > 12 ? `<div class="stat">+ ${O.length - 12} more on the Planning Board</div>` : ''}` : '')
+  + ((cl.reminders || []).length ? `<div class="stat" style="margin:10px 0 6px">Yours</div>` + remList(cl.reminders) : O.length ? '' : remList([])); }
 function wAppts(){
   const A = (home.appts || []).filter(a => a.status !== 'cancelled').sort((a, b) => String(a.time).localeCompare(String(b.time)));
   if (home.appts === null) return '<div class="stat">Loading…</div>';
@@ -4861,9 +4974,15 @@ function drawBill(){
   const due = billed(B.T) - paidSum(B.P), visitPays = B.P.filter(x => x.appointmentId === a.id), w = canW('billing'), done = visitPays.length > 0;
   $('#clOvBody').innerHTML = `<div class="ah">${canW('treatments') ? '<button type="button" class="abk" data-vbback style="margin:0" title="Go back and change the treatments or medicines">← Back</button>' : ''}<h2 style="font-size:16px;margin:0">Bill · ${esc(pName(B.p))} <span class="pcode">${esc(B.p.code || '')}</span></h2><span class="sp"></span><button data-ovclose>Close</button></div>
     <p class="stat" style="margin:4px 0 10px">Visit ${esc(fmtShort(a.date))} ${esc(hm12(a.time))} · ${esc(dName(a.doctorId))}</p>
-    <div class="awrap" style="margin-top:0"><table class="atbl"><thead><tr><th>Treatment</th><th>Doctor</th><th>Status</th><th class="num">Cost</th><th class="num">Discount</th><th class="num">Net</th></tr></thead><tbody>
-      ${visitT.map(t => `<tr><td><b>${isMed(t) ? '💊 ' : ''}${esc(t.typeName)}</b>${t.tooth ? `<span class="sub2">Tooth / area ${esc(t.tooth)}</span>` : ''}${isMed(t) ? `<span class="sub2">${doseTxt(t.dose)} × ${+t.days || 0} days = ${+t.qty || 0} @ ${inr(t.unitPrice)}</span>` : ''}</td><td>${esc(dName(t.doctorId))}</td><td>${TSTATUS[t.status][0]}</td><td class="num">${inr(t.cost)}</td><td class="num">${+t.discount ? inr(t.discount) : '—'}</td><td class="num"><b>${t.status === 'planned' ? '<span class="stat">not billed</span>' : inr(net(t))}</b></td></tr>`).join('') || '<tr><td colspan="6" class="stat">No treatments were added for this visit.</td></tr>'}
+    <div class="hh" style="margin-top:0">Treatments</div>
+    <div class="awrap" style="margin-top:4px"><table class="atbl"><thead><tr><th>Treatment</th><th>Doctor</th><th>Status</th><th class="num">Cost</th><th class="num">Discount</th><th class="num">Net</th></tr></thead><tbody>
+      ${visitT.filter(t => !isMed(t)).map(t => `<tr><td><b>${esc(t.typeName)}</b>${t.tooth ? `<span class="sub2">Tooth / area ${esc(t.tooth)}</span>` : ''}</td><td>${esc(dName(t.doctorId))}</td><td>${TSTATUS[t.status][0]}</td><td class="num">${inr(t.cost)}</td><td class="num">${+t.discount ? inr(t.discount) : '—'}</td><td class="num"><b>${t.status === 'planned' ? '<span class="stat">not billed</span>' : inr(net(t))}</b></td></tr>`).join('') || '<tr><td colspan="6" class="stat">No treatments were added for this visit.</td></tr>'}
     </tbody></table></div>
+    ${visitT.some(isMed) ? `<div class="hh">Medicines</div>
+    <div class="awrap" style="margin-top:4px"><table class="atbl"><thead><tr><th>Medicine</th><th>Morning – Afternoon – Evening – Night</th><th class="num">Days</th><th class="num">Qty</th><th class="num">Price</th><th class="num">Amount</th></tr></thead><tbody>
+      ${visitT.filter(isMed).map(t => `<tr><td><b>${esc(t.typeName)}</b>${t.unit && !/tablet|capsule/i.test(t.unit) ? `<span class="sub2">${esc(t.unit)}</span>` : ''}</td><td>${medDose(t)}</td><td class="num">${+t.days || '—'}</td><td class="num">${+t.qty || 0}</td><td class="num">${inr(t.unitPrice)}</td><td class="num"><b>${inr(net(t))}</b></td></tr>`).join('')}
+      <tr class="tot"><td colspan="5">Medicines total</td><td class="num">${inr(visitT.filter(isMed).reduce((s2, t) => s2 + net(t), 0))}</td></tr>
+    </tbody></table></div>` : ''}
     <div class="box billbox" style="margin-top:10px">
       <div class="payrow"><span>This visit</span><span>${inr(visitNet)}</span></div>
       <div class="payrow"><span>Earlier balance</span><span>${inr(due - visitNet + paidSum(visitPays))}</span></div>
@@ -4884,9 +5003,11 @@ function drawBill(){
 function printVisitBill(){
   const B = cl.bill, a = B.appt, visitT = B.T.filter(t => t.appointmentId === a.id && t.status !== 'planned'), visitPays = B.P.filter(x => x.appointmentId === a.id), due = billed(B.T) - paidSum(B.P);
   printDoc('Bill', `<p><b>Patient:</b> ${esc(pName(B.p))} (${esc(B.p.code || '')}) · ${esc(B.p.phone || '')}<br><b>Visit:</b> ${esc(fmtLong(a.date))} · ${esc(dName(a.doctorId))}</p>
-    <table><tr><th>#</th><th>Treatment</th><th>Doctor</th><th class="n">Cost</th><th class="n">Discount</th><th class="n">Amount</th></tr>
-    ${visitT.map((t, i) => `<tr><td>${i + 1}</td><td>${esc(t.typeName)}${t.tooth ? ' (' + esc(t.tooth) + ')' : ''}${isMed(t) ? ` <small>${doseTxt(t.dose)} × ${+t.days || 0} days · ${+t.qty || 0} @ ${inr(t.unitPrice)}</small>` : ''}</td><td>${esc(dName(t.doctorId))}</td><td class="n">${inr(t.cost)}</td><td class="n">${inr(t.discount)}</td><td class="n">${inr(net(t))}</td></tr>`).join('')}
-    <tr class="tot"><td colspan="5">Total for this visit</td><td class="n">${inr(visitT.reduce((s, t) => s + net(t), 0))}</td></tr></table>
+    <h2>Treatments</h2><table><tr><th>#</th><th>Treatment</th><th>Doctor</th><th class="n">Cost</th><th class="n">Discount</th><th class="n">Amount</th></tr>
+    ${visitT.filter(t => !isMed(t)).map((t, i) => `<tr><td>${i + 1}</td><td>${esc(t.typeName)}${t.tooth ? ' (' + esc(t.tooth) + ')' : ''}</td><td>${esc(dName(t.doctorId))}</td><td class="n">${inr(t.cost)}</td><td class="n">${inr(t.discount)}</td><td class="n">${inr(net(t))}</td></tr>`).join('')}</table>
+    ${visitT.some(isMed) ? `<h2>Medicines</h2><table><tr><th>#</th><th>Medicine</th><th>M-A-E-N</th><th class="n">Days</th><th class="n">Qty</th><th class="n">Price</th><th class="n">Amount</th></tr>
+    ${visitT.filter(isMed).map((t, i) => `<tr><td>${i + 1}</td><td>${esc(t.typeName)}</td><td>${DOSE.some(([k]) => t.dose && t.dose[k]) ? doseTxt(t.dose) : '—'}</td><td class="n">${+t.days || '—'}</td><td class="n">${+t.qty || 0}</td><td class="n">${inr(t.unitPrice)}</td><td class="n">${inr(net(t))}</td></tr>`).join('')}</table>` : ''}
+    <table><tr class="tot"><td>Total for this visit</td><td class="n">${inr(visitT.reduce((s, t) => s + net(t), 0))}</td></tr></table>
     ${visitPays.length ? `<h2>Payments</h2><table>${visitPays.map(x => `<tr><td>${esc(x.receiptNo)}</td><td>${esc((PMODES.find(m => m[0] === x.mode) || [0, x.mode])[1])}</td><td class="n">${inr(x.amount)}</td></tr>`).join('')}</table>` : ''}
     <p><b>Balance due: ${inr(due)}</b></p>`);
 }

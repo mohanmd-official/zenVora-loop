@@ -42,6 +42,7 @@ service cloud.firestore {
     function approverOf(o, uid) {
       return memberOf(o, uid).get('reportsTo', '') != '' ? memberOf(o, uid).reportsTo : orgDoc(o).get('adminUid', '');
     }
+    function isOwner(o) { return clinicMember(o) && (mem(o).role == 'orgadmin' || mem(o).get('isChief', false) == true); }
     function perm(o, p) { return clinicMember(o) && (mem(o).role == 'orgadmin' || mem(o).get('perms', {}).get(p, false) == true); }
 
     // Login directory: which organization a user belongs to
@@ -207,11 +208,14 @@ service cloud.firestore {
         allow write: if perm(o, 'setup');
       }
       match /clinicMeta/{d} {
-        allow read: if clinicMember(o) || supportOpen(o);
+        // 'orgTasks': organization reminders everyone shares and anyone may close (patient follow-ups, documents, descriptions)
+        // 'ownerTasks': reminders only for the Account Manager and the Chief doctor (accounts closing, vendor & lab payments, tallies)
+        allow read: if (d != 'ownerTasks' && (clinicMember(o) || supportOpen(o))) || (d == 'ownerTasks' && (isOwner(o) || supportOpen(o)));
         // 'reminders': patient reminders (follow-ups, summaries, documents, missed patients) shared with everyone in the clinic
         allow write: if (d == 'counter' && (perm(o, 'patients') || perm(o, 'billing')))
           || (d == 'accounts' && perm(o, 'accounts')) || (d == 'settings' && perm(o, 'setup'))
-          || (d == 'reminders' && clinicMember(o));
+          || (d == 'reminders' && clinicMember(o)) || (d == 'orgTasks' && clinicMember(o))
+          || (d == 'ownerTasks' && (isOwner(o) || perm(o, 'accounts')));
       }
       // Patient assists: staff log who they assisted each day; the Chief doctor (perm assistApprove) approves.
       // Staff see only their own entries and the approval status, never the incentive amount.
