@@ -1182,28 +1182,35 @@ function tabOrder(){
 }
 function applyTabOrder(){
   const nav = $('#tabs'), ord = tabOrder();
-  if (!ord.length) return;
+  if (!ord.length || window.__tabDrag) return;              // never fight a drag in progress
   const cur = [...nav.children].map(b => b.dataset.view).join();
   const want = ord.filter(v => nav.querySelector(`[data-view="${v}"]`)).concat([...nav.children].map(b => b.dataset.view).filter(v => !ord.includes(v)));
   if (want.join() !== cur) want.forEach(v => nav.appendChild(nav.querySelector(`[data-view="${v}"]`)));
 }
+/* Drag to reorder. The pointer only has to be roughly level with the menu (it may drift above or below it),
+   the dragged tab is placed by its horizontal (or, for a vertical menu, vertical) position among the visible
+   items, and nothing re-renders the menu while a drag is in progress. */
+function dragPlace(host, drag, e, vert){
+  const items = [...host.children].filter(b => b.tagName === 'BUTTON' && b !== drag && !b.hidden && b.offsetParent !== null);
+  const pos = vert ? e.clientY : e.clientX;
+  const next = items.find(b => { const r = b.getBoundingClientRect(); return pos < (vert ? r.top + r.height / 2 : r.left + r.width / 2); });
+  if (next){ if (drag.nextElementSibling !== next || [...host.children].indexOf(drag) > [...host.children].indexOf(next)) host.insertBefore(drag, next); }
+  else { const last = items[items.length - 1]; if (last && last.nextSibling !== drag) host.insertBefore(drag, last.nextSibling); }
+}
+const nearHost = (host, e, vert) => { const r = host.getBoundingClientRect(), pad = 70; return vert ? e.clientX > r.left - pad && e.clientX < r.right + pad : e.clientY > r.top - pad && e.clientY < r.bottom + pad; };
 (() => {
   const nav = $('#tabs'); let drag = null;
   nav.querySelectorAll('button').forEach(b => { b.draggable = true; b.title += ' · drag to reorder'; });
-  nav.addEventListener('dragstart', e => { drag = e.target.closest('button'); if (!drag) return; drag.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', drag.dataset.view); } catch(_){} });
-  nav.addEventListener('dragover', e => {
-    if (!drag) return; e.preventDefault();
-    const t = e.target.closest('button'); if (!t || t === drag) return;
-    const r = t.getBoundingClientRect();
-    nav.insertBefore(drag, e.clientX > r.left + r.width / 2 ? t.nextSibling : t);
-  });
-  nav.addEventListener('drop', e => e.preventDefault());
+  nav.addEventListener('dragstart', e => { drag = e.target.closest('button'); if (!drag) return; window.__tabDrag = true; drag.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', drag.dataset.view); } catch(_){} });
+  document.addEventListener('dragover', e => { if (!drag) return; if (nearHost(nav, e, false)){ e.preventDefault(); e.dataTransfer.dropEffect = 'move'; dragPlace(nav, drag, e, false); } });
+  document.addEventListener('drop', e => { if (drag) e.preventDefault(); });
   nav.addEventListener('dragend', () => {
+    window.__tabDrag = false;
     if (!drag) return; drag.classList.remove('dragging'); drag = null;
     const ord = [...nav.children].map(b => b.dataset.view);
     try { localStorage.setItem(TAB_KEY, JSON.stringify(ord)); } catch(e){}
-    if (agendaOn()) state.settings.tabOrder = ord;            // follows you to your other devices
-    save();
+    state.settings.tabOrder = ord;                            // follows you to your other devices
+    save(); render();
   });
 })();
 
@@ -3494,10 +3501,8 @@ function saveOrd(k, keys){
   document.addEventListener('mousedown', e => { const b = e.target.closest('[data-ord] > button'); if (b) b.draggable = true; }, true);
   document.addEventListener('dragstart', e => { const b = e.target.closest && e.target.closest('[data-ord] > button'); if (!b) return; dragB = b; window.__ordDrag = true; b.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', 'ord'); } catch(_){} });
   document.addEventListener('dragover', e => {
-    if (!dragB) return; const b = e.target.closest && e.target.closest('[data-ord] > button'), h = host(dragB);
-    if (!b || host(b) !== h || b === dragB) return; e.preventDefault();
-    const r = b.getBoundingClientRect(), vert = h.dataset.ordv === '1', before = vert ? e.clientY < r.top + r.height / 2 : e.clientX < r.left + r.width / 2;
-    h.insertBefore(dragB, before ? b : b.nextSibling);
+    if (!dragB) return; const h = host(dragB); if (!h) return; const vert = h.dataset.ordv === '1';
+    if (!nearHost(h, e, vert)) return; e.preventDefault(); e.dataTransfer.dropEffect = 'move'; dragPlace(h, dragB, e, vert);
   });
   document.addEventListener('drop', e => { if (dragB) e.preventDefault(); });
   document.addEventListener('dragend', () => { window.__ordDrag = false; if (!dragB) return; const h = host(dragB); dragB.classList.remove('dragging');
