@@ -37,6 +37,11 @@ service cloud.firestore {
     function clinicMember(o) { return isMember(o) && clinicOn(o); }
     // Proxy attendance: people the Account Manager ticks (members/{uid}.attProxy) may check others in and out
     function isProxy(o) { return isMember(o) && hasFeature(o, 'attendance') && mem(o).get('attProxy', false) == true; }
+    function regAfter(o, id) { return getAfter(/databases/$(database)/documents/orgs/$(o)/attRegs/$(id)).data; }
+    function memberOf(o, uid) { return get(/databases/$(database)/documents/orgs/$(o)/members/$(uid)).data; }
+    function approverOf(o, uid) {
+      return memberOf(o, uid).get('reportsTo', '') != '' ? memberOf(o, uid).reportsTo : orgDoc(o).get('adminUid', '');
+    }
     function perm(o, p) { return clinicMember(o) && (mem(o).role == 'orgadmin' || mem(o).get('perms', {}).get(p, false) == true); }
 
     // Login directory: which organization a user belongs to
@@ -83,8 +88,41 @@ service cloud.firestore {
               && request.resource.data.type in ['in', 'out']
               && request.resource.data.src == 'proxy'
               && request.resource.data.by == request.auth.uid
-              && request.resource.data.at == request.time));
+              && request.resource.data.at == request.time)
+          // an approved regularization: written by the person who approved it, at exactly the requested time
+          || (isMember(o)
+              && request.resource.data.keys().hasOnly(['type', 'at', 'src', 'reg', 'by'])
+              && request.resource.data.src == 'reg'
+              && request.resource.data.type in ['in', 'out']
+              && request.resource.data.by == request.auth.uid
+              && eventId == request.resource.data.reg + '-' + request.resource.data.type
+              && regAfter(o, request.resource.data.reg).uid == uid
+              && regAfter(o, request.resource.data.reg).status == 'approved'
+              && regAfter(o, request.resource.data.reg).decidedBy == request.auth.uid
+              && request.resource.data.at.toMillis() == regAfter(o, request.resource.data.reg).get(request.resource.data.type == 'in' ? 'inAt' : 'outAt', -1)));
         allow update, delete: if hasFeature(o, 'attendance') && isOrgManager(o);
+      }
+
+      // Attendance regularization requests: the person (or a Proxy attendance person for them) asks;
+      // their immediate reporting manager (or the Account Manager if they report to no one) approves.
+      match /attRegs/{r} {
+        allow read: if hasFeature(o, 'attendance') && isMember(o)
+          && (resource.data.uid == request.auth.uid || resource.data.by == request.auth.uid
+              || resource.data.approver == request.auth.uid || isOrgAdmin(o));
+        allow create: if hasFeature(o, 'attendance') && isMember(o)
+          && request.resource.data.status == 'pending'
+          && request.resource.data.by == request.auth.uid
+          && (request.resource.data.uid == request.auth.uid || isProxy(o))
+          && request.resource.data.approver != request.resource.data.uid
+          && request.resource.data.approver == approverOf(o, request.resource.data.uid);
+        allow update: if hasFeature(o, 'attendance') && isMember(o)
+          && (resource.data.approver == request.auth.uid || isOrgAdmin(o))
+          && resource.data.uid != request.auth.uid
+          && resource.data.status == 'pending'
+          && request.resource.data.status in ['approved', 'rejected']
+          && request.resource.data.decidedBy == request.auth.uid
+          && changed().hasOnly(['status', 'decidedBy', 'decidedName', 'decidedAt']);
+        allow delete: if isMember(o) && resource.data.by == request.auth.uid && resource.data.status == 'pending';
       }
 
       // Support access requests: Super Admin asks, Account Manager decides

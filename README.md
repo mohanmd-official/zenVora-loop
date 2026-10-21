@@ -95,6 +95,7 @@ Where: the **Attendance** tab, or **Clinic → Attendance** when the organizatio
 
 - **Account Managers don't check in:** attendance, payroll and the team lists are for staff only.
 - **Proxy attendance:** Account Manager → Organization → People → **Edit** → tick **Proxy attendance** (below Clinic access). That person, e.g. reception, gets **Mark attendance** (on Home and in Attendance) to check other staff in and out. The time is the server's clock and each entry records who marked it.
+- **Regularization (forgot to check in or out):** in **My attendance**, click **Regularize** next to a missed day (or use the **Regularize attendance** box), enter only the missed time and a reason, and **Send for approval**. A Proxy attendance person can do the same for anyone from **Mark attendance**. The request goes to the person's **immediate reporting manager** (the Account Manager if they report to no one), who sees it on **Home → Attendance approvals** and in **Attendance → Approvals**. On **Approve**, the time is added to their attendance; **Reject** changes nothing. People can't approve their own requests, and requests go back up to 31 days.
 
 
 - **Staff:** **Attendance** tab → **Check in** when arriving and **Check out** when leaving. They can check in and out again as often as needed in a day (e.g. lunch, errands). They see a live "worked today" timer, days present, offs used (out of 4), hours, overtime hours and overtime days, and a day-by-day list grouped by week.
