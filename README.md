@@ -94,7 +94,7 @@ People created in the earlier single-admin version show up in **Organizations �
 Where: the **Attendance** tab, or **Clinic → Attendance** when the organization has the Clinic (there is no separate Attendance tab then). Everyone can also check in and out from **Home**.
 
 - **Account Managers don't check in:** attendance, payroll and the team lists are for staff only.
-- **Attendance proxy** (Super Admin turns on the **Attendance proxy** feature for the org; Account Manager → Organization → People → Edit → tick **Attendance proxy**): that person, for example reception, gets **Mark attendance** (on Home and in Attendance) to check other staff in and out. The time is the server's clock and each entry records who marked it.
+- **Proxy attendance:** Account Manager → Organization → People → **Edit** → tick **Proxy attendance** (below Clinic access). That person, e.g. reception, gets **Mark attendance** (on Home and in Attendance) to check other staff in and out. The time is the server's clock and each entry records who marked it.
 
 
 - **Staff:** **Attendance** tab → **Check in** when arriving and **Check out** when leaving. They can check in and out again as often as needed in a day (e.g. lunch, errands). They see a live "worked today" timer, days present, offs used (out of 4), hours, overtime hours and overtime days, and a day-by-day list grouped by week.

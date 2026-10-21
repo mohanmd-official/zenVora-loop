@@ -9,7 +9,7 @@ rules_version = '2';
 //                               approves support access, sees their billing.
 //  Manager                    → sees and corrects their organization's attendance.
 //  Employee                   → checks in / out, sees own attendance, uses enabled features.
-//  Attendance proxy (feature)  → chosen staff (e.g. reception) can check others in and out.
+//  Proxy attendance            → staff the Account Manager ticks (e.g. reception) can check others in and out.
 //  Clinic (feature)           → patients, appointments, treatments, photos, billing, accounts, reports;
 //                               each person's clinic access is set by the Account Manager.
 //
@@ -35,8 +35,8 @@ service cloud.firestore {
     function changed() { return request.resource.data.diff(resource.data).affectedKeys(); }
     function clinicOn(o) { return hasFeature(o, 'clinic'); }
     function clinicMember(o) { return isMember(o) && clinicOn(o); }
-    // Attendance proxy (feature attProxy): people the Account Manager picks may check others in and out
-    function isProxy(o) { return isMember(o) && hasFeature(o, 'attendance') && hasFeature(o, 'attProxy') && mem(o).get('attProxy', false) == true; }
+    // Proxy attendance: people the Account Manager ticks (members/{uid}.attProxy) may check others in and out
+    function isProxy(o) { return isMember(o) && hasFeature(o, 'attendance') && mem(o).get('attProxy', false) == true; }
     function perm(o, p) { return clinicMember(o) && (mem(o).role == 'orgadmin' || mem(o).get('perms', {}).get(p, false) == true); }
 
     // Login directory: which organization a user belongs to

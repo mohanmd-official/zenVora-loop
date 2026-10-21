@@ -1168,11 +1168,17 @@ function setView(v){
   if (v === 'board') state.settings.planMode = 'day';
   if (v === 'calendar') state.settings.planMode = state.settings.calMode;
   if (v === 'attendance' && state.settings.view !== 'attendance') att.key = '';
-  if (v === 'home' && state.settings.view !== 'home'){ home.key = ''; clinicSync(true); }     // pick up people added meanwhile
+  if (v === 'home' && state.settings.view !== 'home'){                    // refresh Home's data at most once a minute
+    if (Date.now() - (home.at || 0) > 60000) home.key = '';
+    if (Date.now() - (window.__lastSync || 0) > 120000) clinicSync(true); }
   state.settings.view = v; save();
   if (v === 'board') setAddDay(boardDay >= todayKey ? boardDay : todayKey);
   render();
 }
+
+/* Many live updates can arrive together: draw each view at most once per frame */
+const rsq = {};
+function renderSoon(k, fn){ if (rsq[k]) return; rsq[k] = requestAnimationFrame(() => { rsq[k] = 0; fn(); }); setTimeout(() => { if (rsq[k]){ cancelAnimationFrame(rsq[k]); rsq[k] = 0; fn(); } }, 400); }
 
 /* ================= menu order: drag the tabs to arrange them ================= */
 const TAB_KEY = 'zenvora-loop-tab-order';
@@ -1194,20 +1200,24 @@ function dragPlace(host, drag, e, vert){
   const items = [...host.children].filter(b => b.tagName === 'BUTTON' && b !== drag && !b.hidden && b.offsetParent !== null);
   const pos = vert ? e.clientY : e.clientX;
   const next = items.find(b => { const r = b.getBoundingClientRect(); return pos < (vert ? r.top + r.height / 2 : r.left + r.width / 2); });
-  if (next){ if (drag.nextElementSibling !== next || [...host.children].indexOf(drag) > [...host.children].indexOf(next)) host.insertBefore(drag, next); }
-  else { const last = items[items.length - 1]; if (last && last.nextSibling !== drag) host.insertBefore(drag, last.nextSibling); }
+  const vis = [...host.children].filter(b => b.tagName === 'BUTTON' && (b === drag || (!b.hidden && b.offsetParent !== null))), at = vis.indexOf(drag);
+  if (next){ if (vis[at + 1] !== next) host.insertBefore(drag, next); }              // already right before it: leave hidden tabs alone
+  else { const last = items[items.length - 1]; if (last && at !== vis.length - 1) host.insertBefore(drag, last.nextSibling); }
 }
 const nearHost = (host, e, vert) => { const r = host.getBoundingClientRect(), pad = 70; return vert ? e.clientX > r.left - pad && e.clientX < r.right + pad : e.clientY > r.top - pad && e.clientY < r.bottom + pad; };
 (() => {
   const nav = $('#tabs'); let drag = null;
+  const visOrd = () => [...nav.children].filter(b => !b.hidden).map(b => b.dataset.view).join();
   nav.querySelectorAll('button').forEach(b => { b.draggable = true; b.title += ' · drag to reorder'; });
-  nav.addEventListener('dragstart', e => { drag = e.target.closest('button'); if (!drag) return; window.__tabDrag = true; drag.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', drag.dataset.view); } catch(_){} });
+  let startOrd = '';
+  nav.addEventListener('dragstart', e => { drag = e.target.closest('button'); if (!drag) return; window.__tabDrag = true; startOrd = visOrd(); drag.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', drag.dataset.view); } catch(_){} });
   document.addEventListener('dragover', e => { if (!drag) return; if (nearHost(nav, e, false)){ e.preventDefault(); e.dataTransfer.dropEffect = 'move'; dragPlace(nav, drag, e, false); } });
   document.addEventListener('drop', e => { if (drag) e.preventDefault(); });
   nav.addEventListener('dragend', () => {
     window.__tabDrag = false;
-    if (!drag) return; drag.classList.remove('dragging'); drag = null;
+    if (!drag) return; const d = drag; drag.classList.remove('dragging'); drag = null;
     const ord = [...nav.children].map(b => b.dataset.view);
+    if (visOrd() === startOrd){ render(); return setView(d.dataset.view); }   // nothing moved: it was a click
     try { localStorage.setItem(TAB_KEY, JSON.stringify(ord)); } catch(e){}
     state.settings.tabOrder = ord;                            // follows you to your other devices
     save(); render();
@@ -2366,9 +2376,9 @@ const initial = s => esc(String(s || '?').trim().charAt(0).toUpperCase());
 const roleRank = r => ({orgadmin:0, manager:1, employee:2})[r] ?? 3;
 const PALETTE = ['#3730A3', '#0F766E', '#0369A1', '#7C3AED', '#BE185D', '#B45309', '#15803D', '#B91C1C', '#334155'];
 const swatchesHtml = (id, cur) => `<div class="swatches" data-sw="${id}">${PALETTE.map(c => `<button type="button" data-c="${c}" style="background:${c}"${c.toLowerCase() === String(cur).toLowerCase() ? ' class="on"' : ''} title="${c}"></button>`).join('')}<input type="color" id="${id}" value="${esc(cur)}" title="Custom colour"></div>`;
-const FEATURES = [['agenda', 'Agenda Handler', 'boards, calendar, tasks'], ['attendance', 'Attendance', 'check-in / check-out'], ['attProxy', 'Attendance proxy', 'chosen staff can check others in / out (needs Attendance)'], ['payroll', 'Payroll', 'salary & payable (needs Attendance)'], ['clinic', 'Clinic', 'patients, appointments, billing, accounts, reports']];
+const FEATURES = [['agenda', 'Agenda Handler', 'boards, calendar, tasks'], ['attendance', 'Attendance', 'check-in / check-out'], ['payroll', 'Payroll', 'salary & payable (needs Attendance)'], ['clinic', 'Clinic', 'patients, appointments, billing, accounts, reports']];
 const featsHtml = (pre, f) => `<div class="feats">${FEATURES.map(([k, l, d]) => `<label><input type="checkbox" id="${pre}_${k}"${f[k] ? ' checked' : ''}> ${l} <small>${d}</small></label>`).join('')}</div>`;
-const readFeats = pre => { const f = {}; FEATURES.forEach(([k]) => f[k] = $(`#${pre}_${k}`).checked); if (f.payroll && !f.attendance) throw custom('Payroll works from attendance: turn on Attendance too.'); if (f.attProxy && !f.attendance) throw custom('Attendance proxy needs Attendance: turn on Attendance too.'); return f; };
+const readFeats = pre => { const f = {}; FEATURES.forEach(([k]) => f[k] = $(`#${pre}_${k}`).checked); if (f.payroll && !f.attendance) throw custom('Payroll works from attendance: turn on Attendance too.'); return f; };
 document.addEventListener('click', e => {           // colour swatches
   const b = e.target.closest('[data-sw] button[data-c]'); if (!b) return;
   const box = b.closest('[data-sw]'); box.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
@@ -2454,14 +2464,14 @@ function orgPeople(){
         <label>Job title<input id="peTitle" value="${esc(m.title || '')}"></label>
         <label>Reports to<select id="peTo">${toOpts(m.reportsTo || '', m.uid)}</select></label>
         <label>Role<select id="peRole"${me ? ' disabled title="You can\'t change your own role"' : ''}>${roleOpts(m.role)}</select></label>
-        ${feat('attendance') && feat('attProxy') && m.role !== 'orgadmin' ? `<label class="ckl full"><input type="checkbox" id="peProxy"${m.attProxy ? ' checked' : ''}> <b>Attendance proxy</b>: can check other staff in and out (e.g. reception)</label>` : ''}
         ${clinicAccessHtml(m)}
+        ${feat('attendance') && m.role !== 'orgadmin' ? `<div class="full cperm"><div class="fhead" style="margin:4px 0">Attendance</div><label class="ckl" style="color:var(--ink)"><input type="checkbox" id="peProxy"${m.attProxy ? ' checked' : ''}> <b>Proxy attendance</b>&nbsp;<span class="stat">can check other staff in and out (e.g. reception)</span></label></div>` : ''}
         <button class="primary" type="submit">Save</button><button type="button" data-pa="cancel">Cancel</button>
       </form></td></tr>`;
     const st = !m.active ? ['Disabled', 'off'] : m.mustChangePassword ? ['Awaiting first sign-in', 'pend'] : ['Active', 'on'];
     return `<tr data-uid="${esc(m.uid)}" data-email="${esc(m.email)}">
       <td><div style="display:flex;gap:9px;align-items:center"><div class="uav" style="width:28px;height:28px;font-size:12px">${initial(fullName(m))}</div><div><b>${esc(fullName(m))}</b>${me ? ' <span class="stat">(you)</span>' : ''}<span class="sub2">${esc(m.email)}</span></div></div></td>
-      <td>${esc(m.title || '—')}${m.attProxy && feat('attProxy') ? ' <em class="rtag">Attendance proxy</em>' : ''}</td>
+      <td>${esc(m.title || '—')}${m.attProxy && feat('attendance') ? ' <em class="rtag">Proxy attendance</em>' : ''}</td>
       <td>${mgr ? esc(fullName(mgr)) : '<span class="stat">—</span>'}</td>
       <td>${m.role === 'employee' ? 'Employee' : `<em class="rtag" style="margin:0">${ROLE_LABEL[m.role] || m.role}</em>`}${feat('clinic') ? `<span class="sub2">Clinic: ${esc(m.role === 'orgadmin' ? 'full access' : presetOf(m.perms))}</span>` : ''}</td>
       <td><span class="upill ${st[1]}">${st[0]}</span></td>
@@ -3055,7 +3065,7 @@ function clLoad(){
   const key = oc.orgId + '|' + oc.role + '|' + oc.support + '|' + stable(oc.me.perms || {});
   if (cl.key === key) return;
   cl.reset(); cl.key = key;
-  const {F} = cloud, again = () => { if (state.settings.view === 'clinic' && cl.key === key) renderClinic(); };
+  const {F} = cloud, again = () => { if (state.settings.view === 'clinic' && cl.key === key) renderSoon('clinic', () => { if (state.settings.view === 'clinic') renderClinic(); }); };
   cl.unsub.push(F.onSnapshot(cCol('doctors'), qs => { cl.doctors = docsOf(qs).sort((a, b) => (b.active !== false) - (a.active !== false) || String(a.name).localeCompare(String(b.name))); again(); }, () => {}));
   cl.unsub.push(F.onSnapshot(cCol('treatmentTypes'), qs => { cl.types = docsOf(qs).sort((a, b) => String(a.name).localeCompare(String(b.name))); again(); }, () => {}));
   cl.unsub.push(F.onSnapshot(cDoc('clinicMeta', 'settings'), s => { cl.settings = s.exists() ? s.data() : {}; again(); }, () => {}));
@@ -3496,16 +3506,17 @@ function saveOrd(k, keys){
   if (agendaOn()){ state.settings.subOrder = Object.assign({}, state.settings.subOrder || {}, {[k]:keys}); commit(); }
 }
 (() => {
-  let dragB = null;
+  let dragB = null, startO = '';
   const host = b => b && b.parentElement && b.parentElement.matches('[data-ord]') ? b.parentElement : null;
   document.addEventListener('mousedown', e => { const b = e.target.closest('[data-ord] > button'); if (b) b.draggable = true; }, true);
-  document.addEventListener('dragstart', e => { const b = e.target.closest && e.target.closest('[data-ord] > button'); if (!b) return; dragB = b; window.__ordDrag = true; b.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', 'ord'); } catch(_){} });
+  document.addEventListener('dragstart', e => { const b = e.target.closest && e.target.closest('[data-ord] > button'); if (!b) return; dragB = b; window.__ordDrag = true; startO = [...b.parentElement.children].map(x => x.textContent).join('|'); b.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', 'ord'); } catch(_){} });
   document.addEventListener('dragover', e => {
     if (!dragB) return; const h = host(dragB); if (!h) return; const vert = h.dataset.ordv === '1';
     if (!nearHost(h, e, vert)) return; e.preventDefault(); e.dataTransfer.dropEffect = 'move'; dragPlace(h, dragB, e, vert);
   });
   document.addEventListener('drop', e => { if (dragB) e.preventDefault(); });
   document.addEventListener('dragend', () => { window.__ordDrag = false; if (!dragB) return; const h = host(dragB); dragB.classList.remove('dragging');
+    if (h && [...h.children].map(x => x.textContent).join('|') === startO){ const b = dragB; dragB = null; b.click(); return; }   // nothing moved: it was a click
     if (h) saveOrd(h.dataset.ord, [...h.querySelectorAll(':scope > button')].map(b => b.dataset[h.dataset.ordattr])); dragB = null; });
 })();
 
@@ -4524,7 +4535,7 @@ let syncBusy = false, syncTimer2 = null;
 function clinicSync(soon){ clearTimeout(syncTimer2); syncTimer2 = setTimeout(clinicSyncNow, soon ? 1200 : 0); }
 async function clinicSyncNow(){
   const oc = orgCtx(); if (!oc || oc.support || !feat('clinic') || !appReady || syncBusy) return;
-  syncBusy = true;
+  syncBusy = true; window.__lastSync = Date.now();
   try {
     const {F} = cloud, W = F.where, q = (c, ...w) => F.getDocs(F.query(cCol(c), ...w)).then(docsOf), R = [], mk = todayKey.slice(0, 7), y = shiftDay(todayKey, -1);
     if (!cl.doctors.length) cl.doctors = await q('doctors').catch(() => []);
@@ -4574,8 +4585,9 @@ async function clinicSyncNow(){
       tals.filter(t => t.digitalDiff).forEach(t => push('tddiff-' + t.date, 'Daily tally', `GPay / UPI, card or bank ${t.digitalDiff > 0 ? 'excess' : 'shortfall'} of ${inr(Math.abs(t.digitalDiff))} on ${fmtShort(t.date)}: review and acknowledge`, {link:{sec:'accounts', tab:'tally', day:t.date}}));
       tals.filter(t => t.diff).forEach(t => push('tdiff-' + t.date, 'Daily tally', `Cash ${t.diff > 0 ? 'excess' : 'shortfall'} of ${inr(Math.abs(t.diff))} on ${fmtShort(t.date)}: review and acknowledge`, {link:{sec:'accounts', tab:'tally', day:t.date}}));
     }
+    const remChanged = stable(R.map(r => r.id + r.title)) !== stable((cl.reminders || []).map(r => r.id + r.title));
     cl.reminders = R;
-    if (state.settings.view === 'home') renderHome();
+    if (remChanged && state.settings.view === 'home') renderSoon('home', () => { if (state.settings.view === 'home') renderHome(); });
     if (!agendaOn()) return;
     let changed = false;
     R.forEach(r => {
@@ -4602,10 +4614,10 @@ const home = {ev:null, unsub:null, key:'', team:null, appts:null, pay:null, inv:
 function homeLoad(){
   const oc = orgCtx(), F = cloud && cloud.F;
   const key = (oc ? oc.orgId + oc.role : cloud && cloud.isSuper ? 'super' : 'local') + todayKey;
-  if (home.key === key) return; home.key = key;
+  if (home.key === key) return; home.key = key; home.at = Date.now();
   if (home.unsub) try { home.unsub(); } catch(e){}
   Object.assign(home, {unsub:null, ev:null, team:null, appts:null, pay:null, inv:null, px:null});
-  const again = () => { if (state.settings.view === 'home') renderHome(); };
+  const again = () => { if (state.settings.view === 'home') renderSoon('home', () => { if (state.settings.view === 'home') renderHome(); }); };
   if (cloud && cloud.isSuper && !oc){
     supersLoad();
     Promise.all((supers.orgs || []).map(o => F.getDocs(F.query(F.collection(cloud.fs, 'orgs', o.id, 'invoices'), F.where('status', '==', 'due'))).then(qs => docsOf(qs).map(i => Object.assign(i, {org:o}))).catch(() => [])))
@@ -4697,7 +4709,7 @@ async function pxLoad(){
     await Promise.all(accs.map(async a => { const qs = await F.getDocs(F.query(attCol(a.uid), F.where('at', '>=', from))); ev[a.uid] = qs.docs.map(d => { const x = d.data({serverTimestamps:'estimate'}); return {id:d.id, type:x.type, src:x.src, at:tsMs(x.at)}; }); }));
     home.px = {accts:accs, ev};
   } catch(e){ home.px = {accts:[], ev:{}}; info('Attendance could not load: ' + errText(e)); }
-  home.pxBusy = false; if (state.settings.view === 'home') renderHome();
+  home.pxBusy = false; if (state.settings.view === 'home') renderSoon('home', () => { if (state.settings.view === 'home') renderHome(); });
 }
 function wTeam(){
   const oc = orgCtx(), me = oc.me, mgr = home.team ? home.team.find(m => m.uid === me.reportsTo) : null;
@@ -5021,7 +5033,7 @@ const toMin = s => { const [h, m] = String(s || '0:0').split(':').map(Number); r
 const shiftMs = c => Math.max(1, toMin(c.shiftEnd) - toMin(c.shiftStart)) * 60000;
 const canManageAtt = () => { const oc = orgCtx(); return !!(oc && (oc.support || oc.role === 'orgadmin' || oc.role === 'manager')); };
 const attRO = () => !!(orgCtx() && orgCtx().support);          // Zenvora support: look, don't touch
-const isProxyMe = () => { const oc = orgCtx(); return !!(oc && !oc.support && feat('attendance') && feat('attProxy') && oc.me && oc.me.attProxy); };
+const isProxyMe = () => { const oc = orgCtx(); return !!(oc && !oc.support && feat('attendance') && oc.me && oc.me.attProxy); };
 const canMarkAtt = () => !attRO() && (isProxyMe() || canManageAtt());
 const attSelf = () => { const oc = orgCtx(); return !!(oc && !oc.support && oc.role !== 'orgadmin'); };   // Account Managers don't check in
 const payOn = () => feat('payroll');
