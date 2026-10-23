@@ -70,12 +70,12 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent-ink);box-shado
 .brand .logo{width:28px;height:28px;flex:none;border-radius:8px;box-shadow:0 2px 6px rgba(55,48,163,.3)}
 .brand h1:hover{text-decoration:underline dotted;text-underline-offset:3px}
 .tabs{display:flex;gap:2px;background:var(--panel);border:1px solid var(--line);padding:3px;border-radius:10px}
-.tabs button{border:0;background:none;padding:4px 11px;border-radius:7px;color:var(--muted);font-weight:550;display:inline-flex;align-items:center;gap:6px}
+.tabs :is(button,a){border:0;background:none;padding:4px 11px;border-radius:7px;color:var(--muted);font-weight:550;display:inline-flex;align-items:center;gap:6px}
 .tabs svg{width:14px;height:14px;fill:currentColor;stroke:currentColor;stroke-width:0}
 .tabs svg [fill=none]{fill:none}
-.tabs button.dragging{opacity:.45}
-.tabs button[draggable=true]{-webkit-user-drag:element}
-.tabs button.on{background:var(--paper);color:var(--accent-ink);box-shadow:var(--shadow),inset 0 -2px 0 var(--mint)}
+.tabs :is(button,a).dragging{opacity:.45}
+.tabs :is(button,a)[draggable=true]{-webkit-user-drag:element}
+.tabs :is(button,a).on{background:var(--paper);color:var(--accent-ink);box-shadow:var(--shadow),inset 0 -2px 0 var(--mint)}
 #overdueStat{color:var(--high);font-weight:650;font-size:12px;border:none;background:none;padding:2px 4px}
 .add{display:flex;gap:6px;padding:10px 14px 4px}
 .add #newTitle{flex:1}
@@ -335,6 +335,10 @@ details.tv th:first-child,details.tv td:first-child{text-align:left}
 .pbtn{margin-top:8px;border:none;color:#fff;font-weight:700;font-size:15px;padding:11px 26px;border-radius:999px;min-width:170px}
 .pbtn.in{background:var(--done)} .pbtn.sm{padding:6px 14px;font-size:13px;min-width:0;height:auto;margin-top:0}
 .pbtn.out{background:var(--high)}
+.edtbl td{vertical-align:middle}.edsc{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.eds1{display:inline-flex;align-items:center;gap:4px;padding:3px 5px;border:1px solid var(--line);border-radius:9px;background:var(--paper)}
+.eds1 input{width:108px;padding:3px 6px}.eds1 i{color:var(--muted);font-style:normal}.eds1 button{padding:2px 7px;font-size:12px}
+.edtbl tr.dirty td{background:color-mix(in srgb,var(--accent) 7%,transparent)}.edtbl [data-edadd]{font-size:12px;padding:3px 9px}
 .dtprog{height:10px;border-radius:5px;background:color-mix(in srgb,var(--line) 60%,transparent);overflow:hidden;margin:6px 0}.dtprog i{display:block;height:100%;background:var(--accent);transition:width .3s}
 .orgrem{border:1px solid var(--line);border-radius:14px;background:var(--paper);margin:0 0 12px;overflow:hidden}
 .orh{display:flex;align-items:center;gap:10px;width:100%;border:none;background:none;padding:11px 14px;text-align:left;cursor:pointer;flex-wrap:wrap}
@@ -444,24 +448,24 @@ td.pcodec{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;white-space:
 .clwrap{flex:1;min-height:0;display:grid;grid-template-columns:200px minmax(0,1fr);border-top:1px solid var(--line)}
 .clnav{border-right:1px solid var(--line);padding:12px 8px;display:flex;flex-direction:column;gap:2px;background:var(--panel);overflow:auto}
 .clnavt{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:2px 10px 8px}
-.clnav button{display:flex;align-items:center;gap:10px;border:0;background:none;text-align:left;padding:9px 10px;border-radius:9px;color:var(--muted);font-weight:550;font-size:13.5px}
-.clnav button svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;flex:none}
-.clnav button:hover{background:var(--paper);color:var(--ink)}
-.clnav button.on{background:var(--paper);color:var(--accent-ink);box-shadow:var(--shadow),inset 3px 0 0 var(--accent)}
+.clnav :is(button,a){display:flex;align-items:center;gap:10px;border:0;background:none;text-align:left;padding:9px 10px;border-radius:9px;color:var(--muted);font-weight:550;font-size:13.5px}
+.clnav :is(button,a) svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.clnav :is(button,a):hover{background:var(--paper);color:var(--ink)}
+.clnav :is(button,a).on{background:var(--paper);color:var(--accent-ink);box-shadow:var(--shadow),inset 3px 0 0 var(--accent)}
 .clmain{overflow:auto;padding:16px 22px 28px;min-width:0}
 .clhead{display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap}
 .clhead h2{margin:0;font-size:19px;font-weight:750;letter-spacing:-.01em;flex:1}
 .htabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin:0 0 14px;overflow-x:auto;scrollbar-width:none}
-.htabs button{border:0;background:none;border-radius:0;padding:8px 12px;color:var(--muted);font-weight:550;white-space:nowrap;box-shadow:inset 0 -2px 0 transparent}
-.htabs button:hover{color:var(--ink)}
-.htabs button.on{color:var(--accent-ink);box-shadow:inset 0 -2px 0 var(--accent)}
+.htabs :is(button,a){border:0;background:none;border-radius:0;padding:8px 12px;color:var(--muted);font-weight:550;white-space:nowrap;box-shadow:inset 0 -2px 0 transparent}
+.htabs :is(button,a):hover{color:var(--ink)}
+.htabs :is(button,a).on{color:var(--accent-ink);box-shadow:inset 0 -2px 0 var(--accent)}
 .rangebar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
 .rangebar label{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
 .rangebar button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
 .rpnav button{min-width:30px}.rangebar .rpnav button.on{background:var(--accent);color:#fff}
 .rangebar .seg button.on{background:var(--paper);color:var(--accent);border-color:transparent}
 .chartw{border:1px solid var(--line);border-radius:14px;padding:12px;background:var(--paper);overflow-x:auto;margin-bottom:12px}
-.chartw svg{display:block;width:100%;height:auto;font-size:10.5px;fill:var(--muted)}.chartw svg .cv{fill:var(--ink);font-weight:600}
+.chartw svg{display:block;max-width:100%;height:auto;font-size:11px;fill:var(--muted)}.chartw svg .cv{fill:var(--ink);font-weight:600}
 .legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:6px;font-size:12px;color:var(--muted)}.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
 .hbars{display:grid;gap:6px;border:1px solid var(--line);border-radius:14px;padding:12px;background:var(--paper)}
 .hb{display:grid;grid-template-columns:minmax(120px,220px) 1fr 90px;gap:10px;align-items:center;font-size:13px}.hb div{height:14px;background:color-mix(in srgb,var(--line) 50%,transparent);border-radius:7px;overflow:hidden}
@@ -486,7 +490,7 @@ td.pcodec{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;white-space:
 #v-clinic .kpis{margin-bottom:12px}
 #v-clinic .box{margin-bottom:12px}
 #v-clinic .acards{margin:0 0 12px}
-@media (max-width:820px){.clwrap{grid-template-columns:1fr}.clnav{flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line);padding:6px}.clnavt{display:none}.clnav button{flex:none}.clmain{padding:12px}}
+@media (max-width:820px){.clwrap{grid-template-columns:1fr}.clnav{flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line);padding:6px}.clnavt{display:none}.clnav :is(button,a){flex:none}.clmain{padding:12px}}
 .pform{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 12px;align-items:end}
 .pform label input,.pform label select,.pform label textarea{width:100%;min-width:0!important}
 .pform .grow{grid-column:span 2}
@@ -636,8 +640,8 @@ button.aback{font-size:12px;color:var(--muted)}
 .toast .ta button{font-size:12px;padding:3px 8px}
 @keyframes slide{from{transform:translateX(30px);opacity:0}to{transform:none;opacity:1}}
 
-@media (max-width:1180px){.tabs.many .lbl{display:none}.tabs.many button{padding:5px 9px}}
-@media (max-width:900px){.brand .tag{display:none}.tabs .lbl{display:none}.tabs button{padding:5px 9px}}
+@media (max-width:1180px){.tabs.many .lbl{display:none}.tabs.many :is(button,a){padding:5px 9px}}
+@media (max-width:900px){.brand .tag{display:none}.tabs .lbl{display:none}.tabs :is(button,a){padding:5px 9px}}
 @media (max-width:700px){
   body{overflow:auto}
   .board{grid-template-columns:1fr}
@@ -665,9 +669,9 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 
 .brand .logo{width:34px;height:34px;border-radius:10px}
 .brand h1{font-size:17px}
 .tabs{background:var(--panel);border:1px solid var(--line);padding:4px;border-radius:14px;gap:3px}
-.tabs button{padding:7px 13px;border-radius:10px;font-weight:600;color:var(--muted)}
-.tabs button:hover{background:var(--paper);color:var(--ink);border-color:transparent}
-.tabs button.on{background:var(--paper);color:var(--accent-ink);box-shadow:var(--shadow),inset 0 -2px 0 var(--accent)}
+.tabs :is(button,a){padding:7px 13px;border-radius:10px;font-weight:600;color:var(--muted)}
+.tabs :is(button,a):hover{background:var(--paper);color:var(--ink);border-color:transparent}
+.tabs :is(button,a).on{background:var(--paper);color:var(--accent-ink);box-shadow:var(--shadow),inset 0 -2px 0 var(--accent)}
 .tabs svg{width:15px;height:15px}
 #themeBtn{width:36px;height:36px;padding:0;border-radius:12px;display:grid;place-items:center;font-size:16px}
 .seg{border-radius:11px;background:var(--panel);padding:3px;gap:2px;border:1px solid var(--line)}
@@ -698,8 +702,8 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 
 .toast{border-radius:14px;box-shadow:var(--shadow-lg);border:1px solid var(--line)}
 .upill,.ast,.fchip,.epic{font-weight:650}
 .clnav{background:color-mix(in srgb,var(--paper) 60%,transparent);backdrop-filter:blur(8px)}
-.clnav button.on{background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 14%,var(--paper)),var(--paper));box-shadow:var(--shadow),inset 3px 0 0 var(--accent)}
-.htabs button{font-weight:600}
+.clnav :is(button,a).on{background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 14%,var(--paper)),var(--paper));box-shadow:var(--shadow),inset 3px 0 0 var(--accent)}
+.htabs :is(button,a){font-weight:600}
 .umenu{border-radius:16px;box-shadow:var(--shadow-lg)}
 .plannav{margin:12px 18px 0;border-bottom:1px solid var(--line)}
 /* home */
@@ -740,6 +744,10 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 
 @media (max-width:900px){.hwgrid{grid-template-columns:1fr}.hw.full{grid-column:auto}.hgridw{padding:0 12px}}
 .btnrow label.vbchk{display:flex;flex-direction:row;gap:6px;align-items:center;text-transform:none;letter-spacing:0;font-size:13px;font-weight:500;color:var(--muted);white-space:nowrap;margin:0}
 .btnrow label.vbchk input{width:auto;margin:0}
+
+.tabs a,.clnav a,.htabs a{font:inherit;text-decoration:none;cursor:pointer;-webkit-user-drag:element}
+.htabs a{display:inline-block}
+a.plink{color:inherit;text-decoration:none}a.plink:hover{text-decoration:underline}
 </style>
 </head>
 <body>
@@ -750,12 +758,12 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 
     <div><h1 id="appName" title="Click to rename">Zenvora <span class="w2">Loop</span></h1><div class="tag" id="brandTag">Your personal day planner</div></div>
   </div>
   <nav class="tabs" id="tabs">
-    <button data-view="home" id="homeTab" title="Home: your widgets for the day"><svg viewBox="0 0 16 16"><path d="M2 7.5 8 2.5l6 5V14H10v-4H6v4H2z" fill="none" stroke-width="1.5" stroke-linejoin="round"/></svg><span class="lbl">Home</span></button>
-    <button data-view="board" title="Planning board: day, week and month (1)"><svg viewBox="0 0 16 16"><rect x="1.5" y="2" width="3.5" height="12" rx="1"/><rect x="6.25" y="2" width="3.5" height="8" rx="1"/><rect x="11" y="2" width="3.5" height="10" rx="1"/></svg><span class="lbl">Planning Board</span></button>
-    <button data-view="attendance" id="attTab" title="Attendance (5)" hidden><svg viewBox="0 0 16 16"><circle cx="8" cy="8.5" r="6" fill="none" stroke-width="1.6"/><path d="M8 5v3.7l2.4 1.5M6 1.2h4" fill="none" stroke-width="1.6" stroke-linecap="round"/></svg><span class="lbl">Attendance</span></button>
-    <button data-view="clinic" id="clinicTab" title="Clinic: patients, appointments, billing, accounts and reports" hidden><svg viewBox="0 0 16 16"><path d="M8 2.2c-1.6-1.4-4.6-1-5.4 1.4-.6 1.9.2 3.6.6 5.4.4 1.9.5 4.9 1.7 4.9 1.1 0 1.2-3.4 2.1-3.4h2c.9 0 1 3.4 2.1 3.4 1.2 0 1.3-3 1.7-4.9.4-1.8 1.2-3.5.6-5.4C12.6 1.2 9.6.8 8 2.2z" fill="none" stroke-width="1.4"/></svg><span class="lbl">Clinic</span></button>
-    <button data-view="org" id="orgTab" title="Organization: people, org chart, support access, billing" hidden><svg viewBox="0 0 16 16"><circle cx="8" cy="3.6" r="2.1"/><circle cx="3" cy="12.4" r="2.1"/><circle cx="13" cy="12.4" r="2.1"/><path d="M8 5.7v2.6M3 10.3V8.3h10v2" fill="none" stroke-width="1.5"/></svg><span class="lbl">Organization</span></button>
-    <button data-view="orgs" id="orgsTab" title="Organizations (Super Admin)" hidden><svg viewBox="0 0 16 16"><rect x="1.5" y="5" width="5.5" height="9.5" rx="1"/><rect x="9" y="1.5" width="5.5" height="13" rx="1"/></svg><span class="lbl">Organizations</span></button>
+    <a data-view="home" href="#/home" id="homeTab" title="Home: your widgets for the day"><svg viewBox="0 0 16 16"><path d="M2 7.5 8 2.5l6 5V14H10v-4H6v4H2z" fill="none" stroke-width="1.5" stroke-linejoin="round"/></svg><span class="lbl">Home</span></a>
+    <a data-view="board" href="#/board" title="Planning board: day, week and month (1)"><svg viewBox="0 0 16 16"><rect x="1.5" y="2" width="3.5" height="12" rx="1"/><rect x="6.25" y="2" width="3.5" height="8" rx="1"/><rect x="11" y="2" width="3.5" height="10" rx="1"/></svg><span class="lbl">Planning Board</span></a>
+    <a data-view="attendance" href="#/attendance" id="attTab" title="Attendance (5)" hidden><svg viewBox="0 0 16 16"><circle cx="8" cy="8.5" r="6" fill="none" stroke-width="1.6"/><path d="M8 5v3.7l2.4 1.5M6 1.2h4" fill="none" stroke-width="1.6" stroke-linecap="round"/></svg><span class="lbl">Attendance</span></a>
+    <a data-view="clinic" href="#/clinic" id="clinicTab" title="Clinic: patients, appointments, billing, accounts and reports" hidden><svg viewBox="0 0 16 16"><path d="M8 2.2c-1.6-1.4-4.6-1-5.4 1.4-.6 1.9.2 3.6.6 5.4.4 1.9.5 4.9 1.7 4.9 1.1 0 1.2-3.4 2.1-3.4h2c.9 0 1 3.4 2.1 3.4 1.2 0 1.3-3 1.7-4.9.4-1.8 1.2-3.5.6-5.4C12.6 1.2 9.6.8 8 2.2z" fill="none" stroke-width="1.4"/></svg><span class="lbl">Clinic</span></a>
+    <a data-view="org" href="#/org" id="orgTab" title="Organization: people, org chart, support access, billing" hidden><svg viewBox="0 0 16 16"><circle cx="8" cy="3.6" r="2.1"/><circle cx="3" cy="12.4" r="2.1"/><circle cx="13" cy="12.4" r="2.1"/><path d="M8 5.7v2.6M3 10.3V8.3h10v2" fill="none" stroke-width="1.5"/></svg><span class="lbl">Organization</span></a>
+    <a data-view="orgs" href="#/orgs" id="orgsTab" title="Organizations (Super Admin)" hidden><svg viewBox="0 0 16 16"><rect x="1.5" y="5" width="5.5" height="9.5" rx="1"/><rect x="9" y="1.5" width="5.5" height="13" rx="1"/></svg><span class="lbl">Organizations</span></a>
   </nav>
   <span class="sp"></span>
   <button id="overdueStat" title="Show overdue tasks"></button>
@@ -793,7 +801,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 
 
 <!-- BOARD -->
 <section class="view" id="v-board">
-  <div class="htabs plannav"><button data-pn="board">Board</button><button data-pn="all">All tasks</button><button data-pn="insights">Insights</button></div>
+  <div class="htabs plannav"><a data-pn="board" href="#/board">Board</a><a data-pn="all" href="#/all">All tasks</a><a data-pn="insights" href="#/insights">Insights</a></div>
   <div class="vbar">
     <div class="daynav">
       <button id="prevDay" title="Previous day">‹</button>
@@ -813,7 +821,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 
 
 <!-- CALENDAR -->
 <section class="view" id="v-calendar" hidden>
-  <div class="htabs plannav"><button data-pn="board">Board</button><button data-pn="all">All tasks</button><button data-pn="insights">Insights</button></div>
+  <div class="htabs plannav"><a data-pn="board" href="#/board">Board</a><a data-pn="all" href="#/all">All tasks</a><a data-pn="insights" href="#/insights">Insights</a></div>
   <div class="vbar">
     <div class="daynav">
       <button id="calPrev">‹</button><button id="calToday">Today</button><button id="calNext">›</button>
@@ -828,7 +836,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 
 
 <!-- ALL TASKS -->
 <section class="view" id="v-all" hidden>
-  <div class="htabs plannav"><button data-pn="board">Board</button><button data-pn="all">All tasks</button><button data-pn="insights">Insights</button></div>
+  <div class="htabs plannav"><a data-pn="board" href="#/board">Board</a><a data-pn="all" href="#/all">All tasks</a><a data-pn="insights" href="#/insights">Insights</a></div>
   <div class="vbar">
     <input type="search" id="q" placeholder="Search tasks, notes, comments…">
     <div class="seg" id="fStatus">
@@ -849,7 +857,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 
 
 <!-- INSIGHTS -->
 <section class="view" id="v-insights" hidden>
-  <div class="htabs plannav"><button data-pn="board">Board</button><button data-pn="all">All tasks</button><button data-pn="insights">Insights</button></div>
+  <div class="htabs plannav"><a data-pn="board" href="#/board">Board</a><a data-pn="all" href="#/all">All tasks</a><a data-pn="insights" href="#/insights">Insights</a></div>
   <div class="vbar">
     <div class="seg" id="insMode"><button data-m="week">Week</button><button data-m="month">Month</button></div>
     <div class="daynav"><button id="insPrev">‹</button><button id="insNow">This week</button><button id="insNext">›</button></div>
@@ -1156,18 +1164,18 @@ const viewAllowed = v => {
 };
 function render(){
   if (!viewAllowed(state.settings.view)){
-    const first = [...document.querySelectorAll('#tabs button')].find(b => !b.hidden);
+    const first = [...document.querySelectorAll('#tabs [data-view]')].find(b => !b.hidden);
     state.settings.view = first ? first.dataset.view : 'board';
   }
   const v = state.settings.view, agenda = AGENDA_VIEWS.includes(v);
   applyTabOrder();
-  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.view === (AGENDA_VIEWS.includes(v) ? 'board' : v)));
+  document.querySelectorAll('#tabs [data-view]').forEach(b => b.classList.toggle('on', b.dataset.view === (AGENDA_VIEWS.includes(v) ? 'board' : v)));
   document.querySelectorAll('.plannav button').forEach(b => b.classList.toggle('on', b.dataset.pn === (['board', 'calendar'].includes(v) ? 'board' : v)));
   const pm = v === 'calendar' ? state.settings.calMode : 'day';
   document.querySelectorAll('.planSeg button').forEach(b => b.classList.toggle('on', b.dataset.m === pm));
   document.querySelectorAll('.view').forEach(s => s.hidden = s.id !== 'v-' + v);
   $('#addForm').hidden = !agenda;
-  const noTabs = ![...document.querySelectorAll('#tabs button')].some(b => !b.hidden);
+  const noTabs = ![...document.querySelectorAll('#tabs [data-view]')].some(b => !b.hidden);
   if (noTabs) document.querySelectorAll('.view').forEach(s => s.hidden = true);
   else ({board:renderBoard, calendar:renderCalendar, all:renderAll, insights:renderInsights, attendance:renderAttendance, clinic:renderClinic, org:renderOrg, orgs:renderOrgs, home:renderHome})[v]();
   applyLogo();
@@ -1179,6 +1187,7 @@ function render(){
   $('#appName').title = oc && !oc.support ? '' : 'Click to rename';
   $('#brandTag').innerHTML = oc && !oc.support ? '<span class="orgchip">on Zenvora Loop</span>' : (cloud && cloud.isSuper ? 'Super Admin · your personal day planner' : 'Your personal day planner');
   if (!flashTimer) document.title = oc && !oc.support ? oc.org.name + ' · Zenvora Loop' : state.settings.name;
+  syncHash();
 }
 function setView(v){
   if (!viewAllowed(v)) return;
@@ -1197,6 +1206,42 @@ function setView(v){
 const rsq = {};
 function renderSoon(k, fn){ if (rsq[k]) return; rsq[k] = requestAnimationFrame(() => { rsq[k] = 0; fn(); }); setTimeout(() => { if (rsq[k]){ cancelAnimationFrame(rsq[k]); rsq[k] = 0; fn(); } }, 400); }
 
+/* ================= addresses: every page has its own link (#/clinic/patients/…), so it can be opened in a new tab ================= */
+function routeHash(){
+  const v = state.settings.view;
+  if (v !== 'clinic') return '#/' + v;
+  let h = '#/clinic/' + (cl.sec || 'patients');
+  if (cl.sec === 'patients' && cl.pid) h += '/' + cl.pid + (cl.ptab && cl.ptab !== 'profile' ? '/' + cl.ptab : '');
+  if (cl.sec === 'reports') h += '/' + cl.rep.kind;
+  if (cl.sec === 'accounts') h += '/' + cl.acc.tab;
+  return h;
+}
+let routeApplying = false;
+function syncHash(){ if (!appReady || routeApplying) return; const h = routeHash(); if (location.hash !== h) try { history.replaceState(null, '', h); } catch(e){} }
+function applyHash(){
+  const p = decodeURIComponent(location.hash || '').replace(/^#\/?/, '').split('/').filter(Boolean); if (!p.length) return false;
+  routeApplying = true;
+  try {
+    if (p[0] === 'clinic' && viewAllowed('clinic')){
+      const sec = p[1] || 'patients'; cl.sec = sec;
+      if (sec === 'reports' && p[2]) cl.rep.kind = p[2];
+      if (sec === 'accounts' && p[2]) cl.acc.tab = p[2];
+      setView('clinic');
+      if (sec === 'patients'){ if (p[2]){ cl.ptab = p[3] || 'profile'; clOpenPatient(p[2]); } else if (cl.pid){ cl.pUnsub.forEach(u => { try { u(); } catch(_){} }); cl.pUnsub = []; cl.pid = null; cl.newP = false; renderClinic(); } }
+      return true;
+    }
+    if (viewAllowed(p[0])){ setView(p[0]); return true; }
+  } finally { routeApplying = false; syncHash(); }
+  return false;
+}
+window.addEventListener('hashchange', () => { if (appReady && location.hash !== routeHash()) applyHash(); });
+// plain clicks stay inside the app; Ctrl / ⌘ / Shift / middle click and "Open in new tab" use the link
+document.addEventListener('click', e => {
+  const a = e.target.closest && e.target.closest('a[href^="#/"]'); if (!a) return;
+  if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || e.button !== 0){ e.stopImmediatePropagation(); return; }
+  e.preventDefault();
+}, true);
+
 /* ================= menu order: drag the tabs to arrange them ================= */
 const TAB_KEY = 'zenvora-loop-tab-order';
 function tabOrder(){
@@ -1214,10 +1259,10 @@ function applyTabOrder(){
    the dragged tab is placed by its horizontal (or, for a vertical menu, vertical) position among the visible
    items, and nothing re-renders the menu while a drag is in progress. */
 function dragPlace(host, drag, e, vert){
-  const items = [...host.children].filter(b => b.tagName === 'BUTTON' && b !== drag && !b.hidden && b.offsetParent !== null);
+  const items = [...host.children].filter(b => /^(BUTTON|A)$/.test(b.tagName) && b !== drag && !b.hidden && b.offsetParent !== null);
   const pos = vert ? e.clientY : e.clientX;
   const next = items.find(b => { const r = b.getBoundingClientRect(); return pos < (vert ? r.top + r.height / 2 : r.left + r.width / 2); });
-  const vis = [...host.children].filter(b => b.tagName === 'BUTTON' && (b === drag || (!b.hidden && b.offsetParent !== null))), at = vis.indexOf(drag);
+  const vis = [...host.children].filter(b => /^(BUTTON|A)$/.test(b.tagName) && (b === drag || (!b.hidden && b.offsetParent !== null))), at = vis.indexOf(drag);
   if (next){ if (vis[at + 1] !== next) host.insertBefore(drag, next); }              // already right before it: leave hidden tabs alone
   else { const last = items[items.length - 1]; if (last && at !== vis.length - 1) host.insertBefore(drag, last.nextSibling); }
 }
@@ -1225,9 +1270,9 @@ const nearHost = (host, e, vert) => { const r = host.getBoundingClientRect(), pa
 (() => {
   const nav = $('#tabs'); let drag = null;
   const visOrd = () => [...nav.children].filter(b => !b.hidden).map(b => b.dataset.view).join();
-  nav.querySelectorAll('button').forEach(b => { b.draggable = true; b.title += ' · drag to reorder'; });
+  nav.querySelectorAll('[data-view]').forEach(b => { b.draggable = true; b.title += ' · drag to reorder · right-click to open in a new tab'; });
   let startOrd = '';
-  nav.addEventListener('dragstart', e => { drag = e.target.closest('button'); if (!drag) return; window.__tabDrag = true; startOrd = visOrd(); drag.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', drag.dataset.view); } catch(_){} });
+  nav.addEventListener('dragstart', e => { drag = e.target.closest('[data-view]'); if (!drag) return; window.__tabDrag = true; startOrd = visOrd(); drag.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', drag.dataset.view); } catch(_){} });
   document.addEventListener('dragover', e => { if (!drag) return; if (nearHost(nav, e, false)){ e.preventDefault(); e.dataTransfer.dropEffect = 'move'; dragPlace(nav, drag, e, false); } });
   document.addEventListener('drop', e => { if (drag) e.preventDefault(); });
   nav.addEventListener('dragend', () => {
@@ -1895,7 +1940,7 @@ document.addEventListener('click', e => {               // Planning Board sub-me
   setView(v);
 });
 $('#tabs').addEventListener('click', e => {
-  const b = e.target.closest('button'); if (!b) return;
+  const b = e.target.closest('[data-view]'); if (!b) return;
   if (b.dataset.view === 'board' && state.settings.view !== 'board' && state.settings.view !== 'calendar' && state.settings.planMode && state.settings.planMode !== 'day') return setView('calendar');   // reopen the last Daily / Weekly / Monthly choice
   setView(b.dataset.view);
 });
@@ -1988,6 +2033,7 @@ function hideLoading(){ $('#loading').hidden = true; }
 
 function startApp(){
   appReady = true;
+  if (location.hash.length > 2) applyHash();
   rollover(); escalate(); setAddDay(todayKey); save(); render(); updNotifBtn(); checkReminders();
   if (!appStarted){
     appStarted = true;
@@ -2133,7 +2179,7 @@ function refreshTabs(){
   $('#clinicTab').hidden = !(oc && feat('clinic') && (oc.support || clinicAny() || feat('attendance')));
   $('#orgTab').hidden = !(oc && (oc.support || role === 'orgadmin' || role === 'manager'));
   $('#orgsTab').hidden = !isSup;
-  $('#tabs').classList.toggle('many', [...document.querySelectorAll('#tabs button')].filter(b => !b.hidden).length > 6);
+  $('#tabs').classList.toggle('many', [...document.querySelectorAll('#tabs [data-view]')].filter(b => !b.hidden).length > 6);
   ['#exportBtn', '#importBtn'].forEach(s => $(s).hidden = !agenda);
   if (!agenda) $('#notifBtn').hidden = true; else updNotifBtn();
   const uo = $('#userOrg');
@@ -3110,7 +3156,7 @@ function renderClinic(){
   const secs = CSECS.filter(s => s[2]());
   if (!secs.some(s => s[0] === cl.sec)) cl.sec = secs.length ? secs[0][0] : '';
   $('#clSeg').dataset.ord = 'csec'; $('#clSeg').dataset.ordattr = 's'; $('#clSeg').dataset.ordv = '1';
-  $('#clSeg').innerHTML = `<div class="clnavt">Clinic</div>` + ordered('csec', secs).map(([k, l]) => `<button draggable="true" data-s="${k}" class="${k === cl.sec ? 'on' : ''}"><svg viewBox="0 0 16 16">${CI[k]}</svg><span>${l}</span></button>`).join('')
+  $('#clSeg').innerHTML = `<div class="clnavt">Clinic</div>` + ordered('csec', secs).map(([k, l]) => `<a draggable="true" data-s="${k}" href="#/clinic/${k}" class="${k === cl.sec ? 'on' : ''}"><svg viewBox="0 0 16 16">${CI[k]}</svg><span>${l}</span></a>`).join('')
     + (oc.support ? '<div class="stat" style="padding:8px 10px">Read-only support view</div>' : '');
   const body = $('#clBody');
   if (keepTyping(body)) return;
@@ -3128,6 +3174,7 @@ function renderClinic(){
   body.scrollTop = y;
   if (cl.sec === 'reports') clRunReport();
   numberTables(body);
+  syncHash();
 }
 
 /* ---------- Patients: the whole list, in patient-number order, with instant filtering ---------- */
@@ -3161,7 +3208,7 @@ function clPatients(){
   const qd = cl.q.replace(/\s/g, ''), qn = /^[a-z-]*\d+$/i.test(qd) ? +qd.replace(/\D/g, '') : null;
   const exact = p => qn !== null && codeNo(p.code) === qn ? 0 : 1;            // the exact patient number comes first
   const list = all ? all.filter(p => pMatch(p, cl.q)).sort((a, b) => exact(a) - exact(b) || PSORT[sortK][1](a, b)) : null;
-  const rows = (list || []).map(p => `<tr class="clk" data-pid="${esc(p.id)}"><td class="pcodec">${esc(p.code || '—')}</td><td><b>${esc(pName(p))}</b></td>
+  const rows = (list || []).map(p => `<tr class="clk" data-pid="${esc(p.id)}"><td class="pcodec">${esc(p.code || '—')}</td><td><a class="plink" href="#/clinic/patients/${esc(p.id)}"><b>${esc(pName(p))}</b></a></td>
     <td>${esc(p.gender || '—')}${ageOf(p) ? ' · ' + esc(ageOf(p)) : ''}</td><td>${esc(p.phone || '—')}</td><td>${esc(dName(p.primaryDoctorId) || '—')}</td><td class="stat">${p.createdAt > 1 ? esc(fmtShort(dayKey(p.createdAt))) : ''}</td></tr>`).join('');
   return `<div class="clhead"><h2>Patients</h2></div><div class="sect">
     <div class="vbar" style="padding:0"><input type="search" id="clQ" placeholder="Filter by patient code, name or phone…" value="${esc(cl.q)}" style="flex:1;min-width:220px;font-size:14px;padding:8px 12px">
@@ -3215,7 +3262,7 @@ function clPatient(){
         ${p.allergies ? `<div class="alert">⚠ Allergies / alerts: ${esc(p.allergies)}</div>` : ''}</div>
       ${can('billing') ? `<div class="pmoney"><div><span>Treatment cost</span><b>${inr(bill)}</b></div><div><span>Paid</span><b>${inr(paid)}</b></div><div><span>Balance</span><b class="${bill - paid > 0 ? 'neg' : ''}">${inr(bill - paid)}</b></div></div>` : ''}
     </div>
-    <div class="htabs" data-ord="ptab" data-ordattr="pt" title="Drag a tab to put it where you like">${ordered('ptab', tabs).map(([k, l]) => `<button draggable="true" data-pt="${k}" class="${k === cl.ptab ? 'on' : ''}">${l}</button>`).join('')}</div>
+    <div class="htabs" data-ord="ptab" data-ordattr="pt" title="Drag a tab to put it where you like">${ordered('ptab', tabs).map(([k, l]) => `<a draggable="true" data-pt="${k}" href="#/clinic/patients/${esc(cl.pid)}/${k}" class="${k === cl.ptab ? 'on' : ''}">${l}</a>`).join('')}</div>
     <div style="margin-top:10px">${body}</div>`;
 }
 function clProfileForm(p){
@@ -3574,8 +3621,8 @@ function saveOrd(k, keys){
 (() => {
   let dragB = null, startO = '';
   const host = b => b && b.parentElement && b.parentElement.matches('[data-ord]') ? b.parentElement : null;
-  document.addEventListener('mousedown', e => { const b = e.target.closest('[data-ord] > button'); if (b) b.draggable = true; }, true);
-  document.addEventListener('dragstart', e => { const b = e.target.closest && e.target.closest('[data-ord] > button'); if (!b) return; dragB = b; window.__ordDrag = true; startO = [...b.parentElement.children].map(x => x.textContent).join('|'); b.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', 'ord'); } catch(_){} });
+  document.addEventListener('mousedown', e => { const b = e.target.closest('[data-ord] > :is(button,a)'); if (b) b.draggable = true; }, true);
+  document.addEventListener('dragstart', e => { const b = e.target.closest && e.target.closest('[data-ord] > :is(button,a)'); if (!b) return; dragB = b; window.__ordDrag = true; startO = [...b.parentElement.children].map(x => x.textContent).join('|'); b.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', 'ord'); } catch(_){} });
   document.addEventListener('dragover', e => {
     if (!dragB) return; const h = host(dragB); if (!h) return; const vert = h.dataset.ordv === '1';
     if (!nearHost(h, e, vert)) return; e.preventDefault(); e.dataTransfer.dropEffect = 'move'; dragPlace(h, dragB, e, vert);
@@ -3583,12 +3630,12 @@ function saveOrd(k, keys){
   document.addEventListener('drop', e => { if (dragB) e.preventDefault(); });
   document.addEventListener('dragend', () => { window.__ordDrag = false; if (!dragB) return; const h = host(dragB); dragB.classList.remove('dragging');
     if (h && [...h.children].map(x => x.textContent).join('|') === startO){ const b = dragB; dragB = null; b.click(); return; }   // nothing moved: it was a click
-    if (h) saveOrd(h.dataset.ord, [...h.querySelectorAll(':scope > button')].map(b => b.dataset[h.dataset.ordattr])); dragB = null; });
+    if (h) saveOrd(h.dataset.ord, [...h.querySelectorAll(':scope > :is(button,a)')].map(b => b.dataset[h.dataset.ordattr])); dragB = null; });
 })();
 
 /* ---------- date range: Today or a custom From / To ---------- */
 function rangeBar(o, id){
-  const k = o.kind, grp = ['collection', 'treatments', 'appointments'].includes(k), chart = grp;
+  const k = o.kind, grp = true, chart = true;
   return `<div class="rangebar" data-range="${id}">
     ${grp ? `<label>Type<select data-rpgroup>${[['day', 'Daily'], ['month', 'Monthly'], ['year', 'Yearly']].map(([v, l]) => `<option value="${v}"${o.group === v ? ' selected' : ''}>${l}</option>`).join('')}</select></label>` : ''}
     <span class="daynav rpnav"><button data-rpshift="-1" title="Previous ${o.group === 'month' ? 'period' : o.from === o.to ? 'day' : 'period'}">‹</button><button data-rp="today" class="${o.preset === 'today' ? 'on' : ''}">Today</button><button data-rpshift="1" title="Next"${o.to >= todayKey ? ' disabled' : ''}>›</button></span><span class="stat">or</span>
@@ -3611,9 +3658,9 @@ function periodsIn(g, from, to){
   return out;
 }
 function stackChart(cols, keys, names, money){
-  if (!cols.length) return '<div class="empty">Nothing in this period.</div>';
-  const n = cols.length, bw = Math.max(6, Math.min(34, 560 / n * .6)), gap = bw * .7, W = Math.max(360, n * (bw + gap) + 60), H = 220, top = 12;
-  const tot = c => keys.reduce((a, k) => a + (c.parts[k] || 0), 0), max = Math.max(1, ...cols.map(tot));
+  const tot = c => keys.reduce((a, k) => a + (c.parts[k] || 0), 0);
+  if (!cols.length || !cols.some(c => tot(c) > 0)) return '<div class="chartw"><div class="empty" style="margin:0">Nothing to chart in this period.</div></div>';
+  const n = cols.length, bw = Math.max(8, Math.min(34, 620 / n * .6)), gap = bw * .7, W = Math.max(620, n * (bw + gap) + 70), H = 200, top = 14, max = Math.max(1, ...cols.map(tot));
   const step = Math.pow(10, Math.floor(Math.log10(max))), nice = Math.ceil(max / step) * step, y = v => top + H - v / nice * H, fmt = money ? inrK : v => Math.round(v);
   const every = Math.ceil(n / 14);
   let g = [0, .25, .5, .75, 1].map(f => `<line x1="48" x2="${W}" y1="${y(nice * f)}" y2="${y(nice * f)}" style="stroke:var(--line)"/><text x="44" y="${y(nice * f) + 4}" text-anchor="end">${fmt(nice * f)}</text>`).join('');
@@ -3622,10 +3669,12 @@ function stackChart(cols, keys, names, money){
       g += `<rect x="${x}" y="${y1}" width="${bw}" height="${Math.max(h, 1)}" rx="${Math.min(4, bw / 4)}" fill="${RP_COLORS[j % RP_COLORS.length]}"><title>${esc(c.label)} · ${esc(names[k] || k)}: ${money ? inr(v) : v}</title></rect>`; });
     if (acc && n <= 31) g += `<text x="${x + bw / 2}" y="${y(acc) - 4}" text-anchor="middle" class="cv">${fmt(acc)}</text>`;
     if (i % every === 0) g += `<text x="${x + bw / 2}" y="${top + H + 16}" text-anchor="middle">${esc(c.short || c.label)}</text>`; });
-  return `<div class="chartw"><svg viewBox="0 0 ${W} ${H + top + 26}" style="min-width:${Math.min(W, 900)}px">${g}</svg>
+  return `<div class="chartw"><svg viewBox="0 0 ${W} ${H + top + 26}" width="${W}" height="${H + top + 26}" style="${W > 1500 ? 'max-width:none' : ''}">${g}</svg>
     <div class="legend">${keys.map((k, j) => `<span><i style="background:${RP_COLORS[j % RP_COLORS.length]}"></i>${esc(names[k] || k)}</span>`).join('')}</div></div>`;
 }
 function hbarChart(items, money){
+  if (!items.some(x => x.v > 0)) return '<div class="chartw"><div class="empty" style="margin:0">Nothing to chart in this period.</div></div>';
+  items = items.slice(0, 20);
   const max = Math.max(1, ...items.map(x => x.v));
   return `<div class="hbars">${items.map((x, j) => `<div class="hb"><span>${esc(x.label)}</span><div><i style="width:${x.v / max * 100}%;background:${RP_COLORS[j % RP_COLORS.length]}"></i></div><b>${money ? inr(x.v) : x.v}</b></div>`).join('') || '<div class="empty">Nothing in this period.</div>'}</div>`;
 }
@@ -3707,7 +3756,7 @@ function clAccounts(){
   clAccLoad();
   const d = a.d, monthly = !['tally', 'import'].includes(a.tab);
   const head = `<div class="clhead"><h2>Accounts</h2>${monthly ? `<div class="mnav"><button data-am2="-1">‹</button><b>${esc(monthLabel(a.month))}</b><button data-am2="1"${a.month >= todayKey.slice(0, 7) ? ' disabled' : ''}>›</button></div>` : ''}</div>
-    <div class="htabs" data-ord="acc" data-ordattr="at" title="Drag a tab to put it where you like">${ordered('acc', tabs).map(([k, l]) => `<button draggable="true" data-at="${k}" class="${a.tab === k ? 'on' : ''}">${l}</button>`).join('')}</div>`;
+    <div class="htabs" data-ord="acc" data-ordattr="at" title="Drag a tab to put it where you like">${ordered('acc', tabs).map(([k, l]) => `<a draggable="true" data-at="${k}" href="#/clinic/accounts/${k}" class="${a.tab === k ? 'on' : ''}">${l}</a>`).join('')}</div>`;
   if (!d) return head + '<div class="empty">Loading…</div>';
   if (d.err) return head + `<div class="auth-err">${esc(d.err)}</div>`;
   let banner = '';
@@ -4049,8 +4098,8 @@ function clReports(){
   const r = cl.rep, avail = REPORTS.filter(x => can(x[2]));
   if (!avail.some(x => x[0] === r.kind)) r.kind = avail[0][0];
   if (!r.from){ r.preset = 'today'; r.from = r.to = todayKey; }
-  return `<div class="clhead"><h2>Reports</h2></div><div class="htabs" data-ord="rep" data-ordattr="rk">${ordered('rep', avail).map(([k, l]) => `<button draggable="true" data-rk="${k}" class="${k === r.kind ? 'on' : ''}">${l}</button>`).join('')}</div>
-    <div>${r.kind === 'outstanding' ? '' : rangeBar(r, 'rep')}</div><div id="repOut"><div class="empty">Loading…</div></div>`;
+  return `<div class="clhead"><h2>Reports</h2></div><div class="htabs" data-ord="rep" data-ordattr="rk">${ordered('rep', avail).map(([k, l]) => `<a draggable="true" data-rk="${k}" href="#/clinic/reports/${k}" class="${k === r.kind ? 'on' : ''}">${l}</a>`).join('')}</div>
+    <div>${rangeBar(r, 'rep')}</div><div id="repOut"><div class="empty">Loading…</div></div>`;
 }
 async function clRunReport(){
   const {F} = cloud, r = cl.rep, key = [orgCtx().orgId, r.kind, r.from, r.to, r.doc || ''].join('|');
@@ -4077,7 +4126,7 @@ function tbl(head, rows, foot, cls = ''){
 let repCsv = null;
 function clReportHtml(){
   const r = cl.rep, d = r.data; if (!d) return '<div class="empty">Loading…</div>';
-  const per = r.kind === 'outstanding' ? 'as of today' : r.from === r.to ? fmtLong(r.from) : `${fmtShort(r.from)} – ${fmtShort(r.to)}`;
+  const per = r.kind === 'outstanding' ? 'as of ' + fmtLong(r.to) : r.from === r.to ? fmtLong(r.from) : `${fmtShort(r.from)} – ${fmtShort(r.to)}`;
   const bar = t => `<div class="vbar" style="padding:0 0 8px"><strong>${esc(t)}</strong><span class="stat">${esc(per)}</span><span class="sp"></span><button data-repcsv>⬇ CSV</button><button data-repprint>🖨 Print</button></div>`;
   const k = (l, v, s) => `<div class="kpi"><div class="kl">${l}</div><div class="kv">${v}</div><div class="ks">${s}</div></div>`;
   let html = '';
@@ -4119,30 +4168,52 @@ function clReportHtml(){
       + (chart ? '' : `<h3 style="font-size:13px;margin:16px 0 6px">Every treatment, with the patient</h3>` + tbl(['Date', 'Patient', 'Treatment', 'Doctor', '₹Net'], T.slice().sort((a, b) => String(b.date).localeCompare(String(a.date))).map(t => ({attr:` class="clk" data-openp="${esc(t.patientId)}"`, c:[esc(fmtShort(t.date)), `<b>${esc(t.patientName)}</b>`, esc(t.typeName + (t.tooth ? ' (' + t.tooth + ')' : '')), esc(dName(t.doctorId) || t.doctorName || ''), inr(net(t))]}))));
     repCsv = [['Date', 'Patient', 'Treatment', 'Tooth', 'Doctor', 'Gross', 'Discount', 'Net']].concat(T.map(t => [t.date, t.patientName, t.typeName, t.tooth || '', dName(t.doctorId) || t.doctorName || '', +t.cost || 0, +t.discount || 0, net(t)]));
   }
+  const short = pk => G === 'day' ? fmtDM(pk) : G === 'month' ? parseDay(pk + '-01').toLocaleDateString([], {month:'short', year:'2-digit'}) : pk;
+  const perTable = (title, keys, names, valOf, money) => { const ps = periodsIn(G, r.from, r.to).reverse(), cells = ps.map(pk => ({pk, v:keys.map(kk => valOf(pk, kk))})).filter(x => x.v.some(Boolean));
+    return `<h3 style="font-size:13px;margin:4px 0 6px">${esc(title)}</h3>` + tbl([G === 'month' ? 'Month' : G === 'year' ? 'Year' : 'Date', ...keys.map(kk => (money ? '₹' : '#') + names[kk]), (money ? '₹' : '#') + 'Total'],
+      cells.map(x => ({attr:G === 'day' ? '' : drill(x.pk, perLabel(G, x.pk)), c:[`<b>${esc(perLabel(G, x.pk))}</b>`, ...x.v.map(v => money ? inr(v) : v), `<b>${money ? inr(x.v.reduce((a, b) => a + b, 0)) : x.v.reduce((a, b) => a + b, 0)}</b>`]})),
+      ['Total', ...keys.map((kk, ii) => { const t2 = cells.reduce((a, x) => a + x.v[ii], 0); return money ? inr(t2) : t2; }), money ? inr(cells.reduce((a, x) => a + x.v.reduce((p, q) => p + q, 0), 0)) : cells.reduce((a, x) => a + x.v.reduce((p, q) => p + q, 0), 0)]) + '<div style="height:12px"></div>'; };
   if (r.kind === 'doctors'){
-    const fee = t => +t.consultantFee || 0;
-    if (r.doc){
-      const doc = cl.doctors.find(x => x.id === r.doc) || {name:'—'}, T = d.t.filter(t => t.doctorId === r.doc && t.status === 'completed').sort((a, b) => String(a.date).localeCompare(String(b.date)));
+    const fee = t => +t.consultantFee || 0, docSel = r.doc || r.dfil;
+    if (docSel){
+      const doc = cl.doctors.find(x => x.id === docSel) || {name:'—'}, T = d.t.filter(t => t.doctorId === docSel && t.status === 'completed').sort((a, b) => String(a.date).localeCompare(String(b.date)));
       const tot = T.reduce((a, t) => a + net(t), 0), fees = T.reduce((a, t) => a + fee(t), 0), cons = doc.type === 'consultant';
       repCsv = [['Date', 'Patient', 'Treatment', 'Tooth', 'Net'].concat(cons ? ['Consultant fee'] : [])].concat(T.map(t => [t.date, t.patientName, t.typeName, t.tooth || '', net(t)].concat(cons ? [fee(t)] : []))).concat([['', '', '', 'Total', tot].concat(cons ? [fees] : [])]);
-      return `<button class="abk" data-repdoc="">← All doctors</button>` + bar(`${doc.name} · ${cons ? 'Consultant statement' : 'Doctor statement'}`)
-        + `<div class="kpis">${k('Treatments', T.length, plural(new Set(T.map(t => t.patientId)).size, 'patient'))}${k('Treatment value', inr(tot), 'completed, after discount')}${cons ? k('Consultant fees', inr(fees), 'from the fee on each treatment') : ''}</div>`
-        + tbl(['Date', 'Patient', 'Treatment', 'Tooth / area', '₹Net'].concat(cons ? ['₹Consultant fee'] : []), T.map(t => ({c:[esc(fmtShort(t.date)), esc(t.patientName), esc(t.typeName), esc(t.tooth || ''), inr(net(t))].concat(cons ? [inr(fee(t))] : [])})), ['Total', '', '', '', inr(tot)].concat(cons ? [inr(fees)] : []));
+      const kp = `<div class="kpis">${k('Treatments', T.length, plural(new Set(T.map(t => t.patientId)).size, 'patient'))}${k('Treatment value', inr(tot), 'completed, after discount')}${cons ? k('Consultant fees', inr(fees), 'from the fee on each treatment') : ''}</div>`;
+      const head = (r.doc ? `<button class="abk" data-repdoc="">← All doctors</button>` : '') + bar(`${doc.name} · ${cons ? 'Consultant statement' : 'Doctor statement'}`) + kp;
+      if (chart) return head + stackChart(periodsIn(G, r.from, r.to).map(pk => ({label:perLabel(G, pk), short:short(pk), parts:{v:T.filter(t => perOf(G, t.date) === pk).reduce((a, t) => a + net(t), 0)}})), ['v'], {v:'Treatment value'}, true);
+      return head + (G !== 'day' ? perTable('By ' + (G === 'month' ? 'month' : 'year'), ['v'], {v:'Treatment value'}, (pk) => T.filter(t => perOf(G, t.date) === pk).reduce((a, t) => a + net(t), 0), true) : '')
+        + tbl(['Date', 'Patient', 'Treatment', 'Tooth / area', '₹Net'].concat(cons ? ['₹Consultant fee'] : []), T.map(t => ({attr:` class="clk" data-openp="${esc(t.patientId)}"`, c:[esc(fmtShort(t.date)), esc(t.patientName), esc(t.typeName), esc(t.tooth || ''), inr(net(t))].concat(cons ? [inr(fee(t))] : [])})), ['Total', '', '', '', inr(tot)].concat(cons ? [inr(fees)] : []));
     }
     const ids = [...new Set(cl.doctors.map(x => x.id).concat(d.t.map(t => t.doctorId), d.a.map(a => a.doctorId)).filter(Boolean))];
+    const names = Object.fromEntries(ids.map(id => [id, (cl.doctors.find(x => x.id === id) || {name:'Unknown'}).name]));
     const rows = ids.map(id => { const doc = cl.doctors.find(x => x.id === id) || {name:'Unknown'}, T = d.t.filter(t => t.doctorId === id && t.status === 'completed'), A = d.a.filter(a => a.doctorId === id);
       const tot = T.reduce((a, t) => a + net(t), 0), fees = T.reduce((a, t) => a + fee(t), 0);
       return {attr:` class="clk" data-repdoc="${esc(id)}"`, c:[`<b>${esc(doc.name)}</b><span class="sub2">${DTYPE[doc.type] || 'Clinic doctor'}${doc.specialty ? ' · ' + esc(doc.specialty) : ''}</span>`, A.filter(a => a.status === 'completed').length, new Set(T.map(t => t.patientId)).size, T.length, inr(tot), doc.type === 'consultant' ? inr(fees) : '—'],
-        raw:[doc.name, doc.type || 'primary', A.filter(a => a.status === 'completed').length, new Set(T.map(t => t.patientId)).size, T.length, tot, fees], tot}; }).sort((a, b) => b.tot - a.tot);
+        raw:[doc.name, doc.type || 'primary', A.filter(a => a.status === 'completed').length, new Set(T.map(t => t.patientId)).size, T.length, tot, fees], tot, id}; }).sort((a, b) => b.tot - a.tot);
     repCsv = [['Doctor', 'Type', 'Visits completed', 'Patients', 'Treatments', 'Treatment value', 'Consultant fees']].concat(rows.map(x => x.raw));
+    const val = (pk, id) => d.t.filter(t => t.doctorId === id && t.status === 'completed' && perOf(G, t.date) === pk).reduce((a, t) => a + net(t), 0), used = rows.filter(x => x.tot > 0).map(x => x.id);
+    if (chart) return bar('Doctors & consultants') + `<h3 style="font-size:13px;margin:4px 0 6px">Treatment value by doctor</h3>` + hbarChart(rows.map(x => ({label:x.raw[0], v:x.tot})), true)
+      + `<h3 style="font-size:13px;margin:16px 0 6px">By ${G === 'month' ? 'month' : G === 'year' ? 'year' : 'day'}</h3>` + stackChart(periodsIn(G, r.from, r.to).map(pk => ({label:perLabel(G, pk), short:short(pk), parts:Object.fromEntries(used.map(id => [id, val(pk, id)]))})), used, names, true);
     html = bar('Doctors & consultants') + '<p class="stat">Each treatment is credited to the doctor recorded on it. Click a doctor for their statement.</p>'
+      + (G !== 'day' && used.length ? perTable('Treatment value by ' + (G === 'month' ? 'month' : 'year'), used, names, val, true) : '')
       + tbl(['Doctor', '#Visits done', '#Patients', '#Treatments', '₹Treatment value', '₹Consultant fees'], rows, null, 'otbl');
   }
   if (r.kind === 'outstanding'){
-    const rows = d.pt.map(p => { const b = billed(d.t.filter(t => t.patientId === p.id)), pd = paidSum(d.pay.filter(x => x.patientId === p.id)); return {p, b, pd, bal:b - pd}; }).filter(x => x.bal > 0.5).sort((a, b) => b.bal - a.bal);
-    const tot = rows.reduce((a, x) => a + x.bal, 0);
+    const pts = d.pt.filter(p => !r.dfil || p.primaryDoctorId === r.dfil), upto = day => {
+      const T = d.t.filter(t => t.date <= day && t.status !== 'planned'), P = d.pay.filter(x => x.date <= day), bt = {}, pd = {};
+      T.forEach(t => bt[t.patientId] = (bt[t.patientId] || 0) + net(t)); P.forEach(x => pd[x.patientId] = (pd[x.patientId] || 0) + (+x.amount || 0));
+      return pts.map(p => ({p, b:bt[p.id] || 0, pd:pd[p.id] || 0, bal:(bt[p.id] || 0) - (pd[p.id] || 0)})).filter(x => x.bal > 0.5).sort((a, b) => b.bal - a.bal); };
+    const rows = upto(r.to), tot = rows.reduce((a, x) => a + x.bal, 0);
+    const ends = periodsIn(G, r.from, r.to).map(pk => { const e = G === 'day' ? pk : G === 'month' ? mEnd(pk) : pk + '-12-31'; return {pk, e:e > r.to ? r.to : e}; });
+    const series = ends.length <= 120 ? ends.map(x => { const rs = upto(x.e); return {pk:x.pk, tot:rs.reduce((a, y) => a + y.bal, 0), n:rs.length}; }) : [];
     repCsv = [['Patient', 'ID', 'Phone', 'Treatment cost', 'Paid', 'Balance']].concat(rows.map(x => [pName(x.p), x.p.code, x.p.phone, x.b, x.pd, x.bal]));
-    html = bar('Outstanding balances') + `<div class="kpis">${k('Total outstanding', inr(tot), plural(rows.length, 'patient'))}</div>`
+    const kp = `<div class="kpis">${k('Total outstanding', inr(tot), plural(rows.length, 'patient') + ' · as of ' + fmtShort(r.to))}</div>`;
+    if (chart) return bar('Outstanding balances') + kp + `<h3 style="font-size:13px;margin:4px 0 6px">Outstanding at the end of each ${G === 'month' ? 'month' : G === 'year' ? 'year' : 'day'}</h3>`
+      + stackChart(series.map(x => ({label:perLabel(G, x.pk), short:short(x.pk), parts:{v:x.tot}})), ['v'], {v:'Outstanding'}, true)
+      + `<h3 style="font-size:13px;margin:16px 0 6px">Biggest balances</h3>` + hbarChart(rows.map(x => ({label:pName(x.p) + ' · ' + (x.p.code || ''), v:x.bal})), true);
+    html = bar('Outstanding balances') + kp
+      + (G !== 'day' && series.length ? `<h3 style="font-size:13px;margin:4px 0 6px">Outstanding at the end of each ${G === 'month' ? 'month' : 'year'}</h3>` + tbl([G === 'month' ? 'Month' : 'Year', '#Patients owing', '₹Outstanding'], series.slice().reverse().map(x => ({c:[`<b>${esc(perLabel(G, x.pk))}</b>`, x.n, `<b>${inr(x.tot)}</b>`]}))) + '<div style="height:12px"></div>' : '')
       + tbl(['Patient', 'Phone', '₹Treatment cost', '₹Paid', '₹Balance'], rows.map(x => ({attr:` class="clk" data-openp="${esc(x.p.id)}"`, c:[`<b>${esc(pName(x.p))}</b><span class="sub2">${esc(x.p.code || '')}</span>`, esc(x.p.phone || ''), inr(x.b), inr(x.pd), `<b class="neg">${inr(x.bal)}</b>`]})), ['Total', '', '', '', inr(tot)], 'otbl');
   }
   if (r.kind === 'appointments'){
@@ -4156,10 +4227,13 @@ function clReportHtml(){
       + tbl([G === 'month' ? 'Month' : G === 'year' ? 'Year' : 'Date', '#Total', ...st.map(s => '#' + ASTATUS[s])], rows, ['Total', A.length, ...st.map(s => A.filter(a => a.status === s).length)]);
   }
   if (r.kind === 'newpatients'){
-    const P = d.p.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    const P = d.p.filter(p => !r.dfil || p.primaryDoctorId === r.dfil).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
     repCsv = [['Registered', 'Patient', 'ID', 'Phone', 'Referred by']].concat(P.map(p => [p.createdDay, pName(p), p.code, p.phone, p.referredBy || '']));
     const refs = {}; P.forEach(p => { const k2 = p.referredBy || 'Not recorded'; refs[k2] = (refs[k2] || 0) + 1; });
-    html = bar('New patients') + `<div class="kpis">${k('New patients', P.length, 'registered')}${Object.entries(refs).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([n, c]) => k('Referred by', esc(n), plural(c, 'patient'))).join('')}</div>`
+    const kp = `<div class="kpis">${k('New patients', P.length, 'registered')}${Object.entries(refs).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([n, c]) => k('Referred by', esc(n), plural(c, 'patient'))).join('')}</div>`;
+    const cnt = pk => P.filter(p => perOf(G, p.createdDay || '') === pk).length;
+    if (chart) return bar('New patients') + kp + stackChart(periodsIn(G, r.from, r.to).map(pk => ({label:perLabel(G, pk), short:short(pk), parts:{v:cnt(pk)}})), ['v'], {v:'New patients'}, false);
+    html = bar('New patients') + kp + (G !== 'day' ? perTable('By ' + (G === 'month' ? 'month' : 'year'), ['v'], {v:'New patients'}, pk => cnt(pk), false) : '')
       + tbl(['Registered', 'Patient', 'Phone', 'Referred by'], P.map(p => ({attr:` class="clk" data-openp="${esc(p.id)}"`, c:[esc(fmtShort(p.createdDay)), `<b>${esc(pName(p))}</b><span class="sub2">${esc(p.code || '')}</span>`, esc(p.phone || ''), esc(p.referredBy || '—')]})), null, 'otbl');
   }
   return html;
@@ -4212,7 +4286,7 @@ function clSetup(){
 }
 
 /* ---------- events ---------- */
-$('#clSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ cl.sec = b.dataset.s; if (cl.sec === 'setup') cl.members = null; if (cl.sec === 'assists') cl.asKey = ''; if (cl.sec === 'patients' && cl.pid){ cl.pUnsub.forEach(u => { try { u(); } catch(_){} }); cl.pUnsub = []; cl.pid = null; } cl.newP = false; renderClinic(); } });
+$('#clSeg').addEventListener('click', e => { const b = e.target.closest('[data-s]'); if (b){ cl.sec = b.dataset.s; if (cl.sec === 'setup') cl.members = null; if (cl.sec === 'assists') cl.asKey = ''; if (cl.sec === 'patients' && cl.pid){ cl.pUnsub.forEach(u => { try { u(); } catch(_){} }); cl.pUnsub = []; cl.pid = null; } cl.newP = false; renderClinic(); } });
 $('#clBody').addEventListener('input', e => {
   const mr = e.target.closest('[data-mr]'); if (mr && e.target.matches('[data-mf]')){ medCalc(mr); const tt = $('#rxTot'); if (tt) tt.textContent = inr([...document.querySelectorAll('#rxMeds [data-mr]')].reduce((s, r) => s + parseInt((r.querySelector('b[data-mf="cost"]').textContent || '0').replace(/[^0-9]/g, '') || 0), 0)); }
   if (e.target.matches('#tlOpen,#tlChange,#tlOut,[data-den],[data-dapp],[data-dseen]')) tallyCalc();
@@ -5528,7 +5602,8 @@ function sessionsOf(events){
 }
 function attSummary(events, mk, acc){
   const c = attCfg(acc), sh = shiftMs(c), B = monthBounds(mk), now = Date.now();
-  const join = acc && acc.createdAt ? dayKey(acc.createdAt) : B.s;
+  const evs0 = (events || []).filter(e => e.at != null), firstEv = evs0.length ? dayKey(Math.min(...evs0.map(e => e.at))) : null;
+  let join = acc && acc.createdAt ? dayKey(acc.createdAt) : B.s; if (firstEv && firstEv < join) join = firstEv;
   const byDay = {};
   sessionsOf(events).forEach(s => (byDay[dayKey(s.in)] = byDay[dayKey(s.in)] || []).push(s));
   const rows = []; let P = 0, L = 0, H = 0, OT = 0, effMonth = 0;
@@ -5590,6 +5665,7 @@ function renderAttendance(){
   attLoad();
   const body = $('#attBody');
   if (body.contains(document.activeElement) && /INPUT|SELECT/.test(document.activeElement.tagName)) return;   // don't wipe a form being typed in
+  if (body.querySelector('[data-ed].dirty')) return;                                                       // nor unsaved attendance edits
   body.innerHTML = att.mode === 'me' ? attMine() : att.mode === 'mark' ? attMark() : att.mode === 'appr' ? attApprovals() : att.detail ? attDetail() : attTeam();
   numberTables(body);
   attTick();
@@ -5741,18 +5817,43 @@ function attDetail(){
         ${pr('Payable', inr(S.pay))}
       </div>` : ''}
     </div>
-    ${ro ? '' : `<div class="box"><h3>Add or correct an entry <span class="sub">e.g. they forgot to check in or out</span></h3>
-      <form class="aform" id="attAddForm">
-        <label>Date<input type="date" id="adD" value="${att.month === todayKey.slice(0, 7) ? todayKey : S.B.e}" min="${S.B.s}" max="${S.B.e < todayKey ? S.B.e : todayKey}"></label>
-        <label>Check-in<input type="time" id="adI" value="${esc(c.shiftStart)}"></label>
-        <label>Check-out<input type="time" id="adO" value="${esc(c.shiftEnd)}"></label>
-        <button class="primary" type="submit">Add entry</button>
-      </form>
-      <p class="stat" style="margin:8px 0 0">Leave Check-out empty to add only a check-in, or fill only Check-out to close a missed check-out.</p>
-    </div>`}
-    ${attTable(S, !ro)}`;
+    ${ro ? attTable(S, false) : attMonthEditor(S, a)}`;
 }
 
+/* Account Manager / Manager: edit the whole month, any number of check-in / check-out sessions a day (e.g. in → lunch out → in → out) */
+const hhmm = ms => { const d = new Date(ms); return pad2(d.getHours()) + ':' + pad2(d.getMinutes()); };
+const edSess = (i, o) => `<span class="eds1"><input type="time" data-ein value="${i || ''}" title="Check-in"><i>→</i><input type="time" data-eout value="${o || ''}" title="Check-out"><button type="button" class="danger" data-edrm title="Remove this session">✕</button></span>`;
+function attMonthEditor(S, a){
+  const B = S.B, last = B.e < todayKey ? B.e : todayKey, byDay = Object.fromEntries(S.rows.map(r => [r.k, r]));
+  let html = '', wk = null;
+  for (let k = last; k >= B.s; k = shiftDay(k, -1)){
+    const r = byDay[k] || {k, st:'na', ss:[]}, ss = r.ss || [], ids = ss.flatMap(x => x.ids).join(','), w = weekStart(k);
+    if (w !== wk){ wk = w; html += `<tr class="wk"><td colspan="5">Week of ${esc(fmtDM(w))} – ${esc(fmtDM(shiftDay(w, 6)))}</td></tr>`; }
+    html += `<tr data-ed="${k}" data-ids="${esc(ids)}"><td style="white-space:nowrap"><b>${esc(fmtShort(k))}</b></td>
+      <td>${r.st === 'na' ? '<span class="stat">—</span>' : `<span class="astat ${r.st}">${ST_LABEL[r.st] || ''}</span>`}</td>
+      <td class="edsc">${ss.map(x => edSess(hhmm(x.in), x.out ? hhmm(x.out) : '')).join('')}<button type="button" data-edadd title="Add a check-in / check-out">+ Session</button></td>
+      <td class="num">${ss.length ? hm(r.worked || 0) : '—'}</td>
+      <td style="white-space:nowrap">${ss.length ? '' : `<button type="button" data-edshift title="Fill with the shift timing">Shift ${esc(S.c.shiftStart)}–${esc(S.c.shiftEnd)}</button> `}<button type="button" class="primary" data-edsave disabled>Save</button></td></tr>`;
+  }
+  return `<div class="box"><h3>Edit attendance for ${esc(parseDay(att.month + '-01').toLocaleDateString([], {month:'long', year:'numeric'}))} <span class="sub">add, change or remove check-ins and check-outs for any day; several sessions a day are fine (e.g. lunch break)</span></h3>
+    <div class="btnrow" style="margin:0 0 8px"><span class="stat">Change the times, then <b>Save</b> that day, or</span><button class="primary" id="edSaveAll" disabled>Save all changed days</button></div>
+    <div class="awrap" style="margin-top:0"><table class="atbl edtbl"><thead><tr><th>Date</th><th>Status</th><th>Check-in → Check-out</th><th class="num">Worked</th><th></th></tr></thead><tbody>${html}</tbody></table></div></div>`;
+}
+function edDirty(row){ row.classList.add('dirty'); row.querySelector('[data-edsave]').disabled = false; const b = $('#edSaveAll'); if (b) b.disabled = false; }
+async function attSaveDay(row, quiet){
+  const k = row.dataset.ed, uid = att.detail, ids = row.dataset.ids ? row.dataset.ids.split(',').filter(Boolean) : [];
+  const at = t => { const x = parseDay(k); const [hh, mm] = t.split(':').map(Number); x.setHours(hh, mm, 0, 0); return x; };
+  const pairs = [...row.querySelectorAll('.eds1')].map(x => [x.querySelector('[data-ein]').value, x.querySelector('[data-eout]').value]).filter(([i, o]) => i || o);
+  for (const [i, o] of pairs){ if (!i){ info(`${fmtShort(k)}: every session needs a check-in time.`); return false; } if (o && at(o) <= at(i)){ info(`${fmtShort(k)}: check-out ${hm12(o)} must be after check-in ${hm12(i)}.`); return false; }
+    if (at(i) > Date.now() || (o && at(o) > Date.now())){ info(`${fmtShort(k)}: that time hasn't happened yet.`); return false; } }
+  pairs.sort((x, y) => x[0].localeCompare(y[0]));
+  for (let n = 1; n < pairs.length; n++) if (!pairs[n - 1][1] || pairs[n][0] < pairs[n - 1][1]){ info(`${fmtShort(k)}: sessions overlap. Each check-in must come after the previous check-out.`); return false; }
+  const {F, fs} = cloud, b = F.writeBatch(fs), by = cloud.user.email || '';
+  ids.forEach(id => b.delete(F.doc(fs, 'orgs', orgCtx().orgId, 'attendance', uid, 'events', id)));
+  pairs.forEach(([i, o]) => { b.set(F.doc(attCol(uid)), {type:'in', at:F.Timestamp.fromDate(at(i)), src:'manager', by}); if (o) b.set(F.doc(attCol(uid)), {type:'out', at:F.Timestamp.fromDate(at(o)), src:'manager', by}); });
+  try { await b.commit(); row.classList.remove('dirty'); if (!quiet) info(`${fmtShort(k)} saved.`); return true; }
+  catch(e){ info('Could not save: ' + errText(e)); return false; }
+}
 function attTick(){
   clearInterval(att.tick);
   att.tick = setInterval(() => {
@@ -5782,8 +5883,17 @@ $('#attNext').onclick = () => attStepMonth(1);
 $('#attNow').onclick = () => { att.month = todayKey.slice(0, 7); renderAttendance(); };
 $('#attMode').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ att.mode = b.dataset.m; att.detail = null; renderAttendance(); } });
 $('#attExport').onclick = attCsv;
+$('#attBody').addEventListener('input', e => { const r = e.target.closest('[data-ed]'); if (r && e.target.matches('[data-ein],[data-eout]')) edDirty(r); });
 $('#attBody').addEventListener('click', async e => {
   const pb = e.target.closest('#punchBtn'); if (pb) return punch(pb.dataset.t, pb);
+  const er = e.target.closest('[data-ed]');
+  if (er && e.target.closest('[data-edadd]')){ const prev = [...er.querySelectorAll('[data-eout]')].pop(); e.target.closest('[data-edadd]').insertAdjacentHTML('beforebegin', edSess(prev && prev.value ? '' : '', '')); edDirty(er); er.querySelector('.eds1:last-of-type [data-ein]').focus(); return; }
+  if (er && e.target.closest('[data-edrm]')){ e.target.closest('.eds1').remove(); edDirty(er); return; }
+  if (er && e.target.closest('[data-edshift]')){ const c = attCfg(att.accts.find(x => x.uid === att.detail)); e.target.closest('[data-edshift]').remove(); er.querySelector('[data-edadd]').insertAdjacentHTML('beforebegin', edSess(c.shiftStart, c.shiftEnd)); edDirty(er); return; }
+  if (er && e.target.closest('[data-edsave]')){ const b = e.target.closest('[data-edsave]'); b.disabled = true; if (!(await attSaveDay(er))) b.disabled = false; else { document.activeElement.blur(); att.key = ''; renderAttendance(); } return; }
+  if (e.target.closest('#edSaveAll')){ const rows = [...document.querySelectorAll('#attBody [data-ed].dirty')]; let ok = 0;
+    for (const r of rows){ if (await attSaveDay(r, true)) ok++; else break; }
+    if (ok) info(`${plural(ok, 'day')} saved.`); document.activeElement.blur(); att.key = ''; renderAttendance(); return; }
   if (e.target.closest('#attBack')){ att.detail = null; renderAttendance(); return; }
   const del = e.target.closest('[data-del]');
   if (del){

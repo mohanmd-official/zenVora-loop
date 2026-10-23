@@ -85,6 +85,7 @@ People created in the earlier single-admin version show up in **Organizations �
 - **Planning Board:** a small menu at the top switches between **Board** (Daily kanban, Weekly and Monthly calendar), **All tasks** and **Insights**.
 - **Light / dark mode:** the 🌙 / ☀️ button in the top bar. Avatar → **Follow system light / dark** goes back to the computer's setting. Remembered per device.
 - **Numbered lists:** every table has a **No.** column, so you can say "row 12" on a call.
+- **Open in a new tab:** every menu item (top menu, Clinic menu, report / accounts / patient tabs) and every patient name is a real link: right-click → Open in new tab, or ⌘/Ctrl-click. The address bar always shows where you are (e.g. `#/clinic/patients/<id>`), so a page can be bookmarked or reloaded.
 - **Sub-menus are movable too:** drag the Clinic menu items, the Accounts tabs, the Report tabs and the patient tabs into your own order; it is remembered.
 - Avatar → **Change password**, or **Forgot password?** on the sign-in page. Planner backup / restore is in the avatar menu too.
 - The Super Admin email is set in **both** `public/firebase-config.js` and `firestore.rules`. If you change it, change both and publish the rules again.
@@ -104,6 +105,8 @@ Where: the **Attendance** tab, or **Clinic → Attendance** when the organizatio
   - **add or fix entries** (forgotten check-in or check-out) and delete wrong ones
   - see the **pay breakdown** for the month (Payroll)
   - **Export CSV** (Team view) gives the whole month.
+
+**Editing a whole month (Account Manager & Managers):** Attendance → Team → click a person → **Edit attendance for <month>**. Every day of the month is listed; for each day you can change the times, **+ Session** for another check-in → check-out (e.g. morning, then after lunch), ✕ to remove one, or **Shift** to fill the day with their shift timing. **Save** a day, or **Save all changed days**. Sessions must not overlap and can't be in the future. Days before the person was added to Zenvora can be filled in too.
 
 **How the numbers work**
 - **Hours worked** = the sum of all check-in → check-out pairs for the day.
@@ -189,7 +192,7 @@ Home → **Reminders** shows the open organization reminders (with **✓ Close**
 - **Past data & audit:** add past months' income; **paste many rows** from Excel (`date, income|expense, category, amount, note`); and **Download audit pack**: one ZIP per financial year (April–March) with income, expenses (bill no., vendor GSTIN, GST), consultant fees and payments, petty cash, daily tallies, a month-by-month summary, and every attached bill copy, ready to hand to your auditor.
 
 **Reports:** Collection (every payment with date, receipt, **patient**, doctor and mode), Treatment-wise earnings (summary + every treatment with the patient; medicines as one line), Doctors & consultants, Outstanding balances, Appointments, New patients.
-- Toolbar: **Type** Daily / Monthly / Yearly · **‹ Today ›** (‹ › step to the previous / next day, or the previous / next period when a range or Monthly / Yearly is shown) or **From / To** then **View** · **Tabular / Chart** · **Mode** (Cash, UPI / GPay, Card, Cheque, NEFT, RTGS, Bank transfer) · **Doctor**. Click a month or year row to open it day by day. CSV and Print.
+- Every report has the same toolbar: **Type** Daily / Monthly / Yearly · **‹ Today ›** (‹ › step to the previous / next day, or the previous / next period when a range or Monthly / Yearly is shown) or **From / To** then **View** · **Tabular / Chart** · **Mode** (Cash, UPI / GPay, Card, Cheque, NEFT, RTGS, Bank transfer) · **Doctor**. Click a month or year row to open it day by day. CSV and Print. Charts sit in a frame at a readable size. **Outstanding balances** are as of the To date; Monthly / Yearly shows the total outstanding at the end of each month / year. **Doctors & consultants** and **New patients** get per-period tables and charts too.
 
 **Import from Dentee (Account Manager): Clinic → Clinic setup → Import from Dentee**
 1. In Dentee, export your data to Excel (the file has sheets Patient, Treatment, Bill, Payments, Appointments, Doctors, TreatmentType, Medicine…).
