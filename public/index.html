@@ -5291,10 +5291,14 @@ const DT = {file:null, plan:null, busy:false, done:null, cut:true};
 const dtNorm = s => String(s || '').toLowerCase().replace(/\bdr\b\.?/g, '').replace(/[^a-z]/g, '');
 const dtSlug = s => String(s || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'x';
 const dtNum = v => { const n = parseFloat(String(v ?? '').replace(/[^\d.-]/g, '')); return isFinite(n) ? n : 0; };
-function dtDate(s){            // "5/13/2026 7:12:56 AM" → Date (clinic's local time)
+/* Dentee exports clock times in UTC (GMT): 9:00 AM in the clinic is "3:30:00 AM" in the file.
+   utc = true for real moments (appointments, receipts, registrations); plain dates (treatment date, DOB) stay as they are. */
+function dtDate(s, utc){
   const m = String(s || '').trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*([AP]M)?)?/i); if (!m) return null;
   let h = +(m[4] || 0); if (m[7]){ const pm = /p/i.test(m[7]); if (h === 12) h = pm ? 12 : 0; else if (pm) h += 12; }
-  return new Date(+m[3], +m[1] - 1, +m[2], h, +(m[5] || 0), +(m[6] || 0));
+  const mi = +(m[5] || 0), se = +(m[6] || 0);
+  if (utc && (h || mi || se)) return new Date(Date.UTC(+m[3], +m[1] - 1, +m[2], h, mi, se));
+  return new Date(+m[3], +m[1] - 1, +m[2], h, mi, se);
 }
 const DT_MED = /\bmg\b|\d\s*mg|syrup|syr\.|mouth ?wash|tooth ?paste|tooth ?brush|\bgel\b|tablet|\btab\.|\bcap\.|\bwax\b|astringent|^pan\.|zerodol|ketorol|flagyl|augmentin|chymerol|enafix|novamox|ibugesic|^medicine$/i;
 const dtUnit = n => /cap\.|capsule|amox|mox\b|wymox/i.test(n) ? 'Capsule' : /syr|syrup/i.test(n) ? 'Syrup (bottle)' : /mouth ?wash/i.test(n) ? 'Mouthwash (bottle)' : /gel|paste|astringent|cream|wax/i.test(n) ? 'Gel / tube' : /brush/i.test(n) ? 'Other' : 'Tablet';
@@ -5311,6 +5315,8 @@ async function dtPlan(S){
   const recent = (await Promise.all(['payments', 'treatments', 'appointments'].map(c => F.getDocs(F.query(cCol(c), W('date', '>=', since))).then(docsOf).catch(() => [])))).flat().filter(x => !x.imported);
   const ownPast = recent.filter(x => x.date && x.date <= todayKey), firstOwn = ownPast.map(x => x.date).sort()[0] || '';
   const ownWho = [...new Set(ownPast.map(x => x.patientName).filter(Boolean))].slice(0, 4);
+  const progressed = {};       // imported visits already moved on in Zenvora (checked in, completed, billed…) keep their status
+  docsOf(await F.getDocs(F.query(cCol('appointments'), W('date', '>=', shiftDay(todayKey, -1))))).filter(x => x.imported && x.status !== 'scheduled').forEach(x => progressed[x.id] = x);
   const ownFuture = new Set(docsOf(await F.getDocs(F.query(cCol('appointments'), W('date', '>=', todayKey)))).filter(x => !x.imported && x.status !== 'cancelled').map(x => x.patientId + '|' + x.date));
   // doctors
   const docs = cl.doctors.slice(), docMap = {}, newDocs = [];
@@ -5344,7 +5350,7 @@ async function dtPlan(S){
   S.patients.forEach(r => {
     const code0 = String(r.PatientCode || '').trim(), dup = byCode[code0].length > 1 ? byCode[code0].indexOf(r) : 0, code = code0.replace(/^PATIENT-/i, '') + (dup ? '-' + String.fromCharCode(65 + dup) : '');
     maxNo = Math.max(maxNo, +(code0.match(/(\d+)$/) || [0, 0])[1]);
-    const reg = dtDate(r.RegistrationDate) || new Date(), dob = dtDate(r.DOB), ph = String(r.MobileNumber || r.PhoneNumber || '').replace(/\D/g, '');
+    const reg = dtDate(r.RegistrationDate, true) || new Date(), dob = dtDate(r.DOB), ph = String(r.MobileNumber || r.PhoneNumber || '').replace(/\D/g, '');
     const g = /^f/i.test(r.Gender) ? 'Female' : /^m/i.test(r.Gender) ? 'Male' : '';
     const ex = (phoneIdx[ph.slice(-10)] || []).find(p => String(p.first || '').trim().toLowerCase().split(/\s+/)[0] === String(r.FirstName || '').trim().toLowerCase().split(/\s+/)[0]);
     const d = {title:String(r.Title || '').trim(), first:String(r.FirstName || '').trim(), last:String(r.LastName || '').trim(), gender:g, dob:dob && dob.getFullYear() > 1900 ? dayKey(dob) : '',
@@ -5363,15 +5369,17 @@ async function dtPlan(S){
   const cutoff = DT.cut && firstOwn ? firstOwn : '';
   const keep = day => !cutoff || day < cutoff;
   // activity per patient per day (to tell a visit that happened from one that didn't)
-  const act = new Set(); S.treatments.forEach(t => { const d = dtDate(t.TreatmentDate), P = patOf(t); if (d && P) act.add(P.id + '|' + dayKey(d)); }); S.payments.forEach(t => { const d = dtDate(t.ReceiptDate), P = patOf(t); if (d && P) act.add(P.id + '|' + dayKey(d)); });
+  const act = new Set(); S.treatments.forEach(t => { const d = dtDate(t.TreatmentDate), P = patOf(t); if (d && P) act.add(P.id + '|' + dayKey(d)); }); S.payments.forEach(t => { const d = dtDate(t.ReceiptDate, true), P = patOf(t); if (d && P) act.add(P.id + '|' + dayKey(d)); });
   // appointments
   const appts = [], apptOf = {}; let skipped = 0;
   S.appts.forEach((r, i) => {
-    const s = dtDate(r.StartDateTime), e = dtDate(r.EndDateTime), P = patOf(r); if (!s || !P) return;
+    const s = dtDate(r.StartDateTime, true), e = dtDate(r.EndDateTime, true), P = patOf(r); if (!s || !P) return;
     const day = dayKey(s), past = s.getTime() < Date.now(), st0 = String(r.Status || '').toLowerCase();
     if (past ? !keep(day) : ownFuture.has(P.id + '|' + day)){ skipped++; return; }     // upcoming visits are kept unless already booked in Zenvora
     const status = st0 === 'cancelled' ? 'cancelled' : st0 === 'rescheduled' ? 'cancelled' : !past ? 'scheduled' : act.has(P.id + '|' + day) ? 'completed' : 'missed';
     const reason = [st0 === 'rescheduled' ? 'Rescheduled in Dentee' : '', String(r.Comments || '').trim()].filter(Boolean).join(' · ');
+    const keepA = progressed['dt-a-' + (i + 1)];
+    if (keepA){ appts.push({id:keepA.id, d:Object.assign({}, keepA, {date:day, time:pad2(s.getHours()) + ':' + pad2(s.getMinutes())}), keep:true}); delete appts[appts.length - 1].d.id; if (keepA.status === 'completed' && !apptOf[P.id + '|' + day]) apptOf[P.id + '|' + day] = keepA.id; return; }
     const a = {id:'dt-a-' + (i + 1), d:{patientId:P.id, patientName:pName(P.d), doctorId:docOf(r.DoctorName), date:day, time:pad2(s.getHours()) + ':' + pad2(s.getMinutes()), duration:e ? Math.max(5, Math.round((e - s) / 60000)) : 15, reason, status, createdAt:s.getTime(), createdBy:'Dentee import', imported:true}};
     appts.push(a); if (status === 'completed' && !apptOf[P.id + '|' + day]) apptOf[P.id + '|' + day] = a.id;
   });
@@ -5392,7 +5400,7 @@ async function dtPlan(S){
   const pays = [];
   S.payments.forEach(r => {
     if (/cancel/i.test(r.ReceiptStatus || '')) return;
-    const d0 = dtDate(r.ReceiptDate), P = patOf(r), amt = dtNum(r.ReceiptPayment); if (!d0 || !P || !amt) return;
+    const d0 = dtDate(r.ReceiptDate, true), P = patOf(r), amt = dtNum(r.ReceiptPayment); if (!d0 || !P || !amt) return;
     const day = dayKey(d0); if (!keep(day)){ skipped++; return; }
     const no = String(r.ReceiptNumber || '').trim(), inv = String(r.InvoiceNumber || '').trim();
     pays.push({id:'dt-r-' + dtSlug(no || String(d0.getTime())), d:{patientId:P.id, patientName:pName(P.d), appointmentId:apptOf[P.id + '|' + day] || '', date:day, amount:Math.round(amt), mode:MODE(r.ModeofPayment), doctorId:(pats.find(x => x === P) && P.d.primaryDoctorId) || '',
