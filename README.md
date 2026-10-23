@@ -187,6 +187,14 @@ Home → **Reminders** shows the open organization reminders (with **✓ Close**
 **Reports:** Collection (every payment with date, receipt, **patient**, doctor and mode), Treatment-wise earnings (summary + every treatment with the patient; medicines as one line), Doctors & consultants, Outstanding balances, Appointments, New patients.
 - Toolbar: **Type** Daily / Monthly / Yearly · **Today** or **From / To** then **View** · **Tabular / Chart** · **Mode** (Cash, UPI / GPay, Card, Cheque, NEFT, RTGS, Bank transfer) · **Doctor**. Click a month or year row to open it day by day. CSV and Print.
 
+**Import from Dentee (Account Manager): Clinic → Clinic setup → Import from Dentee**
+1. In Dentee, export your data to Excel (the file has sheets Patient, Treatment, Bill, Payments, Appointments, Doctors, TreatmentType, Medicine…).
+2. Choose the file → **Check the file**. Nothing is written yet: you see how many patients, appointments, treatments, medicines and payments will come in, the total collected and the balance due.
+3. If some days were already entered in Zenvora, tick **Skip Dentee records from <date> onwards** (on by default) so they aren't counted twice. Upcoming Dentee appointments are still brought in unless the patient is already booked that day in Zenvora.
+4. **Import**. It takes a few seconds. Running it again later updates the same records (no duplicates).
+
+What it does: patients keep their Dentee codes (e.g. ADC00001; when Dentee gave two people the same code the second gets a letter, e.g. ADC00203-B); a patient already in Zenvora with the same phone number is linked, not duplicated; doctors are matched by name (others are added as Consultants); Dentee's treatment and medicine prices are added to your price lists; medicines, mouthwashes, toothpastes and brushes go into the Medicines table; Dentee's discounts and per-tooth totals are kept, so every patient's balance matches Dentee; Google Pay / Paytm become UPI / GPay; receipts are numbered DT-<Dentee number>. Past appointments become Completed (if the patient had a treatment or payment that day) or Missed; Rescheduled / Cancelled become Cancelled. Imported history doesn't create reminders (follow-ups, missed patients, documents).
+
 **Patient assists (Clinic → Patient assists)**
 - **My assists (assistants, reception, anyone):** each day, add the patients you assisted (patient, treatment, doctor, what you did). You see only your own entries and whether they're **Pending / Approved / Not approved**, never the amounts.
 - **Approve (Chief doctor):** pending entries by day: **Approve**, **Reject** or **Approve all for this day**.
