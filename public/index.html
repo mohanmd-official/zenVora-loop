@@ -3122,7 +3122,7 @@ function renderClinic(){
   const saved = cl.clear || cl.fkey !== fkey ? null : [...body.querySelectorAll('input[id],select[id],textarea[id]')].filter(e => e.type !== 'file' && !e.disabled).map(e => [e.id, e.type === 'checkbox' ? e.checked : e.value]);
   cl.clear = false; cl.fkey = fkey;
   body.innerHTML = ({patients:() => cl.pid || cl.newP ? clPatient() : clPatients(), appointments:clAppointments, accounts:clAccounts, reports:clReports, assists:clAssists, setup:clSetup})[cl.sec]();
-  if (saved) saved.forEach(([id, v]) => { const e = document.getElementById(id); if (e && body.contains(e) && !e.disabled && e.id !== 'clQ'){ if (e.type === 'checkbox') e.checked = v; else e.value = v; } });
+  if (saved) saved.forEach(([id, v]) => { const e = document.getElementById(id); if (e && body.contains(e) && !e.disabled && !['clQ', 'aPick', 'rgDate'].includes(e.id)){ if (e.type === 'checkbox') e.checked = v; else e.value = v; } });
   tallyCalc();
   if ($('#tfDoc') && $('#tfFeeWrap')){ const dd = cl.doctors.find(x => x.id === $('#tfDoc').value); $('#tfFeeWrap').hidden = !(dd && dd.type === 'consultant'); }
   body.scrollTop = y;
@@ -5416,7 +5416,7 @@ function dtBox(){
     ${DT.busy ? `<div class="dtprog"><i style="width:${DT.busy.pct || 0}%"></i></div><p class="stat">${esc(DT.busy.msg || 'Working…')}</p>`
     : DT.done ? `<div class="nag" style="border-color:var(--done)">✓ Import finished: ${esc(DT.done)}</div><button id="dtAgain">Import another file</button>`
     : !p ? `<form class="aform" id="dtForm" novalidate><label class="grow">Dentee export (.xlsx)<input type="file" id="dtFile" accept=".xlsx,.xls"></label><button class="primary" type="submit">Check the file</button></form>
-      <p class="stat" style="margin:6px 0 0">Nothing is written until you have seen the summary and pressed Import. Running it again later updates the same records instead of duplicating them.</p>`
+      <p class="stat" style="margin:6px 0 0">Nothing is written until you have seen the summary and pressed Import. Running it again later updates the same records instead of duplicating them. <b>Times are converted from Dentee's UTC to India time (IST).</b></p>`
     : `<div class="kpis">${k('Patients', p.pats.length, p.linked.length ? p.linked.length + ' already in Zenvora (same phone): linked, not duplicated' : 'new')}${k('Appointments', p.appts.length, p.appts.filter(a => a.d.status === 'scheduled').length + ' upcoming')}${k('Treatments', p.tr.filter(x => !x.d.kind).length, inr(p.tr.filter(x => !x.d.kind).reduce((s, x) => s + x.d.cost - x.d.discount, 0)))}${k('Medicines sold', p.tr.filter(x => x.d.kind).length, inr(p.tr.filter(x => x.d.kind).reduce((s, x) => s + x.d.cost, 0)))}${k('Payments', p.pays.length, inr(p.paid))}${k('Balance due', inr(p.billed - p.paid), 'across all imported patients')}</div>
       <div class="stat" style="line-height:1.7">
         Doctors: ${p.docMatched.map(d => `<b>${esc(d.name)}</b> (existing)`).join(', ')}${p.newDocs.length ? ` · new: ${p.newDocs.map(d => esc(d.name)).join(', ')} <i>(added as Consultants: change in the table above if needed)</i>` : ''}<br>
