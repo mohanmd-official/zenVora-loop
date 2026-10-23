@@ -377,6 +377,8 @@ button.linkb{border:none;background:none;padding:0 2px;color:var(--accent);font-
 .payrow{display:flex;justify-content:space-between;gap:10px;padding:4px 0;border-bottom:1px dashed var(--line);font-size:12.5px}
 .payrow:last-child{border-bottom:none;font-weight:800;font-size:14px;padding-top:8px}
 .abk{margin-bottom:8px}
+.pscroll{max-height:calc(100vh - 230px);overflow:auto}.pscroll thead th{position:sticky;top:0;z-index:1;background:var(--paper2,var(--paper))}
+td.pcodec{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;white-space:nowrap;color:var(--muted)}
 [data-ord] > button{cursor:grab}[data-ord] > button:active{cursor:grabbing}[data-ord] > button.dragging{opacity:.45}
 .ahead{display:flex;align-items:center;gap:10px;margin:4px 0 6px}
 .ahead .uav{width:38px;height:38px;font-size:16px}
@@ -456,6 +458,7 @@ button.linkb{border:none;background:none;padding:0 2px;color:var(--accent);font-
 .rangebar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
 .rangebar label{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
 .rangebar button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.rpnav button{min-width:30px}.rangebar .rpnav button.on{background:var(--accent);color:#fff}
 .rangebar .seg button.on{background:var(--paper);color:var(--accent);border-color:transparent}
 .chartw{border:1px solid var(--line);border-radius:14px;padding:12px;background:var(--paper);overflow-x:auto;margin-bottom:12px}
 .chartw svg{display:block;width:100%;height:auto;font-size:10.5px;fill:var(--muted)}.chartw svg .cv{fill:var(--ink);font-weight:600}
@@ -3042,7 +3045,7 @@ const cl = {sec:'patients', pid:null, ptab:'profile', doctors:[], types:[], sett
   rep:{kind:'collection', preset:'today', from:'', to:'', data:null, key:'', doc:null, group:'day', view:'table', mode:'', dfil:''},
   reset(){ [...this.unsub, ...this.pUnsub, ...(this.otUnsub || [])].forEach(u => { try { u(); } catch(e){} }); if (this.aUnsub) try { this.aUnsub(); } catch(e){} this.otUnsub = []; this.otKey = ''; this.orgT = null; this.ownT = null;
     Object.assign(this, {pid:null, doctors:[], types:[], settings:{}, recent:null, search:null, q:'', unsub:[], key:'', p:null, pT:null, pP:null, pA:null, pPh:null, pUnsub:[], pKey:'',
-      newP:false, edit:{}, appts:null, aUnsub:null, aKey:'', book:null, ameta:null, members:null, mLoading:false, reminders:[], pD:null, sum:null, meds:null, asst:null, asKey:''}); this.acc.key = ''; this.rep.key = ''; this.rep.data = null; }};
+      newP:false, edit:{}, appts:null, aUnsub:null, aKey:'', book:null, ameta:null, allP:null, allBusy:false, members:null, mLoading:false, reminders:[], pD:null, sum:null, meds:null, asst:null, asKey:''}); this.acc.key = ''; this.rep.key = ''; this.rep.data = null; }};
 const cCol = (...p) => cloud.F.collection(cloud.fs, 'orgs', orgCtx().orgId, ...p);
 const cDoc = (...p) => cloud.F.doc(cloud.fs, 'orgs', orgCtx().orgId, ...p);
 const docsOf = qs => qs.docs.map(d => Object.assign({id:d.id}, d.data()));
@@ -3087,7 +3090,8 @@ function clLoad(){
   cl.unsub.push(F.onSnapshot(cCol('medicines'), qs => { cl.meds = docsOf(qs).sort((a, b) => String(a.name).localeCompare(String(b.name))); again(); }, () => { cl.meds = []; }));
   if (can('accounts')) cl.unsub.push(F.onSnapshot(cDoc('clinicMeta', 'accounts'), s => { cl.ameta = s.exists() ? s.data() : null; again(); }, () => {}));
   if (can('patients') || can('appointments') || can('treatments') || can('billing'))
-    cl.unsub.push(F.onSnapshot(F.query(cCol('patients'), F.orderBy('updatedAt', 'desc'), F.limit(30)), qs => { cl.recent = docsOf(qs); again(); }, e => { cl.recent = []; info('Patients could not load: ' + errText(e)); }));
+    cl.unsub.push(F.onSnapshot(F.query(cCol('patients'), F.orderBy('updatedAt', 'desc'), F.limit(30)), qs => { cl.recent = docsOf(qs);
+      if (cl.allP){ const m = new Map(cl.allP.map(x => [x.id, x])); cl.recent.forEach(x => m.set(x.id, x)); cl.allP = [...m.values()]; } again(); }, e => { cl.recent = []; info('Patients could not load: ' + errText(e)); }));
 }
 const CI = {
   patients:'<circle cx="8" cy="5" r="2.6"/><path d="M3 14c.4-3 2.4-4.6 5-4.6s4.6 1.6 5 4.6"/>',
@@ -3126,25 +3130,52 @@ function renderClinic(){
   numberTables(body);
 }
 
-/* ---------- Patients: search + list ---------- */
+/* ---------- Patients: the whole list, in patient-number order, with instant filtering ---------- */
+const codeNo = c => { const m = String(c || '').match(/(\d+)\D*$/); return m ? +m[1] : Infinity; };
+const PSORT = {num:['Patient No. (1 → latest)', (a, b) => codeNo(a.code) - codeNo(b.code) || String(a.code).localeCompare(String(b.code))],
+  numd:['Patient No. (latest first)', (a, b) => codeNo(b.code) - codeNo(a.code) || String(b.code).localeCompare(String(a.code))],
+  name:['Name A–Z', (a, b) => pName(a).localeCompare(pName(b))], reg:['Recently registered', (a, b) => (b.createdAt || 0) - (a.createdAt || 0)]};
+function loadAllPatients(force){
+  if (cl.allBusy || (cl.allP && !force)) return;
+  const {F} = cloud; cl.allBusy = true;
+  F.getDocs(cCol('patients')).then(qs => { cl.allP = docsOf(qs); cl.allBusy = false; bumpCounter(); if (cl.sec === 'patients' && !cl.pid && !cl.newP) renderClinic(); })
+    .catch(e => { cl.allBusy = false; cl.allP = []; info('Patients could not load: ' + errText(e)); });
+}
+async function bumpCounter(){          // new patients continue after the highest imported patient number
+  if (!isOwner() || !cl.allP) return;
+  const max = Math.max(0, ...cl.allP.filter(p => p.imported).map(p => codeNo(p.code)).filter(isFinite)); if (!max) return;
+  const {F} = cloud, ref = cDoc('clinicMeta', 'counter');
+  try { await F.runTransaction(cloud.fs, async tx => { const s2 = await tx.get(ref), cur = (s2.exists() && s2.data().patient) || 0; if (cur < max) tx.set(ref, {patient:max}, {merge:true}); }); } catch(e){}
+}
+function pMatch(p, q){
+  const n = q.toLowerCase().replace(/\s+/g, ' ').trim(); if (!n) return true;
+  const digits = n.replace(/\D/g, ''), code = String(p.code || '').toLowerCase();
+  if (code.includes(n.replace(/\s/g, ''))) return true;
+  if (digits && /^[a-z-]*\d+$/i.test(n.replace(/\s/g, '')) && codeNo(code) === +digits) return true;      // "29", "ADC29", "adc-0029"
+  if (digits.length >= 3 && String(p.phone || '').includes(digits)) return true;
+  return pName(p).toLowerCase().includes(n);
+}
 function clPatients(){
-  const list = cl.q.length >= 2 ? cl.search : cl.recent;
-  const rows = (list || []).map(p => `<tr class="clk" data-pid="${esc(p.id)}"><td><b>${esc(pName(p))}</b><span class="sub2">${esc(p.code || '')}</span></td>
-    <td>${esc(p.gender || '—')}${ageOf(p) ? ' · ' + esc(ageOf(p)) : ''}</td><td>${esc(p.phone || '—')}</td><td>${esc(dName(p.primaryDoctorId) || '—')}</td><td class="stat">${p.createdAt ? esc(fmtShort(dayKey(p.createdAt))) : ''}</td></tr>`).join('');
+  loadAllPatients();
+  const all = cl.allP, sortK = cl.psort || 'num';
+  const qd = cl.q.replace(/\s/g, ''), qn = /^[a-z-]*\d+$/i.test(qd) ? +qd.replace(/\D/g, '') : null;
+  const exact = p => qn !== null && codeNo(p.code) === qn ? 0 : 1;            // the exact patient number comes first
+  const list = all ? all.filter(p => pMatch(p, cl.q)).sort((a, b) => exact(a) - exact(b) || PSORT[sortK][1](a, b)) : null;
+  const rows = (list || []).map(p => `<tr class="clk" data-pid="${esc(p.id)}"><td class="pcodec">${esc(p.code || '—')}</td><td><b>${esc(pName(p))}</b></td>
+    <td>${esc(p.gender || '—')}${ageOf(p) ? ' · ' + esc(ageOf(p)) : ''}</td><td>${esc(p.phone || '—')}</td><td>${esc(dName(p.primaryDoctorId) || '—')}</td><td class="stat">${p.createdAt > 1 ? esc(fmtShort(dayKey(p.createdAt))) : ''}</td></tr>`).join('');
   return `<div class="clhead"><h2>Patients</h2></div><div class="sect">
-    <div class="vbar" style="padding:0"><input type="search" id="clQ" placeholder="Search by name, phone or patient ID…" value="${esc(cl.q)}" style="flex:1;min-width:220px;font-size:14px;padding:8px 12px">
+    <div class="vbar" style="padding:0"><input type="search" id="clQ" placeholder="Filter by patient code, name or phone…" value="${esc(cl.q)}" style="flex:1;min-width:220px;font-size:14px;padding:8px 12px">
+      <select id="clPSort" title="Order">${Object.entries(PSORT).map(([k, [l]]) => `<option value="${k}"${k === sortK ? ' selected' : ''}>${l}</option>`).join('')}</select>
+      <button id="clPRefresh" title="Reload the list">↻</button>
       ${canW('patients') ? '<button class="primary" id="clNewP">+ New patient</button>' : ''}</div>
-    <div class="stat">${cl.q.length >= 2 ? `Search results for "${esc(cl.q)}"` : 'Recently added or updated patients'}</div>
-    <div class="awrap" style="margin-top:0"><table class="atbl otbl"><thead><tr><th>Patient</th><th>Gender · Age</th><th>Phone</th><th>Primary doctor</th><th>Registered</th></tr></thead>
-    <tbody>${list === null ? '<tr><td colspan="5">Loading…</td></tr>' : rows || `<tr><td colspan="5" class="stat">${cl.q.length >= 2 ? 'No patient found.' : 'No patients yet.'}</td></tr>`}</tbody></table></div></div>`;
+    <div class="stat">${!all ? 'Loading all patients…' : cl.q ? `${list.length} of ${all.length} patients match "${esc(cl.q)}"` : `${all.length} patients`}</div>
+    <div class="awrap pscroll" style="margin-top:0"><table class="atbl otbl"><thead><tr><th>Patient No.</th><th>Patient</th><th>Gender · Age</th><th>Phone</th><th>Primary doctor</th><th>Registered</th></tr></thead>
+    <tbody>${list === null ? '<tr><td colspan="6">Loading…</td></tr>' : rows || `<tr><td colspan="6" class="stat">${cl.q ? 'No patient matches.' : 'No patients yet.'}</td></tr>`}</tbody></table></div></div>`;
 }
 let clQTimer = null;
 function clDoSearch(){
-  const {F} = cloud, q = cl.q.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
-  if (q.length < 2){ cl.search = null; return renderClinic(); }
-  F.getDocs(F.query(cCol('patients'), F.where('keys', 'array-contains', q), F.limit(25)))
-    .then(qs => { cl.search = docsOf(qs); const el = $('#clQ'), pos = el ? el.selectionStart : 0; document.activeElement.blur(); renderClinic(); const n = $('#clQ'); if (n){ n.focus(); n.setSelectionRange(pos, pos); } })
-    .catch(e => info('Search failed: ' + errText(e)));
+  const el = $('#clQ'), pos = el ? el.selectionStart : 0; document.activeElement.blur(); renderClinic();
+  const n = $('#clQ'); if (n){ n.focus(); n.setSelectionRange(pos, pos); }
 }
 
 /* ---------- Patient record ---------- */
@@ -3209,8 +3240,28 @@ function clProfileForm(p){
     ${f('pfRef', 'Referred by', p.referredBy)}
     <label class="grow">Allergies / medical alerts<input id="pfAll" value="${esc(p.allergies || '')}" placeholder="e.g. Penicillin, diabetic, on blood thinners"${ro ? ' disabled' : ''}></label>
     <label class="grow full">Medical history &amp; notes<textarea id="pfNotes" rows="3"${ro ? ' disabled' : ''}>${esc(p.notes || '')}</textarea></label>
-    ${ro ? '' : `<div class="btnrow full"><button class="primary" type="submit">${p.id ? 'Save changes' : 'Register patient'}</button>${p.id ? '' : '<button type="button" id="clBack2">Cancel</button>'}</div>`}
+    ${ro ? '' : `<div class="btnrow full"><button class="primary" type="submit">${p.id ? 'Save changes' : 'Register patient'}</button>${p.id ? '' : '<button type="button" id="clBack2">Cancel</button>'}${p.id && isOwner() ? '<span class="sp"></span><button type="button" class="danger" id="clDelP">Delete patient…</button>' : ''}</div>`}
   </form>`;
+}
+async function clDeletePatient(){
+  const {F, fs} = cloud, p = cl.p, pid = cl.pid; if (!p || !pid || !isOwner()) return;
+  const W = F.where, q = c => F.getDocs(F.query(cCol(c), W('patientId', '==', pid))).then(qs => qs.docs.map(d => d.id));
+  let T, P, A, sub;
+  info('Checking what will be deleted…');
+  try { [T, P, A] = await Promise.all([q('treatments'), q('payments'), q('appointments')]);
+    sub = (await Promise.all(['docs', 'docData', 'photos', 'photoData'].map(c => F.getDocs(cCol('patients', pid, c)).then(qs => qs.docs.map(d => ['patients', pid, c, d.id]))))).flat(); }
+  catch(e){ return info('Could not check: ' + errText(e)); }
+  const tot = billed(cl.pT || []), paid = paidSum(cl.pP || []);
+  if (!confirm(`Delete ${pName(p)} (${p.code || ''}) permanently?\n\nThis also deletes ${plural(T.length, 'treatment')} (${inr(tot)}), ${plural(P.length, 'payment')} (${inr(paid)}), ${plural(A.length, 'appointment')} and ${plural(sub.length / 2 || 0, 'document / photo')}. Reports, collections and balances will no longer include them.\n\nThis cannot be undone.`)) return;
+  if (!confirm(`Last check: delete ${pName(p)} and all their records?`)) return;
+  info(`Deleting ${pName(p)} and ${plural(T.length + P.length + A.length, 'record')}…`);
+  const refs = [...T.map(id => cDoc('treatments', id)), ...P.map(id => cDoc('payments', id)), ...A.map(id => cDoc('appointments', id)), ...sub.map(x => cDoc(...x)), cDoc('patients', pid)];
+  try {
+    cl.pUnsub.forEach(u => { try { u(); } catch(_){} }); cl.pUnsub = [];
+    for (let i = 0; i < refs.length; i += 400){ const b = F.writeBatch(fs); refs.slice(i, i + 400).forEach(r => b.delete(r)); await b.commit(); }
+    if (cl.allP) cl.allP = cl.allP.filter(x => x.id !== pid);
+    cl.pid = null; cl.p = null; info(`${pName(p)} and all their records were deleted.`); cl.acc.key = ''; cl.rep.key = ''; clinicSync(true); renderClinic();
+  } catch(e){ info('Could not delete everything: ' + errText(e) + '. Press Delete again to finish.'); }
 }
 async function clSavePatient(){
   const {F} = cloud, v = id => ($('#' + id) || {}).value || '';
@@ -3540,7 +3591,7 @@ function rangeBar(o, id){
   const k = o.kind, grp = ['collection', 'treatments', 'appointments'].includes(k), chart = grp;
   return `<div class="rangebar" data-range="${id}">
     ${grp ? `<label>Type<select data-rpgroup>${[['day', 'Daily'], ['month', 'Monthly'], ['year', 'Yearly']].map(([v, l]) => `<option value="${v}"${o.group === v ? ' selected' : ''}>${l}</option>`).join('')}</select></label>` : ''}
-    <button data-rp="today" class="${o.preset === 'today' ? 'on' : ''}">Today</button><span class="stat">or</span>
+    <span class="daynav rpnav"><button data-rpshift="-1" title="Previous ${o.group === 'month' ? 'period' : o.from === o.to ? 'day' : 'period'}">‹</button><button data-rp="today" class="${o.preset === 'today' ? 'on' : ''}">Today</button><button data-rpshift="1" title="Next"${o.to >= todayKey ? ' disabled' : ''}>›</button></span><span class="stat">or</span>
     <label>From <input type="date" data-rf value="${o.from}" max="${todayKey}"></label><label>To <input type="date" data-rt value="${o.to}" max="${todayKey}"></label>
     <button class="primary" data-rpgo>View</button>
     ${chart ? `<div class="seg rpv"><button data-rpv="table" class="${o.view !== 'chart' ? 'on' : ''}">▦ Tabular</button><button data-rpv="chart" class="${o.view === 'chart' ? 'on' : ''}">📊 Chart</button></div>` : ''}
@@ -4172,6 +4223,7 @@ $('#clBody').addEventListener('change', async e => {
   const {F} = cloud, t = e.target;
   if (t.id === 'tfType'){ const o = t.selectedOptions[0]; if (o) $('#tfCost').value = o.dataset.cost; }
   if (t.id === 'aPick' && t.value){ cl.aDate = t.value; renderClinic(); }
+  if (t.id === 'clPSort'){ cl.psort = t.value; return renderClinic(); }
   if (t.id === 'aDocF'){ cl.aDoc = t.value; renderClinic(); }
   if (t.id === 'vFilter'){ cl.acc.vf = t.value; renderClinic(); }
   if (t.id === 'vOnly'){ cl.acc.vonly = t.value; renderClinic(); }
@@ -4255,6 +4307,8 @@ $('#clBody').addEventListener('click', async e => {
   const go = t.closest('[data-openp]'); if (go){ e.stopPropagation(); cl.sec = 'patients'; cl.ptab = 'profile'; return clOpenPatient(go.dataset.openp); }
   const pr = t.closest('[data-pid]'); if (pr){ cl.ptab = 'profile'; return clOpenPatient(pr.dataset.pid); }
   if (t.closest('#clNewP')) return clOpenPatient(null);
+  if (t.closest('#clPRefresh')){ cl.allP = null; loadAllPatients(true); return renderClinic(); }
+  if (t.closest('#clDelP')) return clDeletePatient();
   if (t.closest('#clBack') || t.closest('#clBack2')){ cl.pUnsub.forEach(u => { try { u(); } catch(_){} }); cl.pUnsub = []; cl.pid = null; cl.newP = false; return renderClinic(); }
   const pt = t.closest('[data-pt]'); if (pt){ cl.ptab = pt.dataset.pt; return renderClinic(); }
   const bk = t.closest('[data-book]'); if (bk){ return clOpenBook(bk.dataset.book ? {patientId:bk.dataset.book, patientName:pName(cl.p)} : {}); }
@@ -4263,6 +4317,11 @@ $('#clBody').addEventListener('click', async e => {
   const am = t.closest('[data-am]'); if (am){ cl.aMode = am.dataset.am; return renderClinic(); }
   const gd = t.closest('[data-goday]'); if (gd){ cl.aDate = gd.dataset.goday; cl.aMode = 'day'; return renderClinic(); }
   const rp = t.closest('[data-rp]'); if (rp){ const o = cl.rep; o.preset = 'today'; o.group = 'day'; [o.from, o.to] = presetRange(); return renderClinic(); }
+  const rps = t.closest('[data-rpshift]'); if (rps){ const o = cl.rep, n = +rps.dataset.rpshift;
+    if (o.group === 'month' || o.group === 'year'){ const step = o.group === 'year' ? 12 : Math.max(1, (+o.to.slice(0, 4) - +o.from.slice(0, 4)) * 12 + (+o.to.slice(5, 7) - +o.from.slice(5, 7)) + 1);
+      const f = mShift(o.from.slice(0, 7), n * step) + '-01', e = mEnd(mShift(o.to.slice(0, 7), n * step)); o.from = f; o.to = e > todayKey ? todayKey : e; }
+    else { const span = days(o.from, o.to).length || 1; o.from = shiftDay(o.from, n * span); o.to = shiftDay(o.to, n * span); if (o.to > todayKey){ o.to = todayKey; if (o.from > todayKey) o.from = todayKey; } }
+    o.preset = o.from === todayKey && o.to === todayKey ? 'today' : ''; return renderClinic(); }
   if (t.closest('[data-rpgo]')){ const rg = t.closest('[data-range]'), o = cl.rep, f = rg.querySelector('[data-rf]').value, to = rg.querySelector('[data-rt]').value;
     if (!f || !to) return info('Choose both dates.'); if (f > to) return info('"From" must be on or before "To".');
     o.from = f; o.to = to > todayKey ? todayKey : to; o.preset = f === todayKey && to === todayKey ? 'today' : ''; return renderClinic(); }
@@ -5250,7 +5309,8 @@ async function dtPlan(S){
   // existing data in Zenvora
   const exP = docsOf(await F.getDocs(cCol('patients'))), since = shiftDay(todayKey, -60);
   const recent = (await Promise.all(['payments', 'treatments', 'appointments'].map(c => F.getDocs(F.query(cCol(c), W('date', '>=', since))).then(docsOf).catch(() => [])))).flat().filter(x => !x.imported);
-  const firstOwn = recent.filter(x => x.date <= todayKey).map(x => x.date).filter(Boolean).sort()[0] || '';
+  const ownPast = recent.filter(x => x.date && x.date <= todayKey), firstOwn = ownPast.map(x => x.date).sort()[0] || '';
+  const ownWho = [...new Set(ownPast.map(x => x.patientName).filter(Boolean))].slice(0, 4);
   const ownFuture = new Set(docsOf(await F.getDocs(F.query(cCol('appointments'), W('date', '>=', todayKey)))).filter(x => !x.imported && x.status !== 'cancelled').map(x => x.patientId + '|' + x.date));
   // doctors
   const docs = cl.doctors.slice(), docMap = {}, newDocs = [];
@@ -5339,7 +5399,7 @@ async function dtPlan(S){
       note:`Dentee receipt ${no}${inv ? ' · bill ' + inv : ''}`, receiptNo:'DT-' + no, createdAt:d0.getTime(), by:'Dentee import', imported:true}});
   });
   const billed = tr.reduce((s, x) => s + Math.max(0, (+x.d.cost || 0) - (+x.d.discount || 0)), 0), paid = pays.reduce((s, x) => s + x.d.amount, 0);
-  return {S, pats, linked, newDocs, newTypes, newMeds, appts, tr, pays, billed, paid, cutoff, firstOwn, skipped, maxNo, docMatched:Object.values(docMap).filter((d, i, a) => !d.imported && a.indexOf(d) === i)};
+  return {S, pats, linked, newDocs, newTypes, newMeds, appts, tr, pays, billed, paid, cutoff, firstOwn, skipped, maxNo, ownWho, ownN:ownPast.length, docMatched:Object.values(docMap).filter((d, i, a) => !d.imported && a.indexOf(d) === i)};
 }
 function dtBox(){
   if (!isOwner()) return '';
@@ -5356,7 +5416,8 @@ function dtBox(){
         Appointments: past ones become <b>Completed</b> when the patient had a treatment or payment that day, otherwise <b>Missed</b>; Rescheduled and Cancelled ones become <b>Cancelled</b>.<br>
         Imported treatments count as done and don't add "upload document" reminders. Patient codes stay as in Dentee (e.g. ADC00001)${p.pats.some(x => /-[A-Z]$/.test(x.d.code)) ? `; Dentee gave two people the same code, so the second one gets a letter (${p.pats.filter(x => /-[A-Z]$/.test(x.d.code)).map(x => esc(x.d.code)).join(', ')})` : ''}.
       </div>
-      ${p.firstOwn ? `<label class="ckl" style="margin:10px 0;color:var(--ink)"><input type="checkbox" id="dtCut"${DT.cut ? ' checked' : ''}> Skip Dentee records from <b>&nbsp;${esc(fmtShort(p.firstOwn))}&nbsp;</b> onwards: those days were already entered in Zenvora${p.skipped ? ` (${p.skipped} Dentee records skipped)` : ''}</label>` : ''}
+      ${p.firstOwn ? `<div class="nag" style="margin:10px 0"><label class="ckl" style="color:var(--ink)"><input type="checkbox" id="dtCut"${DT.cut ? ' checked' : ''}> Skip Dentee records from <b>&nbsp;${esc(fmtShort(p.firstOwn))}&nbsp;</b> onwards${DT.cut && p.skipped ? ` (${p.skipped} Dentee records will be skipped)` : ''}</label>
+        <div class="stat" style="margin-top:4px">Zenvora already has ${plural(p.ownN, 'record')} from ${esc(fmtShort(p.firstOwn))} (${p.ownWho.map(esc).join(', ')}${p.ownN > p.ownWho.length ? '…' : ''}). Keep this ticked only if you entered those days' real visits in Zenvora too. If they were test entries, untick it so Dentee's records for those days come in, and delete the test patients.</div></div>` : ''}
       <div class="btnrow"><button class="primary" id="dtGo">Import ${p.pats.length + p.appts.length + p.tr.length + p.pays.length} records</button><button id="dtCancel">Cancel</button><span class="stat">Uses about ${p.pats.length + p.appts.length + p.tr.length + p.pays.length + p.newTypes.length + p.newMeds.length + p.newDocs.length} of the free plan's 20,000 writes a day.</span></div>`}
   </div>`;
 }
@@ -5387,6 +5448,8 @@ async function dtImport(){
       const b = F.writeBatch(fs); ops.slice(i, i + 400).forEach(([c, id, d]) => b.set(cDoc(c, id), d)); await b.commit();
       DT.busy = {pct:Math.round(Math.min(ops.length, i + 400) / ops.length * 100), msg:`Saved ${Math.min(ops.length, i + 400)} of ${ops.length} records…`}; const bx = $('#dtBox'); if (bx) bx.outerHTML = dtBox();
     }
+    try { const ref = cDoc('clinicMeta', 'counter'); await F.runTransaction(fs, async tx => { const s2 = await tx.get(ref), cur = (s2.exists() && s2.data().patient) || 0; if (cur < p.maxNo) tx.set(ref, {patient:p.maxNo}, {merge:true}); }); } catch(e){}
+    cl.allP = null;
     DT.done = `${p.pats.length} patients (${p.linked.length} linked to existing), ${p.appts.length} appointments, ${p.tr.length} treatments & medicines, ${p.pays.length} payments.`;
     DT.plan = null; DT.file = null; info('Dentee data imported.'); clinicSync(true);
   } catch(e){ info('Import stopped: ' + errText(e) + '. Press Import again: it continues safely.'); }
