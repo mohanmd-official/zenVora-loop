@@ -519,17 +519,29 @@ td.pcodec{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;white-space:
 .achip.completed{border-color:var(--done);background:color-mix(in srgb,var(--done) 12%,var(--paper))}
 .achip.missed{border-color:var(--high);background:color-mix(in srgb,var(--high) 10%,var(--paper))}
 .achip.cancelled{opacity:.5;text-decoration:line-through}
+/* doctor colour: left bar + tint; the status is the small tag */
+.achip[style*="--dc"]{border-left:4px solid var(--dc);background:color-mix(in srgb,var(--dc) 12%,var(--paper))}
+.achip.completed[style*="--dc"]{background:color-mix(in srgb,var(--dc) 6%,var(--paper))}.achip.dim{opacity:.35}
+.astag{font-style:normal;font-size:10px;font-weight:700;margin-left:6px;padding:1px 6px;border-radius:999px;background:var(--paper);border:1px solid var(--line);vertical-align:1px}
+.astag.scheduled{color:var(--todo)}.astag.waiting{color:var(--prog)}.astag.engaged{color:#8b5cf6}.astag.billing{color:#0ea5a4}.astag.completed{color:var(--done)}.astag.missed{color:var(--high)}
+.aq[style*="--dc"]{border-left:4px solid var(--dc)}
+input.dcol{width:26px;height:22px;padding:0;border:none;background:none;vertical-align:middle;cursor:pointer}
+.dlegend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--muted);margin:-2px 0 8px}.dlegend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+a.plink2{color:inherit;text-decoration:none;font-weight:700}a.plink2:hover{text-decoration:underline}
+.achip[data-drag]{cursor:grab;touch-action:none;user-select:none}.achip.dragging{opacity:.35}
+.dragghost{position:fixed;z-index:300;pointer-events:none;box-shadow:var(--shadow);opacity:.95;transform:rotate(-1.5deg);max-width:300px}
 #toothPop{position:absolute;z-index:200;display:none;background:var(--paper);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:10px 12px}
 #toothPop.on{display:block}.tph{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:8px}.tph .sp{flex:1}.tph button{padding:3px 10px;font-size:12px}.tph button.on{background:var(--accent);color:#fff}
 .trow2{display:flex;gap:3px;align-items:center;margin:4px 0}.tlab{width:42px;font-size:11px;color:var(--muted)}.tmid{width:2px;align-self:stretch;background:var(--line);margin:0 4px}
 .trow2 button{flex:1;min-width:0;padding:6px 0;font-size:12px;font-variant-numeric:tabular-nums;border-radius:8px}.trow2 button small{display:block;font-size:9.5px;opacity:.7;line-height:1}.trow2.kid button{padding:4px 0}
 .trow2 button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
 input.srchin.bad{border-color:var(--high)}
-.achip[draggable=true]{cursor:grab}.achip.dragging{opacity:.4}.scell.dropok,.aday.dropok{background:color-mix(in srgb,var(--accent) 12%,transparent);outline:2px dashed var(--accent);outline-offset:-2px}
+.scell.dropok,.aday.dropok{background:color-mix(in srgb,var(--accent) 12%,transparent);outline:2px dashed var(--accent);outline-offset:-2px}
 .acx{margin-top:8px;font-size:13px}.acx summary{cursor:pointer;color:var(--muted);font-weight:600;padding:4px 0}.acx .aq{margin-top:6px;opacity:.75}.acxr{padding:3px 0}
 .aside{display:flex;flex-direction:column;gap:6px;position:sticky;top:0}
-.acnts{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
-.acnt{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:5px;text-align:center;font-size:10.5px;color:var(--muted)}
+.acnts{display:grid;grid-template-columns:repeat(auto-fit,minmax(62px,1fr));gap:4px}
+.acnt{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:5px 2px;text-align:center;font-size:10.5px;color:var(--muted);cursor:pointer;font-weight:600;text-transform:none;letter-spacing:0;line-height:1.2}
+.acnt:hover{border-color:var(--accent)}.acnt.on{background:var(--accent);border-color:var(--accent);color:#fff}.acnt.on b{color:#fff}
 .acnt b{display:block;font-size:17px;color:var(--ink)}
 .aq{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:6px}
 .aqm{display:flex;flex-direction:column;gap:2px}
@@ -766,7 +778,6 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 
 .trow:last-child{border-bottom:none}
 .trow b{flex:1;font-weight:550}
 .billbox .payrow:last-child{font-size:15px}
-.acnts{grid-template-columns:repeat(6,1fr)}
 .ast.billing{color:#0ea5a4}
 .achip.billing{border-color:#0ea5a4;background:color-mix(in srgb,#0ea5a4 12%,var(--paper))}
 .visit.billing{border-left-color:#0ea5a4}
@@ -1267,7 +1278,7 @@ window.addEventListener('hashchange', () => { if (appReady && location.hash !== 
 // plain clicks stay inside the app; Ctrl / ⌘ / Shift / middle click and "Open in new tab" use the link
 document.addEventListener('click', e => {
   const a = e.target.closest && e.target.closest('a[href^="#/"]'); if (!a) return;
-  if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || e.button !== 0){ e.stopImmediatePropagation(); return; }
+  if (a.target === '_blank' || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || e.button !== 0){ e.stopImmediatePropagation(); return; }
   e.preventDefault();
 }, true);
 
@@ -3183,7 +3194,7 @@ const CSECS = [['patients', 'Patients', () => can('patients') || can('treatments
   ['attendance', 'Attendance', () => feat('attendance')], ['accounts', 'Accounts', () => can('accounts') || can('petty') || can('tally') || isOwnerLike()], ['reports', 'Reports', () => can('reports') || can('doctorReports')], ['assists', 'Patient assists', () => !!(orgCtx() && !orgCtx().support)], ['setup', 'Clinic setup', () => can('setup')]];
 
 function renderClinic(){
-  const oc = orgCtx(); if (!oc || !feat('clinic') || window.__ordDrag) return;
+  const oc = orgCtx(); if (!oc || !feat('clinic') || window.__ordDrag || window.__apDrag) return;
   clLoad();
   const secs = CSECS.filter(s => s[2]());
   if (!secs.some(s => s[0] === cl.sec)) cl.sec = secs.length ? secs[0][0] : '';
@@ -3575,6 +3586,10 @@ function clApptLoad(){
 }
 const toHM = m => `${pad2(Math.floor(m / 60))}:${pad2(m % 60)}`;
 const hm12 = t => { if (!t) return ''; const [h, m] = t.split(':').map(Number); return `${(h + 11) % 12 + 1}:${pad2(m)} ${h < 12 ? 'AM' : 'PM'}`; };
+/* each doctor has a colour (Clinic setup → Doctors), used on appointment tiles */
+const DOC_COLORS = ['#2563EB', '#DB2777', '#059669', '#D97706', '#7C3AED', '#0891B2', '#DC2626', '#65A30D', '#9333EA', '#EA580C'];
+const docColor = id => { const d = cl.doctors.find(x => x.id === id); if (d && d.color) return d.color; const i = cl.doctors.findIndex(x => x.id === id); return i < 0 ? '#64748B' : DOC_COLORS[i % DOC_COLORS.length]; };
+const plink = (id, name, cls = '') => `<a class="plink2 ${cls}" href="#/clinic/patients/${esc(id)}" target="_blank" rel="noopener" title="Open ${esc(name)} in a new tab">${esc(name)}</a>`;
 function clAppointments(){
   clApptLoad();
   const w = canW('appointments'), A = (cl.appts || []).filter(a => !cl.aDoc || a.doctorId === cl.aDoc).sort((a, b) => String(a.date + a.time).localeCompare(String(b.date + b.time)));
@@ -3586,10 +3601,11 @@ function clAppointments(){
     <select id="aDocF">${docOpts(cl.aDoc, 'All doctors')}</select></div>`;
   if (cl.appts === null) return bar + '<div class="empty">Loading…</div>';
   const live = A.filter(a => a.status !== 'cancelled'), gone = A.filter(a => a.status === 'cancelled');   // cancelled / rescheduled visits leave the schedule
-  const chip = a => `<div class="achip ${a.status}" data-appt="${esc(a.id)}"${w && a.status === 'scheduled' ? ' draggable="true" title="Drag to another time to reschedule"' : ''}><b>${esc(hm12(a.time))}</b> ${esc(a.patientName)}<span>${esc(dName(a.doctorId))}${a.reason ? ' · ' + esc(a.reason) : ''}</span></div>`;
+  const chip = a => `<div class="achip ${a.status}${cl.aStat && cl.aStat !== a.status ? ' dim' : ''}" data-appt="${esc(a.id)}" style="--dc:${docColor(a.doctorId)}"${w && ['scheduled', 'missed'].includes(a.status) ? ' data-drag="1" title="Drag to another time to reschedule"' : ''}><b>${esc(hm12(a.time))}</b> ${esc(a.patientName)}<i class="astag ${a.status}">${ASTATUS[a.status]}</i><span>${esc(dName(a.doctorId))}${a.reason ? ' · ' + esc(a.reason) : ''}</span></div>`;
+  const usedDocs = [...new Set(A.map(a => a.doctorId))].filter(Boolean), legend = usedDocs.length ? `<div class="dlegend">${usedDocs.map(id => `<span><i style="background:${docColor(id)}"></i>${esc(dName(id))}</span>`).join('')}</div>` : '';
   if (cl.aMode === 'week'){
     const days = [...Array(7)].map((_, i) => shiftDay(weekStart(cl.aDate), i));
-    return bar + `<div class="aweek">${days.map(d => `<div class="aday${d === todayKey ? ' today' : ''}"${w ? ` data-dday="${d}"` : ''}><div class="adh" data-goday="${d}">${esc(fmtShort(d))} <span class="stat">${live.filter(a => a.date === d).length || ''}</span></div>${live.filter(a => a.date === d).map(chip).join('') || '<div class="stat" style="padding:6px">—</div>'}</div>`).join('')}</div>
+    return bar + legend + `<div class="aweek">${days.map(d => `<div class="aday${d === todayKey ? ' today' : ''}"${w ? ` data-dday="${d}"` : ''}><div class="adh" data-goday="${d}">${esc(fmtShort(d))} <span class="stat">${live.filter(a => a.date === d).length || ''}</span></div>${live.filter(a => a.date === d).map(chip).join('') || '<div class="stat" style="padding:6px">—</div>'}</div>`).join('')}</div>
       ${gone.length ? `<details class="acx"><summary>Cancelled / rescheduled this week (${gone.length})</summary>${gone.map(a => `<div class="acxr" data-appt="${esc(a.id)}"><s>${esc(fmtShort(a.date))} ${esc(hm12(a.time))} · ${esc(a.patientName)}</s> <span class="stat">${esc(dName(a.doctorId))}</span></div>`).join('')}</details>` : ''}`;
   }
   const open = toMin(cl.settings.open || '09:00'), close = toMin(cl.settings.close || '21:00'), slot = 30;
@@ -3599,13 +3615,16 @@ function clAppointments(){
     grid += `<div class="srow"><div class="stime">${esc(hm12(toHM(m)))}</div><div class="scell"${w ? ` data-slot="${toHM(m)}"` : ''}>${inSlot.map(chip).join('')}</div></div>`;
   }
   const outside = live.filter(a => toMin(a.time) < open || toMin(a.time) >= close);
-  const counts = Object.keys(ASTATUS).filter(k => k !== 'cancelled').map(k => `<div class="acnt ${k}"><span>${ASTATUS[k]}</span><b>${A.filter(a => a.status === k).length}</b></div>`).join('');
+  const st = cl.aStat || '';
+  const counts = [['', 'All', live.length]].concat(Object.keys(ASTATUS).filter(k => k !== 'cancelled').map(k => [k, ASTATUS[k], A.filter(a => a.status === k).length]))
+    .map(([k, l, n]) => `<button type="button" class="acnt ${k}${st === k ? ' on' : ''}" data-astat="${k}" title="Show ${l.toLowerCase()} only">${l}<b>${n}</b></button>`).join('');
   const NEXT = {scheduled:[['waiting', 'Check in'], ['missed', 'Missed']], waiting:[['engaged', 'In chair'], ['scheduled', '↩ Back']], engaged:[['completed', 'Done → summary'], ['waiting', '↩ Back']], billing:[['bill', 'Bill & print'], ['engaged', '↩ Back to In chair']], missed:[['scheduled', 'Re-open']], completed:[], cancelled:[['scheduled', 'Restore']]};
-  const qcard = a => `<div class="aq ${a.status}" data-appt="${esc(a.id)}"><div class="aqm"><b class="lnk" data-openp="${esc(a.patientId)}">${esc(a.patientName)}</b><span>${esc(hm12(a.time))} · ${esc(a.duration || 15)} min · ${esc(dName(a.doctorId))}</span><span class="ast ${a.status}">${ASTATUS[a.status]}</span></div>
+  const qcard = a => `<div class="aq ${a.status}" data-appt="${esc(a.id)}" style="--dc:${docColor(a.doctorId)}"><div class="aqm">${plink(a.patientId, a.patientName, 'lnk')}<span>${esc(hm12(a.time))} · ${esc(a.duration || 15)} min · ${esc(dName(a.doctorId))}</span><span class="ast ${a.status}">${ASTATUS[a.status]}</span></div>
     ${w ? `<div class="aqa">${NEXT[a.status].map(([s, l]) => `<button data-ast="${s}"${/^↩/.test(l) ? ' class="aback" title="Go one step back"' : ['waiting', 'engaged', 'completed', 'bill'].includes(s) ? ' class="primary"' : ''}>${l}</button>`).join('')}${a.status === 'scheduled' ? '<button data-edit-appt>Reschedule / edit</button><button class="danger" data-ast="cancelled">Cancel</button>' : ''}</div>` : ''}</div>`;
-  const side = live.map(qcard).join('') + (gone.length ? `<details class="acx"><summary>Cancelled / rescheduled (${gone.length})</summary>${gone.map(qcard).join('')}</details>` : '');
-  return bar + `<div class="agrid"><div class="aslots">${outside.length ? `<div class="srow"><div class="stime">Other</div><div class="scell">${outside.map(chip).join('')}</div></div>` : ''}${grid}</div>
-    <div class="aside"><div class="acnts">${counts}</div>${side || '<div class="empty">No appointments this day.</div>'}</div></div>`;
+  const shown = st ? live.filter(a => a.status === st) : live;
+  const side = (shown.map(qcard).join('') || `<div class="empty" style="margin:0">No ${esc((ASTATUS[st] || '').toLowerCase())} appointments.</div>`) + (!st && gone.length ? `<details class="acx"><summary>Cancelled / rescheduled (${gone.length})</summary>${gone.map(qcard).join('')}</details>` : '');
+  return bar + legend + `<div class="agrid"><div class="aslots">${outside.length ? `<div class="srow"><div class="stime">Other</div><div class="scell">${outside.map(chip).join('')}</div></div>` : ''}${grid}</div>
+    <div class="aside"><div class="acnts">${counts}</div>${A.length ? side : '<div class="empty">No appointments this day.</div>'}</div></div>`;
 }
 function clBookForm(){
   const b = cl.book, w = b.id ? (cl.appts || []).find(a => a.id === b.id) || b : b;
@@ -4425,7 +4444,7 @@ function clSetup(){
         <label>Phone<input id="dcPhone"></label>
         <button class="primary" type="submit">Add doctor</button></form>
       <div class="awrap"><table class="atbl"><thead><tr><th>Doctor</th><th>Post</th>${cl.members ? '<th>Login</th>' : ''}<th></th></tr></thead><tbody>
-        ${cl.doctors.map(d => `<tr data-doc="${esc(d.id)}"${d.active === false ? ' style="opacity:.55"' : ''}><td><b>${esc(d.name)}</b><span class="sub2">${esc([d.specialty, d.phone].filter(Boolean).join(' · '))}</span></td>
+        ${cl.doctors.map(d => `<tr data-doc="${esc(d.id)}"${d.active === false ? ' style="opacity:.55"' : ''}><td><input type="color" data-dcolor value="${esc(docColor(d.id))}" title="Colour on the appointment tiles" class="dcol"${canW('setup') ? '' : ' disabled'}> <b>${esc(d.name)}</b><span class="sub2">${esc([d.specialty, d.phone].filter(Boolean).join(' · '))}</span></td>
           <td><select data-dtype>${Object.entries(DTYPE).map(([k, l]) => `<option value="${k}"${k === (d.type || 'primary') ? ' selected' : ''}>${l}</option>`).join('')}</select></td>
           ${cl.members ? `<td><select data-doclogin title="Link to this doctor's Zenvora Loop login (the Chief doctor gets daily-tally reminders)"><option value="">— none —</option>${cl.members.map(m => `<option value="${esc(m.id)}"${m.id === d.memberUid ? ' selected' : ''}>${esc(fullName(m))}</option>`).join('')}</select></td>` : ''}
           <td><button data-docact>${d.active === false ? 'Activate' : 'Deactivate'}</button></td></tr>`).join('') || '<tr><td colspan="4" class="stat">No doctors yet.</td></tr>'}
@@ -4534,24 +4553,40 @@ function toothCost(el){                 // price of the chosen treatment × numb
 document.addEventListener('input', e => { if (e.target.matches && e.target.matches('input[data-teeth]')) toothCost(e.target); });
 document.addEventListener('change', e => { if (e.target.matches && e.target.matches('[data-sf="type"],#tfType')) setTimeout(() => toothCost(e.target), 0); });
 
-/* reschedule by dragging an appointment tile to another time slot (day view) or another day (week view) */
-{ let dragA = null;
-  const clb = $('#clBody');
-  clb.addEventListener('dragstart', e => { const c = e.target.closest && e.target.closest('.achip[draggable=true]'); if (!c) return; dragA = c.dataset.appt; c.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', 'appt'); } catch(_){} });
-  clb.addEventListener('dragend', () => { dragA = null; document.querySelectorAll('.dragging,.dropok').forEach(x => x.classList.remove('dragging', 'dropok')); });
-  clb.addEventListener('dragover', e => { if (!dragA) return; const t = e.target.closest('[data-slot],[data-dday]'); document.querySelectorAll('.dropok').forEach(x => x !== t && x.classList.remove('dropok')); if (t){ e.preventDefault(); e.dataTransfer.dropEffect = 'move'; t.classList.add('dropok'); } });
-  clb.addEventListener('drop', async e => {
-    if (!dragA) return; const t = e.target.closest('[data-slot],[data-dday]'), id = dragA; dragA = null; if (!t) return; e.preventDefault();
-    const a = (cl.appts || []).find(x => x.id === id); if (!a) return;
+/* reschedule by dragging an appointment tile (mouse, pen or touch) to another time slot (day view) or another day (week view) */
+{ let D = null;
+  const clb = $('#clBody'), target = (x, y) => { const el = document.elementFromPoint(x, y); return el && el.closest('#clBody [data-slot], #clBody [data-dday]'); };
+  const clear = () => document.querySelectorAll('.dropok,.achip.dragging').forEach(x => x.classList.remove('dropok', 'dragging'));
+  clb.addEventListener('pointerdown', e => { if (e.button !== 0) return; const c = e.target.closest('.achip[data-drag]'); if (!c) return; D = {id:c.dataset.appt, c, x:e.clientX, y:e.clientY, on:false}; });
+  document.addEventListener('pointermove', e => {
+    if (!D) return;
+    if (!D.on){ if (Math.hypot(e.clientX - D.x, e.clientY - D.y) < 6) return;
+      D.on = true; window.__apDrag = true; D.c.classList.add('dragging'); const g = D.c.cloneNode(true); g.classList.add('dragghost'); g.classList.remove('dragging'); g.style.width = D.c.offsetWidth + 'px'; document.body.append(g); D.g = g;
+      try { D.c.setPointerCapture(e.pointerId); } catch(_){} }
+    e.preventDefault(); D.g.style.left = (e.clientX + 8) + 'px'; D.g.style.top = (e.clientY + 8) + 'px';
+    const t = target(e.clientX, e.clientY); document.querySelectorAll('.dropok').forEach(x => x !== t && x.classList.remove('dropok')); if (t) t.classList.add('dropok');
+    if (!D.sc){ let el = D.c.parentElement; while (el && el !== document.body && !(/(auto|scroll)/.test(getComputedStyle(el).overflowY) && el.scrollHeight > el.clientHeight)) el = el.parentElement; D.sc = el && el !== document.body ? el : document.scrollingElement; }
+    const r = D.sc === document.scrollingElement ? {top:0, bottom:innerHeight} : D.sc.getBoundingClientRect();
+    if (e.clientY < r.top + 60) D.sc.scrollTop -= 14; else if (e.clientY > r.bottom - 50) D.sc.scrollTop += 14;     // scroll while dragging near the edge
+  });
+  const end = async e => {
+    if (!D) return; const d = D; D = null;
+    if (!d.on) return; if (d.g) d.g.remove(); window.__apDrag = false;
+    const blockClick = ev => { ev.stopPropagation(); ev.preventDefault(); }; document.addEventListener('click', blockClick, {capture:true, once:true}); setTimeout(() => document.removeEventListener('click', blockClick, true), 300);
+    const t = e.type === 'pointerup' ? target(e.clientX, e.clientY) : null; clear();
+    const a = (cl.appts || []).find(x => x.id === d.id); if (!t || !a) return renderClinic();
     const time = t.dataset.slot || a.time, date = t.dataset.dday || a.date;
     if (time === a.time && date === a.date) return renderClinic();
-    if (date < todayKey) return info("Appointments can't be moved into the past."), renderClinic();
-    const clash = (cl.appts || []).find(x => x.id !== id && x.doctorId === a.doctorId && x.date === date && x.time === time && x.status !== 'cancelled');
+    if (date < todayKey) { info("Appointments can't be moved into the past."); return renderClinic(); }
+    const clash = (cl.appts || []).find(x => x.id !== d.id && x.doctorId === a.doctorId && x.date === date && x.time === time && x.status !== 'cancelled');
     if (clash && !confirm(`${dName(a.doctorId)} already has ${clash.patientName} at ${hm12(time)}. Move anyway?`)) return renderClinic();
-    try { await cloud.F.updateDoc(cDoc('appointments', id), {date, time, movedFrom:a.date + ' ' + a.time, movedAt:Date.now()}); Object.assign(a, {date, time}); info(`${a.patientName} moved to ${date === todayKey ? 'today' : fmtShort(date)} ${hm12(time)}.`); }
+    const upd = {date, time, movedFrom:a.date + ' ' + a.time, movedAt:Date.now()}; if (a.status === 'missed') upd.status = 'scheduled';
+    try { await cloud.F.updateDoc(cDoc('appointments', d.id), upd); Object.assign(a, upd); info(`${a.patientName} moved to ${date === todayKey ? 'today' : fmtShort(date)} ${hm12(time)}.`); }
     catch(err){ info('Could not move: ' + errText(err)); }
     renderClinic();
-  });
+  };
+  document.addEventListener('pointerup', end); document.addEventListener('pointercancel', end);
+  clb.addEventListener('dragstart', e => { if (e.target.closest && e.target.closest('.achip[data-drag]')) e.preventDefault(); });
 }
 $('#clBody').addEventListener('input', e => {
   const mr = e.target.closest('[data-mr]'); if (mr && e.target.matches('[data-mf]')){ medCalc(mr); const tt = $('#rxTot'); if (tt) tt.textContent = inr([...document.querySelectorAll('#rxMeds [data-mr]')].reduce((s, r) => s + parseInt((r.querySelector('b[data-mf="cost"]').textContent || '0').replace(/[^0-9]/g, '') || 0), 0)); }
@@ -4566,6 +4601,7 @@ $('#clBody').addEventListener('change', async e => {
   if (t.id === 'aPick' && t.value){ cl.aDate = t.value; renderClinic(); }
   if (t.id === 'clPSort'){ cl.psort = t.value; return renderClinic(); }
   if (t.id === 'aDocF'){ cl.aDoc = t.value; renderClinic(); }
+  if (t.matches('[data-dcolor]')){ try { await F.updateDoc(cDoc('doctors', t.closest('[data-doc]').dataset.doc), {color:t.value}); info('Doctor colour saved.'); } catch(err){ info(errText(err)); } return; }
   if (t.id === 'vFilter'){ cl.acc.vf = t.value; renderClinic(); }
   if (t.id === 'vOnly'){ cl.acc.vonly = t.value; renderClinic(); }
   if (t.id === 'stLogo' && t.files[0]){ try { const logo = await logoFromFile(t.files[0]); await F.updateDoc(cloud.F.doc(cloud.fs, 'orgs', orgCtx().orgId), {logo}); info('Logo updated.'); } catch(err){ info(errText(err)); } return; }
@@ -4653,6 +4689,7 @@ $('#clBody').addEventListener('click', async e => {
   if (t.closest('#clBack') || t.closest('#clBack2')){ cl.pUnsub.forEach(u => { try { u(); } catch(_){} }); cl.pUnsub = []; cl.pid = null; cl.newP = false; return renderClinic(); }
   const pt = t.closest('[data-pt]'); if (pt){ cl.ptab = pt.dataset.pt; return renderClinic(); }
   const bk = t.closest('[data-book]'); if (bk){ return clOpenBook(bk.dataset.book ? {patientId:bk.dataset.book, patientName:pName(cl.p)} : {}); }
+  const asf = t.closest('[data-astat]'); if (asf){ cl.aStat = cl.aStat === asf.dataset.astat ? '' : asf.dataset.astat; return renderClinic(); }
   const sl = t.closest('[data-slot]'); if (sl && t === sl) return clOpenBook({time:sl.dataset.slot});
   const ad = t.closest('[data-ad]'); if (ad){ const n = +ad.dataset.ad; cl.aDate = n ? shiftDay(cl.aDate, n * (cl.aMode === 'week' ? 7 : 1)) : todayKey; return renderClinic(); }
   const am = t.closest('[data-am]'); if (am){ cl.aMode = am.dataset.am; return renderClinic(); }
