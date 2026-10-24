@@ -519,6 +519,13 @@ td.pcodec{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;white-space:
 .achip.completed{border-color:var(--done);background:color-mix(in srgb,var(--done) 12%,var(--paper))}
 .achip.missed{border-color:var(--high);background:color-mix(in srgb,var(--high) 10%,var(--paper))}
 .achip.cancelled{opacity:.5;text-decoration:line-through}
+#toothPop{position:absolute;z-index:200;display:none;background:var(--paper);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:10px 12px}
+#toothPop.on{display:block}.tph{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:8px}.tph .sp{flex:1}.tph button{padding:3px 10px;font-size:12px}.tph button.on{background:var(--accent);color:#fff}
+.trow2{display:flex;gap:3px;align-items:center;margin:4px 0}.tlab{width:42px;font-size:11px;color:var(--muted)}.tmid{width:2px;align-self:stretch;background:var(--line);margin:0 4px}
+.trow2 button{flex:1;min-width:0;padding:6px 0;font-size:12px;font-variant-numeric:tabular-nums;border-radius:8px}.trow2 button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+input.srchin.bad{border-color:var(--high)}
+.achip[draggable=true]{cursor:grab}.achip.dragging{opacity:.4}.scell.dropok,.aday.dropok{background:color-mix(in srgb,var(--accent) 12%,transparent);outline:2px dashed var(--accent);outline-offset:-2px}
+.acx{margin-top:8px;font-size:13px}.acx summary{cursor:pointer;color:var(--muted);font-weight:600;padding:4px 0}.acx .aq{margin-top:6px;opacity:.75}.acxr{padding:3px 0}
 .aside{display:flex;flex-direction:column;gap:6px;position:sticky;top:0}
 .acnts{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
 .acnt{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:5px;text-align:center;font-size:10.5px;color:var(--muted)}
@@ -535,6 +542,7 @@ td.pcodec{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;white-space:
 .aday.today{box-shadow:inset 0 0 0 2px var(--accent-ink)}
 .adh{font-weight:650;font-size:12px;cursor:pointer;padding:2px 4px}
 .aday .achip{max-width:none;flex:none}
+.wtrow{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:flex-end}.wtrow label{display:flex;flex-direction:column}.wtrow .fhead{align-self:center}
 .bkmode{display:inline-flex;margin-bottom:4px}.npbox{display:flex;flex-wrap:wrap;gap:8px 10px;padding:10px;border:1px solid var(--line);border-radius:12px;background:color-mix(in srgb,var(--accent) 4%,var(--paper))}
 .npbox label{display:flex;flex-direction:column}.npbox label.grow{flex:1;min-width:160px}.npbox label.full{flex-basis:100%}
 .bkres{display:flex;flex-direction:column;gap:3px;margin:4px 0}
@@ -2530,6 +2538,7 @@ function orgPeople(){
         <label>Reports to<select id="paTo">${toOpts(cloud.uid, '')}</select></label>
         <label>Role<select id="paRole">${roleOpts('employee')}</select></label>
         ${feat('clinic') ? `<label>Clinic access<select id="paCPre">${CPRESETS.map(([k, l]) => `<option value="${k}"${k === 'receptionist' ? ' selected' : ''}>${l}</option>`).join('')}</select></label>` : ''}
+        ${feat('attendance') ? `<div class="full wtrow"><span class="fhead" style="margin:0">Work timing</span>${wtFields('paW', attCfg(null))}<span class="stat">time worked beyond these hours counts as overtime / extra hours</span></div>` : ''}
         <label>Temporary password<span class="pwgen"><input id="paPass" value="${esc(orgView.tmp)}" autocomplete="off"><button type="button" id="paGen" title="Generate a new password">↻</button></span></label>
         <button class="primary" type="submit" id="paSubmit">Create login</button>
       </form>
@@ -2548,13 +2557,13 @@ function orgPeople(){
         <label>Reports to<select id="peTo">${toOpts(m.reportsTo || '', m.uid)}</select></label>
         <label>Role<select id="peRole"${me ? ' disabled title="You can\'t change your own role"' : ''}>${roleOpts(m.role)}</select></label>
         ${clinicAccessHtml(m)}
-        ${feat('attendance') && m.role !== 'orgadmin' ? `<div class="full cperm"><div class="fhead" style="margin:4px 0">Attendance</div><label class="ckl" style="color:var(--ink)"><input type="checkbox" id="peProxy"${m.attProxy ? ' checked' : ''}> <b>Proxy attendance</b>&nbsp;<span class="stat">can check other staff in and out (e.g. reception)</span></label></div>` : ''}
+        ${feat('attendance') && m.role !== 'orgadmin' ? `<div class="full cperm"><div class="fhead" style="margin:4px 0">Attendance · work timing</div><div class="wtrow" style="margin-bottom:6px">${wtFields('peW', attCfg(m))}</div><label class="ckl" style="color:var(--ink)"><input type="checkbox" id="peProxy"${m.attProxy ? ' checked' : ''}> <b>Proxy attendance</b>&nbsp;<span class="stat">can check other staff in and out (e.g. reception)</span></label></div>` : ''}
         <button class="primary" type="submit">Save</button><button type="button" data-pa="cancel">Cancel</button>
       </form></td></tr>`;
     const st = !m.active ? ['Disabled', 'off'] : m.mustChangePassword ? ['Awaiting first sign-in', 'pend'] : ['Active', 'on'];
     return `<tr data-uid="${esc(m.uid)}" data-email="${esc(m.email)}">
       <td><div style="display:flex;gap:9px;align-items:center"><div class="uav" style="width:28px;height:28px;font-size:12px">${initial(fullName(m))}</div><div><b>${esc(fullName(m))}</b>${me ? ' <span class="stat">(you)</span>' : ''}<span class="sub2">${esc(m.email)}</span></div></div></td>
-      <td>${esc(m.title || '—')}${m.attProxy && feat('attendance') ? ' <em class="rtag">Proxy attendance</em>' : ''}</td>
+      <td>${esc(m.title || '—')}${m.attProxy && feat('attendance') ? ' <em class="rtag">Proxy attendance</em>' : ''}${feat('attendance') && m.role !== 'orgadmin' ? `<span class="sub2">⏰ ${esc(shiftTxt(attCfg(m)))}</span>` : ''}</td>
       <td>${mgr ? esc(fullName(mgr)) : '<span class="stat">—</span>'}</td>
       <td>${m.role === 'employee' ? 'Employee' : `<em class="rtag" style="margin:0">${ROLE_LABEL[m.role] || m.role}</em>`}${feat('clinic') ? `<span class="sub2">Clinic: ${esc(m.role === 'orgadmin' ? 'full access' : presetOf(m.perms))}</span>` : ''}</td>
       <td><span class="upill ${st[1]}">${st[0]}</span></td>
@@ -2634,6 +2643,7 @@ async function addPerson(){
   const reportsTo = $('#paTo').value, role = $('#paRole').value, pass = $('#paPass').value, perms = $('#paCPre') ? permsFromPreset($('#paCPre').value) : {};
   orgView.share = '';
   try {
+    const att = $('#paWS') && role !== 'orgadmin' ? wtRead('paW') : null;
     if (!name) throw custom('Enter their name.');
     if (!EMAIL_RE.test(email)) throw custom('Enter a valid email address.');
     if (email === ADMIN_EMAIL) throw custom('That is the Zenvora Loop Super Admin account.');
@@ -2642,7 +2652,7 @@ async function addPerson(){
     if (ex && !ex.removed) throw custom(`${email} is already in ${oc.org.name}.`);
     $('#paSubmit').disabled = true;
     if (ex){                                                   // removed earlier: bring them back
-      await F.updateDoc(orgDoc('members', ex.uid), {active:true, removed:false, name, title, reportsTo, role});
+      await F.updateDoc(orgDoc('members', ex.uid), Object.assign({active:true, removed:false, name, title, reportsTo, role}, att ? {att} : {}));
       await F.sendPasswordResetEmail(cloud.auth, email);
       orgView.msg = {t:`${email} was in ${oc.org.name} before. Access is restored and a password-reset email was sent.`, ok:true};
     } else {
@@ -2655,7 +2665,7 @@ async function addPerson(){
         const now = Date.now();
         await F.setDoc(F.doc(fs, 'accounts', uid), {orgId:oc.orgId, email, createdAt:now});
         const mg = (orgView.members || []).find(m => m.uid === reportsTo);
-        await F.setDoc(orgDoc('members', uid), {email, name, title, reportsTo, reportsToName:mg ? fullName(mg) : '', reportsToTitle:mg ? (mg.title || ROLE_LABEL[mg.role] || '') : '', role, perms, active:true, removed:false, mustChangePassword:true, createdAt:now, createdBy:cloud.user.email || ''});
+        await F.setDoc(orgDoc('members', uid), Object.assign({email, name, title, reportsTo, reportsToName:mg ? fullName(mg) : '', reportsToTitle:mg ? (mg.title || ROLE_LABEL[mg.role] || '') : '', role, perms, active:true, removed:false, mustChangePassword:true, createdAt:now, createdBy:cloud.user.email || ''}, att ? {att} : {}));
         orgView.share = inviteText(oc.org.name, email, pass);
         orgView.msg = {t:`${name} can now sign in. Share the login details below.`, ok:true};
       }
@@ -2681,6 +2691,7 @@ $('#orgBody').addEventListener('submit', async e => {
     const uid = e.target.dataset.uid, upd = {name:$('#peName').value.trim(), title:$('#peTitle').value.trim(), reportsTo:$('#peTo').value};
     if (!$('#peRole').disabled) upd.role = $('#peRole').value;
     if ($('#peProxy')) upd.attProxy = $('#peProxy').checked;
+    if ($('#peWS')){ try { upd.att = wtRead('peW', ((orgView.members || []).find(m => m.uid === uid) || {}).att); } catch(err){ return info(err.message); } }
     if (document.querySelector('#pEdit [data-cp]')) upd.perms = Object.fromEntries([...document.querySelectorAll('#pEdit [data-cp]')].map(c => [c.dataset.cp, c.checked]));
     if (!upd.name) return info('Enter their name.');
     if (!noReportLoop(uid, upd.reportsTo)) return info("That would make a reporting loop: pick someone who doesn't report to this person.");
@@ -3362,8 +3373,8 @@ function clTreatments(){
   const add = w ? `<div class="box"><h3>Add treatment <span class="sub">the doctor chosen here is credited in reports</span></h3>
     <form class="aform" id="clTForm" novalidate>
       <label>Date<input type="date" id="tfDate" value="${todayKey}"></label>
-      <label class="grow">Treatment<select id="tfType">${types.map(t => `<option value="${esc(t.id)}" data-cost="${+t.cost || 0}">${esc(t.name)}</option>`).join('')}</select></label>
-      <label>Tooth / area<input id="tfTooth" placeholder="e.g. 36, UR quadrant" style="min-width:120px"></label>
+      <label class="grow">Treatment<select id="tfType" class="srch">${types.map(t => `<option value="${esc(t.id)}" data-cost="${+t.cost || 0}">${esc(t.name)}</option>`).join('')}</select></label>
+      <label>Tooth / area<input id="tfTooth" data-teeth autocomplete="off" placeholder="🦷 click to pick" style="min-width:120px"></label>
       <label>Doctor<select id="tfDoc">${docOpts(defDoc, '— Select —')}</select></label>
       <label id="tfFeeWrap"${(cl.doctors.find(x => x.id === defDoc) || {}).type === 'consultant' ? '' : ' hidden'}>Consultant fee (₹)<input type="number" id="tfFee" min="0" step="50" placeholder="paid to consultant"></label>
       <label>Cost (₹)<input type="number" id="tfCost" min="0" step="50" value="${types[0] ? +types[0].cost || 0 : ''}"></label>
@@ -3429,7 +3440,7 @@ function clBilling(){
   const bal = billed(cl.pT) - paidSum(cl.pP), w = canW('billing');
   return `<div class="sect">${w ? `<div class="box"><h3>Take a payment</h3>
     <form class="aform" id="clPayForm" novalidate>
-      <label>Date<input type="date" id="pyDate" value="${todayKey}" max="${todayKey}"></label>
+      <label>Bill date<input type="date" id="pyDate" value="${todayKey}" max="${todayKey}" title="The day this payment is counted in collections and the daily tally"></label>
       <label>Amount (₹)<input type="number" id="pyAmt" min="1" step="1" value="${bal > 0 ? bal : ''}"></label>
       <label>Mode<select id="pyMode">${PMODES.map(([k, l]) => `<option value="${k}">${l}</option>`).join('')}</select></label>
       <label>Towards doctor<select id="pyDoc">${docOpts(cl.p.primaryDoctorId, '— Clinic —')}</select></label>
@@ -3572,22 +3583,25 @@ function clAppointments(){
     <div class="seg" id="aModeSeg"><button data-am="day" class="${cl.aMode === 'day' ? 'on' : ''}">Day</button><button data-am="week" class="${cl.aMode === 'week' ? 'on' : ''}">Week</button></div>
     <select id="aDocF">${docOpts(cl.aDoc, 'All doctors')}</select></div>`;
   if (cl.appts === null) return bar + '<div class="empty">Loading…</div>';
-  const chip = a => `<div class="achip ${a.status}" data-appt="${esc(a.id)}"><b>${esc(hm12(a.time))}</b> ${esc(a.patientName)}<span>${esc(dName(a.doctorId))}${a.reason ? ' · ' + esc(a.reason) : ''}</span></div>`;
+  const live = A.filter(a => a.status !== 'cancelled'), gone = A.filter(a => a.status === 'cancelled');   // cancelled / rescheduled visits leave the schedule
+  const chip = a => `<div class="achip ${a.status}" data-appt="${esc(a.id)}"${w && a.status === 'scheduled' ? ' draggable="true" title="Drag to another time to reschedule"' : ''}><b>${esc(hm12(a.time))}</b> ${esc(a.patientName)}<span>${esc(dName(a.doctorId))}${a.reason ? ' · ' + esc(a.reason) : ''}</span></div>`;
   if (cl.aMode === 'week'){
     const days = [...Array(7)].map((_, i) => shiftDay(weekStart(cl.aDate), i));
-    return bar + `<div class="aweek">${days.map(d => `<div class="aday${d === todayKey ? ' today' : ''}"><div class="adh" data-goday="${d}">${esc(fmtShort(d))} <span class="stat">${A.filter(a => a.date === d && a.status !== 'cancelled').length || ''}</span></div>${A.filter(a => a.date === d).map(chip).join('') || '<div class="stat" style="padding:6px">—</div>'}</div>`).join('')}</div>`;
+    return bar + `<div class="aweek">${days.map(d => `<div class="aday${d === todayKey ? ' today' : ''}"${w ? ` data-dday="${d}"` : ''}><div class="adh" data-goday="${d}">${esc(fmtShort(d))} <span class="stat">${live.filter(a => a.date === d).length || ''}</span></div>${live.filter(a => a.date === d).map(chip).join('') || '<div class="stat" style="padding:6px">—</div>'}</div>`).join('')}</div>
+      ${gone.length ? `<details class="acx"><summary>Cancelled / rescheduled this week (${gone.length})</summary>${gone.map(a => `<div class="acxr" data-appt="${esc(a.id)}"><s>${esc(fmtShort(a.date))} ${esc(hm12(a.time))} · ${esc(a.patientName)}</s> <span class="stat">${esc(dName(a.doctorId))}</span></div>`).join('')}</details>` : ''}`;
   }
   const open = toMin(cl.settings.open || '09:00'), close = toMin(cl.settings.close || '21:00'), slot = 30;
   let grid = '';
   for (let m = open; m < close; m += slot){
-    const inSlot = A.filter(a => toMin(a.time) >= m && toMin(a.time) < m + slot);
+    const inSlot = live.filter(a => toMin(a.time) >= m && toMin(a.time) < m + slot);
     grid += `<div class="srow"><div class="stime">${esc(hm12(toHM(m)))}</div><div class="scell"${w ? ` data-slot="${toHM(m)}"` : ''}>${inSlot.map(chip).join('')}</div></div>`;
   }
-  const outside = A.filter(a => toMin(a.time) < open || toMin(a.time) >= close);
+  const outside = live.filter(a => toMin(a.time) < open || toMin(a.time) >= close);
   const counts = Object.keys(ASTATUS).filter(k => k !== 'cancelled').map(k => `<div class="acnt ${k}"><span>${ASTATUS[k]}</span><b>${A.filter(a => a.status === k).length}</b></div>`).join('');
   const NEXT = {scheduled:[['waiting', 'Check in'], ['missed', 'Missed']], waiting:[['engaged', 'In chair'], ['scheduled', '↩ Back']], engaged:[['completed', 'Done → summary'], ['waiting', '↩ Back']], billing:[['bill', 'Bill & print'], ['engaged', '↩ Back to In chair']], missed:[['scheduled', 'Re-open']], completed:[], cancelled:[['scheduled', 'Restore']]};
-  const side = A.map(a => `<div class="aq ${a.status}" data-appt="${esc(a.id)}"><div class="aqm"><b class="lnk" data-openp="${esc(a.patientId)}">${esc(a.patientName)}</b><span>${esc(hm12(a.time))} · ${esc(a.duration || 15)} min · ${esc(dName(a.doctorId))}</span><span class="ast ${a.status}">${ASTATUS[a.status]}</span></div>
-    ${w ? `<div class="aqa">${NEXT[a.status].map(([s, l]) => `<button data-ast="${s}"${/^↩/.test(l) ? ' class="aback" title="Go one step back"' : ['waiting', 'engaged', 'completed', 'bill'].includes(s) ? ' class="primary"' : ''}>${l}</button>`).join('')}${a.status === 'scheduled' ? '<button data-edit-appt>Edit</button><button class="danger" data-ast="cancelled">Cancel</button>' : ''}</div>` : ''}</div>`).join('');
+  const qcard = a => `<div class="aq ${a.status}" data-appt="${esc(a.id)}"><div class="aqm"><b class="lnk" data-openp="${esc(a.patientId)}">${esc(a.patientName)}</b><span>${esc(hm12(a.time))} · ${esc(a.duration || 15)} min · ${esc(dName(a.doctorId))}</span><span class="ast ${a.status}">${ASTATUS[a.status]}</span></div>
+    ${w ? `<div class="aqa">${NEXT[a.status].map(([s, l]) => `<button data-ast="${s}"${/^↩/.test(l) ? ' class="aback" title="Go one step back"' : ['waiting', 'engaged', 'completed', 'bill'].includes(s) ? ' class="primary"' : ''}>${l}</button>`).join('')}${a.status === 'scheduled' ? '<button data-edit-appt>Reschedule / edit</button><button class="danger" data-ast="cancelled">Cancel</button>' : ''}</div>` : ''}</div>`;
+  const side = live.map(qcard).join('') + (gone.length ? `<details class="acx"><summary>Cancelled / rescheduled (${gone.length})</summary>${gone.map(qcard).join('')}</details>` : '');
   return bar + `<div class="agrid"><div class="aslots">${outside.length ? `<div class="srow"><div class="stime">Other</div><div class="scell">${outside.map(chip).join('')}</div></div>` : ''}${grid}</div>
     <div class="aside"><div class="acnts">${counts}</div>${side || '<div class="empty">No appointments this day.</div>'}</div></div>`;
 }
@@ -4444,6 +4458,89 @@ function clSetup(){
 
 /* ---------- events ---------- */
 $('#clSeg').addEventListener('click', e => { const b = e.target.closest('[data-s]'); if (b){ cl.sec = b.dataset.s; if (cl.sec === 'setup') cl.members = null; if (cl.sec === 'assists') cl.asKey = ''; if (cl.sec === 'patients' && cl.pid){ cl.pUnsub.forEach(u => { try { u(); } catch(_){} }); cl.pUnsub = []; cl.pid = null; } cl.newP = false; renderClinic(); } });
+/* type-to-search for long dropdowns (treatments, medicines): the select stays (hidden) and is set from the typed name */
+let srchN = 0;
+function enhanceSrch(sel){
+  if (sel._srch) return; sel._srch = true;
+  const id = 'srchdl' + (++srchN), inp = document.createElement('input'), dl = document.createElement('datalist'), ph = sel.options[0] && !sel.options[0].value ? sel.options[0].text.replace(/—/g, '').trim() : '';
+  inp.className = 'srchin'; inp.setAttribute('list', id); inp.autocomplete = 'off'; inp.placeholder = '🔍 ' + (ph || 'Type to search…'); dl.id = id;
+  const fill = () => { dl.innerHTML = [...sel.options].filter(o => o.value).map(o => `<option value="${esc(o.text)}"></option>`).join(''); };
+  fill(); if (sel.value && sel.selectedOptions[0]) inp.value = sel.selectedOptions[0].text;
+  sel.hidden = true; sel.after(inp, dl);
+  inp.addEventListener('input', () => {
+    const q = inp.value.trim().toLowerCase(), opts = [...sel.options].filter(o => o.value);
+    const o = opts.find(x => x.text.toLowerCase() === q) || (q.length > 1 ? (opts.filter(x => x.text.toLowerCase().startsWith(q)).length === 1 ? opts.find(x => x.text.toLowerCase().startsWith(q)) : null) : null);
+    const exact = o && o.text.toLowerCase() === q, nv = exact ? o.value : '';
+    if (sel.value !== nv && (nv || sel.options[0].value === '')){ sel.value = nv || ''; sel.dispatchEvent(new Event('change', {bubbles:true})); sel.dispatchEvent(new Event('input', {bubbles:true})); }
+    inp.classList.toggle('bad', !!q && !exact);
+  });
+  inp.addEventListener('blur', () => { if (sel.value && sel.selectedOptions[0]) { inp.value = sel.selectedOptions[0].text; inp.classList.remove('bad'); } });
+  inp.addEventListener('focus', () => inp.select());
+  sel.addEventListener('change', () => { if (document.activeElement !== inp && sel.selectedOptions[0]) { inp.value = sel.value ? sel.selectedOptions[0].text : ''; inp.classList.remove('bad'); } });
+}
+new MutationObserver(() => document.querySelectorAll('select.srch').forEach(enhanceSrch)).observe(document.body, {childList:true, subtree:true});
+
+/* tooth chart (FDI numbering): click teeth to pick them; the treatment cost = price × number of teeth */
+const TROWS = [[18, 17, 16, 15, 14, 13, 12, 11, '|', 21, 22, 23, 24, 25, 26, 27, 28], [48, 47, 46, 45, 44, 43, 42, 41, '|', 31, 32, 33, 34, 35, 36, 37, 38]];
+const TROWS_KID = [[55, 54, 53, 52, 51, '|', 61, 62, 63, 64, 65], [85, 84, 83, 82, 81, '|', 71, 72, 73, 74, 75]];
+const isTooth = n => /^[1-8][1-8]$/.test(String(n)) && (+String(n)[0] <= 4 ? +String(n)[1] <= 8 : +String(n)[1] <= 5);
+const teethIn = s => String(s || '').split(/[\s,;+&]+/).filter(isTooth);
+const teethCount = s => { const n = teethIn(s).length; return n || 1; };
+let toothFor = null;
+function toothPop(inp){
+  let pop = $('#toothPop'); if (!pop){ pop = document.createElement('div'); pop.id = 'toothPop'; document.body.append(pop);
+    pop.addEventListener('mousedown', e => e.preventDefault());
+    pop.addEventListener('click', e => { e.stopPropagation(); if (!toothFor) return; const b = e.target.closest('[data-tn]'), x = e.target.closest('[data-tx]');
+      if (b){ const cur = teethIn(toothFor.value), n = b.dataset.tn, other = String(toothFor.value || '').split(/[\s,;+&]+/).filter(t => t && !isTooth(t));
+        const next = cur.includes(n) ? cur.filter(t => t !== n) : cur.concat(n), order = TROWS.concat(TROWS_KID).flat().map(String);
+        toothFor.value = next.sort((p, q) => order.indexOf(p) - order.indexOf(q)).concat(other).join(', '); toothFor.dispatchEvent(new Event('input', {bubbles:true})); drawTooth(); }
+      if (x){ if (x.dataset.tx === 'kid'){ pop.dataset.kid = pop.dataset.kid ? '' : '1'; drawTooth(); } if (x.dataset.tx === 'clear'){ toothFor.value = ''; toothFor.dispatchEvent(new Event('input', {bubbles:true})); drawTooth(); } if (x.dataset.tx === 'done') closeTooth(); } });
+  }
+  toothFor = inp; drawTooth();
+  const r = inp.getBoundingClientRect(), W = Math.min(560, innerWidth - 16);
+  pop.style.width = W + 'px'; pop.style.left = Math.max(8, Math.min(r.left, innerWidth - W - 8)) + scrollX + 'px'; pop.style.top = (r.bottom + 6 + scrollY) + 'px'; pop.classList.add('on');
+}
+function drawTooth(){
+  const pop = $('#toothPop'); if (!pop || !toothFor) return;
+  const sel = teethIn(toothFor.value), rows = pop.dataset.kid ? TROWS_KID : TROWS;
+  const row = (r, lab) => `<div class="trow2"><span class="tlab">${lab}</span>${r.map(n => n === '|' ? '<i class="tmid"></i>' : `<button type="button" data-tn="${n}" class="${sel.includes(String(n)) ? 'on' : ''}">${n}</button>`).join('')}</div>`;
+  pop.innerHTML = `<div class="tph"><b>Tap the teeth</b><span class="stat">${sel.length ? sel.length + (sel.length > 1 ? ' teeth' : ' tooth') + ' · cost × ' + sel.length : 'patient\'s right ← → left'}</span><span class="sp"></span>
+    <button type="button" data-tx="kid" class="${pop.dataset.kid ? 'on' : ''}">Milk teeth</button><button type="button" data-tx="clear">Clear</button><button type="button" class="primary" data-tx="done">Done</button></div>
+    ${row(rows[0], 'Upper')}${row(rows[1], 'Lower')}`;
+}
+function closeTooth(){ const pop = $('#toothPop'); if (pop) pop.classList.remove('on'); toothFor = null; }
+document.addEventListener('focusin', e => { if (toothFor && e.target !== toothFor && !(e.target.closest && e.target.closest('#toothPop'))) closeTooth(); });
+document.addEventListener('click', e => { if (e.target.matches && e.target.matches('input[data-teeth]')){ if (toothFor !== e.target) toothPop(e.target); return; } if (toothFor && !e.target.closest('#toothPop')) closeTooth(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && toothFor) closeTooth(); });
+addEventListener('scroll', () => { if (!toothFor) return; const pop = $('#toothPop'), r = toothFor.getBoundingClientRect(); pop.style.top = (r.bottom + 6 + scrollY) + 'px'; }, true);
+function toothCost(el){                 // price of the chosen treatment × number of teeth
+  const row = el.closest('.srowf');
+  if (row){ const o = row.querySelector('[data-sf="type"]').selectedOptions[0], c = row.querySelector('[data-sf="cost"]'), n = teethCount(row.querySelector('[data-sf="tooth"]').value);
+    if (o && o.value && c){ c.value = (+o.dataset.cost || 0) * n; c.title = n > 1 ? `${inr(+o.dataset.cost || 0)} × ${n} teeth` : ''; } return; }
+  if (el.closest('#clTForm')){ const o = $('#tfType').selectedOptions[0]; if (o) $('#tfCost').value = (+o.dataset.cost || 0) * teethCount($('#tfTooth').value); }
+}
+document.addEventListener('input', e => { if (e.target.matches && e.target.matches('input[data-teeth]')) toothCost(e.target); });
+document.addEventListener('change', e => { if (e.target.matches && e.target.matches('[data-sf="type"],#tfType')) setTimeout(() => toothCost(e.target), 0); });
+
+/* reschedule by dragging an appointment tile to another time slot (day view) or another day (week view) */
+{ let dragA = null;
+  const clb = $('#clBody');
+  clb.addEventListener('dragstart', e => { const c = e.target.closest && e.target.closest('.achip[draggable=true]'); if (!c) return; dragA = c.dataset.appt; c.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', 'appt'); } catch(_){} });
+  clb.addEventListener('dragend', () => { dragA = null; document.querySelectorAll('.dragging,.dropok').forEach(x => x.classList.remove('dragging', 'dropok')); });
+  clb.addEventListener('dragover', e => { if (!dragA) return; const t = e.target.closest('[data-slot],[data-dday]'); document.querySelectorAll('.dropok').forEach(x => x !== t && x.classList.remove('dropok')); if (t){ e.preventDefault(); e.dataTransfer.dropEffect = 'move'; t.classList.add('dropok'); } });
+  clb.addEventListener('drop', async e => {
+    if (!dragA) return; const t = e.target.closest('[data-slot],[data-dday]'), id = dragA; dragA = null; if (!t) return; e.preventDefault();
+    const a = (cl.appts || []).find(x => x.id === id); if (!a) return;
+    const time = t.dataset.slot || a.time, date = t.dataset.dday || a.date;
+    if (time === a.time && date === a.date) return renderClinic();
+    if (date < todayKey) return info("Appointments can't be moved into the past."), renderClinic();
+    const clash = (cl.appts || []).find(x => x.id !== id && x.doctorId === a.doctorId && x.date === date && x.time === time && x.status !== 'cancelled');
+    if (clash && !confirm(`${dName(a.doctorId)} already has ${clash.patientName} at ${hm12(time)}. Move anyway?`)) return renderClinic();
+    try { await cloud.F.updateDoc(cDoc('appointments', id), {date, time, movedFrom:a.date + ' ' + a.time, movedAt:Date.now()}); Object.assign(a, {date, time}); info(`${a.patientName} moved to ${date === todayKey ? 'today' : fmtShort(date)} ${hm12(time)}.`); }
+    catch(err){ info('Could not move: ' + errText(err)); }
+    renderClinic();
+  });
+}
 $('#clBody').addEventListener('input', e => {
   const mr = e.target.closest('[data-mr]'); if (mr && e.target.matches('[data-mf]')){ medCalc(mr); const tt = $('#rxTot'); if (tt) tt.textContent = inr([...document.querySelectorAll('#rxMeds [data-mr]')].reduce((s, r) => s + parseInt((r.querySelector('b[data-mf="cost"]').textContent || '0').replace(/[^0-9]/g, '') || 0), 0)); }
   if (e.target.matches('#tlOut,[data-den],[data-dapp],#tlAck,#tlAckD')) tallyCalc();
@@ -4638,6 +4735,8 @@ $('#clBody').addEventListener('click', async e => {
 /* booking overlay */
 $('#clOv').addEventListener('click', e => {
   if (e.target.id === 'clOv' || e.target.closest('[data-ovclose]')){ $('#clOv').classList.remove('on'); cl.book = null; cl.sum = null; cl.bill = null; cl.cz = null; if (state.settings.view === 'clinic') renderClinic(); return; }
+  if (e.target.id === 'smNoCost' && cl.sum){ const on = e.target.checked; $('#smCostArea').hidden = on; $('#smSkipWrap').hidden = on; if (on) $('#smSkipDesc').checked = false;
+    const sb = $('#smSubmit'); if (sb) sb.textContent = on && cl.sum.completing ? 'Save & complete visit ✓' : cl.sum.completing || cl.sum.back === 'bill' ? 'Save & go to bill →' : 'Save'; if (on) $('#smNotes').focus(); return; }
   if (e.target.closest('#smAdd')){ const box = $('#smRows'), n = box.children.length; box.insertAdjacentHTML('beforeend', sumRow(n, cl.sum.appt)); return; }
   if (e.target.closest('[data-srdel]')){ e.target.closest('[data-sr]').remove(); return; }
   if (e.target.closest('#smMedAdd')){ const box = $('#smMeds'); box.insertAdjacentHTML('beforeend', medRow(box.children.length)); return; }
@@ -4708,8 +4807,8 @@ function sumRow(i, a, t){
   const types = cl.types.filter(x => x.active !== false || (t && x.id === t.typeId));
   const doc = t ? t.doctorId : a.doctorId, cons = (cl.doctors.find(x => x.id === doc) || {}).type === 'consultant';
   return `<div class="srowf" data-sr="${i}"${t ? ` data-tid="${esc(t.id)}"` : ''}>
-    <select data-sf="type">${t ? '' : '<option value="">— Treatment * —</option>'}${types.map(x => `<option value="${esc(x.id)}" data-cost="${+x.cost || 0}"${t && x.id === t.typeId ? ' selected' : ''}>${esc(x.name)}</option>`).join('')}</select>
-    <input data-sf="tooth" placeholder="Tooth / area" value="${t ? esc(t.tooth || '') : ''}">
+    <select data-sf="type" class="srch">${t ? '' : '<option value="">— Treatment * —</option>'}${types.map(x => `<option value="${esc(x.id)}" data-cost="${+x.cost || 0}"${t && x.id === t.typeId ? ' selected' : ''}>${esc(x.name)}</option>`).join('')}</select>
+    <input data-sf="tooth" data-teeth placeholder="🦷 Tooth no." autocomplete="off" value="${t ? esc(t.tooth || '') : ''}">
     <select data-sf="doc">${docOpts(doc, '— Doctor —')}</select>
     <input type="number" data-sf="cost" min="0" step="50" value="${t ? +t.cost || 0 : ''}" placeholder="Cost ₹ *">
     <input type="number" data-sf="disc" min="0" step="50" value="${t && +t.discount ? +t.discount : ''}" placeholder="Discount">
@@ -4720,7 +4819,7 @@ function sumRow(i, a, t){
 function medRow(i, m){
   const meds = (cl.meds || []).filter(x => x.active !== false || (m && x.id === m.medId)), d = (m && m.dose) || {};
   return `<div class="mrow" data-mr="${i}"${m ? ` data-tid="${esc(m.id)}"` : ''}>
-    <select data-mf="med"><option value="">— Medicine —</option>${meds.map(x => `<option value="${esc(x.id)}" data-price="${+x.price || 0}" data-unit="${esc(x.unit || 'Tablet')}"${m && x.id === m.medId ? ' selected' : ''}>${esc(x.name)} · ${inr(x.price)}/${esc((x.unit || 'Tablet').toLowerCase())}</option>`).join('')}</select>
+    <select data-mf="med" class="srch"><option value="">— Medicine —</option>${meds.map(x => `<option value="${esc(x.id)}" data-price="${+x.price || 0}" data-unit="${esc(x.unit || 'Tablet')}"${m && x.id === m.medId ? ' selected' : ''}>${esc(x.name)} · ${inr(x.price)}/${esc((x.unit || 'Tablet').toLowerCase())}</option>`).join('')}</select>
     <span class="dose">${DOSE.map(([k, l]) => `<label title="${l}"><input type="checkbox" data-mf="${k}"${d[k] ? ' checked' : ''}><span>${l}</span></label>`).join('')}</span>
     <input type="number" data-mf="days" min="1" max="120" value="${m ? +m.days || '' : ''}" placeholder="Days" title="How many days">
     <input type="number" data-mf="qty" min="0" value="${m ? +m.qty || '' : ''}" placeholder="Qty" title="Number of tablets: ticks × days (you can change it)">
@@ -4741,35 +4840,39 @@ function clSummaryForm(){
   return `<div class="ah"><button type="button" class="abk" data-smback style="margin:0" title="${back === 'bill' ? 'Back to the bill' : 'Back to the queue: the patient stays In chair'}">← Back</button><h2 style="font-size:16px;margin:0">What happened in this appointment?</h2><span class="sp"></span><button data-ovclose>Close</button></div>
     <p class="stat" style="margin:4px 0 10px"><b>${esc(a.patientName)}</b> · ${esc(fmtShort(a.date))} ${esc(hm12(a.time))} · ${esc(dName(a.doctorId))}${a.reason ? ' · ' + esc(a.reason) : ''}</p>
     <form id="clSumForm" novalidate>
-      ${w ? `<div class="fhead" style="margin:0 0 4px">Treatment done * <span class="stat">required, with its cost · billed to the patient · the doctor here is credited</span></div>
+      ${w ? `<label class="ckl nocost"><input type="checkbox" id="smNoCost"${a.noCost ? ' checked' : ''}> <b>No cost for this appointment</b>&nbsp;<span class="stat">e.g. review, consultation or dressing: no treatment or bill; the description below is then required</span></label>
+        <div id="smCostArea"${a.noCost ? ' hidden' : ''}>
+        <div class="fhead" style="margin:0 0 4px">Treatment done * <span class="stat">required, with its cost · billed to the patient · the doctor here is credited</span></div>
         <div id="smRows">${(TT.length ? TT : [null]).map((t, i) => sumRow(i, a, t)).join('')}</div>
         <button type="button" id="smAdd" style="margin-top:4px">+ Add treatment</button>
         <div class="fhead" style="margin:16px 0 4px">Medicines / tablets <span class="stat">tick when to take them and for how many days: the number of tablets and the cost are worked out and added to the bill</span></div>
         <div id="smMeds">${MM.map((m, i) => medRow(i, m)).join('')}</div>
-        <div class="btnrow"><button type="button" id="smMedAdd">+ Add medicine</button>${(cl.meds || []).filter(x => x.active !== false).length ? '' : '<span class="stat">Add your medicine price list in Clinic setup first.</span>'}<span class="sp"></span><span class="stat">Medicines total <b id="smMedTot">${inr(MM.reduce((s, m) => s + (+m.cost || 0), 0))}</b></span></div>`
+        <div class="btnrow"><button type="button" id="smMedAdd">+ Add medicine</button>${(cl.meds || []).filter(x => x.active !== false).length ? '' : '<span class="stat">Add your medicine price list in Clinic setup first.</span>'}<span class="sp"></span><span class="stat">Medicines total <b id="smMedTot">${inr(MM.reduce((s, m) => s + (+m.cost || 0), 0))}</b></span></div></div>`
       : '<p class="stat">Treatments and medicines are added by a doctor (you don\'t have Treatments access).</p>'}
       <label class="stat" style="display:block;margin-top:14px">Treatment plan description / clinical notes<textarea id="smNotes" rows="3" style="width:100%" placeholder="Complaint, findings, what was done, treatment plan, instructions given…">${esc(notes)}</textarea></label>
-      <label class="ckl" style="margin-top:6px"><input type="checkbox" id="smSkipDesc"> Skip the description for now: everyone gets a reminder "Treatment plan description needs to be updated for ${esc(a.patientName)}"</label>
+      <label class="ckl" id="smSkipWrap" style="margin-top:6px"${a.noCost ? ' hidden' : ''}><input type="checkbox" id="smSkipDesc"> Skip the description for now: everyone gets a reminder "Treatment plan description needs to be updated for ${esc(a.patientName)}"</label>
       ${back === 'bill' ? '' : `<div class="fhead" style="margin:12px 0 4px">Next visit</div>
       <div class="nvrow"><span class="nvck"><input type="checkbox" id="smNext"> Book the next visit</span><input type="date" id="smNDate" value="${shiftDay(todayKey, 7)}" min="${todayKey}"><input type="time" id="smNTime" value="${esc(a.time || '10:00')}" step="300"><input id="smNReason" placeholder="Reason, e.g. RCT 2nd sitting"></div>`}
-      <div class="btnrow" style="margin-top:14px"><button class="primary" type="submit">${completing || back === 'bill' ? 'Save & go to bill →' : 'Save'}</button></div>
+      <div class="btnrow" style="margin-top:14px"><button class="primary" type="submit" id="smSubmit">${a.noCost && completing ? 'Save & complete visit ✓' : completing || back === 'bill' ? 'Save & go to bill →' : 'Save'}</button></div>
     </form>`;
 }
 async function clSaveSummary(){
   const {F} = cloud, S = cl.sum; if (!S) return;
   const {appt:a, completing, back} = S, by = cloud.user.email || '', now = Date.now(), w = canW('treatments'), toBill = completing || back === 'bill';
-  const notes = ($('#smNotes') || {}).value.trim(), skipDesc = !!($('#smSkipDesc') && $('#smSkipDesc').checked);
-  const rows = w ? [...document.querySelectorAll('#smRows [data-sr]')].map(r => { const v = k => r.querySelector(`[data-sf="${k}"]`).value; return {tid:r.dataset.tid || '', typeId:v('type'), tooth:v('tooth').trim(), doctorId:v('doc'), costRaw:v('cost').trim(), cost:Math.max(0, +v('cost') || 0), discount:Math.max(0, +v('disc') || 0), status:v('status'), fee:Math.max(0, +v('fee') || 0)}; }) : [];
+  const noCost = !!($('#smNoCost') && $('#smNoCost').checked);
+  const notes = ($('#smNotes') || {}).value.trim(), skipDesc = !noCost && !!($('#smSkipDesc') && $('#smSkipDesc').checked);
+  if (noCost && !notes) return info('No cost for this appointment: write the description of what was done.');
+  const rows = w && !noCost ? [...document.querySelectorAll('#smRows [data-sr]')].map(r => { const v = k => r.querySelector(`[data-sf="${k}"]`).value; return {tid:r.dataset.tid || '', typeId:v('type'), tooth:v('tooth').trim(), doctorId:v('doc'), costRaw:v('cost').trim(), cost:Math.max(0, +v('cost') || 0), discount:Math.max(0, +v('disc') || 0), status:v('status'), fee:Math.max(0, +v('fee') || 0)}; }) : [];
   const filled = rows.filter(r => r.typeId);
-  if (w && toBill && !filled.length) return info('Add the treatment done with its cost: it is required.');
+  if (w && toBill && !noCost && !filled.length) return info('Add the treatment done with its cost: it is required.');
   if (filled.some(r => r.costRaw === '')) return info('Enter the cost for each treatment.');
   if (filled.some(r => !r.doctorId)) return info('Choose the doctor for each treatment.');
-  const meds = w ? [...document.querySelectorAll('#smMeds [data-mr]')].map(r => { const g = k => r.querySelector(`[data-mf="${k}"]`), o = g('med').selectedOptions[0];
+  const meds = w && !noCost ? [...document.querySelectorAll('#smMeds [data-mr]')].map(r => { const g = k => r.querySelector(`[data-mf="${k}"]`), o = g('med').selectedOptions[0];
     return {tid:r.dataset.tid || '', medId:g('med').value, dose:Object.fromEntries(DOSE.map(([k]) => [k, g(k).checked])), days:Math.max(0, +g('days').value || 0), qty:Math.max(0, +g('qty').value || 0), price:o && o.value ? +o.dataset.price || 0 : 0, unit:o && o.value ? o.dataset.unit || '' : ''}; }).filter(m => m.medId) : [];
   if (meds.some(m => !m.qty)) return info('For each medicine, tick when to take it and enter the number of days.');
   if (!notes && !skipDesc) return info('Write the treatment plan description, or tick "Skip the description for now".');
   try {
-    if (w){
+    if (w && !noCost){
       const keep = new Set(filled.map(r => r.tid).concat(meds.map(m => m.tid)).filter(Boolean));
       for (const t of (S.T || [])) if (!keep.has(t.id)) await F.deleteDoc(cDoc('treatments', t.id));
       const base = {patientId:a.patientId, patientName:a.patientName, appointmentId:a.id, date:a.date <= todayKey ? a.date : todayKey};
@@ -4785,16 +4888,19 @@ async function clSaveSummary(){
       }
     }
     const upd = notes ? {summaryPending:false, summary:{notes, by, at:now}} : {summaryPending:true, skippedBy:by};
-    if (completing) Object.assign(upd, {status:'billing', summarizedAt:now});
+    upd.noCost = noCost;
+    if (noCost && (S.T || []).some(t => t.status !== 'planned' && net(t) > 0)) return info('This visit already has treatments with a cost. Remove them first, or untick "No cost".');
+    if (completing) Object.assign(upd, noCost ? {status:'completed', summarizedAt:now, completedAt:now, billed:false} : {status:'billing', summarizedAt:now});
     await F.updateDoc(cDoc('appointments', a.id), upd);
     if ($('#smNext') && $('#smNext').checked){
       const nd = $('#smNDate').value, nt = $('#smNTime').value;
       if (nd && nt) await F.addDoc(cCol('appointments'), {patientId:a.patientId, patientName:a.patientName, doctorId:a.doctorId, date:nd, time:nt, duration:a.duration || 15, reason:$('#smNReason').value.trim() || 'Follow-up', status:'scheduled', createdAt:now, createdBy:by, followOf:a.id});
     }
     $('#clOv').classList.remove('on'); cl.sum = null;
+    if (noCost && completing){ info(`${a.patientName}'s visit is completed (no cost).`); clinicSync(true); renderClinic(); return; }
     info(notes ? 'Visit summary saved.' : `Saved. "Treatment plan description needs to be updated for ${a.patientName}" is on the Planning Board.`);
     clinicSync(true); renderClinic();
-    if (toBill){ if (canW('billing')) clOpenBill(Object.assign({}, a, upd)); else if (completing) info(`${a.patientName} is now "At billing": the front desk will take the payment.`); }
+    if (toBill && !noCost){ if (canW('billing')) clOpenBill(Object.assign({}, a, upd)); else if (completing) info(`${a.patientName} is now "At billing": the front desk will take the payment.`); }
   } catch(e){ info('Could not save: ' + errText(e)); }
 }
 
@@ -5287,6 +5393,7 @@ function drawBill(){
       <div class="payrow"><span>Paid in this visit</span><span>${visitPays.length ? '− ' + inr(paidSum(visitPays)) : inr(0)}</span></div>
       <div class="payrow"><span>Balance due now</span><span class="${due > 0 ? 'neg' : ''}">${inr(due)}</span></div></div>
     ${w ? `<form class="aform" id="clVBill" novalidate style="margin-top:10px">
+        <label>Bill date<input type="date" id="vbDate" value="${a.date <= todayKey ? a.date : todayKey}" max="${todayKey}" title="The day this payment is counted in collections and the daily tally"></label>
         <label>Amount (₹)<input type="number" id="vbAmt" min="1" value="${due > 0 ? due : ''}"></label>
         <label>Mode<select id="vbMode">${PMODES.map(([k, l]) => `<option value="${k}">${l}</option>`).join('')}</select></label>
         <label class="grow">Note<input id="vbNote" placeholder="e.g. OPG + consultation"></label>
@@ -5312,9 +5419,10 @@ function printVisitBill(){
 async function saveVisitPayment(){
   const {F} = cloud, B = cl.bill, a = B.appt, amount = Math.round(+$('#vbAmt').value || 0);
   if (amount <= 0) return info('Enter the amount received.');
+  if ((($('#vbDate') || {}).value || '') > todayKey) return info("The bill date can't be in the future.");
   try {
     const receiptNo = await nextNumber('receipt', 'R-', 5);
-    const x = {patientId:a.patientId, patientName:a.patientName, appointmentId:a.id, date:todayKey, amount, mode:$('#vbMode').value, doctorId:a.doctorId, note:$('#vbNote').value.trim(), receiptNo, createdAt:Date.now(), by:cloud.user.email || ''};
+    const x = {patientId:a.patientId, patientName:a.patientName, appointmentId:a.id, date:($('#vbDate') || {}).value || todayKey, amount, mode:$('#vbMode').value, doctorId:a.doctorId, note:$('#vbNote').value.trim(), receiptNo, createdAt:Date.now(), by:cloud.user.email || ''};
     const ref = await F.addDoc(cCol('payments'), x);
     B.P.push(Object.assign({id:ref.id}, x)); drawBill(); info(`${inr(amount)} received · ${receiptNo}`);
   } catch(e){ info('Could not save: ' + errText(e)); }
@@ -5733,9 +5841,20 @@ const hm = ms => { const m = Math.round((ms || 0) / 60000); return `${Math.floor
 const hms = ms => { const s = Math.max(0, Math.floor(ms / 1000)); return `${pad2(Math.floor(s / 3600))}:${pad2(Math.floor(s / 60) % 60)}:${pad2(s % 60)}`; };
 const inr = n => '₹' + Math.round(n || 0).toLocaleString('en-IN');
 const monthBounds = mk => { const [y, m] = mk.split('-').map(Number); return {s:dayKey(new Date(y, m - 1, 1)), e:dayKey(new Date(y, m, 0)), days:new Date(y, m, 0).getDate()}; };
-const attCfg = a => Object.assign({shiftStart:'09:00', shiftEnd:'18:00', salary:0, otMult:1}, (a && a.att) || {});
+const attCfg = a => Object.assign({shiftStart:'09:00', shiftEnd:'18:00', brk:0, salary:0, otMult:1}, (a && a.att) || {});
+const shiftTxt = c => c.brkS && c.brkE ? `${hm12(c.shiftStart)} – ${hm12(c.brkS)}, ${hm12(c.brkE)} – ${hm12(c.shiftEnd)}` : `${hm12(c.shiftStart)} – ${hm12(c.shiftEnd)}`;
+/* work timing fields (People → Add / Edit, Attendance → shift settings): start, end, unpaid break (e.g. 9:30–7:00 with a 60 min lunch) */
+const wtFields = (pre, c) => `<label>Work starts<input type="time" id="${pre}S" value="${esc(c.shiftStart)}"></label><label>Work ends<input type="time" id="${pre}E" value="${esc(c.shiftEnd)}"></label>
+  <label>Break from<input type="time" id="${pre}BS" value="${esc(c.brkS || '')}" title="Optional: lunch / break start, e.g. 3:00 PM"></label><label>Break to<input type="time" id="${pre}BE" value="${esc(c.brkE || '')}" title="Back from the break, e.g. 4:00 PM"></label>`;
+function wtRead(pre, prev){
+  const g = k => ($('#' + pre + k) || {}).value || '', S = g('S') || '09:00', E = g('E') || '18:00', BS = g('BS'), BE = g('BE');
+  if (toMin(E) <= toMin(S)) throw custom('Work end time must be after the start time.');
+  if (!!BS !== !!BE) throw custom('Enter both the break start and the break end, or leave both empty.');
+  if (BS && !(toMin(S) < toMin(BS) && toMin(BS) < toMin(BE) && toMin(BE) < toMin(E))) throw custom('The break must be inside the working hours, and end after it starts.');
+  return Object.assign({}, attCfg({att:prev || {}}), {shiftStart:S, shiftEnd:E, brkS:BS, brkE:BE, brk:BS ? toMin(BE) - toMin(BS) : 0});
+}
 const toMin = s => { const [h, m] = String(s || '0:0').split(':').map(Number); return h * 60 + m; };
-const shiftMs = c => Math.max(1, toMin(c.shiftEnd) - toMin(c.shiftStart)) * 60000;
+const shiftMs = c => Math.max(1, toMin(c.shiftEnd) - toMin(c.shiftStart) - (+c.brk || 0)) * 60000;
 const canManageAtt = () => { const oc = orgCtx(); return !!(oc && (oc.support || oc.role === 'orgadmin' || oc.role === 'manager')); };
 const attRO = () => !!(orgCtx() && orgCtx().support);          // Zenvora support: look, don't touch
 const isProxyMe = () => { const oc = orgCtx(); return !!(oc && !oc.support && feat('attendance') && oc.me && oc.me.attProxy); };
@@ -5846,7 +5965,7 @@ function attMine(){
     card = `<div class="punch${open ? ' isin' : ''}">
       <div>
         <div class="pg">${greet()}, ${esc(firstName(fullName(orgCtx().me || {}) || (cloud.user && cloud.user.displayName) || ''))}</div>
-        <div class="pd">${esc(fmtLong(todayKey))} · Shift ${esc(S.c.shiftStart)}–${esc(S.c.shiftEnd)} (${hm(S.sh)})</div>
+        <div class="pd">${esc(fmtLong(todayKey))} · Work ${esc(shiftTxt(S.c))} (${hm(S.sh)})</div>
         <div class="pstat">${open ? `<i class="dot s-done"></i>Checked in since ${esc(timeOnly(open.in))}` : ss.length ? `<i class="dot s-off"></i>Checked out at ${esc(timeOnly(ss[ss.length - 1].out))}` : '<i class="dot s-off"></i>Not checked in yet'}</div>
         <div class="psess">${ss.map(s => `<span>${esc(timeOnly(s.in))} → ${s.out ? esc(timeOnly(s.out)) : 'now'}</span>`).join('')}</div>
       </div>
@@ -5936,7 +6055,7 @@ function attTeam(){
     if (!a.active) today = '<span class="astat out">Disabled</span>';
     totPay += S.pay;
     return `<tr class="clk" data-staff="${esc(a.uid)}">
-      <td><b>${esc(fullName(a))}</b>${a.role !== 'employee' && ROLE_LABEL[a.role] ? `<em class="rtag">${ROLE_LABEL[a.role]}</em>` : ''}<div class="stat">${esc(titleOf(a) ? titleOf(a) + ' · ' : '')}${esc(attCfg(a).shiftStart)}–${esc(attCfg(a).shiftEnd)}</div></td>
+      <td><b>${esc(fullName(a))}</b>${a.role !== 'employee' && ROLE_LABEL[a.role] ? `<em class="rtag">${ROLE_LABEL[a.role]}</em>` : ''}<div class="stat">${esc(titleOf(a) ? titleOf(a) + ' · ' : '')}${esc(shiftTxt(attCfg(a)))}</div></td>
       <td>${today}</td><td class="num">${S.P}</td><td class="num">${S.offsUsed}/${OFFS_PER_MONTH}</td>
       <td class="num ${S.lop ? 'neg' : ''}">${S.lop || '—'}</td><td class="num">${hm(S.H)}</td>
       <td class="num ${S.OT ? 'ot' : ''}">${S.OT ? hm(S.OT) : '—'}</td><td class="num ${S.otDays ? 'ot' : ''}">${S.otDays || '—'}</td>
@@ -5965,8 +6084,7 @@ function attDetail(){
     <div class="acards">
       ${ro ? '' : `<div class="box"><h3>Shift${pay ? ' &amp; pay' : ''} settings</h3>
         <form class="aform" id="attCfgForm">
-          <label>Shift start<input type="time" id="cfS" value="${esc(c.shiftStart)}"></label>
-          <label>Shift end<input type="time" id="cfE" value="${esc(c.shiftEnd)}"></label>
+          ${wtFields('cf', c)}
           ${pay ? `<label>Monthly salary (₹)<input type="number" id="cfSal" min="0" step="100" value="${+c.salary || ''}" placeholder="e.g. 15000"></label>
           <label>Overtime rate<select id="cfOT">${[1, 1.5, 2].map(m => `<option value="${m}"${+c.otMult === m ? ' selected' : ''}>${m}× hourly</option>`).join('')}</select></label>` : ''}
           <button class="primary" type="submit">Save</button>
@@ -5996,8 +6114,8 @@ function attMonthEditor(S, a){
     html += `<tr data-ed="${k}" data-ids="${esc(ids)}"><td style="white-space:nowrap"><b>${esc(fmtShort(k))}</b></td>
       <td>${r.st === 'na' ? '<span class="stat">—</span>' : `<span class="astat ${r.st}">${ST_LABEL[r.st] || ''}</span>`}</td>
       <td class="edsc">${ss.map(x => edSess(hhmm(x.in), x.out ? hhmm(x.out) : '')).join('')}<button type="button" data-edadd title="Add a check-in / check-out">+ Session</button></td>
-      <td class="num">${ss.length ? hm(r.worked || 0) : '—'}</td>
-      <td style="white-space:nowrap">${ss.length ? '' : `<button type="button" data-edshift title="Fill with the shift timing">Shift ${esc(S.c.shiftStart)}–${esc(S.c.shiftEnd)}</button> `}<button type="button" class="primary" data-edsave disabled>Save</button></td></tr>`;
+      <td class="num">${ss.length ? hm(r.worked || 0) + (r.ot ? `<div class="ot" style="font-size:11.5px">+${hm(r.ot)} OT</div>` : '') : '—'}</td>
+      <td style="white-space:nowrap">${ss.length ? '' : `<button type="button" data-edshift title="Fill with the work timing: ${esc(shiftTxt(S.c))}">Fill shift</button> `}<button type="button" class="primary" data-edsave disabled>Save</button></td></tr>`;
   }
   return `<div class="box" id="attEditor"><h3>Edit attendance for ${esc(parseDay(att.month + '-01').toLocaleDateString([], {month:'long', year:'numeric'}))} <span class="sub">add, change or remove check-ins and check-outs for any day; several sessions a day are fine (e.g. lunch break)</span></h3>
     <div class="btnrow" style="margin:0 0 8px"><span class="stat">Change the times, then <b>Save</b> that day, or</span><button class="primary" id="edSaveAll" disabled>Save all changed days</button></div>
@@ -6053,7 +6171,7 @@ $('#attBody').addEventListener('click', async e => {
   const er = e.target.closest('[data-ed]');
   if (er && e.target.closest('[data-edadd]')){ const prev = [...er.querySelectorAll('[data-eout]')].pop(); e.target.closest('[data-edadd]').insertAdjacentHTML('beforebegin', edSess(prev && prev.value ? '' : '', '')); edDirty(er); er.querySelector('.eds1:last-of-type [data-ein]').focus(); return; }
   if (er && e.target.closest('[data-edrm]')){ e.target.closest('.eds1').remove(); edDirty(er); return; }
-  if (er && e.target.closest('[data-edshift]')){ const c = attCfg(att.accts.find(x => x.uid === att.detail)); e.target.closest('[data-edshift]').remove(); er.querySelector('[data-edadd]').insertAdjacentHTML('beforebegin', edSess(c.shiftStart, c.shiftEnd)); edDirty(er); return; }
+  if (er && e.target.closest('[data-edshift]')){ const c = attCfg(att.accts.find(x => x.uid === att.detail)); e.target.closest('[data-edshift]').remove(); er.querySelector('[data-edadd]').insertAdjacentHTML('beforebegin', c.brkS && c.brkE ? edSess(c.shiftStart, c.brkS) + edSess(c.brkE, c.shiftEnd) : edSess(c.shiftStart, c.shiftEnd)); edDirty(er); return; }
   if (er && e.target.closest('[data-edsave]')){ const b = e.target.closest('[data-edsave]'); b.disabled = true; if (!(await attSaveDay(er))) b.disabled = false; else { document.activeElement.blur(); att.key = ''; renderAttendance(); } return; }
   if (e.target.closest('#edSaveAll')){ const rows = [...document.querySelectorAll('#attBody [data-ed].dirty')]; let ok = 0;
     for (const r of rows){ if (await attSaveDay(r, true)) ok++; else break; }
@@ -6078,9 +6196,8 @@ $('#attBody').addEventListener('submit', async e => {
   if (attRO()) return;
   if (e.target.id === 'attCfgForm'){
     const prev = attCfg(att.accts.find(x => x.uid === uid));
-    const cfg = {shiftStart:$('#cfS').value || '09:00', shiftEnd:$('#cfE').value || '18:00',
-                 salary:$('#cfSal') ? Math.max(0, +$('#cfSal').value || 0) : +prev.salary || 0, otMult:$('#cfOT') ? +$('#cfOT').value || 1 : +prev.otMult || 1};
-    if (toMin(cfg.shiftEnd) <= toMin(cfg.shiftStart)) return info('Shift end must be after shift start.');
+    let cfg; try { cfg = wtRead('cf', prev); } catch(err){ return info(err.message); }
+    cfg.salary = $('#cfSal') ? Math.max(0, +$('#cfSal').value || 0) : +prev.salary || 0; cfg.otMult = $('#cfOT') ? +$('#cfOT').value || 1 : +prev.otMult || 1;
     try { await F.updateDoc(F.doc(fs, 'orgs', orgCtx().orgId, 'members', uid), {att:cfg}); const a = att.accts.find(x => x.uid === uid); if (a) a.att = cfg; document.activeElement.blur(); renderAttendance(); info('Saved shift and pay settings.'); }
     catch(err){ info('Could not save: ' + (err.code || err.message)); }
   }
