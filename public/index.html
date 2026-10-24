@@ -522,7 +522,8 @@ td.pcodec{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;white-space:
 #toothPop{position:absolute;z-index:200;display:none;background:var(--paper);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:10px 12px}
 #toothPop.on{display:block}.tph{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:8px}.tph .sp{flex:1}.tph button{padding:3px 10px;font-size:12px}.tph button.on{background:var(--accent);color:#fff}
 .trow2{display:flex;gap:3px;align-items:center;margin:4px 0}.tlab{width:42px;font-size:11px;color:var(--muted)}.tmid{width:2px;align-self:stretch;background:var(--line);margin:0 4px}
-.trow2 button{flex:1;min-width:0;padding:6px 0;font-size:12px;font-variant-numeric:tabular-nums;border-radius:8px}.trow2 button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.trow2 button{flex:1;min-width:0;padding:6px 0;font-size:12px;font-variant-numeric:tabular-nums;border-radius:8px}.trow2 button small{display:block;font-size:9.5px;opacity:.7;line-height:1}.trow2.kid button{padding:4px 0}
+.trow2 button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
 input.srchin.bad{border-color:var(--high)}
 .achip[draggable=true]{cursor:grab}.achip.dragging{opacity:.4}.scell.dropok,.aday.dropok{background:color-mix(in srgb,var(--accent) 12%,transparent);outline:2px dashed var(--accent);outline-offset:-2px}
 .acx{margin-top:8px;font-size:13px}.acx summary{cursor:pointer;color:var(--muted);font-weight:600;padding:4px 0}.acx .aq{margin-top:6px;opacity:.75}.acxr{padding:3px 0}
@@ -4484,29 +4485,39 @@ new MutationObserver(() => document.querySelectorAll('select.srch').forEach(enha
 const TROWS = [[18, 17, 16, 15, 14, 13, 12, 11, '|', 21, 22, 23, 24, 25, 26, 27, 28], [48, 47, 46, 45, 44, 43, 42, 41, '|', 31, 32, 33, 34, 35, 36, 37, 38]];
 const TROWS_KID = [[55, 54, 53, 52, 51, '|', 61, 62, 63, 64, 65], [85, 84, 83, 82, 81, '|', 71, 72, 73, 74, 75]];
 const isTooth = n => /^[1-8][1-8]$/.test(String(n)) && (+String(n)[0] <= 4 ? +String(n)[1] <= 8 : +String(n)[1] <= 5);
-const teethIn = s => String(s || '').split(/[\s,;+&]+/).filter(isTooth);
+const PEDO_L = 'ABCDE';                                   // primary teeth letters A (central incisor) … E (second molar)
+const toothTok = t => { const m = /^([1-8])([a-e])$/i.exec(t); return m ? String(+m[1] <= 4 ? +m[1] + 4 : +m[1]) + (PEDO_L.indexOf(m[2].toUpperCase()) + 1) : t; };   // Dentee styles 6D / 2D (quadrant + letter) → FDI 64
+const normTeeth = s => String(s || '').split(/[\s,;+&]+/).filter(Boolean).map(toothTok).join(', ');
+const teethIn = s => String(s || '').split(/[\s,;+&]+/).map(toothTok).filter(isTooth);
 const teethCount = s => { const n = teethIn(s).length; return n || 1; };
 let toothFor = null;
 function toothPop(inp){
   let pop = $('#toothPop'); if (!pop){ pop = document.createElement('div'); pop.id = 'toothPop'; document.body.append(pop);
     pop.addEventListener('mousedown', e => e.preventDefault());
     pop.addEventListener('click', e => { e.stopPropagation(); if (!toothFor) return; const b = e.target.closest('[data-tn]'), x = e.target.closest('[data-tx]');
-      if (b){ const cur = teethIn(toothFor.value), n = b.dataset.tn, other = String(toothFor.value || '').split(/[\s,;+&]+/).filter(t => t && !isTooth(t));
+      if (b){ const cur = teethIn(toothFor.value), n = b.dataset.tn, other = String(toothFor.value || '').split(/[\s,;+&]+/).filter(t => t && !isTooth(toothTok(t)));
         const next = cur.includes(n) ? cur.filter(t => t !== n) : cur.concat(n), order = TROWS.concat(TROWS_KID).flat().map(String);
         toothFor.value = next.sort((p, q) => order.indexOf(p) - order.indexOf(q)).concat(other).join(', '); toothFor.dispatchEvent(new Event('input', {bubbles:true})); drawTooth(); }
-      if (x){ if (x.dataset.tx === 'kid'){ pop.dataset.kid = pop.dataset.kid ? '' : '1'; drawTooth(); } if (x.dataset.tx === 'clear'){ toothFor.value = ''; toothFor.dispatchEvent(new Event('input', {bubbles:true})); drawTooth(); } if (x.dataset.tx === 'done') closeTooth(); } });
+      if (x){ if (x.dataset.tx === 'adult' || x.dataset.tx === 'pedo'){ pop.dataset.kid = x.dataset.tx === 'pedo' ? '1' : ''; drawTooth(); } if (x.dataset.tx === 'clear'){ toothFor.value = ''; toothFor.dispatchEvent(new Event('input', {bubbles:true})); drawTooth(); } if (x.dataset.tx === 'done') closeTooth(); } });
   }
-  toothFor = inp; drawTooth();
+  toothFor = inp;
+  { const cur = teethIn(inp.value), pid = cl.sum ? cl.sum.appt.patientId : cl.pid, pt = (cl.p && cl.p.id === pid ? cl.p : null) || (cl.allP || []).find(x => x.id === pid), age = pt ? parseInt(ageOf(pt)) : NaN;     // open on Pedo for primary teeth or a child under 12
+    pop.dataset.kid = cur.length ? (cur.some(t => +t[0] >= 5) ? '1' : '') : (age < 12 ? '1' : ''); }
+  drawTooth();
   const r = inp.getBoundingClientRect(), W = Math.min(560, innerWidth - 16);
   pop.style.width = W + 'px'; pop.style.left = Math.max(8, Math.min(r.left, innerWidth - W - 8)) + scrollX + 'px'; pop.style.top = (r.bottom + 6 + scrollY) + 'px'; pop.classList.add('on');
 }
 function drawTooth(){
   const pop = $('#toothPop'); if (!pop || !toothFor) return;
   const sel = teethIn(toothFor.value), rows = pop.dataset.kid ? TROWS_KID : TROWS;
-  const row = (r, lab) => `<div class="trow2"><span class="tlab">${lab}</span>${r.map(n => n === '|' ? '<i class="tmid"></i>' : `<button type="button" data-tn="${n}" class="${sel.includes(String(n)) ? 'on' : ''}">${n}</button>`).join('')}</div>`;
-  pop.innerHTML = `<div class="tph"><b>Tap the teeth</b><span class="stat">${sel.length ? sel.length + (sel.length > 1 ? ' teeth' : ' tooth') + ' · cost × ' + sel.length : 'patient\'s right ← → left'}</span><span class="sp"></span>
-    <button type="button" data-tx="kid" class="${pop.dataset.kid ? 'on' : ''}">Milk teeth</button><button type="button" data-tx="clear">Clear</button><button type="button" class="primary" data-tx="done">Done</button></div>
-    ${row(rows[0], 'Upper')}${row(rows[1], 'Lower')}`;
+  const kid = !!pop.dataset.kid, lab = n => kid ? `${n}<small>${PEDO_L[(n % 10) - 1]}</small>` : n;
+  const row = (r, l) => `<div class="trow2${kid ? ' kid' : ''}"><span class="tlab">${l}</span>${r.map(n => n === '|' ? '<i class="tmid"></i>' : `<button type="button" data-tn="${n}" class="${sel.includes(String(n)) ? 'on' : ''}" title="${kid ? 'Primary ' + n + ' (' + Math.floor(n / 10) + PEDO_L[(n % 10) - 1] + ')' : 'Permanent ' + n}">${lab(n)}</button>`).join('')}</div>`;
+  const other = sel.filter(t => (+t[0] >= 5) !== kid).length;
+  pop.innerHTML = `<div class="tph"><div class="seg mini"><button type="button" data-tx="adult" class="${kid ? '' : 'on'}">Adult (permanent)</button><button type="button" data-tx="pedo" class="${kid ? 'on' : ''}">Pedo (primary)</button></div>
+    <span class="stat">${sel.length ? sel.length + (sel.length > 1 ? ' teeth' : ' tooth') + ' · cost × ' + sel.length + (other ? ` (${other} on the ${kid ? 'Adult' : 'Pedo'} chart)` : '') : 'FDI numbers · patient\'s right ← → left'}</span><span class="sp"></span>
+    <button type="button" data-tx="clear">Clear</button><button type="button" class="primary" data-tx="done">Done</button></div>
+    ${row(rows[0], 'Upper')}${row(rows[1], 'Lower')}
+    ${kid ? '<div class="stat" style="margin-top:4px">Primary teeth: 55–51 · 61–65 (upper), 85–81 · 71–75 (lower); the letter is the old style (A = central incisor … E = 2nd molar), e.g. 64 = 6D.</div>' : ''}`;
 }
 function closeTooth(){ const pop = $('#toothPop'); if (pop) pop.classList.remove('on'); toothFor = null; }
 document.addEventListener('focusin', e => { if (toothFor && e.target !== toothFor && !(e.target.closest && e.target.closest('#toothPop'))) closeTooth(); });
@@ -5738,7 +5749,7 @@ async function dtPlan(S){
       createdAt:d0.getTime(), by:'Dentee import', imported:true, docAttached:true, notes:String(r.TeethTreatmentNote || '').trim()};
     if (DT_MED.test(name)){ const m = medFor(name), up = +m.price || 0, qty = total > 0 && up > 0 && Math.abs(total / up - Math.round(total / up)) < 0.01 ? Math.round(total / up) : 1;
       tr.push({id:'dt-t-' + (i + 1), d:Object.assign(base, {kind:'medicine', medId:m.id, typeId:'', typeName:m.name, unit:m.unit || 'Tablet', dose:{}, days:0, qty, unitPrice:qty === 1 ? total : up, cost:total, discount:0, tooth:''})}); }
-    else { const t = typeFor(name); tr.push({id:'dt-t-' + (i + 1), d:Object.assign(base, {typeId:t.id, typeName:t.name, tooth:String(r.Tooths || '').trim(), cost:total + disc, discount:disc})}); }
+    else { const t = typeFor(name); tr.push({id:'dt-t-' + (i + 1), d:Object.assign(base, {typeId:t.id, typeName:t.name, tooth:normTeeth(String(r.Tooths || '').trim()), cost:total + disc, discount:disc})}); }
   });
   // payments
   const MODE = m => /cash/i.test(m) ? 'cash' : /google|gpay|paytm|phone ?pe|upi/i.test(m) ? 'upi' : /credit/i.test(m) ? 'ccard' : /card/i.test(m) ? 'card' : /cheque|check/i.test(m) ? 'cheque' : /neft/i.test(m) ? 'neft' : /rtgs/i.test(m) ? 'rtgs' : /bank|transfer|imps/i.test(m) ? 'bank' : 'cash';
