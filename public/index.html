@@ -459,7 +459,8 @@ td.pcodec{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;white-space:
 .htabs :is(button,a){border:0;background:none;border-radius:0;padding:8px 12px;color:var(--muted);font-weight:550;white-space:nowrap;box-shadow:inset 0 -2px 0 transparent}
 .htabs :is(button,a):hover{color:var(--ink)}
 .htabs :is(button,a).on{color:var(--accent-ink);box-shadow:inset 0 -2px 0 var(--accent)}
-.rangebar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.rangebar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:12px}.rangebar select{width:auto;padding:5px 8px}
+.rpdates{display:inline-flex;align-items:center;gap:4px}.rpdates input{padding:4px 6px;width:auto}.rpdates i{color:var(--muted);font-style:normal}
 .rangebar label{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
 .rangebar button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
 .rpnav button{min-width:30px}.rangebar .rpnav button.on{background:var(--accent);color:#fff}
@@ -534,6 +535,8 @@ td.pcodec{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;white-space:
 .aday.today{box-shadow:inset 0 0 0 2px var(--accent-ink)}
 .adh{font-weight:650;font-size:12px;cursor:pointer;padding:2px 4px}
 .aday .achip{max-width:none;flex:none}
+.bkmode{display:inline-flex;margin-bottom:4px}.npbox{display:flex;flex-wrap:wrap;gap:8px 10px;padding:10px;border:1px solid var(--line);border-radius:12px;background:color-mix(in srgb,var(--accent) 4%,var(--paper))}
+.npbox label{display:flex;flex-direction:column}.npbox label.grow{flex:1;min-width:160px}.npbox label.full{flex-basis:100%}
 .bkres{display:flex;flex-direction:column;gap:3px;margin:4px 0}
 .bkres button{text-align:left;text-transform:none;letter-spacing:0;font-size:13px}
 .phrow{display:flex;gap:16px;flex-wrap:wrap}
@@ -621,6 +624,22 @@ button.aback{font-size:12px;color:var(--muted)}
 .tdiff.ok{background:color-mix(in srgb,var(--done) 12%,var(--paper));color:var(--done)}
 .tdiff.bad{background:color-mix(in srgb,var(--high) 12%,var(--paper));color:var(--high)}
 .ack{display:flex;gap:6px;align-items:center;margin-top:8px;font-size:13px}
+.ack.tick{padding:8px 10px;border:1px solid var(--line);border-radius:10px;cursor:pointer;font-weight:600}
+.ack.tick.on{background:color-mix(in srgb,var(--done) 14%,var(--paper));border-color:var(--done);color:var(--done)}
+.tdiff.wait{background:var(--panel);color:var(--muted)}
+.topen{display:flex;flex-wrap:wrap;gap:10px 24px;align-items:center;margin-bottom:12px}.topen .denoms{flex:1;margin:0}
+.tob{display:flex;flex-direction:column}.tob>span:first-child{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700}
+.tob .big{font-size:28px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.15}
+.dchips{display:flex;flex-wrap:wrap;gap:6px;flex:1}.dchip{padding:3px 9px;border-radius:999px;background:var(--panel);font-size:12.5px;font-weight:600;font-variant-numeric:tabular-nums}
+.tally+.tally{margin-top:12px}.tsum{border-top:1px solid var(--line);margin-top:6px;padding-top:6px}.tsum b{font-size:16px}
+.dtbl{width:100%;border-collapse:collapse;font-size:13px}.dtbl td,.dtbl th{padding:6px 4px;border-bottom:1px solid var(--line);vertical-align:top}.dtbl th{font-size:11.5px;color:var(--muted);font-weight:600}
+.dtbl details{font-size:12px}.dtbl .num{text-align:right}.dstat{font-weight:700;width:70px;text-align:right}.dstat.okc{color:var(--done)}
+.cvh{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.cvh .sp{flex:1}.seg.mini button{padding:4px 10px;font-size:12.5px}
+.ccal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;margin:6px 0 12px}.cch{font-size:11px;color:var(--muted);font-weight:700;text-align:center}
+.ccd{min-height:58px;border:1px solid var(--line);border-radius:8px;padding:4px 6px;font-size:12px;display:flex;flex-direction:column;background:var(--paper)}.ccd span{color:var(--muted)}
+.ccd.on{cursor:pointer;background:color-mix(in srgb,var(--accent) 8%,var(--paper));border-color:color-mix(in srgb,var(--accent) 40%,var(--line))}.ccd.on b{font-size:12px}.ccd em{font-style:normal;font-variant-numeric:tabular-nums}
+.ccd.sel{outline:2px solid var(--accent)}.ccd.td span{color:var(--accent);font-weight:800}input.saved{outline:2px solid var(--done)}
+tr.sel td{background:color-mix(in srgb,var(--accent) 7%,transparent)}
 .tdig{grid-column:1/-1}.tdig h3 .stat{font-weight:400;margin-left:6px}
 .dmode{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:10px}
 .dmh{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}.dmh .sp{flex:1}
@@ -3080,7 +3099,7 @@ const canW = p => can(p) === true;                      // may change things (su
 const clinicAny = () => CPERMS.some(([p]) => can(p));
 const TSTATUS = {planned:['Planned', 'pend'], progress:['In progress', 'prog'], completed:['Completed', 'on']};
 const ASTATUS = {scheduled:'Scheduled', waiting:'Waiting', engaged:'In chair', billing:'At billing', completed:'Completed', missed:'Missed', cancelled:'Cancelled'};
-const PMODES = [['cash', 'Cash'], ['upi', 'UPI / GPay'], ['card', 'Card'], ['cheque', 'Cheque'], ['neft', 'NEFT'], ['rtgs', 'RTGS'], ['bank', 'Bank transfer']];
+const PMODES = [['cash', 'Cash'], ['upi', 'UPI / GPay'], ['card', 'Card'], ['ccard', 'Credit card'], ['cheque', 'Cheque'], ['neft', 'NEFT'], ['rtgs', 'RTGS'], ['bank', 'Bank transfer']];
 const MED_UNITS = ['Tablet', 'Capsule', 'Syrup (bottle)', 'Gel / tube', 'Mouthwash (bottle)', 'Injection', 'Other'];
 const DEFAULT_MEDS = [['Amoxicillin 500 mg', 8, 'Capsule'], ['Amoxicillin + Clavulanate 625 mg', 20, 'Tablet'], ['Metronidazole 400 mg', 2, 'Tablet'], ['Ibuprofen 400 mg', 2, 'Tablet'], ['Paracetamol 650 mg', 2, 'Tablet'], ['Aceclofenac + Paracetamol', 5, 'Tablet'], ['Ketorolac 10 mg', 4, 'Tablet'], ['Pantoprazole 40 mg', 8, 'Tablet'], ['Chlorhexidine mouthwash', 120, 'Mouthwash (bottle)'], ['Metrogyl DG gel', 90, 'Gel / tube']];
 const DEFAULT_TYPES = [['Consultation', 200], ['OPG X-ray', 400], ['IOPA X-ray', 150], ['Scaling & polishing', 1000], ['Filling', 1200], ['Root canal (RCT)', 4500], ['Extraction', 800], ['Crown', 6000], ['Implant', 30000], ['Braces / aligners', 35000], ['Dentures', 12000], ['Teeth whitening', 8000]];
@@ -3148,7 +3167,7 @@ const CI = {
   assists:'<path d="M5.5 7.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM1.5 14c.3-2.6 1.8-4 4-4s3.7 1.4 4 4M10.5 8.5l1.6 1.6 3-3.2"/>',
   setup:'<circle cx="8" cy="8" r="2.2"/><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M3.4 12.6l1.4-1.4M11.2 4.8l1.4-1.4"/>'};
 const CSECS = [['patients', 'Patients', () => can('patients') || can('treatments') || can('billing')], ['appointments', 'Appointments', () => can('appointments') || can('treatments')],
-  ['attendance', 'Attendance', () => feat('attendance')], ['accounts', 'Accounts', () => can('accounts') || can('petty') || can('tally')], ['reports', 'Reports', () => can('reports') || can('doctorReports')], ['assists', 'Patient assists', () => !!(orgCtx() && !orgCtx().support)], ['setup', 'Clinic setup', () => can('setup')]];
+  ['attendance', 'Attendance', () => feat('attendance')], ['accounts', 'Accounts', () => can('accounts') || can('petty') || can('tally') || isOwnerLike()], ['reports', 'Reports', () => can('reports') || can('doctorReports')], ['assists', 'Patient assists', () => !!(orgCtx() && !orgCtx().support)], ['setup', 'Clinic setup', () => can('setup')]];
 
 function renderClinic(){
   const oc = orgCtx(); if (!oc || !feat('clinic') || window.__ordDrag) return;
@@ -3190,7 +3209,9 @@ function loadAllPatients(force){
 }
 async function bumpCounter(){          // new patients continue after the highest imported patient number
   if (!isOwner() || !cl.allP) return;
-  const max = Math.max(0, ...cl.allP.filter(p => p.imported).map(p => codeNo(p.code)).filter(isFinite)); if (!max) return;
+  const imp = cl.allP.filter(p => p.imported), max = Math.max(0, ...imp.map(p => codeNo(p.code)).filter(isFinite)); if (!max) return;
+  if (!(cl.settings || {}).codeFormat){ const pre = (String((imp.find(p => /^[A-Za-z]+\d+$/.test(p.code || '')) || {}).code || '').match(/^[A-Za-z]+/) || [''])[0];
+    if (pre) cloud.F.setDoc(cDoc('clinicMeta', 'settings'), {codeFormat:'compact', codePrefix:pre}, {merge:true}).catch(() => {}); }
   const {F} = cloud, ref = cDoc('clinicMeta', 'counter');
   try { await F.runTransaction(cloud.fs, async tx => { const s2 = await tx.get(ref), cur = (s2.exists() && s2.data().patient) || 0; if (cur < max) tx.set(ref, {patient:max}, {merge:true}); }); } catch(e){}
 }
@@ -3323,7 +3344,7 @@ async function clSavePatient(){
     else {
       const dup = await F.getDocs(F.query(cCol('patients'), F.where('keys', 'array-contains', d.phone.replace(/\D/g, '')), F.limit(3)));
       if (!dup.empty && !confirm(`${dup.docs.map(x => pName(x.data())).join(', ')} already has this phone number. Register a new patient anyway?`)) return;
-      d.code = await nextNumber('patient', (cl.settings.prefix || 'PT') + '-', 6);
+      d.code = await newPatientCode();
       d.keys = searchKeys(d); d.createdAt = Date.now(); d.createdDay = todayKey; d.createdBy = cloud.user.email || '';
       const ref = await F.addDoc(cCol('patients'), d);
       info(`${pName(d)} registered as ${d.code}.`); cl.newP = false; document.activeElement.blur(); clOpenPatient(ref.id);
@@ -3574,8 +3595,19 @@ function clBookForm(){
   const b = cl.book, w = b.id ? (cl.appts || []).find(a => a.id === b.id) || b : b;
   return `<div class="ah"><h2 style="font-size:16px;margin:0">${b.id ? 'Edit appointment' : 'New appointment'}</h2><span class="sp"></span><button data-ovclose>Close</button></div>
     <form class="aform" id="clBookForm" novalidate style="margin-top:10px">
-      <label class="grow full">Patient${b.patientId ? `<input value="${esc(b.patientName)}" disabled>` : `<input id="bkQ" placeholder="Type name or phone to search…" autocomplete="off"><div id="bkRes" class="bkres"></div>
-        <span class="stat" style="text-transform:none;letter-spacing:0">New patient? Fill both:</span><span class="btnrow"><input id="bkNewName" placeholder="Full name" style="flex:1"><input id="bkNewPhone" placeholder="Mobile" style="flex:1"></span>`}</label>
+      ${b.patientId ? `<label class="grow full">Patient<input value="${esc(b.patientName)}" disabled></label>`
+      : `<div class="full seg bkmode"><button type="button" data-bkmode="old" class="${b.mode !== 'new' ? 'on' : ''}">Existing patient</button><button type="button" data-bkmode="new" class="${b.mode === 'new' ? 'on' : ''}">+ New patient</button></div>
+        ${b.mode === 'new' ? `<div class="full npbox">
+          <label>Title<select id="npTitle">${['', 'Mr.', 'Mrs.', 'Ms.', 'Miss', 'Master', 'Baby', 'Dr.'].map(x => `<option>${x}</option>`).join('')}</select></label>
+          <label class="grow">First name *<input id="npFirst" autocomplete="off"></label><label class="grow">Last name<input id="npLast" autocomplete="off"></label>
+          <label>Gender<select id="npGender"><option value=""></option><option>Female</option><option>Male</option><option>Other</option></select></label>
+          <label>Date of birth<input type="date" id="npDob" max="${todayKey}"></label><label>or Age<input type="number" id="npAge" min="0" max="120" style="width:80px"></label>
+          <label>Mobile *<input id="npPhone" inputmode="tel" autocomplete="off"></label><label>Other phone<input id="npPhone2" inputmode="tel"></label>
+          <label class="grow">Email<input id="npEmail" type="email"></label>
+          <label class="grow full">Address<input id="npAddr"></label><label>City<input id="npCity"></label><label>Pincode<input id="npPin" style="width:100px"></label>
+          <label class="grow">Referred by<input id="npRef" placeholder="e.g. friend, Google, camp"></label>
+          <label class="grow full">Allergies / medical alerts<input id="npAll" placeholder="e.g. Penicillin, diabetic, on blood thinners"></label></div>`
+        : `<label class="grow full">Search patient<input id="bkQ" placeholder="Type name, phone or patient code…" autocomplete="off"><div id="bkRes" class="bkres"></div></label>`}`}
       <label class="grow">Doctor<select id="bkDoc">${docOpts(w.doctorId || cl.aDoc || '', '— Select —')}</select></label>
       <label>Date<input type="date" id="bkDate" value="${esc(w.date || cl.aDate)}"></label>
       <label>Time<input type="time" id="bkTime" step="300" value="${esc(w.time || b.time || '10:00')}"></label>
@@ -3583,6 +3615,11 @@ function clBookForm(){
       <label class="grow full">Reason<input id="bkReason" value="${esc(w.reason || '')}" placeholder="e.g. Toothache, RCT 2nd sitting, review"></label>
       <div class="btnrow full"><button class="primary" type="submit">${b.id ? 'Save' : 'Book'}</button></div>
     </form>`;
+}
+async function newPatientCode(){          // same style as the clinic's existing numbers (imported Dentee codes: ADC00482)
+  const st = cl.settings || {};
+  if (st.codeFormat === 'compact') return nextNumber('patient', st.codePrefix || st.prefix || 'PT', 5);
+  return nextNumber('patient', (st.prefix || 'PT') + '-', 6);
 }
 function clOpenBook(o){ cl.book = o; $('#clOv').classList.add('on'); $('#clOvBody').innerHTML = clBookForm(); const q = $('#bkQ'); if (q) q.focus(); }
 async function clSaveBook(){
@@ -3592,13 +3629,22 @@ async function clSaveBook(){
   if (!d.date || !d.time) return info('Choose the date and time.');
   try {
     if (!b.patientId){
-      const nm = ($('#bkNewName') || {}).value || '', ph = (($('#bkNewPhone') || {}).value || '').replace(/[^\d+]/g, '');
-      if (!nm.trim()) return info('Pick a patient from the search, or type a new patient\'s name and mobile.');
-      if (!/^\+?\d{7,15}$/.test(ph)) return info('Enter the new patient\'s mobile number.');
+      if (b.mode !== 'new') return info('Search and pick the patient, or switch to "+ New patient".');
+      const v = id => (($('#' + id) || {}).value || '').trim(), ph = v('npPhone').replace(/[^\d+]/g, '');
+      if (!v('npFirst')) return info('Enter the new patient\'s first name.');
+      if (!/^\+?\d{7,15}$/.test(ph)) return info('Enter a valid mobile number for the new patient.');
       if (!canW('patients')) return info('You can\'t register new patients. Ask someone with Patients access.');
-      const dd = cl.doctors.find(x => x.id === d.doctorId) || {}, parts = nm.trim().split(/\s+/), p = {first:parts[0], last:parts.slice(1).join(' '), phone:ph, primaryDoctorId:dd.type === 'consultant' ? '' : d.doctorId, updatedAt:Date.now(), createdAt:Date.now(), createdDay:todayKey, createdBy:cloud.user.email || ''};
-      p.code = await nextNumber('patient', (cl.settings.prefix || 'PT') + '-', 6); p.keys = searchKeys(p);
+      const dup = await F.getDocs(F.query(cCol('patients'), F.where('keys', 'array-contains', ph.replace(/\D/g, '')), F.limit(3)));
+      if (!dup.empty && !confirm(`${dup.docs.map(x => pName(x.data()) + ' (' + (x.data().code || '') + ')').join(', ')} already has this mobile number. Register a new patient anyway?`)) return;
+      const dd = cl.doctors.find(x => x.id === d.doctorId) || {}, now = Date.now();
+      const p = {title:v('npTitle'), first:v('npFirst'), last:v('npLast'), gender:v('npGender'), dob:v('npDob'), phone:ph, phone2:v('npPhone2').replace(/[^\d+]/g, ''), email:v('npEmail').toLowerCase(),
+        address:v('npAddr'), city:v('npCity'), pincode:v('npPin'), referredBy:v('npRef'), allergies:v('npAll'), occupation:'', notes:'', bloodGroup:'',
+        primaryDoctorId:dd.type === 'consultant' ? '' : d.doctorId, updatedAt:now, createdAt:now, createdDay:todayKey, createdBy:cloud.user.email || ''};
+      if (!p.dob && v('npAge')){ p.ageYears = +v('npAge'); p.ageAt = now; }
+      p.code = await newPatientCode(); p.keys = searchKeys(p);
       const ref = await F.addDoc(cCol('patients'), p); b.patientId = ref.id; b.patientName = pName(p);
+      if (cl.allP) cl.allP.push(Object.assign({id:ref.id}, p));
+      info(`${pName(p)} registered as ${p.code}.`);
     }
     const clash = (cl.appts || []).find(a => a.id !== b.id && a.doctorId === d.doctorId && a.date === d.date && a.status !== 'cancelled' && Math.abs(toMin(a.time) - toMin(d.time)) < Math.max(+a.duration || 15, d.duration));
     if (clash && !confirm(`${dName(d.doctorId)} already has ${clash.patientName} at ${hm12(clash.time)}. Book anyway?`)) return;
@@ -3634,18 +3680,17 @@ function saveOrd(k, keys){
 })();
 
 /* ---------- date range: Today or a custom From / To ---------- */
-function rangeBar(o, id){
-  const k = o.kind, grp = true, chart = true;
+function rangeBar(o, id){             // one compact line: group · ‹ Today › · from – to · filters (Table / Chart sits in the report header)
+  const k = o.kind;
   return `<div class="rangebar" data-range="${id}">
-    ${grp ? `<label>Type<select data-rpgroup>${[['day', 'Daily'], ['month', 'Monthly'], ['year', 'Yearly']].map(([v, l]) => `<option value="${v}"${o.group === v ? ' selected' : ''}>${l}</option>`).join('')}</select></label>` : ''}
-    <span class="daynav rpnav"><button data-rpshift="-1" title="Previous ${o.group === 'month' ? 'period' : o.from === o.to ? 'day' : 'period'}">‹</button><button data-rp="today" class="${o.preset === 'today' ? 'on' : ''}">Today</button><button data-rpshift="1" title="Next"${o.to >= todayKey ? ' disabled' : ''}>›</button></span><span class="stat">or</span>
-    <label>From <input type="date" data-rf value="${o.from}" max="${todayKey}"></label><label>To <input type="date" data-rt value="${o.to}" max="${todayKey}"></label>
-    <button class="primary" data-rpgo>View</button>
-    ${chart ? `<div class="seg rpv"><button data-rpv="table" class="${o.view !== 'chart' ? 'on' : ''}">▦ Tabular</button><button data-rpv="chart" class="${o.view === 'chart' ? 'on' : ''}">📊 Chart</button></div>` : ''}
-    ${k === 'collection' ? `<label>Mode<select data-rpmode><option value="">All modes</option>${PMODES.map(([v, l]) => `<option value="${v}"${o.mode === v ? ' selected' : ''}>${l}</option>`).join('')}</select></label>` : ''}
-    ${grp ? `<label>Doctor<select data-rpdoc><option value="">All doctors</option>${cl.doctors.map(d => `<option value="${esc(d.id)}"${o.dfil === d.id ? ' selected' : ''}>${esc(d.name)}</option>`).join('')}</select></label>` : ''}
+    <select data-rpgroup title="Show by">${[['day', 'Daily'], ['month', 'Monthly'], ['year', 'Yearly']].map(([v, l]) => `<option value="${v}"${o.group === v ? ' selected' : ''}>${l}</option>`).join('')}</select>
+    <span class="daynav rpnav"><button data-rpshift="-1" title="Previous">‹</button><button data-rp="today" class="${o.preset === 'today' ? 'on' : ''}">Today</button><button data-rpshift="1" title="Next"${o.to >= todayKey ? ' disabled' : ''}>›</button></span>
+    <span class="rpdates"><input type="date" data-rf value="${o.from}" max="${todayKey}" title="From" aria-label="From"><i>–</i><input type="date" data-rt value="${o.to}" max="${todayKey}" title="To" aria-label="To"><button class="primary" data-rpgo title="Show this range">Go</button></span>
+    ${k === 'collection' ? `<select data-rpmode title="Payment mode"><option value="">All modes</option>${PMODES.map(([v, l]) => `<option value="${v}"${o.mode === v ? ' selected' : ''}>${l}</option>`).join('')}</select>` : ''}
+    <select data-rpdoc title="Doctor"><option value="">All doctors</option>${cl.doctors.map(d => `<option value="${esc(d.id)}"${o.dfil === d.id ? ' selected' : ''}>${esc(d.name)}</option>`).join('')}</select>
   </div>`;
 }
+const rpViewToggle = v => `<div class="seg mini rpv" title="Table or chart"><button data-rpv="table" class="${v !== 'chart' ? 'on' : ''}" title="Table">☰</button><button data-rpv="chart" class="${v === 'chart' ? 'on' : ''}" title="Chart">📊</button></div>`;
 /* reports: group by day / month / year, and a stacked bar chart */
 const RP_COLORS = ['#0F766E', '#6366F1', '#F59E0B', '#EC4899', '#0EA5E9', '#84CC16', '#A855F7', '#EF4444'];
 const inrK = n => { n = Math.round(n || 0); return n >= 1e7 ? '₹' + (n / 1e7).toFixed(1) + 'Cr' : n >= 1e5 ? '₹' + (n / 1e5).toFixed(1) + 'L' : n >= 1e3 ? '₹' + (n / 1e3).toFixed(1) + 'k' : '₹' + n; };
@@ -3704,7 +3749,7 @@ function commitStatus(mk, led){
 }
 const ACC_TABS = [['overview', 'Overview', 'accounts'], ['tally', 'Daily tally', 'tally'], ['expenses', 'Clinic expenses', 'accounts'], ['petty', 'Petty cash', 'petty'],
   ['lab', 'Lab', 'accounts'], ['materials', 'Materials', 'accounts'], ['consultants', 'Consultants', 'accounts'], ['setup', 'Commitments & categories', 'accounts'], ['import', 'Past data & audit', 'accounts']];
-const accTabs = () => ACC_TABS.filter(t => can(t[2]) || (t[2] !== 'accounts' && can('accounts')));
+const accTabs = () => ACC_TABS.filter(t => can(t[2]) || (t[2] !== 'accounts' && can('accounts')) || (t[0] === 'consultants' && isOwnerLike()));
 function clAccLoad(){
   const {F} = cloud, a = cl.acc;
   if (!a.month) a.month = todayKey.slice(0, 7);
@@ -3712,7 +3757,7 @@ function clAccLoad(){
   if (a.key === key) return; a.key = key; a.d = null;
   const again = () => { if (a.key === key && state.settings.view === 'clinic' && cl.sec === 'accounts') renderClinic(); };
   const q = (c, ...w) => F.getDocs(F.query(cCol(c), ...w)).then(docsOf);
-  const W = F.where, full = can('accounts');
+  const W = F.where, full = can('accounts') || (a.tab === 'consultants' && isOwnerLike());
   const from = mShift(a.month, -5) + '-01', to = mEnd(a.month);
   const jobs = {};
   if (full){
@@ -3724,11 +3769,14 @@ function clAccLoad(){
     jobs.cfeesAll = q('treatments', W('consultantFee', '>', 0));
     jobs.expAll = q('ledger', W('kind', '==', 'expense'));
   }
+  if (full && a.tab === 'consultants') jobs.mAppts = q('appointments', W('date', '>=', a.month + '-01'), W('date', '<=', mEnd(a.month)));
   if (full || can('petty')){ jobs.pin = q('ledger', W('kind', '==', 'petty')); jobs.pout = q('ledger', W('kind', '==', 'pettyspend')); }
   if (a.tab === 'tally' && (full || can('tally'))){
     const d = a.tday || todayKey;
     jobs.tPay = q('payments', W('date', '==', d)); jobs.tExp = q('ledger', W('kind', '==', 'expense'), W('date', '==', d));
-    jobs.tallies = q('tallies', W('date', '>=', shiftDay(d, -40)), W('date', '<=', d));
+    const m0 = d.slice(0, 7) + '-01', lo = shiftDay(d, -40) < m0 ? shiftDay(d, -40) : m0;
+    jobs.tallies = q('tallies', W('date', '>=', lo), W('date', '<=', mEnd(d.slice(0, 7))));
+    jobs.mPay = q('payments', W('date', '>=', m0), W('date', '<=', mEnd(d.slice(0, 7))));
   }
   const ks = Object.keys(jobs);
   Promise.all(ks.map(k => jobs[k])).then(vals => {
@@ -3884,17 +3932,89 @@ function accConsultants(d){
   const rows = cons.map(c => {
     const feesM = d.fees.filter(t => t.doctorId === c.id && inM(t)).reduce((s, t) => s + feeOf(t), 0) + paidSum(d.led.filter(x => x.kind === 'expense' && x.doctorId === c.id && inM(x)));
     const feesAll = d.cfeesAll.filter(t => t.doctorId === c.id).reduce((s, t) => s + feeOf(t), 0) + paidSum(d.cfeeManual.filter(x => x.doctorId === c.id)), paid = paidSum(d.cpay.filter(x => x.doctorId === c.id)), bal = feesAll - paid;
-    return `<tr data-cons="${esc(c.id)}" class="clk"><td><b>${esc(c.name)}</b><span class="sub2">${esc(c.specialty || 'Consultant')}${c.phone ? ' · ' + esc(c.phone) : ''}</span></td><td class="num">${inr(feesM)}</td><td class="num">${inr(feesAll)}</td><td class="num">${inr(paid)}</td><td class="num"><b class="${bal > 0 ? 'neg' : ''}">${inr(bal)}</b></td>
-      <td>${w ? `<div class="uact"><button data-cfee>+ Fee</button><button class="primary" data-cpay data-bal="${Math.max(0, bal)}">Pay</button></div>` : ''}</td></tr>`; }).join('');
-  const sel = a.cf && cons.some(c => c.id === a.cf) ? a.cf : (cons[0] || {}).id;
+    return `<tr data-cons="${esc(c.id)}" class="clk${c.id === (a.cf && cons.some(x => x.id === a.cf) ? a.cf : (cons[0] || {}).id) ? ' sel' : ''}"><td><b>${esc(c.name)}</b><span class="sub2">${esc(c.specialty || 'Consultant')}${c.phone ? ' · ' + esc(c.phone) : ''}</span></td><td class="num">${inr(feesM)}</td><td class="num">${inr(feesAll)}</td><td class="num">${inr(paid)}</td><td class="num"><b class="${bal > 0 ? 'neg' : ''}">${inr(bal)}</b></td>
+      <td>${canW('accounts') ? `<div class="uact"><button data-cfee>+ Fee</button><button class="primary" data-cpay data-bal="${Math.max(0, bal)}">Pay</button></div>` : ''}</td></tr>`; }).join('');
+  const sel = a.cf && cons.some(c => c.id === a.cf) ? a.cf : (cons[0] || {}).id; a.cfSel = sel;
   const list = sel ? d.fees.filter(t => t.doctorId === sel && inM(t)).map(t => ({date:t.date, what:`${t.typeName}${t.tooth ? ' (' + t.tooth + ')' : ''}`, patient:t.patientName, amt:feeOf(t), kind:'Fee'}))
     .concat(d.led.filter(x => x.kind === 'expense' && x.doctorId === sel && inM(x)).map(x => ({date:x.date, what:x.note || 'Fee', patient:x.patientName || '', amt:+x.amount, kind:'Fee'})))
     .concat(d.cpay.filter(x => x.doctorId === sel && inM(x)).map(x => ({date:x.date, what:x.note || 'Payment', patient:'', amt:-x.amount, kind:'Paid'}))).sort((x, y) => String(y.date).localeCompare(String(x.date))) : [];
   return `<div class="awrap" style="margin-top:0"><table class="atbl otbl"><thead><tr><th>Consultant doctor</th><th class="num">Fees this month</th><th class="num">Fees to date</th><th class="num">Paid to date</th><th class="num">To pay now</th><th></th></tr></thead>
       <tbody>${rows || '<tr><td colspan="6" class="stat">No consultant doctors. Add them in Clinic setup with type Consultant.</td></tr>'}</tbody></table></div>
-    ${sel ? `<div class="box" style="margin-top:12px"><h3>${esc(dName(sel))} · ${esc(monthLabel(a.month))} <span class="sub">click a consultant above to switch</span></h3>
-      ${tbl(['Date', 'Patient', 'For', 'Type', '₹Amount'], list.map(x => ({c:[esc(fmtShort(x.date)), esc(x.patient || '—'), esc(x.what), x.kind === 'Paid' ? '<span class="upill on">Paid</span>' : 'Fee', x.amt < 0 ? '− ' + inr(-x.amt) : inr(x.amt)]})))}</div>` : ''}
+    ${sel ? consVisits(d, sel) : ''}
+    ${sel ? `<details class="box" style="margin-top:12px"><summary><b>All fees &amp; payments · ${esc(dName(sel))} · ${esc(monthLabel(a.month))}</b></summary>
+      ${tbl(['Date', 'Patient', 'For', 'Type', '₹Amount'], list.map(x => ({c:[esc(fmtShort(x.date)), esc(x.patient || '—'), esc(x.what), x.kind === 'Paid' ? '<span class="upill on">Paid</span>' : 'Fee', x.amt < 0 ? '− ' + inr(-x.amt) : inr(x.amt)]})))}</details>` : ''}
     <p class="stat">A consultant's fee is entered on each treatment they do (or with + Fee) and counts as a clinic expense. "Pay" records money handed over, which reduces what you owe them.</p>`;
+}
+/* consultant visits: the days a consultant came (from their appointments), each patient seen and what the clinic pays for that patient */
+function consRows(d, sel){
+  const a = cl.acc, inM = x => (x.date || '').slice(0, 7) === a.month;
+  const ap = (d.mAppts || []).filter(x => x.doctorId === sel && inM(x) && !['cancelled', 'missed'].includes(x.status));
+  const cf = Object.fromEntries((d.led || []).filter(x => x.appointmentId && x.doctorId === sel).map(x => [x.appointmentId, x]));
+  const tf = d.fees.filter(t => t.doctorId === sel && inM(t));
+  const rows = ap.map(x => { const tr = tf.filter(t => t.patientId === x.patientId && t.date === x.date), trFee = tr.reduce((s, t) => s + (+t.consultantFee || 0), 0), c = cf[x.id];
+    return {id:x.id, date:x.date, time:x.time || '', patient:x.patientName || '', patientId:x.patientId, what:tr.map(t => t.typeName).filter(Boolean).join(', ') || x.reason || '', trFee, cost:c ? +c.amount || 0 : null, status:x.status}; });
+  tf.filter(t => !ap.some(x => x.patientId === t.patientId && x.date === t.date)).forEach(t => rows.push({id:'', date:t.date, time:'', patient:t.patientName || '', what:t.typeName || '', trFee:+t.consultantFee || 0, cost:null}));
+  return rows.sort((x, y) => (x.date + x.time).localeCompare(y.date + y.time));
+}
+const consAmt = r => r.trFee + (r.cost || 0);
+function consVisits(d, sel){
+  const a = cl.acc, w = canW('accounts') || isOwnerLike(), rows = consRows(d, sel), view = a.cview || 'table';
+  const days = [...new Set(rows.map(r => r.date))], tot = rows.reduce((s, r) => s + consAmt(r), 0), open = rows.filter(r => r.id && !r.trFee && r.cost == null).length;
+  const fd = a.cday && days.includes(a.cday) ? a.cday : '', shown = fd ? rows.filter(r => r.date === fd) : rows;
+  let body;
+  if (view === 'cal'){
+    const s0 = parseDay(a.month + '-01'), lead = (s0.getDay() + 6) % 7, n = +mEnd(a.month).slice(8);
+    let cells = '<div class="ccal">' + ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(x => `<div class="cch">${x}</div>`).join('') + '<div></div>'.repeat(lead);
+    for (let i = 1; i <= n; i++){ const k = `${a.month}-${pad2(i)}`, rs = rows.filter(r => r.date === k);
+      cells += `<div class="ccd${rs.length ? ' on' : ''}${k === fd ? ' sel' : ''}${k === todayKey ? ' td' : ''}"${rs.length ? ` data-cday="${k}"` : ''}><span>${i}</span>${rs.length ? `<b>${plural(rs.length, 'patient')}</b><em>${inr(rs.reduce((s, r) => s + consAmt(r), 0))}</em>` : ''}</div>`; }
+    body = cells + '</div>' + (fd ? consTable(shown, w) : '<p class="stat">Click a day to see its patients and enter the cost.</p>');
+  } else body = consTable(shown, w);
+  return `<div class="box" style="margin-top:12px"><div class="cvh"><h3 style="margin:0">${esc(dName(sel))} · ${esc(monthLabel(a.month))}</h3>
+      <div class="seg mini"><button data-cview="table" class="${view === 'table' ? 'on' : ''}">☰ Table</button><button data-cview="cal" class="${view === 'cal' ? 'on' : ''}">▦ Calendar</button></div><span class="sp"></span>
+      <button data-cexp="csv">⬇ Excel / CSV</button><button data-cexp="print">🖨 Statement</button></div>
+    <div class="kpis" style="margin:10px 0"><div class="kpi"><div class="kl">Days visited</div><div class="kv">${days.length}</div></div><div class="kpi"><div class="kl">Patients</div><div class="kv">${rows.length}</div></div>
+      <div class="kpi"><div class="kl">Month total</div><div class="kv" id="cvTot">${inr(tot)}</div></div><div class="kpi"><div class="kl">Cost not entered</div><div class="kv${open ? ' neg' : ''}" id="cvOpen">${open}</div></div></div>
+    ${fd ? `<div class="stat">Showing ${esc(fmtLong(fd))} · <button class="linkb" data-cday="">show the whole month</button></div>` : ''}
+    ${body}
+    <p class="stat">Visits come from the appointments booked with ${esc(dName(sel))} (cancelled ones are left out). ${w ? 'Enter what the clinic pays for each patient; it saves as you type and counts as a consultant fee.' : ''}</p></div>`;
+}
+function consTable(rows, w){
+  let html = '', last = '';
+  rows.forEach(r => { if (r.date !== last){ last = r.date; const rs = rows.filter(x => x.date === r.date); html += `<tr class="wk"><td colspan="5">${esc(fmtLong(r.date))} · ${plural(rs.length, 'patient')} · <span data-cdtot="${r.date}">${inr(rs.reduce((s, x) => s + consAmt(x), 0))}</span></td></tr>`; }
+    html += `<tr><td>${esc(r.time ? hm12(r.time) : '—')}</td><td><b>${esc(r.patient || '—')}</b></td><td>${esc(r.what || '')}</td>
+      <td class="num">${r.trFee ? `${inr(r.trFee)} <span class="stat">from treatment</span>` : ''}${r.id && !r.trFee ? (w ? `<input type="number" min="0" class="tin" data-ccost="${esc(r.id)}" value="${r.cost != null ? r.cost : ''}" placeholder="₹ cost">` : r.cost != null ? inr(r.cost) : '—') : ''}</td>
+      <td class="num"><b${r.id ? ` data-camt="${esc(r.id)}"` : ''}>${inr(consAmt(r))}</b></td></tr>`; });
+  return `<div class="awrap"><table class="atbl"><thead><tr><th>Time</th><th>Patient</th><th>Treatment / reason</th><th class="num">Cost per patient</th><th class="num">Amount</th></tr></thead><tbody>${html || '<tr><td colspan="5" class="stat">No visits this month.</td></tr>'}</tbody></table></div>`;
+}
+async function consSaveCost(inp){
+  const a = cl.acc, d = a.d, id = inp.dataset.ccost, ap = (d.mAppts || []).find(x => x.id === id); if (!ap) return;
+  const raw = inp.value.trim(), ref = cDoc('ledger', 'cf-' + id), {F} = cloud;
+  try {
+    if (raw === ''){ await F.deleteDoc(ref); d.led = d.led.filter(x => x.id !== 'cf-' + id); d.cfeeManual = (d.cfeeManual || []).filter(x => x.id !== 'cf-' + id); }
+    else { const x = {kind:'expense', category:'Consultant fees', doctorId:ap.doctorId, appointmentId:id, patientId:ap.patientId || '', patientName:ap.patientName || '', amount:Math.max(0, Math.round(+raw || 0)),
+        date:ap.date, mode:'cash', paid:true, note:`Consultant fee · ${ap.patientName || ''}`, at:Date.now(), by:cloud.user.email || ''};
+      await F.setDoc(ref, x); const o = Object.assign({id:'cf-' + id}, x);
+      d.led = d.led.filter(y => y.id !== o.id).concat(o); d.cfeeManual = (d.cfeeManual || []).filter(y => y.id !== o.id).concat(o); }
+    inp.classList.add('saved'); setTimeout(() => inp.classList.remove('saved'), 900);
+    const rows = consRows(d, a.cfSel), set = (sel, v) => { const e = document.querySelector(sel); if (e) e.textContent = v; };     // update the figures in place, so typing is not interrupted
+    rows.forEach(r => { if (r.id) set(`[data-camt="${r.id}"]`, inr(consAmt(r))); });
+    [...new Set(rows.map(r => r.date))].forEach(k => set(`[data-cdtot="${k}"]`, inr(rows.filter(r => r.date === k).reduce((s, r) => s + consAmt(r), 0))));
+    set('#cvTot', inr(rows.reduce((s, r) => s + consAmt(r), 0))); const op = rows.filter(r => r.id && !r.trFee && r.cost == null).length; set('#cvOpen', op);
+    const oe = $('#cvOpen'); if (oe) oe.classList.toggle('neg', op > 0);
+  } catch(e){ info('Could not save: ' + errText(e)); }
+}
+function consExport(kind){
+  const a = cl.acc, sel = a.cfSel; if (!sel) return;
+  const rows = consRows(a.d, sel), tot = rows.reduce((s, r) => s + consAmt(r), 0), nm = dName(sel), ml = monthLabel(a.month), days = new Set(rows.map(r => r.date)).size;
+  if (kind === 'csv'){
+    const csv = csvOf([[`${nm} · ${ml}`], [], ['Date', 'Time', 'Patient', 'Treatment / reason', 'Amount']].concat(rows.map(r => [r.date, r.time, r.patient, r.what, consAmt(r)]), [[], ['', '', `${days} days · ${rows.length} patients`, 'Month total', tot]]));
+    const b = new Blob(['\ufeff' + csv], {type:'text/csv'}), l = document.createElement('a'); l.href = URL.createObjectURL(b); l.download = `${nm.replace(/[^\w]+/g, '-')}-${a.month}.csv`; l.click(); setTimeout(() => URL.revokeObjectURL(l.href), 2000);
+    return;
+  }
+  printDoc(`${nm} · ${ml}`, `<h2>Consultant statement · ${esc(nm)}</h2><div class="muted">${esc(ml)} · ${days} days · ${rows.length} patients</div>
+    <table><thead><tr><th>Date</th><th>Time</th><th>Patient</th><th>Treatment / reason</th><th class="n">Amount</th></tr></thead><tbody>
+    ${rows.map(r => `<tr><td>${esc(fmtShort(r.date))}</td><td>${esc(r.time ? hm12(r.time) : '')}</td><td>${esc(r.patient)}</td><td>${esc(r.what)}</td><td class="n">${inr(consAmt(r))}</td></tr>`).join('')}
+    <tr class="tot"><td colspan="4">Month total</td><td class="n">${inr(tot)}</td></tr></tbody></table>`);
 }
 function accSetup(){
   const m = ameta(), w = canW('accounts');
@@ -3944,8 +4064,8 @@ async function auditPack(fy){
     zip.file('consultant-fees.csv', csvOf([['Date', 'Consultant', 'Patient', 'Treatment', 'Fee']].concat(tr.filter(t => +t.consultantFee > 0).sort(by).map(t => [t.date, dName(t.doctorId), t.patientName, t.typeName, t.consultantFee]))));
     zip.file('consultant-payments.csv', csvOf([['Date', 'Consultant', 'Amount', 'Mode', 'Note']].concat(led.filter(x => x.kind === 'cpayout').sort(by).map(x => [x.date, dName(x.doctorId), x.amount, x.mode, x.note]))));
     zip.file('petty-cash.csv', csvOf([['Date', 'Type', 'Amount', 'Note', 'By']].concat(led.filter(x => x.kind === 'petty' || x.kind === 'pettyspend').sort(by).map(x => [x.date, x.kind === 'petty' ? 'Top-up' : 'Spend', x.amount, x.note, x.by]))));
-    zip.file('daily-tallies.csv', csvOf([['Date', 'Cash expected', 'Cash counted', 'Cash difference', 'UPI recorded', 'UPI per app', 'Card+bank recorded', 'Card+bank per app', 'Online difference', 'Note', 'By']].concat(tal.sort(by).map(t => { const g = t.digital || {}, v = (k, f) => g[k] ? +g[k][f] || 0 : 0;
-      return [t.date, t.expected, t.counted, t.diff, v('upi', 'system'), v('upi', 'app'), v('card', 'system') + v('bank', 'system'), v('card', 'app') + v('bank', 'app'), t.digitalDiff || 0, t.note, t.by]; }))));
+    zip.file('daily-tallies.csv', csvOf([['Date', 'Cash expected', 'Cash counted', 'Cash difference', 'UPI recorded', 'UPI per app', 'Cards & others recorded', 'Cards & others per app', 'Online difference', 'Note', 'By']].concat(tal.sort(by).map(t => { const g = t.digital || {}, v = (k, f) => g[k] ? +g[k][f] || 0 : 0;
+      return [t.date, t.expected, t.counted, t.diff, v('upi', 'system'), v('upi', 'app'), v('card', 'system') + v('ccard', 'system') + v('other', 'system') + v('bank', 'system'), v('card', 'app') + v('ccard', 'app') + v('other', 'app') + v('bank', 'app'), t.digitalDiff || 0, t.note, t.by]; }))));
     const months = [...Array(12)].map((_, i) => mShift(`${fy}-04`, i));
     zip.file('summary-by-month.csv', csvOf([['Month', 'Patient payments', 'Other income', 'Clinic expenses', 'Consultant fees', 'Petty cash spent', 'Net']].concat(months.map(m => {
       const inM = x => (x.date || '').slice(0, 7) === m, p = paidSum(pay.filter(inM)), oi = paidSum(led.filter(x => x.kind === 'income' && inM(x))), e = paidSum(led.filter(x => x.kind === 'expense' && inM(x)));
@@ -3962,84 +4082,121 @@ async function auditPack(fy){
   } catch(e){ info('Could not build the audit pack: ' + errText(e)); }
   btn.disabled = false; btn.textContent = '⬇ Download audit pack';
 }
-/* daily tally: count the main cash drawer, and check GPay / UPI, card and bank receipts by hand */
-const DMODES = [['upi', 'GPay / UPI', 'GPay, PhonePe, Paytm or the clinic\'s UPI app'], ['card', 'Card', 'card machine settlement slip'], ['bank', 'Bank transfer', 'bank statement / app']];
+/* daily tally: opening cash (carried from the last tally) + change taken + today's count → cash collected today, checked against the Collection report;
+   GPay / UPI, cards and others entered from the apps and checked against the same report */
+const CHG = [200, 100, 50, 20, 10, 5, 2, 1];
+const TMODES = [['upi', 'GPay / UPI', ['upi']], ['card', 'Debit card', ['card']], ['ccard', 'Credit card', ['ccard']], ['other', 'Others', ['cheque', 'neft', 'rtgs', 'bank']]];
+const tCollected = t => (+t.counted || 0) - (+t.opening || 0) - (+t.change || 0) + (+t.cashExp || 0) + (+t.out || 0);
+const tOk = t => t && !t.diff && !t.digitalDiff && t.manual !== false;
+const denSum = (c, L) => (L || DENOMS).reduce((s, v) => s + v * (+(c || {})[v] || 0), 0);
 function tallyBase(){
-  const a = cl.acc, d = a.d, day = a.tday || todayKey, tallies = (d.tallies || []).slice().sort((x, y) => String(y.date).localeCompare(String(x.date)));
-  const done = tallies.find(t => t.date === day), prev = tallies.find(t => t.date < day);
-  const pays = (d.tPay || []).filter(x => x.mode === 'cash');
-  const dig = DMODES.map(([k, l, hint]) => { const ps = (d.tPay || []).filter(x => x.mode === k); return {k, l, hint, ps, sys:paidSum(ps)}; }).filter(m => m.k === 'upi' || m.ps.length);
-  return {day, tallies, done, prev, pays, dig, cashIn:paidSum(pays), cashExp:paidSum((d.tExp || []).filter(x => x.mode === 'cash' && x.paid !== false))};
+  const a = cl.acc, d = a.d, day = a.tday || todayKey, all = (d.tallies || []).slice().sort((x, y) => String(y.date).localeCompare(String(x.date)));
+  const done = all.find(t => t.date === day), prev = all.find(t => t.date < day), tPay = d.tPay || [];
+  const pays = tPay.filter(x => x.mode === 'cash');
+  const dig = TMODES.map(([k, l, ms]) => { const ps = tPay.filter(x => ms.includes(x.mode)); return {k, l, ms, ps, sys:paidSum(ps)}; });
+  return {day, tallies:all, done, prev, pays, dig, cashIn:paidSum(pays), cashExp:paidSum((d.tExp || []).filter(x => x.mode === 'cash' && x.paid !== false))};
 }
+const denGrid = (L, pre, counts, w) => `<div class="denoms">${L.map(n => `<label><span>₹${n} ×</span><input type="number" min="0" id="${pre}${n}" data-den="${pre}" value="${+(counts || {})[n] || ''}" placeholder="0"${w ? '' : ' disabled'}><b id="${pre}T${n}">₹0</b></label>`).join('')}</div>`;
 function accTally(){
   const B = tallyBase(), {day, done, prev, pays} = B, w = canW('tally') || canW('accounts');
-  const opening = done ? +done.opening : prev ? +prev.counted : 0, counts = (done && done.counts) || {};
-  const inp = (id, v, ph) => w ? `<input type="number" class="tin" id="${id}" value="${v || ''}" placeholder="${ph || 0}">` : inr(v);
+  const fixedOpen = !!(done || prev), opening = done ? +done.opening || 0 : prev ? +prev.counted || 0 : 0;
+  const openCounts = done ? done.openCounts || null : prev ? prev.counts || null : null;
+  const chip = (c, L) => (L || DENOMS).filter(n => +c[n]).map(n => `<span class="dchip">₹${n} × ${+c[n]}</span>`).join('') || '<span class="stat">no denominations saved</span>';
+  const status = done ? (tOk(done) ? `<span class="upill on">Tallied ✓ · ${esc((done.by || '').split('@')[0])}</span>` : `<span class="upill gone">Not tallied · ${[done.diff ? 'cash ' + (done.diff > 0 ? '+' : '−') + inr(Math.abs(done.diff)) : '', done.digitalDiff ? 'online ' + (done.digitalDiff > 0 ? '+' : '−') + inr(Math.abs(done.digitalDiff)) : ''].filter(Boolean).join(', ') || 'not counted by hand'}</span>`) : '<span class="upill pend">Not tallied yet</span>';
   return `<div class="vbar" style="padding:0 0 10px"><div class="daynav"><button data-td="-1">‹</button><button data-td="0"${day === todayKey ? ' disabled' : ''}>Today</button><button data-td="1"${day >= todayKey ? ' disabled' : ''}>›</button></div>
-      <strong>${esc(fmtLong(day))}</strong>${done ? `<span class="upill ${done.diff || done.digitalDiff ? 'gone' : 'on'}">${done.diff || done.digitalDiff ? [done.diff ? 'Cash ' + (done.diff > 0 ? 'excess ' : 'short ') + inr(Math.abs(done.diff)) : '', done.digitalDiff ? 'Online ' + (done.digitalDiff > 0 ? 'excess ' : 'short ') + inr(Math.abs(done.digitalDiff)) : ''].filter(Boolean).join(' · ') : 'Tallied ✓'} · ${esc((done.by || '').split('@')[0])}</span>` : '<span class="upill pend">Not tallied yet</span>'}</div>
+      <strong>${esc(fmtLong(day))}</strong>${status}</div>
+    <div class="box topen"><div class="tob"><span>Opening cash</span><b class="big" id="tlOpenV">${inr(opening)}</b>
+      <span class="stat">${prev && !done ? 'left in the drawer at the tally on ' + esc(fmtDM(prev.date)) : done ? 'as tallied' : 'first tally: count what is in the drawer before today\'s collection'}</span></div>
+      ${fixedOpen ? `<div class="dchips">${openCounts ? chip(openCounts) : ''}</div>` : denGrid(DENOMS, 'op', {}, w)}</div>
     <div class="tally">
-      <div class="box"><h3>What the drawer should have</h3>
-        <div class="payrow"><span>Opening cash ${prev ? `<span class="stat">(counted on ${esc(fmtDM(prev.date))})</span>` : '<span class="stat">(first tally: enter what was in the drawer)</span>'}</span><span>${inp('tlOpen', opening)}</span></div>
-        <div class="payrow"><span>+ Cash from patients <span class="stat">${plural(pays.length, 'payment')}</span></span><span>${inr(B.cashIn)}</span></div>
-        <div class="payrow"><span>+ Change / float put in <span class="stat">notes &amp; coins added for giving change</span></span><span>${inp('tlChange', done && done.change)}</span></div>
-        <div class="payrow"><span>− Cash expenses paid from the drawer</span><span>${inr(B.cashExp)}</span></div>
-        <div class="payrow"><span>− Cash taken out / deposited <span class="stat">handed to owner or bank</span></span><span>${inp('tlOut', done && done.out)}</span></div>
-        <div class="payrow"><span>Expected in drawer</span><span id="tlExpected">—</span></div>
-        ${pays.length ? `<details class="stat" style="margin-top:6px"><summary>Cash payments on this day</summary>${pays.map(x => `<div>${esc(x.patientName)} · ${esc(x.receiptNo || '')} · ${inr(x.amount)}</div>`).join('')}</details>` : ''}</div>
-      <div class="box"><h3>Count the cash</h3>
-        <div class="denoms">${DENOMS.map(n => `<label><span>₹${n} ×</span><input type="number" min="0" id="den${n}" data-den="${n}" value="${+counts[n] || ''}" placeholder="0"${w ? '' : ' disabled'}><b id="denT${n}">₹0</b></label>`).join('')}</div>
-        <div class="payrow"><span>Counted</span><span id="tlCounted">—</span></div>
-        <div class="tdiff" id="tlDiff"></div>
-        ${w ? `<label class="ack"><input type="checkbox" id="tlAck"> I counted this cash myself and confirm the figures</label>` : ''}</div>
-      <div class="box tdig"><h3>Check GPay / UPI, card &amp; bank <span class="stat">open each app, find every payment, tick it, then enter what the app shows for the day</span></h3>
-        ${B.dig.map(m => { const dm = (done && done.digital && done.digital[m.k]) || {}, seen = dm.seen || [];
-          return `<div class="dmode" data-dmode="${m.k}"><div class="dmh"><b>${esc(m.l)}</b><span class="stat">${esc(m.hint)}</span><span class="sp"></span><span class="stat">System</span><b>${inr(m.sys)}</b></div>
-          ${m.ps.length ? `<div class="dps">${m.ps.map(x => `<label class="dp"><input type="checkbox" data-dseen="${m.k}" value="${esc(x.id)}"${seen.includes(x.id) ? ' checked' : ''}${w ? '' : ' disabled'}><span>${esc(x.patientName || '')}</span><span class="stat">${esc(x.receiptNo || '')}${x.note ? ' · ' + esc(x.note) : ''}</span><b>${inr(x.amount)}</b></label>`).join('')}</div>` : '<p class="stat" style="margin:4px 0">No payments recorded in this mode today. If the app shows money received, enter it below.</p>'}
-          <div class="payrow"><span>Received as per the app</span><span>${w ? `<input type="number" class="tin" id="dg_${m.k}" data-dapp="${m.k}" value="${dm.app != null ? dm.app : ''}" placeholder="${m.sys}">` : inr(dm.app)}</span></div>
-          <div class="tdiff" id="dgDiff_${m.k}"></div></div>`; }).join('')}
-        ${w ? `<label class="ack"><input type="checkbox" id="tlAckD"> I checked every GPay / UPI, card and bank payment in the app myself and confirm the figures</label>
-        <label class="stat" style="display:block;margin-top:10px">Note (required if anything doesn't match)<input id="tlNote" style="width:100%" value="${esc(done ? done.note || '' : '')}"></label>
-        <button class="primary" id="tlSave" style="margin-top:10px">${done ? 'Update tally' : 'Save tally'}</button>` : ''}
-      </div>
+      <div class="box"><h3>Change taken <span class="sub">coins &amp; notes added to the drawer</span></h3>${denGrid(CHG, 'ch', done && done.changeCounts, w)}
+        <div class="payrow tsum"><span>Change taken</span><b id="tlChangeV">₹0</b></div></div>
+      <div class="box"><h3>Today's cash in the drawer <span class="sub">count every note and coin</span></h3>${denGrid(DENOMS, 'den', done && done.counts, w)}
+        <div class="payrow tsum"><span>Cash in drawer</span><b id="tlCounted">₹0</b></div></div>
     </div>
-    <h3 style="font-size:13px;margin:16px 0 6px">Recent tallies</h3>
-    ${tbl(['Date', '₹Cash expected', '₹Cash counted', '₹GPay / UPI', '₹Card + bank', 'Result', 'By'], B.tallies.slice(0, 14).map(x => { const dg = x.digital || {}, ap = k => dg[k] ? +dg[k].app || 0 : 0;
-      return {attr:` class="clk" data-tday="${esc(x.date)}"`, c:[esc(fmtShort(x.date)), inr(x.expected), inr(x.counted), dg.upi ? inr(ap('upi')) : '—', dg.card || dg.bank ? inr(ap('card') + ap('bank')) : '—',
-        (x.diff ? `<b class="neg">Cash ${x.diff > 0 ? 'excess' : 'short'} ${inr(Math.abs(x.diff))}</b> ` : '') + (x.digitalDiff ? `<b class="neg">Online ${x.digitalDiff > 0 ? 'excess' : 'short'} ${inr(Math.abs(x.digitalDiff))}</b>` : '') || '<span class="upill on">Matched</span>', esc((x.by || '').split('@')[0])]}; }))}`;
+    <div class="tally">
+      <div class="box tcash"><h3>Cash</h3>
+        <div class="payrow"><span>Cash in drawer − opening − change</span><span id="tlNet">—</span></div>
+        <div class="payrow"><span>+ Cash expenses paid from the drawer</span><span>${inr(B.cashExp)}</span></div>
+        <div class="payrow"><span>+ Cash taken out / deposited</span><span>${w ? `<input type="number" class="tin" id="tlOut" value="${done && +done.out || ''}" placeholder="0">` : inr(done && done.out)}</span></div>
+        <div class="payrow tsum"><span>Cash collected today</span><b id="tlColl">—</b></div>
+        <div class="payrow"><span>Collection report · cash <span class="stat">${plural(pays.length, 'payment')}</span></span><b>${inr(B.cashIn)}</b></div>
+        <div class="tdiff" id="tlDiff"></div>
+        ${w ? `<label class="ack tick" id="tlAckL"><input type="checkbox" id="tlAck"${done && done.manual ? ' checked' : ''}> I counted the cash by hand</label>` : ''}
+        ${pays.length ? `<details class="stat"><summary>Cash payments</summary>${pays.map(x => `<div>${esc(x.patientName)} · ${esc(x.receiptNo || '')} · ${inr(x.amount)}</div>`).join('')}</details>` : ''}</div>
+      <div class="box"><h3>GPay / UPI, cards &amp; others</h3>
+        <table class="dtbl"><thead><tr><th></th><th class="num">Report</th><th class="num">App / slip</th><th></th></tr></thead><tbody>
+        ${B.dig.map(m => { const dm = (done && done.digital && done.digital[m.k]) || {};
+          return `<tr><td><b>${esc(m.l)}</b>${m.ps.length ? `<details class="stat"><summary>${plural(m.ps.length, 'payment')}</summary>${m.ps.map(x => `<div>${esc(x.patientName || '')} · ${inr(x.amount)}${m.ms.length > 1 ? ' · ' + esc(x.mode) : ''}</div>`).join('')}</details>` : ''}</td>
+            <td class="num">${inr(m.sys)}</td><td class="num">${w ? `<input type="number" class="tin" id="dg_${m.k}" data-dapp="${m.k}" value="${done && dm.app != null ? dm.app : ''}" placeholder="${m.sys ? 'enter' : '0'}">` : inr(dm.app)}</td><td id="dgDiff_${m.k}" class="dstat"></td></tr>`; }).join('')}
+        </tbody></table>
+        <div class="tdiff" id="tlDigDiff"></div>
+        ${w ? `<label class="ack tick" id="tlAckDL"><input type="checkbox" id="tlAckD"${done && done.manual ? ' checked' : ''}> I checked each amount in the app / slip</label>` : ''}</div>
+    </div>
+    ${w ? `<div class="btnrow" style="margin-top:10px"><input id="tlNote" placeholder="Note (required if anything doesn't match)" style="flex:1;min-width:200px" value="${esc(done ? done.note || '' : '')}"><button class="primary" id="tlSave">${done ? 'Update tally' : 'Save tally'}</button></div>` : ''}
+    ${tallyMonth(B)}`;
+}
+function tallyMonth(B){
+  const d = cl.acc.d, mk = B.day.slice(0, 7), mp = d.mPay || [], last = mEnd(mk) < todayKey ? mEnd(mk) : todayKey, byT = Object.fromEntries(B.tallies.map(t => [t.date, t]));
+  const T = {rc:0, tc:0, ru:0, tu:0, ro:0, to:0, xc:0, xu:0, xo:0}, rows = [];
+  for (let k = last; k >= mk + '-01'; k = shiftDay(k, -1)){
+    const ps = mp.filter(x => x.date === k), t = byT[k];
+    if (!ps.length && !t) continue;
+    const rc = paidSum(ps.filter(x => x.mode === 'cash')), ru = paidSum(ps.filter(x => x.mode === 'upi')), ro = paidSum(ps.filter(x => x.mode !== 'cash' && x.mode !== 'upi'));
+    const g = (t && t.digital) || {}, ap = kk => g[kk] ? +g[kk].app || 0 : 0, tc = t ? tCollected(t) : 0, tu = ap('upi'), to = ap('card') + ap('ccard') + ap('other') + ap('bank');
+    T.rc += rc; T.ru += ru; T.ro += ro; if (t){ T.tc += tc; T.tu += tu; T.to += to; T.xc += rc; T.xu += ru; T.xo += ro; }
+    const cell = (r, v) => t ? `<td class="num${v !== r ? ' neg' : ''}">${inr(v)}</td>` : '<td class="num stat">—</td>';
+    rows.push(`<tr class="clk${k === B.day ? ' sel' : ''}" data-tday="${k}"><td>${esc(fmtShort(k))}</td><td class="num">${inr(rc)}</td>${cell(rc, tc)}<td class="num">${inr(ru)}</td>${cell(ru, tu)}<td class="num">${inr(ro)}</td>${cell(ro, to)}
+      <td>${t ? tOk(t) ? '<span class="upill on">Tallied</span>' : '<span class="upill gone">Mismatch</span>' : '<span class="upill pend">Not done</span>'}</td></tr>`);
+  }
+  const dd = (r, v) => `<td class="num${r !== v ? ' neg' : ''}"><b>${inr(v)}</b></td>`;
+  return `<h3 style="font-size:13px;margin:18px 0 6px">${esc(monthLabel(mk))} · report vs tally</h3>
+    <div class="awrap"><table class="atbl"><thead><tr><th>Date</th><th class="num">Cash · report</th><th class="num">Cash · tally</th><th class="num">GPay/UPI · report</th><th class="num">GPay/UPI · tally</th><th class="num">Cards &amp; others · report</th><th class="num">Cards &amp; others · tally</th><th></th></tr></thead>
+    <tbody>${rows.join('') || '<tr><td colspan="8" class="stat">No collections or tallies this month yet.</td></tr>'}
+    ${rows.length ? `<tr class="tot"><td>Month total</td><td class="num"><b>${inr(T.rc)}</b></td>${dd(T.xc, T.tc)}<td class="num"><b>${inr(T.ru)}</b></td>${dd(T.xu, T.tu)}<td class="num"><b>${inr(T.ro)}</b></td>${dd(T.xo, T.to)}<td></td></tr>` : ''}</tbody></table></div>`;
 }
 function tallyCalc(){
-  if (!$('#tlExpected')) return null;
-  const B = tallyBase(), n = id => { const e = $('#' + id); return e ? (e.tagName === 'INPUT' ? +e.value || 0 : 0) : 0; };
-  const opening = $('#tlOpen') ? n('tlOpen') : (B.done ? +B.done.opening : B.prev ? +B.prev.counted : 0);
-  const change = $('#tlChange') ? n('tlChange') : (B.done ? +B.done.change || 0 : 0), out = $('#tlOut') ? n('tlOut') : (B.done ? +B.done.out || 0 : 0);
-  const counts = Object.fromEntries(DENOMS.map(v => [v, n('den' + v)]));
-  const expected = opening + B.cashIn + change - B.cashExp - out, counted = DENOMS.reduce((s, v) => s + v * counts[v], 0), diff = counted - expected;
-  DENOMS.forEach(v => { const b = $('#denT' + v); if (b) b.textContent = inr(v * counts[v]); });
-  $('#tlExpected').textContent = inr(expected); $('#tlCounted').textContent = inr(counted);
-  const dEl = $('#tlDiff'); dEl.className = 'tdiff ' + (diff === 0 ? 'ok' : 'bad'); dEl.textContent = diff === 0 ? '✓ Matches the system' : diff > 0 ? `Excess of ${inr(diff)}` : `Short by ${inr(-diff)}`;
-  const digital = {}; let digitalDiff = 0, unseen = 0, blank = 0;
+  if (!$('#tlColl')) return null;
+  const B = tallyBase(), n = id => { const e = $('#' + id); return e ? +e.value || 0 : 0; }, w = !!$('#tlSave');
+  const cnt = (pre, L) => Object.fromEntries(L.map(v => [v, Math.max(0, n(pre + v))]));
+  const showT = (pre, L, c) => L.forEach(v => { const b = $('#' + pre + 'T' + v); if (b) b.textContent = inr(v * c[v]); });
+  const fixedOpen = !$('#op500'), openCounts = fixedOpen ? (B.done ? B.done.openCounts || null : B.prev ? B.prev.counts || null : null) : cnt('op', DENOMS);
+  const opening = fixedOpen ? (B.done ? +B.done.opening || 0 : B.prev ? +B.prev.counted || 0 : 0) : denSum(openCounts);
+  if (!fixedOpen){ showT('op', DENOMS, openCounts); $('#tlOpenV').textContent = inr(opening); }
+  const changeCounts = cnt('ch', CHG), change = denSum(changeCounts, CHG), counts = cnt('den', DENOMS), counted = denSum(counts);
+  showT('ch', CHG, changeCounts); showT('den', DENOMS, counts);
+  const out = $('#tlOut') ? n('tlOut') : B.done ? +B.done.out || 0 : 0;
+  const expected = opening + B.cashIn + change - B.cashExp - out, diff = counted - expected, coll = counted - opening - change + B.cashExp + out;
+  $('#tlChangeV').textContent = inr(change); $('#tlCounted').textContent = inr(counted); $('#tlNet').textContent = inr(counted - opening - change); $('#tlColl').textContent = inr(coll);
+  const ack = $('#tlAck') ? $('#tlAck').checked : !!(B.done && B.done.manual), dEl = $('#tlDiff');
+  dEl.className = 'tdiff ' + (diff ? 'bad' : ack ? 'ok' : 'wait');
+  dEl.textContent = diff ? (diff > 0 ? `Excess ${inr(diff)} over the report` : `Short ${inr(-diff)} against the report`) : ack ? '✓ Cash tallied' : 'Matches the report · tick "counted by hand" to tally';
+  const digital = {}; let digitalDiff = 0, blank = 0;
   B.dig.forEach(m => {
-    const e = $('#dg_' + m.k), raw = e ? e.value.trim() : '', app = raw === '' ? null : +raw || 0, seen = [...document.querySelectorAll(`[data-dseen="${m.k}"]:checked`)].map(c => c.value);
-    unseen += m.ps.length - seen.length; if (app == null) blank++;
+    const e = $('#dg_' + m.k), raw = e ? e.value.trim() : '', app = e ? (raw === '' ? (m.sys ? null : 0) : +raw || 0) : (((B.done || {}).digital || {})[m.k] || {}).app || 0;
+    if (app == null) blank++;
     const dd = app == null ? 0 : app - m.sys; digitalDiff += dd;
-    digital[m.k] = {system:m.sys, app:app == null ? 0 : app, diff:dd, seen, count:m.ps.length};
-    const de = $('#dgDiff_' + m.k); if (de){ de.className = 'tdiff ' + (app == null ? '' : dd === 0 && seen.length === m.ps.length ? 'ok' : 'bad');
-      de.textContent = app == null ? `Enter the ${m.l} total from the app` : dd ? (dd > 0 ? `App shows ${inr(dd)} more than recorded` : `App shows ${inr(-dd)} less than recorded`) : seen.length < m.ps.length ? `Amount matches · tick ${m.ps.length - seen.length} more payment${m.ps.length - seen.length > 1 ? 's' : ''} after finding ${m.ps.length - seen.length > 1 ? 'them' : 'it'} in the app` : '✓ Matches the app'; }
+    digital[m.k] = {system:m.sys, app:app == null ? 0 : app, diff:dd, count:m.ps.length, seen:[]};
+    const de = $('#dgDiff_' + m.k); if (de){ de.className = 'dstat ' + (app == null ? '' : dd ? 'neg' : 'okc'); de.textContent = app == null ? '' : dd ? (dd > 0 ? '+' : '−') + inr(Math.abs(dd)) : '✓'; }
   });
-  return {B, opening, change, out, counts, expected, counted, diff, digital, digitalDiff, unseen, blank};
+  const ackD = $('#tlAckD') ? $('#tlAckD').checked : !!(B.done && B.done.manual), gEl = $('#tlDigDiff');
+  gEl.className = 'tdiff ' + (blank ? 'wait' : digitalDiff ? 'bad' : ackD ? 'ok' : 'wait');
+  gEl.textContent = blank ? `Enter the amount for ${plural(blank, 'mode')} from the app / slip` : digitalDiff ? `Differs from the report by ${inr(Math.abs(digitalDiff))}` : ackD ? '✓ GPay / UPI, cards & others tallied' : 'Matches the report · tick "checked" to tally';
+  const L1 = $('#tlAckL'), L2 = $('#tlAckDL'); if (L1) L1.classList.toggle('on', ack && !diff); if (L2) L2.classList.toggle('on', ackD && !digitalDiff && !blank);
+  return {B, opening, openCounts, change, changeCounts, out, counts, expected, counted, diff, digital, digitalDiff, blank, ack, ackD, w};
 }
 async function saveTally(){
   const T = tallyCalc(); if (!T) return;
-  const note = ($('#tlNote') || {}).value || '';
-  if (!$('#tlAck').checked) return info('Tick "I counted this cash myself" to confirm.');
-  if (T.blank) return info('Enter the amount each app (GPay / UPI, card, bank) shows for the day. Enter 0 if nothing came in.');
-  if (T.unseen && !note.trim()) return info(`Tick each GPay / UPI, card or bank payment once you have found it in the app (${T.unseen} not ticked), or add a note.`);
-  if (!$('#tlAckD').checked) return info('Tick "I checked every GPay / UPI, card and bank payment" to confirm.');
-  if ((T.diff || T.digitalDiff) && !note.trim()) return info('Add a note explaining the difference.');
+  const note = (($('#tlNote') || {}).value || '').trim();
+  if (!T.counted && !confirm('The drawer count is empty. Save with ₹0 in the drawer?')) return;
+  if (T.blank) return info('Enter the amount each app / slip shows (0 if nothing came in).');
+  if (!T.ack || !T.ackD) return info('Tick "I counted the cash by hand" and "I checked each amount" to confirm.');
+  if ((T.diff || T.digitalDiff) && !note) return info('It doesn\'t match the Collection report. Add a note explaining the difference.');
   try {
-    await cloud.F.setDoc(cDoc('tallies', T.B.day), {date:T.B.day, opening:T.opening, cashIn:T.B.cashIn, change:T.change, cashExp:T.B.cashExp, out:T.out, expected:T.expected, counts:T.counts, counted:T.counted, diff:T.diff, digital:T.digital, digitalDiff:T.digitalDiff, unseen:T.unseen, note:note.trim(), by:cloud.user.email || '', at:Date.now()});
+    await cloud.F.setDoc(cDoc('tallies', T.B.day), {date:T.B.day, opening:T.opening, openCounts:T.openCounts || null, cashIn:T.B.cashIn, change:T.change, changeCounts:T.changeCounts, cashExp:T.B.cashExp, out:T.out, expected:T.expected,
+      counts:T.counts, counted:T.counted, diff:T.diff, digital:T.digital, digitalDiff:T.digitalDiff, unseen:0, manual:true, note, by:cloud.user.email || '', at:Date.now()});
   } catch(e){ return info('Could not save: ' + errText(e)); }
-  cl.acc.key = ''; cl.clear = true; info(T.diff || T.digitalDiff ? `Tally saved with a difference: cash ${inr(T.diff)}, online ${inr(T.digitalDiff)}.` : 'Tally saved: cash and online payments match ✓'); renderClinic(); clinicSync(true);
+  cl.acc.key = ''; cl.clear = true; info(T.diff || T.digitalDiff ? `Saved, but not tallied: cash ${inr(T.diff)}, online ${inr(T.digitalDiff)} against the report.` : 'Tallied ✓ Cash and online match the Collection report.'); renderClinic(); clinicSync(true);
 }
 const saveAMeta = m => cloud.F.setDoc(cDoc('clinicMeta', 'accounts'), m);
 async function readFileData(file){
@@ -4127,7 +4284,7 @@ let repCsv = null;
 function clReportHtml(){
   const r = cl.rep, d = r.data; if (!d) return '<div class="empty">Loading…</div>';
   const per = r.kind === 'outstanding' ? 'as of ' + fmtLong(r.to) : r.from === r.to ? fmtLong(r.from) : `${fmtShort(r.from)} – ${fmtShort(r.to)}`;
-  const bar = t => `<div class="vbar" style="padding:0 0 8px"><strong>${esc(t)}</strong><span class="stat">${esc(per)}</span><span class="sp"></span><button data-repcsv>⬇ CSV</button><button data-repprint>🖨 Print</button></div>`;
+  const bar = t => `<div class="vbar" style="padding:0 0 8px"><strong>${esc(t)}</strong><span class="stat">${esc(per)}</span><span class="sp"></span>${rpViewToggle(r.view)}<button data-repcsv>⬇ CSV</button><button data-repprint>🖨 Print</button></div>`;
   const k = (l, v, s) => `<div class="kpi"><div class="kl">${l}</div><div class="kv">${v}</div><div class="ks">${s}</div></div>`;
   let html = '';
   const G = r.group || 'day', chart = r.view === 'chart', drill = (k, label) => ` class="clk" data-drill="${esc(k)}" title="Open ${esc(label)} day by day"`;
@@ -4289,7 +4446,8 @@ function clSetup(){
 $('#clSeg').addEventListener('click', e => { const b = e.target.closest('[data-s]'); if (b){ cl.sec = b.dataset.s; if (cl.sec === 'setup') cl.members = null; if (cl.sec === 'assists') cl.asKey = ''; if (cl.sec === 'patients' && cl.pid){ cl.pUnsub.forEach(u => { try { u(); } catch(_){} }); cl.pUnsub = []; cl.pid = null; } cl.newP = false; renderClinic(); } });
 $('#clBody').addEventListener('input', e => {
   const mr = e.target.closest('[data-mr]'); if (mr && e.target.matches('[data-mf]')){ medCalc(mr); const tt = $('#rxTot'); if (tt) tt.textContent = inr([...document.querySelectorAll('#rxMeds [data-mr]')].reduce((s, r) => s + parseInt((r.querySelector('b[data-mf="cost"]').textContent || '0').replace(/[^0-9]/g, '') || 0), 0)); }
-  if (e.target.matches('#tlOpen,#tlChange,#tlOut,[data-den],[data-dapp],[data-dseen]')) tallyCalc();
+  if (e.target.matches('#tlOut,[data-den],[data-dapp],#tlAck,#tlAckD')) tallyCalc();
+  if (e.target.matches('[data-ccost]')){ clearTimeout(e.target._t); e.target._t = setTimeout(() => consSaveCost(e.target), 700); }
   if (e.target.id === 'clQ'){ cl.q = e.target.value; clearTimeout(clQTimer); clQTimer = setTimeout(clDoSearch, 250); }
   if (e.target.id === 'pfDob' && $('#pfAge')){ const a = $('#pfAge'); a.disabled = !!e.target.value; a.value = ''; a.placeholder = e.target.value ? ageOf({dob:e.target.value}) : 'if DOB unknown'; }
 });
@@ -4436,6 +4594,9 @@ $('#clBody').addEventListener('click', async e => {
     if (t.closest('[data-vact]')){ const v = cl.acc.d.vendors.find(x => x.id === t.closest('[data-ven]').dataset.ven); await F.updateDoc(cDoc('vendors', v.id), {active:v.active === false}); cl.acc.key = ''; renderClinic(); }
     if (t.closest('[data-cmdel]')){ const m = ameta(); m.commitments = m.commitments.filter(c => c.id !== t.closest('[data-cm]').dataset.cm); await saveAMeta(m); }
     if (t.closest('[data-catdel]')){ const m = ameta(); m.cats = m.cats.filter(c => c !== t.closest('[data-cat]').dataset.cat); await saveAMeta(m); }
+    const cvw = t.closest('[data-cview]'); if (cvw){ cl.acc.cview = cvw.dataset.cview; return renderClinic(); }
+    const cdy = t.closest('[data-cday]'); if (cdy){ cl.acc.cday = cdy.dataset.cday; return renderClinic(); }
+    const cex = t.closest('[data-cexp]'); if (cex) return consExport(cex.dataset.cexp);
     const cf = t.closest('[data-cfee]'), cp = t.closest('[data-cpay]');
     if (cf || cp){
       const docId = t.closest('[data-cons]').dataset.cons, nm = dName(docId);
@@ -4485,6 +4646,8 @@ $('#clOv').addEventListener('click', e => {
     if (S && S.back === 'bill') return clOpenBill(S.appt);
     $('#clOv').classList.remove('on'); if (S && S.completing) info(`${S.appt.patientName} is still In chair.`); if (state.settings.view === 'clinic') renderClinic(); return; }
   if (e.target.closest('[data-vbback]') && cl.bill){ const a = cl.bill.appt; cl.bill = null; return clOpenSummary(a, false, 'bill'); }
+  const bm = e.target.closest('[data-bkmode]');
+  if (bm && cl.book){ const keep = {doctorId:$('#bkDoc').value, date:$('#bkDate').value, time:$('#bkTime').value, reason:$('#bkReason').value}; Object.assign(cl.book, keep, {mode:bm.dataset.bkmode}); $('#clOvBody').innerHTML = clBookForm(); const f = $(cl.book.mode === 'new' ? '#npFirst' : '#bkQ'); if (f) f.focus(); return; }
   const r = e.target.closest('[data-pick]');
   if (r){ cl.book.patientId = r.dataset.pick; cl.book.patientName = r.dataset.name; const keep = {doctorId:$('#bkDoc').value, date:$('#bkDate').value, time:$('#bkTime').value, reason:$('#bkReason').value}; Object.assign(cl.book, keep); $('#clOvBody').innerHTML = clBookForm(); }
 });
@@ -5470,7 +5633,7 @@ async function dtPlan(S){
     else { const t = typeFor(name); tr.push({id:'dt-t-' + (i + 1), d:Object.assign(base, {typeId:t.id, typeName:t.name, tooth:String(r.Tooths || '').trim(), cost:total + disc, discount:disc})}); }
   });
   // payments
-  const MODE = m => /cash/i.test(m) ? 'cash' : /google|gpay|paytm|phone ?pe|upi/i.test(m) ? 'upi' : /card/i.test(m) ? 'card' : /cheque|check/i.test(m) ? 'cheque' : /neft/i.test(m) ? 'neft' : /rtgs/i.test(m) ? 'rtgs' : /bank|transfer|imps/i.test(m) ? 'bank' : 'cash';
+  const MODE = m => /cash/i.test(m) ? 'cash' : /google|gpay|paytm|phone ?pe|upi/i.test(m) ? 'upi' : /credit/i.test(m) ? 'ccard' : /card/i.test(m) ? 'card' : /cheque|check/i.test(m) ? 'cheque' : /neft/i.test(m) ? 'neft' : /rtgs/i.test(m) ? 'rtgs' : /bank|transfer|imps/i.test(m) ? 'bank' : 'cash';
   const pays = [];
   S.payments.forEach(r => {
     if (/cancel/i.test(r.ReceiptStatus || '')) return;
@@ -5777,7 +5940,8 @@ function attTeam(){
       <td>${today}</td><td class="num">${S.P}</td><td class="num">${S.offsUsed}/${OFFS_PER_MONTH}</td>
       <td class="num ${S.lop ? 'neg' : ''}">${S.lop || '—'}</td><td class="num">${hm(S.H)}</td>
       <td class="num ${S.OT ? 'ot' : ''}">${S.OT ? hm(S.OT) : '—'}</td><td class="num ${S.otDays ? 'ot' : ''}">${S.otDays || '—'}</td>
-      ${pay ? `<td class="num">${+S.c.salary ? inr(S.c.salary) : '<span class="stat">not set</span>'}</td><td class="num"><b>${inr(S.pay)}</b></td>` : ''}</tr>`;
+      ${pay ? `<td class="num">${+S.c.salary ? inr(S.c.salary) : '<span class="stat">not set</span>'}</td><td class="num"><b>${inr(S.pay)}</b></td>` : ''}
+      ${attRO() ? '' : `<td><button type="button" class="edbtn" data-staffed="${esc(a.uid)}" title="Mark or fix check-in / check-out times for any day of this month">✎ Edit times</button></td>`}</tr>`;
   }).join('');
   return `${cur ? `<div class="kpis">
       <div class="kpi"><div class="kl"><i class="dot s-done"></i>Checked in now</div><div class="kv">${inNow}</div><div class="ks">at the clinic</div></div>
@@ -5785,8 +5949,8 @@ function attTeam(){
       <div class="kpi"><div class="kl"><i class="dot s-prog"></i>Not in yet</div><div class="kv">${notIn}</div><div class="ks">today</div></div>
       ${pay ? `<div class="kpi"><div class="kl">Team payable</div><div class="kv">${inr(totPay)}</div><div class="ks">${cur ? 'so far this month' : 'this month'}</div></div>` : ''}</div>` : ''}
     <div class="stat">Click a person to see their daily and weekly hours${attRO() ? '' : pay ? ', fix entries, or set their shift and salary' : ', fix entries, or set their shift'}.</div>
-    <div class="awrap"><table class="atbl"><thead><tr><th>Staff</th><th>Today</th><th class="num">Present</th><th class="num">Offs used</th><th class="num">Loss of pay</th><th class="num">Hours</th><th class="num">OT hours</th><th class="num">OT days</th>${pay ? '<th class="num">Salary</th><th class="num">Payable</th>' : ''}</tr></thead>
-    <tbody>${rows}${pay ? `<tr class="tot"><td colspan="9">Total payable</td><td class="num">${inr(totPay)}</td></tr>` : ''}</tbody></table></div>`;
+    <div class="awrap"><table class="atbl"><thead><tr><th>Staff</th><th>Today</th><th class="num">Present</th><th class="num">Offs used</th><th class="num">Loss of pay</th><th class="num">Hours</th><th class="num">OT hours</th><th class="num">OT days</th>${pay ? '<th class="num">Salary</th><th class="num">Payable</th>' : ''}${attRO() ? '' : '<th></th>'}</tr></thead>
+    <tbody>${rows}${pay ? `<tr class="tot"><td colspan="9">Total payable</td><td class="num">${inr(totPay)}</td>${attRO() ? '' : '<td></td>'}</tr>` : ''}</tbody></table></div>`;
 }
 
 function attDetail(){
@@ -5835,7 +5999,7 @@ function attMonthEditor(S, a){
       <td class="num">${ss.length ? hm(r.worked || 0) : '—'}</td>
       <td style="white-space:nowrap">${ss.length ? '' : `<button type="button" data-edshift title="Fill with the shift timing">Shift ${esc(S.c.shiftStart)}–${esc(S.c.shiftEnd)}</button> `}<button type="button" class="primary" data-edsave disabled>Save</button></td></tr>`;
   }
-  return `<div class="box"><h3>Edit attendance for ${esc(parseDay(att.month + '-01').toLocaleDateString([], {month:'long', year:'numeric'}))} <span class="sub">add, change or remove check-ins and check-outs for any day; several sessions a day are fine (e.g. lunch break)</span></h3>
+  return `<div class="box" id="attEditor"><h3>Edit attendance for ${esc(parseDay(att.month + '-01').toLocaleDateString([], {month:'long', year:'numeric'}))} <span class="sub">add, change or remove check-ins and check-outs for any day; several sessions a day are fine (e.g. lunch break)</span></h3>
     <div class="btnrow" style="margin:0 0 8px"><span class="stat">Change the times, then <b>Save</b> that day, or</span><button class="primary" id="edSaveAll" disabled>Save all changed days</button></div>
     <div class="awrap" style="margin-top:0"><table class="atbl edtbl"><thead><tr><th>Date</th><th>Status</th><th>Check-in → Check-out</th><th class="num">Worked</th><th></th></tr></thead><tbody>${html}</tbody></table></div></div>`;
 }
@@ -5903,6 +6067,8 @@ $('#attBody').addEventListener('click', async e => {
     catch(err){ info('Could not delete: ' + (err.code || err.message)); }
     return;
   }
+  const sed = e.target.closest('[data-staffed]');
+  if (sed){ att.detail = sed.dataset.staffed; renderAttendance(); setTimeout(() => { const b = $('#attEditor'); if (b) b.scrollIntoView({behavior:'smooth', block:'start'}); }, 60); return; }
   const row = e.target.closest('[data-staff]');
   if (row){ att.detail = row.dataset.staff; renderAttendance(); }
 });

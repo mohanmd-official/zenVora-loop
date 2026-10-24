@@ -178,11 +178,15 @@ service cloud.firestore {
       // Accounts ledger: income, expenses & bills, petty cash, consultant payments.
       // Front desk may only record petty cash spends; only Accounts (the owner) tops petty cash up.
       match /ledger/{l} {
-        allow read: if perm(o, 'accounts') || perm(o, 'reports') || supportOpen(o)
+        allow read: if perm(o, 'accounts') || perm(o, 'reports') || supportOpen(o) || isOwner(o)
           || (perm(o, 'petty') && resource.data.kind in ['petty', 'pettyspend'])
           || (perm(o, 'tally') && resource.data.kind == 'expense');
-        allow create: if perm(o, 'accounts') || (perm(o, 'petty') && request.resource.data.kind == 'pettyspend');
-        allow update, delete: if perm(o, 'accounts');
+        // the Chief doctor (owner) may enter the per-patient cost of a consultant's visit (ledger id cf-<appointmentId>)
+        allow create: if perm(o, 'accounts') || (perm(o, 'petty') && request.resource.data.kind == 'pettyspend')
+          || (isOwner(o) && l == 'cf-' + request.resource.data.appointmentId && request.resource.data.kind == 'expense');
+        allow update: if perm(o, 'accounts')
+          || (isOwner(o) && l == 'cf-' + request.resource.data.appointmentId && request.resource.data.kind == 'expense' && resource.data.appointmentId == request.resource.data.appointmentId);
+        allow delete: if perm(o, 'accounts') || (isOwner(o) && l == 'cf-' + resource.data.appointmentId);
       }
       match /ledgerDocs/{l} {
         allow read, write: if perm(o, 'accounts');
