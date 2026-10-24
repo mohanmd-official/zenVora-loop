@@ -544,6 +544,7 @@ input.srchin.bad{border-color:var(--high)}
 .adh{font-weight:650;font-size:12px;cursor:pointer;padding:2px 4px}
 .aday .achip{max-width:none;flex:none}
 .wtrow{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:flex-end}.wtrow label{display:flex;flex-direction:column}.wtrow .fhead{align-self:center}
+#clSumForm .fhead{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.fhead .sp{flex:1}.ckl.nox{font-weight:600;color:var(--ink);font-size:13px;margin-left:auto}
 .bkmode{display:inline-flex;margin-bottom:4px}.npbox{display:flex;flex-wrap:wrap;gap:8px 10px;padding:10px;border:1px solid var(--line);border-radius:12px;background:color-mix(in srgb,var(--accent) 4%,var(--paper))}
 .npbox label{display:flex;flex-direction:column}.npbox label.grow{flex:1;min-width:160px}.npbox label.full{flex-basis:100%}
 .bkres{display:flex;flex-direction:column;gap:3px;margin:4px 0}
@@ -4746,8 +4747,8 @@ $('#clBody').addEventListener('click', async e => {
 /* booking overlay */
 $('#clOv').addEventListener('click', e => {
   if (e.target.id === 'clOv' || e.target.closest('[data-ovclose]')){ $('#clOv').classList.remove('on'); cl.book = null; cl.sum = null; cl.bill = null; cl.cz = null; if (state.settings.view === 'clinic') renderClinic(); return; }
-  if (e.target.id === 'smNoCost' && cl.sum){ const on = e.target.checked; $('#smCostArea').hidden = on; $('#smSkipWrap').hidden = on; if (on) $('#smSkipDesc').checked = false;
-    const sb = $('#smSubmit'); if (sb) sb.textContent = on && cl.sum.completing ? 'Save & complete visit ✓' : cl.sum.completing || cl.sum.back === 'bill' ? 'Save & go to bill →' : 'Save'; if (on) $('#smNotes').focus(); return; }
+  if ((e.target.id === 'smNoTr' || e.target.id === 'smNoMed') && cl.sum){ $('#smTrArea').hidden = $('#smNoTr').checked; $('#smMedArea').hidden = $('#smNoMed').checked;
+    const both = $('#smNoTr').checked && $('#smNoMed').checked; $('#smSkipWrap').hidden = both; if (both){ $('#smSkipDesc').checked = false; $('#smNotes').focus(); } return; }
   if (e.target.closest('#smAdd')){ const box = $('#smRows'), n = box.children.length; box.insertAdjacentHTML('beforeend', sumRow(n, cl.sum.appt)); return; }
   if (e.target.closest('[data-srdel]')){ e.target.closest('[data-sr]').remove(); return; }
   if (e.target.closest('#smMedAdd')){ const box = $('#smMeds'); box.insertAdjacentHTML('beforeend', medRow(box.children.length)); return; }
@@ -4848,43 +4849,42 @@ const medTotal = () => [...document.querySelectorAll('#smMeds [data-mr]')].reduc
 function clSummaryForm(){
   const {appt:a, completing, T, back} = cl.sum, w = canW('treatments');
   const TT = (T || []).filter(t => !isMed(t)), MM = (T || []).filter(isMed), notes = (a.summary && a.summary.notes) || '';
+  const noTr = !TT.length && !!(a.noTr || a.noCost), noMed = !MM.length && !!(a.noMed || a.noCost);
   return `<div class="ah"><button type="button" class="abk" data-smback style="margin:0" title="${back === 'bill' ? 'Back to the bill' : 'Back to the queue: the patient stays In chair'}">← Back</button><h2 style="font-size:16px;margin:0">What happened in this appointment?</h2><span class="sp"></span><button data-ovclose>Close</button></div>
     <p class="stat" style="margin:4px 0 10px"><b>${esc(a.patientName)}</b> · ${esc(fmtShort(a.date))} ${esc(hm12(a.time))} · ${esc(dName(a.doctorId))}${a.reason ? ' · ' + esc(a.reason) : ''}</p>
     <form id="clSumForm" novalidate>
-      ${w ? `<label class="ckl nocost"><input type="checkbox" id="smNoCost"${a.noCost ? ' checked' : ''}> <b>No cost for this appointment</b>&nbsp;<span class="stat">e.g. review, consultation or dressing: no treatment or bill; the description below is then required</span></label>
-        <div id="smCostArea"${a.noCost ? ' hidden' : ''}>
-        <div class="fhead" style="margin:0 0 4px">Treatment done * <span class="stat">required, with its cost · billed to the patient · the doctor here is credited</span></div>
-        <div id="smRows">${(TT.length ? TT : [null]).map((t, i) => sumRow(i, a, t)).join('')}</div>
-        <button type="button" id="smAdd" style="margin-top:4px">+ Add treatment</button>
-        <div class="fhead" style="margin:16px 0 4px">Medicines / tablets <span class="stat">tick when to take them and for how many days: the number of tablets and the cost are worked out and added to the bill</span></div>
-        <div id="smMeds">${MM.map((m, i) => medRow(i, m)).join('')}</div>
+      ${w ? `<div class="fhead" style="margin:0 0 4px">Treatment done * <span class="stat">with its cost · billed to the patient · the doctor here is credited</span><span class="sp"></span><label class="ckl nox"><input type="checkbox" id="smNoTr"${noTr ? ' checked' : ''}> No treatment</label></div>
+        <div id="smTrArea"${noTr ? ' hidden' : ''}><div id="smRows">${(TT.length ? TT : [null]).map((t, i) => sumRow(i, a, t)).join('')}</div>
+        <button type="button" id="smAdd" style="margin-top:4px">+ Add treatment</button></div>
+        <div class="fhead" style="margin:16px 0 4px">Medicines / tablets <span class="stat">tick when and for how many days: tablets and cost are worked out</span><span class="sp"></span><label class="ckl nox"><input type="checkbox" id="smNoMed"${noMed ? ' checked' : ''}> No medicine</label></div>
+        <div id="smMedArea"${noMed ? ' hidden' : ''}><div id="smMeds">${MM.map((m, i) => medRow(i, m)).join('')}</div>
         <div class="btnrow"><button type="button" id="smMedAdd">+ Add medicine</button>${(cl.meds || []).filter(x => x.active !== false).length ? '' : '<span class="stat">Add your medicine price list in Clinic setup first.</span>'}<span class="sp"></span><span class="stat">Medicines total <b id="smMedTot">${inr(MM.reduce((s, m) => s + (+m.cost || 0), 0))}</b></span></div></div>`
       : '<p class="stat">Treatments and medicines are added by a doctor (you don\'t have Treatments access).</p>'}
       <label class="stat" style="display:block;margin-top:14px">Treatment plan description / clinical notes<textarea id="smNotes" rows="3" style="width:100%" placeholder="Complaint, findings, what was done, treatment plan, instructions given…">${esc(notes)}</textarea></label>
-      <label class="ckl" id="smSkipWrap" style="margin-top:6px"${a.noCost ? ' hidden' : ''}><input type="checkbox" id="smSkipDesc"> Skip the description for now: everyone gets a reminder "Treatment plan description needs to be updated for ${esc(a.patientName)}"</label>
+      <label class="ckl" id="smSkipWrap" style="margin-top:6px"${noTr && noMed ? ' hidden' : ''}><input type="checkbox" id="smSkipDesc"> Skip the description for now: everyone gets a reminder "Treatment plan description needs to be updated for ${esc(a.patientName)}"</label>
       ${back === 'bill' ? '' : `<div class="fhead" style="margin:12px 0 4px">Next visit</div>
       <div class="nvrow"><span class="nvck"><input type="checkbox" id="smNext"> Book the next visit</span><input type="date" id="smNDate" value="${shiftDay(todayKey, 7)}" min="${todayKey}"><input type="time" id="smNTime" value="${esc(a.time || '10:00')}" step="300"><input id="smNReason" placeholder="Reason, e.g. RCT 2nd sitting"></div>`}
-      <div class="btnrow" style="margin-top:14px"><button class="primary" type="submit" id="smSubmit">${a.noCost && completing ? 'Save & complete visit ✓' : completing || back === 'bill' ? 'Save & go to bill →' : 'Save'}</button></div>
+      <div class="btnrow" style="margin-top:14px"><button class="primary" type="submit" id="smSubmit">${completing || back === 'bill' ? 'Save & go to bill →' : 'Save'}</button></div>
     </form>`;
 }
 async function clSaveSummary(){
   const {F} = cloud, S = cl.sum; if (!S) return;
   const {appt:a, completing, back} = S, by = cloud.user.email || '', now = Date.now(), w = canW('treatments'), toBill = completing || back === 'bill';
-  const noCost = !!($('#smNoCost') && $('#smNoCost').checked);
+  const noTr = !!($('#smNoTr') && $('#smNoTr').checked), noMed = !!($('#smNoMed') && $('#smNoMed').checked), noCost = noTr && noMed;
   const notes = ($('#smNotes') || {}).value.trim(), skipDesc = !noCost && !!($('#smSkipDesc') && $('#smSkipDesc').checked);
-  if (noCost && !notes) return info('No cost for this appointment: write the description of what was done.');
-  const rows = w && !noCost ? [...document.querySelectorAll('#smRows [data-sr]')].map(r => { const v = k => r.querySelector(`[data-sf="${k}"]`).value; return {tid:r.dataset.tid || '', typeId:v('type'), tooth:v('tooth').trim(), doctorId:v('doc'), costRaw:v('cost').trim(), cost:Math.max(0, +v('cost') || 0), discount:Math.max(0, +v('disc') || 0), status:v('status'), fee:Math.max(0, +v('fee') || 0)}; }) : [];
+  if (noCost && !notes) return info('No treatment and no medicine: write the description of what was done.');
+  const rows = w && !noTr ? [...document.querySelectorAll('#smRows [data-sr]')].map(r => { const v = k => r.querySelector(`[data-sf="${k}"]`).value; return {tid:r.dataset.tid || '', typeId:v('type'), tooth:v('tooth').trim(), doctorId:v('doc'), costRaw:v('cost').trim(), cost:Math.max(0, +v('cost') || 0), discount:Math.max(0, +v('disc') || 0), status:v('status'), fee:Math.max(0, +v('fee') || 0)}; }) : [];
   const filled = rows.filter(r => r.typeId);
-  if (w && toBill && !noCost && !filled.length) return info('Add the treatment done with its cost: it is required.');
+  if (w && toBill && !noTr && !filled.length) return info('Add the treatment done with its cost, or tick "No treatment".');
   if (filled.some(r => r.costRaw === '')) return info('Enter the cost for each treatment.');
   if (filled.some(r => !r.doctorId)) return info('Choose the doctor for each treatment.');
-  const meds = w && !noCost ? [...document.querySelectorAll('#smMeds [data-mr]')].map(r => { const g = k => r.querySelector(`[data-mf="${k}"]`), o = g('med').selectedOptions[0];
+  const meds = w && !noMed ? [...document.querySelectorAll('#smMeds [data-mr]')].map(r => { const g = k => r.querySelector(`[data-mf="${k}"]`), o = g('med').selectedOptions[0];
     return {tid:r.dataset.tid || '', medId:g('med').value, dose:Object.fromEntries(DOSE.map(([k]) => [k, g(k).checked])), days:Math.max(0, +g('days').value || 0), qty:Math.max(0, +g('qty').value || 0), price:o && o.value ? +o.dataset.price || 0 : 0, unit:o && o.value ? o.dataset.unit || '' : ''}; }).filter(m => m.medId) : [];
   if (meds.some(m => !m.qty)) return info('For each medicine, tick when to take it and enter the number of days.');
   if (!notes && !skipDesc) return info('Write the treatment plan description, or tick "Skip the description for now".');
   try {
-    if (w && !noCost){
-      const keep = new Set(filled.map(r => r.tid).concat(meds.map(m => m.tid)).filter(Boolean));
+    if (w){
+      const keep = new Set(filled.map(r => r.tid).concat(meds.map(m => m.tid)).filter(Boolean));   // ticking "No treatment" / "No medicine" removes this visit's entries of that kind
       for (const t of (S.T || [])) if (!keep.has(t.id)) await F.deleteDoc(cDoc('treatments', t.id));
       const base = {patientId:a.patientId, patientName:a.patientName, appointmentId:a.id, date:a.date <= todayKey ? a.date : todayKey};
       for (const r of filled){
@@ -4899,19 +4899,17 @@ async function clSaveSummary(){
       }
     }
     const upd = notes ? {summaryPending:false, summary:{notes, by, at:now}} : {summaryPending:true, skippedBy:by};
-    upd.noCost = noCost;
-    if (noCost && (S.T || []).some(t => t.status !== 'planned' && net(t) > 0)) return info('This visit already has treatments with a cost. Remove them first, or untick "No cost".');
-    if (completing) Object.assign(upd, noCost ? {status:'completed', summarizedAt:now, completedAt:now, billed:false} : {status:'billing', summarizedAt:now});
+    Object.assign(upd, {noTr, noMed, noCost});
+    if (completing) Object.assign(upd, {status:'billing', summarizedAt:now});
     await F.updateDoc(cDoc('appointments', a.id), upd);
     if ($('#smNext') && $('#smNext').checked){
       const nd = $('#smNDate').value, nt = $('#smNTime').value;
       if (nd && nt) await F.addDoc(cCol('appointments'), {patientId:a.patientId, patientName:a.patientName, doctorId:a.doctorId, date:nd, time:nt, duration:a.duration || 15, reason:$('#smNReason').value.trim() || 'Follow-up', status:'scheduled', createdAt:now, createdBy:by, followOf:a.id});
     }
     $('#clOv').classList.remove('on'); cl.sum = null;
-    if (noCost && completing){ info(`${a.patientName}'s visit is completed (no cost).`); clinicSync(true); renderClinic(); return; }
     info(notes ? 'Visit summary saved.' : `Saved. "Treatment plan description needs to be updated for ${a.patientName}" is on the Planning Board.`);
     clinicSync(true); renderClinic();
-    if (toBill && !noCost){ if (canW('billing')) clOpenBill(Object.assign({}, a, upd)); else if (completing) info(`${a.patientName} is now "At billing": the front desk will take the payment.`); }
+    if (toBill){ if (canW('billing')) clOpenBill(Object.assign({}, a, upd)); else if (completing) info(`${a.patientName} is now "At billing": the front desk will take the payment.`); }
   } catch(e){ info('Could not save: ' + errText(e)); }
 }
 
@@ -5412,7 +5410,7 @@ function drawBill(){
     ${visitPays.length ? `<div class="hh">Receipts for this visit</div>${visitPays.map(x => `<div class="trow"><b>${esc(x.receiptNo)} · ${inr(x.amount)} · ${esc((PMODES.find(m => m[0] === x.mode) || [0, x.mode])[1])}</b><button data-vbrcpt="${esc(x.id)}">🖨 Print receipt</button></div>`).join('')}` : ''}
     <div class="btnrow" style="margin-top:14px">
       <button data-vbprint>🖨 Print bill</button><span class="sp"></span>
-      ${w ? `<label class="vbchk"><input type="checkbox" id="vbNoPay"${B.noPay ? ' checked' : ''}> No payment now (balance stays due)</label>
+      ${w ? `<label class="vbchk" title="Complete the visit without taking a payment"><input type="checkbox" id="vbNoPay"${B.noPay ? ' checked' : ''}> <b>No bill</b>&nbsp;${visitNet > 0 ? `(no payment now: ${inr(due)} stays due)` : '(nothing to charge for this visit)'}</label>
         <button class="primary" id="vbDone"${done || B.noPay ? '' : ' disabled'}>Complete visit ✓</button>` : '<button id="vbLeave">Leave for billing</button>'}</div>`;
   numberTables($('#clOvBody'));
 }
@@ -5445,7 +5443,7 @@ $('#clOv').addEventListener('click', async e => {
   if (e.target.id === 'vbNoPay'){ cl.bill.noPay = e.target.checked; $('#vbDone').disabled = !(cl.bill.noPay || cl.bill.P.some(x => x.appointmentId === cl.bill.appt.id)); return; }
   if (e.target.closest('#vbLeave')){ $('#clOv').classList.remove('on'); cl.bill = null; return; }
   if (e.target.closest('#vbDone')){
-    try { await cloud.F.updateDoc(cDoc('appointments', cl.bill.appt.id), {status:'completed', completedAt:Date.now(), billed:true}); } catch(err){ return info(errText(err)); }
+    try { await cloud.F.updateDoc(cDoc('appointments', cl.bill.appt.id), {status:'completed', completedAt:Date.now(), billed:!cl.bill.noPay || cl.bill.P.some(x => x.appointmentId === cl.bill.appt.id)}); } catch(err){ return info(errText(err)); }
     $('#clOv').classList.remove('on'); info(`${cl.bill.appt.patientName}'s visit is completed.`); cl.bill = null; clinicSync(true); renderClinic();
   }
 });
