@@ -557,6 +557,9 @@ input.srchin.bad{border-color:var(--high)}
 .aday .achip{max-width:none;flex:none}
 .wtrow{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:flex-end}.wtrow label{display:flex;flex-direction:column}.wtrow .fhead{align-self:center}
 #clSumForm .fhead{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.fhead .sp{flex:1}.ckl.nox{font-weight:600;color:var(--ink);font-size:13px;margin-left:auto}
+.smtot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.smtot div{display:flex;flex-direction:column}.smtot span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:700}.smtot b{font-size:17px;font-variant-numeric:tabular-nums}
+.smtot i{font-style:normal;color:var(--muted);font-size:18px}.smtot .all{margin-left:auto;text-align:right}.smtot .all b{font-size:22px;color:var(--accent)}
 .bkmode{display:inline-flex;margin-bottom:4px}.npbox{display:flex;flex-wrap:wrap;gap:8px 10px;padding:10px;border:1px solid var(--line);border-radius:12px;background:color-mix(in srgb,var(--accent) 4%,var(--paper))}
 .npbox label{display:flex;flex-direction:column}.npbox label.grow{flex:1;min-width:160px}.npbox label.full{flex-basis:100%}
 .bkres{display:flex;flex-direction:column;gap:3px;margin:4px 0}
@@ -4814,6 +4817,16 @@ $('#clOv').addEventListener('input', e => {
 $('#clOv').addEventListener('submit', e => { e.preventDefault(); if (e.target.id === 'clBookForm') clSaveBook(); if (e.target.id === 'clSumForm') clSaveSummary(); });
 const medEv = e => { const mr = e.target.closest('[data-mr]'); if (mr && e.target.matches('[data-mf]')){ medCalc(mr); const t = $('#smMedTot'); if (t) t.textContent = inr(medTotal()); } };
 $('#clOv').addEventListener('input', medEv);
+/* live totals on "What happened in this appointment?": treatments (cost − discount, planned ones not billed) + medicines */
+function sumTotals(){
+  const box = $('#smTotals'); if (!box) return;
+  const noTr = $('#smNoTr') && $('#smNoTr').checked, noMed = $('#smNoMed') && $('#smNoMed').checked;
+  const tr = noTr ? 0 : [...document.querySelectorAll('#smRows [data-sr]')].reduce((t, r) => { const g = k => r.querySelector(`[data-sf="${k}"]`);
+    return g('type').value && g('status').value !== 'planned' ? t + Math.max(0, (+g('cost').value || 0) - (+g('disc').value || 0)) : t; }, 0);
+  const md = noMed ? 0 : medTotal();
+  box.querySelector('[data-tt=tr]').textContent = inr(tr); box.querySelector('[data-tt=md]').textContent = inr(md); box.querySelector('[data-tt=all]').textContent = inr(tr + md);
+}
+['input', 'change', 'click'].forEach(ev => $('#clOv').addEventListener(ev, () => setTimeout(sumTotals, 0)));
 $('#clOv').addEventListener('change', e => {
   medEv(e);
   const r = e.target.closest('[data-sr]'); if (!r) return;
@@ -4850,7 +4863,7 @@ async function clOpenSummary(appt, completing, back){
   $('#clOv').classList.add('on'); $('#clOvBody').innerHTML = '<div class="empty">Loading…</div>';
   try { cl.sum.T = (can('treatments') || can('billing')) ? docsOf(await cloud.F.getDocs(cloud.F.query(cCol('treatments'), cloud.F.where('appointmentId', '==', appt.id)))) : []; }
   catch(e){ if (cl.sum) cl.sum.T = []; }
-  if (cl.sum && cl.sum.appt === appt) $('#clOvBody').innerHTML = clSummaryForm();
+  if (cl.sum && cl.sum.appt === appt){ $('#clOvBody').innerHTML = clSummaryForm(); sumTotals(); }
 }
 function sumRow(i, a, t){
   const types = cl.types.filter(x => x.active !== false || (t && x.id === t.typeId));
@@ -4897,6 +4910,7 @@ function clSummaryForm(){
         <div id="smMedArea"${noMed ? ' hidden' : ''}><div id="smMeds">${MM.map((m, i) => medRow(i, m)).join('')}</div>
         <div class="btnrow"><button type="button" id="smMedAdd">+ Add medicine</button>${(cl.meds || []).filter(x => x.active !== false).length ? '' : '<span class="stat">Add your medicine price list in Clinic setup first.</span>'}<span class="sp"></span><span class="stat">Medicines total <b id="smMedTot">${inr(MM.reduce((s, m) => s + (+m.cost || 0), 0))}</b></span></div></div>`
       : '<p class="stat">Treatments and medicines are added by a doctor (you don\'t have Treatments access).</p>'}
+      ${w ? `<div class="smtot" id="smTotals"><div><span>Cost of treatment</span><b data-tt="tr">₹0</b></div><i>+</i><div><span>Cost of medicines</span><b data-tt="md">₹0</b></div><i>=</i><div class="all"><span>Total cost</span><b data-tt="all">₹0</b></div></div>` : ''}
       <label class="stat" style="display:block;margin-top:14px">Treatment plan description / clinical notes<textarea id="smNotes" rows="3" style="width:100%" placeholder="Complaint, findings, what was done, treatment plan, instructions given…">${esc(notes)}</textarea></label>
       <label class="ckl" id="smSkipWrap" style="margin-top:6px"${noTr && noMed ? ' hidden' : ''}><input type="checkbox" id="smSkipDesc"> Skip the description for now: everyone gets a reminder "Treatment plan description needs to be updated for ${esc(a.patientName)}"</label>
       ${back === 'bill' ? '' : `<div class="fhead" style="margin:12px 0 4px">Next visit</div>
