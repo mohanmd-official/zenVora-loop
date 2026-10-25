@@ -1265,6 +1265,7 @@ function applyHash(){
   const p = decodeURIComponent(location.hash || '').replace(/^#\/?/, '').split('/').filter(Boolean); if (!p.length) return false;
   routeApplying = true;
   try {
+    if (p[0] === 'clinic' && p[1] === 'attendance' && viewAllowed('attendance')){ setView('attendance'); return true; }    // old link: Attendance is its own tab now
     if (p[0] === 'clinic' && viewAllowed('clinic')){
       const sec = p[1] || 'patients'; cl.sec = sec;
       if (sec === 'reports' && p[2]) cl.rep.kind = p[2];
@@ -2217,9 +2218,9 @@ function refreshTabs(){
   const oc = orgCtx(), isSup = !!(cloud && cloud.isSuper), role = oc ? oc.role : '';
   const agenda = agendaOn();
   AGENDA_VIEWS.forEach(v => { const t = document.querySelector(`#tabs [data-view="${v}"]`); if (t) t.hidden = !agenda; });
-  $('#attTab').hidden = !(oc && feat('attendance') && !feat('clinic'));
+  $('#attTab').hidden = !(oc && feat('attendance'));
   $('#homeTab').hidden = !!(oc && oc.support);
-  $('#clinicTab').hidden = !(oc && feat('clinic') && (oc.support || clinicAny() || feat('attendance')));
+  $('#clinicTab').hidden = !(oc && feat('clinic'));          // every clinic member at least logs their Patient assists there
   $('#orgTab').hidden = !(oc && (oc.support || role === 'orgadmin' || role === 'manager'));
   $('#orgsTab').hidden = !isSup;
   $('#tabs').classList.toggle('many', [...document.querySelectorAll('#tabs [data-view]')].filter(b => !b.hidden).length > 6);
@@ -3194,7 +3195,7 @@ const CI = {
   assists:'<path d="M5.5 7.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM1.5 14c.3-2.6 1.8-4 4-4s3.7 1.4 4 4M10.5 8.5l1.6 1.6 3-3.2"/>',
   setup:'<circle cx="8" cy="8" r="2.2"/><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M3.4 12.6l1.4-1.4M11.2 4.8l1.4-1.4"/>'};
 const CSECS = [['patients', 'Patients', () => can('patients') || can('treatments') || can('billing')], ['appointments', 'Appointments', () => can('appointments') || can('treatments')],
-  ['attendance', 'Attendance', () => feat('attendance')], ['accounts', 'Accounts', () => can('accounts') || can('petty') || can('tally') || isOwnerLike()], ['reports', 'Reports', () => can('reports') || can('doctorReports')], ['assists', 'Patient assists', () => !!(orgCtx() && !orgCtx().support)], ['setup', 'Clinic setup', () => can('setup')]];
+  ['accounts', 'Accounts', () => can('accounts') || can('petty') || can('tally') || isOwnerLike()], ['reports', 'Reports', () => can('reports') || can('doctorReports')], ['assists', 'Patient assists', () => !!(orgCtx() && !orgCtx().support)], ['setup', 'Clinic setup', () => can('setup')]];
 
 function renderClinic(){
   const oc = orgCtx(); if (!oc || !feat('clinic') || window.__ordDrag || window.__apDrag) return;
@@ -3580,12 +3581,19 @@ function clHistory(){
 }
 
 /* ---------- Appointments ---------- */
+const autoMissed = new Set();
+function autoMiss(list){                 // past days: a visit left "Scheduled" becomes "Missed" (the reminder to call them is raised by the clinic sync)
+  if (!canW('appointments')) return;
+  const stale = (list || []).filter(a => a.date < todayKey && a.status === 'scheduled' && !autoMissed.has(a.id)); if (!stale.length) return;
+  stale.forEach(a => { autoMissed.add(a.id); a.status = 'missed'; a.autoMissed = true; cloud.F.updateDoc(cDoc('appointments', a.id), {status:'missed', autoMissed:true, missedAt:Date.now()}).catch(() => autoMissed.delete(a.id)); });
+  clinicSync(true);
+}
 function clApptLoad(){
   const {F} = cloud, from = cl.aMode === 'day' ? cl.aDate : weekStart(cl.aDate), to = cl.aMode === 'day' ? cl.aDate : shiftDay(weekStart(cl.aDate), 6);
   const key = orgCtx().orgId + from + to;
   if (cl.aKey === key) return; cl.aKey = key; cl.appts = null;
   if (cl.aUnsub) try { cl.aUnsub(); } catch(e){}
-  cl.aUnsub = F.onSnapshot(F.query(cCol('appointments'), F.where('date', '>=', from), F.where('date', '<=', to)), qs => { if (cl.aKey !== key) return; cl.appts = docsOf(qs); if (state.settings.view === 'clinic' && cl.sec === 'appointments') renderClinic(); }, e => { cl.appts = []; info('Appointments could not load: ' + errText(e)); });
+  cl.aUnsub = F.onSnapshot(F.query(cCol('appointments'), F.where('date', '>=', from), F.where('date', '<=', to)), qs => { if (cl.aKey !== key) return; cl.appts = docsOf(qs); autoMiss(cl.appts); if (state.settings.view === 'clinic' && cl.sec === 'appointments') renderClinic(); }, e => { cl.appts = []; info('Appointments could not load: ' + errText(e)); });
 }
 const toHM = m => `${pad2(Math.floor(m / 60))}:${pad2(m % 60)}`;
 const hm12 = t => { if (!t) return ''; const [h, m] = t.split(':').map(Number); return `${(h + 11) % 12 + 1}:${pad2(m)} ${h < 12 ? 'AM' : 'PM'}`; };
@@ -3787,8 +3795,8 @@ function commitStatus(mk, led){
   });
 }
 const ACC_TABS = [['overview', 'Overview', 'accounts'], ['tally', 'Daily tally', 'tally'], ['expenses', 'Clinic expenses', 'accounts'], ['petty', 'Petty cash', 'petty'],
-  ['lab', 'Lab', 'accounts'], ['materials', 'Materials', 'accounts'], ['consultants', 'Consultants', 'accounts'], ['setup', 'Commitments & categories', 'accounts'], ['import', 'Past data & audit', 'accounts']];
-const accTabs = () => ACC_TABS.filter(t => can(t[2]) || (t[2] !== 'accounts' && can('accounts')) || (t[0] === 'consultants' && isOwnerLike()));
+  ['lab', 'Lab', 'accounts'], ['materials', 'Materials', 'accounts'], ['consultants', 'Consultants', 'accounts'], ['salary', 'Staff salary', 'accounts'], ['setup', 'Commitments & categories', 'accounts'], ['import', 'Past data & audit', 'accounts']];
+const accTabs = () => ACC_TABS.filter(t => t[0] !== 'salary' || (feat('attendance') && canManageAtt() && !(orgCtx() || {}).support)).filter(t => can(t[2]) || (t[2] !== 'accounts' && can('accounts')) || (t[0] === 'consultants' && isOwnerLike()));
 function clAccLoad(){
   const {F} = cloud, a = cl.acc;
   if (!a.month) a.month = todayKey.slice(0, 7);
@@ -3808,6 +3816,7 @@ function clAccLoad(){
     jobs.cfeesAll = q('treatments', W('consultantFee', '>', 0));
     jobs.expAll = q('ledger', W('kind', '==', 'expense'));
   }
+  if (a.tab === 'salary' && feat('attendance') && canManageAtt()) jobs.staff = loadStaffPay(a.month);
   if (full && a.tab === 'consultants') jobs.mAppts = q('appointments', W('date', '>=', a.month + '-01'), W('date', '<=', mEnd(a.month)));
   if (full || can('petty')){ jobs.pin = q('ledger', W('kind', '==', 'petty')); jobs.pout = q('ledger', W('kind', '==', 'pettyspend')); }
   if (a.tab === 'tally' && (full || can('tally'))){
@@ -3855,7 +3864,7 @@ function clAccounts(){
     banner += late.length ? `<div class="nag late">⚠ Overdue for ${esc(monthLabel(a.month))}: ${late.map(x => esc(x.c.name)).join(', ')}: these should be entered by the ${DUE_DAY}th.</div>`
       : due.length ? `<div class="nag">Due by ${DUE_DAY} ${esc(parseDay(a.month + '-01').toLocaleDateString([], {month:'short'}))}: ${due.map(x => esc(x.c.name)).join(', ')}</div>` : '';
   }
-  return head + banner + ({overview:accOverview, tally:accTally, expenses:accExpenses, petty:accPetty, lab:() => accVendorTab('Lab'), materials:() => accVendorTab('Materials'), consultants:accConsultants, setup:accSetup, import:accImport})[a.tab](d);
+  return head + banner + ({overview:accOverview, tally:accTally, expenses:accExpenses, petty:accPetty, lab:() => accVendorTab('Lab'), materials:() => accVendorTab('Materials'), consultants:accConsultants, salary:accSalary, setup:accSetup, import:accImport})[a.tab](d);
 }
 const kpi = (l, v, s, c = '') => `<div class="kpi"><div class="kl">${l}</div><div class="kv ${c}">${v}</div><div class="ks">${s}</div></div>`;
 function accOverview(d){
@@ -4055,6 +4064,34 @@ function consExport(kind){
     ${rows.map(r => `<tr><td>${esc(fmtShort(r.date))}</td><td>${esc(r.time ? hm12(r.time) : '')}</td><td>${esc(r.patient)}</td><td>${esc(r.what)}</td><td class="n">${inr(consAmt(r))}</td></tr>`).join('')}
     <tr class="tot"><td colspan="4">Month total</td><td class="n">${inr(tot)}</td></tr></tbody></table>`);
 }
+/* Staff salary: the month's attendance (salary − loss of pay + extra hours / days) + patient-assist incentives = payable; "Pay" records it as a clinic expense */
+async function loadStaffPay(month){
+  const {F, fs} = cloud, B = monthBounds(month), oc = orgCtx();
+  const from = F.Timestamp.fromDate(parseDay(shiftDay(B.s, -1))), to = F.Timestamp.fromDate(parseDay(shiftDay(B.e, 2)));
+  const accs = docsOf(await F.getDocs(F.collection(fs, 'orgs', oc.orgId, 'members'))).map(a => Object.assign({uid:a.id}, a)).filter(a => !a.removed && a.role !== 'orgadmin')
+    .sort((a, b) => fullName(a).localeCompare(fullName(b)));
+  const [inc, evs, paid] = await Promise.all([loadIncentives(month),
+    Promise.all(accs.map(a => F.getDocs(F.query(attCol(a.uid), F.where('at', '>=', from), F.where('at', '<', to))).then(qs => qs.docs.map(d => { const x = d.data({serverTimestamps:'estimate'}); return {id:d.id, type:x.type, src:x.src, at:tsMs(x.at)}; })))),
+    F.getDocs(F.query(cCol('ledger'), F.where('kind', '==', 'expense'), F.where('category', '==', 'Staff salary'))).then(docsOf).catch(() => [])]);
+  return accs.map((a, i) => { a._inc = inc[a.uid] || 0; const S = attSummary(evs[i], month, a); return {a, S, paid:paid.filter(x => x.staffUid === a.uid && x.salMonth === month)}; });
+}
+function accSalary(d){
+  const a = cl.acc, rows = d.staff || [], w = canW('accounts'), pay = payOn();
+  if (!pay) return '<div class="empty">Salaries need the <b>Payroll</b> feature for this organization (Zenvora Loop Super Admin → Organizations → Edit → Payroll). Attendance, extra hours and Sundays are in the Attendance tab.</div>';
+  const T = rows.reduce((t, r) => { t.sal += r.S.salary; t.ex += r.S.extra; t.inc += r.S.inc; t.pay += r.S.pay; t.paid += paidSum(r.paid); return t; }, {sal:0, ex:0, inc:0, pay:0, paid:0});
+  return `<div class="kpis">${kpi('Payable ' + esc(monthLabel(a.month)), inr(T.pay), plural(rows.length, 'staff member'))}${kpi('Paid', inr(T.paid), 'recorded as clinic expenses')}${kpi('Still to pay', inr(Math.max(0, T.pay - T.paid)), a.month < todayKey.slice(0, 7) ? 'for this month' : 'so far this month', T.pay - T.paid > 0 ? 'neg' : '')}</div>
+    <div class="awrap"><table class="atbl"><thead><tr><th>Staff</th><th class="num">Present</th><th class="num">Loss of pay</th><th class="num">Salary</th><th class="num">Extra hours</th><th class="num">Extra days / Sundays</th>${feat('clinic') ? '<th class="num">Incentive</th>' : ''}<th class="num">Payable</th><th class="num">Paid</th><th></th></tr></thead><tbody>
+    ${rows.map(({a:m, S, paid}) => { const pd = paidSum(paid), due = Math.max(0, Math.round(S.pay) - pd);
+      return `<tr data-sal="${esc(m.uid)}"><td><b>${esc(fullName(m))}</b><span class="sub2">${esc(titleOf(m) || '')}${+S.c.salary ? ' · ' + inr(S.c.salary) + '/month' : ' · <span class="neg">salary not set</span>'}</span></td>
+        <td class="num">${S.P}</td><td class="num ${S.lop ? 'neg' : ''}">${S.lop ? S.lop + ' d · − ' + inr(S.lopAmt) : '—'}</td><td class="num">${inr(S.salary)}</td>
+        <td class="num">${S.OT ? hm(S.OT) + ' · ' + inr(S.otHrPay) : '—'}</td><td class="num">${S.otDays || S.sun ? `${S.otDays} d · ${inr(S.otDayPay)}${S.sun ? `<span class="sub2">${plural(S.sun, 'Sunday')} worked</span>` : ''}` : '—'}</td>
+        ${feat('clinic') ? `<td class="num">${S.inc ? inr(S.inc) : '—'}</td>` : ''}<td class="num"><b>${inr(S.pay)}</b></td>
+        <td class="num">${pd ? `<span class="upill on">${inr(pd)}</span>` : '—'}</td>
+        <td style="white-space:nowrap">${w && due > 0 ? `<button class="primary" data-salpay="${Math.round(due)}">Pay ${inr(due)}</button>` : ''}${w && paid.length ? ` <button class="linkb" data-salundo="${esc(paid.map(x => x.id).join(','))}" title="Remove the payment entry">Undo</button>` : ''}</td></tr>`; }).join('') || '<tr><td colspan="10" class="stat">No staff yet.</td></tr>'}
+    ${rows.length ? `<tr class="tot"><td colspan="3">Total</td><td class="num">${inr(T.sal)}</td><td colspan="2" class="num">${inr(T.ex)}</td>${feat('clinic') ? `<td class="num">${inr(T.inc)}</td>` : ''}<td class="num">${inr(T.pay)}</td><td class="num">${inr(T.paid)}</td><td></td></tr>` : ''}
+    </tbody></table></div>
+    <p class="stat">Payable = salary (less loss of pay beyond ${OFFS_PER_MONTH} offs) + extra hours (beyond the work timing) + extra days worked on offs / Sundays${feat('clinic') ? ' + incentives from approved patient assists' : ''}. Set each person's salary and work timing in Attendance → the person. <b>Pay</b> records the salary as a clinic expense (category "Staff salary").</p>`;
+}
 function accSetup(){
   const m = ameta(), w = canW('accounts');
   return `<div class="acards">
@@ -4127,6 +4164,12 @@ const CHG = [200, 100, 50, 20, 10, 5, 2, 1];
 const TMODES = [['upi', 'GPay / UPI', ['upi']], ['card', 'Debit card', ['card']], ['ccard', 'Credit card', ['ccard']], ['other', 'Others', ['cheque', 'neft', 'rtgs', 'bank']]];
 const tCollected = t => (+t.counted || 0) - (+t.opening || 0) - (+t.change || 0) + (+t.cashExp || 0) + (+t.out || 0);
 const tOk = t => t && !t.diff && !t.digitalDiff && t.manual !== false;
+/* a saved tally checked against the payments as they are NOW (payments added or changed later turn a "Tallied" day into a mismatch) */
+function tFig(t, ps){
+  const rc = paidSum(ps.filter(x => x.mode === 'cash')), ru = paidSum(ps.filter(x => x.mode === 'upi')), ro = paidSum(ps.filter(x => x.mode !== 'cash' && x.mode !== 'upi'));
+  const g = (t && t.digital) || {}, ap = k => g[k] ? +g[k].app || 0 : 0, tc = t ? tCollected(t) : 0, tu = ap('upi'), to = ap('card') + ap('ccard') + ap('other') + ap('bank');
+  return {rc, ru, ro, tc, tu, to, dc:tc - rc, dd:(tu - ru) + (to - ro), ok:!!t && tc === rc && tu === ru && to === ro && t.manual !== false};
+}
 const denSum = (c, L) => (L || DENOMS).reduce((s, v) => s + v * (+(c || {})[v] || 0), 0);
 function tallyBase(){
   const a = cl.acc, d = a.d, day = a.tday || todayKey, all = (d.tallies || []).slice().sort((x, y) => String(y.date).localeCompare(String(x.date)));
@@ -4141,7 +4184,9 @@ function accTally(){
   const fixedOpen = !!(done || prev), opening = done ? +done.opening || 0 : prev ? +prev.counted || 0 : 0;
   const openCounts = done ? done.openCounts || null : prev ? prev.counts || null : null;
   const chip = (c, L) => (L || DENOMS).filter(n => +c[n]).map(n => `<span class="dchip">₹${n} × ${+c[n]}</span>`).join('') || '<span class="stat">no denominations saved</span>';
-  const status = done ? (tOk(done) ? `<span class="upill on">Tallied ✓ · ${esc((done.by || '').split('@')[0])}</span>` : `<span class="upill gone">Not tallied · ${[done.diff ? 'cash ' + (done.diff > 0 ? '+' : '−') + inr(Math.abs(done.diff)) : '', done.digitalDiff ? 'online ' + (done.digitalDiff > 0 ? '+' : '−') + inr(Math.abs(done.digitalDiff)) : ''].filter(Boolean).join(', ') || 'not counted by hand'}</span>`) : '<span class="upill pend">Not tallied yet</span>';
+  const F0 = done ? tFig(done, cl.acc.d.tPay || []) : null;
+  const status = done ? (F0.ok ? `<span class="upill on">Tallied ✓ · ${esc((done.by || '').split('@')[0])}</span>` : `<span class="upill gone">Not tallied · ${[F0.dc ? 'cash ' + (F0.dc > 0 ? '+' : '−') + inr(Math.abs(F0.dc)) : '', F0.dd ? 'online ' + (F0.dd > 0 ? '+' : '−') + inr(Math.abs(F0.dd)) : ''].filter(Boolean).join(', ') || 'not counted by hand'} against today's report</span>`)
+    + (canW('accounts') ? ` <button class="linkb danger" data-tldel="${esc(day)}" title="Delete this saved tally (e.g. test entries), then count again">🗑 Delete this tally</button>` : '') : '<span class="upill pend">Not tallied yet</span>';
   return `<div class="vbar" style="padding:0 0 10px"><div class="daynav"><button data-td="-1">‹</button><button data-td="0"${day === todayKey ? ' disabled' : ''}>Today</button><button data-td="1"${day >= todayKey ? ' disabled' : ''}>›</button></div>
       <strong>${esc(fmtLong(day))}</strong>${status}</div>
     <div class="box topen"><div class="tob"><span>Opening cash</span><b class="big" id="tlOpenV">${inr(opening)}</b>
@@ -4181,12 +4226,11 @@ function tallyMonth(B){
   for (let k = last; k >= mk + '-01'; k = shiftDay(k, -1)){
     const ps = mp.filter(x => x.date === k), t = byT[k];
     if (!ps.length && !t) continue;
-    const rc = paidSum(ps.filter(x => x.mode === 'cash')), ru = paidSum(ps.filter(x => x.mode === 'upi')), ro = paidSum(ps.filter(x => x.mode !== 'cash' && x.mode !== 'upi'));
-    const g = (t && t.digital) || {}, ap = kk => g[kk] ? +g[kk].app || 0 : 0, tc = t ? tCollected(t) : 0, tu = ap('upi'), to = ap('card') + ap('ccard') + ap('other') + ap('bank');
+    const {rc, ru, ro, tc, tu, to, ok:tok} = tFig(t, ps);
     T.rc += rc; T.ru += ru; T.ro += ro; if (t){ T.tc += tc; T.tu += tu; T.to += to; T.xc += rc; T.xu += ru; T.xo += ro; }
     const cell = (r, v) => t ? `<td class="num${v !== r ? ' neg' : ''}">${inr(v)}</td>` : '<td class="num stat">—</td>';
     rows.push(`<tr class="clk${k === B.day ? ' sel' : ''}" data-tday="${k}"><td>${esc(fmtShort(k))}</td><td class="num">${inr(rc)}</td>${cell(rc, tc)}<td class="num">${inr(ru)}</td>${cell(ru, tu)}<td class="num">${inr(ro)}</td>${cell(ro, to)}
-      <td>${t ? tOk(t) ? '<span class="upill on">Tallied</span>' : '<span class="upill gone">Mismatch</span>' : '<span class="upill pend">Not done</span>'}</td></tr>`);
+      <td>${t ? tok ? '<span class="upill on">Tallied</span>' : '<span class="upill gone">Mismatch</span>' : '<span class="upill pend">Not done</span>'}</td></tr>`);
   }
   const dd = (r, v) => `<td class="num${r !== v ? ' neg' : ''}"><b>${inr(v)}</b></td>`;
   return `<h3 style="font-size:13px;margin:18px 0 6px">${esc(monthLabel(mk))} · report vs tally</h3>
@@ -4771,6 +4815,14 @@ $('#clBody').addEventListener('click', async e => {
       await F.updateDoc(cDoc('ledger', id), {paid:true, paidAt:Date.now(), mode}); info('Bill marked paid.'); cl.acc.key = ''; return renderClinic(); }
     if (t.closest('[data-vfilter]')){ cl.acc.vf = t.closest('[data-ven]').dataset.ven; return renderClinic(); }
     const td = t.closest('[data-td]'); if (td){ const n = +td.dataset.td, d0 = cl.acc.tday || todayKey; cl.acc.tday = n ? shiftDay(d0, n) : todayKey; if (cl.acc.tday > todayKey) cl.acc.tday = todayKey; return renderClinic(); }
+    const sp = t.closest('[data-salpay]'); if (sp){ const uid = t.closest('[data-sal]').dataset.sal, r = (cl.acc.d.staff || []).find(x => x.a.uid === uid); if (!r) return;
+      const amt = Math.round(+prompt(`Salary paid to ${fullName(r.a)} for ${monthLabel(cl.acc.month)} (₹):`, sp.dataset.salpay) || 0); if (amt <= 0) return;
+      const mode = (prompt('Paid how? cash, upi, bank or cheque', 'bank') || 'bank').trim().toLowerCase();
+      await F.addDoc(cCol('ledger'), {kind:'expense', category:'Staff salary', staffUid:uid, staffName:fullName(r.a), salMonth:cl.acc.month, amount:amt, date:todayKey, mode, paid:true, paidAt:Date.now(), note:`Salary ${monthLabel(cl.acc.month)} · ${fullName(r.a)}`, at:Date.now(), by:cloud.user.email || ''});
+      info(`${inr(amt)} salary to ${fullName(r.a)} recorded as a clinic expense.`); cl.acc.key = ''; return renderClinic(); }
+    const su = t.closest('[data-salundo]'); if (su){ if (!confirm('Remove the salary payment entry?')) return; for (const id of su.dataset.salundo.split(',')) await F.deleteDoc(cDoc('ledger', id)); cl.acc.key = ''; return renderClinic(); }
+    const tdl = t.closest('[data-tldel]'); if (tdl){ if (!confirm(`Delete the saved tally for ${fmtLong(tdl.dataset.tldel)}? The day goes back to "Not tallied yet" and can be counted again.`)) return;
+      await F.deleteDoc(cDoc('tallies', tdl.dataset.tldel)); cl.acc.key = ''; info('Tally deleted.'); clinicSync(true); return renderClinic(); }
     const tdy = t.closest('[data-tday]'); if (tdy){ cl.acc.tday = tdy.dataset.tday; return renderClinic(); }
     if (t.closest('#tlSave')) return saveTally();
     if (t.closest('#auditBtn')) return auditPack(+$('#fySel').value);
@@ -5037,8 +5089,14 @@ async function clinicSyncNow(){
       (await q('treatments', W('date', '>=', shiftDay(todayKey, -90)))).filter(t => !isMed(t) && typeNeeds(t) && !t.docAttached && t.status !== 'planned')
         .forEach(t => opush('doc', 'doc-' + t.id, 'Patient documents', `Upload ${typeNeeds(t)} for ${t.patientName} (${t.typeName}, ${fmtDM(t.date)})`, {link:{pid:t.patientId, tab:'docs'}})); }
     if (can('appointments') === true){ cats.add('fu'); cats.add('miss');
-      (await q('appointments', W('date', '>=', shiftDay(todayKey, -7)), W('date', '<=', todayKey))).forEach(a => {
-        if (a.imported) return;                                   // history brought in from Dentee doesn't raise reminders
+      const recent = await q('appointments', W('date', '>=', shiftDay(todayKey, -14)), W('date', '<=', todayKey));
+      if (canW('appointments')){                                   // a visit still "Scheduled" after its day is over becomes Missed (and gets a call-back reminder)
+        const stale = recent.filter(a => a.date < todayKey && a.status === 'scheduled');
+        for (const a of stale){ try { await F.updateDoc(cDoc('appointments', a.id), {status:'missed', autoMissed:true, missedAt:Date.now()}); Object.assign(a, {status:'missed', autoMissed:true}); const c = (cl.appts || []).find(x => x.id === a.id); if (c) Object.assign(c, {status:'missed', autoMissed:true}); } catch(_){} }
+        if (stale.length && state.settings.view === 'clinic' && cl.sec === 'appointments') renderClinic();
+      }
+      recent.filter(a => a.date >= shiftDay(todayKey, -7)).forEach(a => {
+        if (a.imported && !a.autoMissed) return;                  // history brought in from Dentee doesn't raise reminders
         if (a.status === 'completed' && a.date >= y) opush('fu', 'fu-' + a.id, 'Patient follow-ups', `Follow up with ${a.patientName}: seen on ${fmtDM(a.date)} by ${dName(a.doctorId)}${a.reason ? ' (' + a.reason + ')' : ''}`, {day:shiftDay(a.date, 1), link:{pid:a.patientId, tab:'appointments'}});
         if (a.status === 'missed' || (a.date < todayKey && ['scheduled', 'waiting'].includes(a.status))){ const d1 = shiftDay(a.date, 1) > todayKey ? shiftDay(a.date, 1) : todayKey;
           opush('miss', 'miss-' + a.id, 'Patient follow-ups', `Call ${a.patientName} to reschedule: missed ${fmtDM(a.date)} ${hm12(a.time)} with ${dName(a.doctorId)}`, {priority:'high', day:d1, link:{pid:a.patientId, tab:'appointments'}}); }
@@ -5557,6 +5615,18 @@ function asApprove(d){
     ${done.length ? `<h3 style="font-size:13px;margin:16px 0 6px">Decided this month</h3><div class="awrap"><table class="atbl"><thead><tr><th>Staff</th><th>Date</th><th>Patient</th><th>Treatment</th><th>Doctor</th><th>Note</th><th>Status</th></tr></thead><tbody>
       ${done.map(x => `<tr><td>${esc(x.name || '')}</td>${asRow(x, `<td><span class="upill ${AS_ST[x.status][1]}">${AS_ST[x.status][0]}</span></td>`)}</tr>`).join('')}</tbody></table></div>` : ''}`;
 }
+/* incentive earned per staff member in a month: approved patient assists × the rate for that treatment (or the amount set on the entry) */
+function incentivesByUid(all, payDocs, month){
+  const pay = Object.fromEntries((payDocs || []).map(p => [p.id, p])), rates = (pay.rates && pay.rates.rates) || {}, out = {};
+  (all || []).filter(x => x.status === 'approved' && (x.date || '').slice(0, 7) === month).forEach(x => { out[x.uid] = (out[x.uid] || 0) + (pay['e-' + x.id] ? +pay['e-' + x.id].amount || 0 : +(rates[x.typeId || 'other'] || 0)); });
+  return out;
+}
+async function loadIncentives(month){
+  if (!feat('clinic') || !asOwner()) return {};
+  try { const {F} = cloud, q = (c, ...w) => F.getDocs(F.query(cCol(c), ...w)).then(docsOf);
+    const [all, pay] = await Promise.all([q('assists', F.where('status', '==', 'approved')), q('assistPay')]);
+    return incentivesByUid(all, pay, month); } catch(e){ return {}; }
+}
 function asIncentives(d){
   const A = cl.asst, pay = Object.fromEntries((d.pay || []).map(p => [p.id, p])), rates = (pay.rates && pay.rates.rates) || {};
   const amt = x => pay['e-' + x.id] ? +pay['e-' + x.id].amount || 0 : +(rates[x.typeId || 'other'] || 0);
@@ -5786,7 +5856,7 @@ async function dtPlan(S){
     const reason = [st0 === 'rescheduled' ? 'Rescheduled in Dentee' : '', String(r.Comments || '').trim()].filter(Boolean).join(' · ');
     const keepA = progressed['dt-a-' + (i + 1)];
     if (keepA){ appts.push({id:keepA.id, d:Object.assign({}, keepA, {date:day, time:pad2(s.getHours()) + ':' + pad2(s.getMinutes())}), keep:true}); delete appts[appts.length - 1].d.id; if (keepA.status === 'completed' && !apptOf[P.id + '|' + day]) apptOf[P.id + '|' + day] = keepA.id; return; }
-    const a = {id:'dt-a-' + (i + 1), d:{patientId:P.id, patientName:pName(P.d), doctorId:docOf(r.DoctorName), date:day, time:pad2(s.getHours()) + ':' + pad2(s.getMinutes()), duration:e ? Math.max(5, Math.round((e - s) / 60000)) : 15, reason, status, createdAt:s.getTime(), createdBy:'Dentee import', imported:true}};
+    const a = {id:'dt-a-' + (i + 1), d:{patientId:P.id, patientName:pName(P.d), doctorId:docOf(r.DoctorName), date:day, time:pad2(s.getHours()) + ':' + pad2(s.getMinutes()), duration:e ? Math.max(5, Math.round((e - s) / 60000)) : 15, reason, status, createdAt:s.getTime(), createdBy:'Dentee import', imported:true, importedAt:Date.now()}};
     appts.push(a); if (status === 'completed' && !apptOf[P.id + '|' + day]) apptOf[P.id + '|' + day] = a.id;
   });
   // treatments (Dentee's total = cost × teeth − discount)
@@ -5949,7 +6019,7 @@ function attSummary(events, mk, acc){
   let join = acc && acc.createdAt ? dayKey(acc.createdAt) : B.s; if (firstEv && firstEv < join) join = firstEv;
   const byDay = {};
   sessionsOf(events).forEach(s => (byDay[dayKey(s.in)] = byDay[dayKey(s.in)] || []).push(s));
-  const rows = []; let P = 0, L = 0, H = 0, OT = 0, effMonth = 0;
+  const rows = []; let P = 0, L = 0, H = 0, OT = 0, effMonth = 0, sun = 0;
   for (let k = B.s; k <= B.e; k = shiftDay(k, 1)){
     if (k >= join) effMonth++;
     const ss = byDay[k] || [];
@@ -5958,7 +6028,7 @@ function attSummary(events, mk, acc){
     const worked = ss.reduce((t, s) => t + (s.out ? s.out - s.in : (k === todayKey ? now - s.in : 0)), 0);
     const ot = Math.max(0, worked - sh);
     let st;
-    if (ss.length){ st = open ? (k < todayKey ? 'missed' : 'in') : 'present'; P++; }
+    if (ss.length){ st = open ? (k < todayKey ? 'missed' : 'in') : 'present'; P++; if (parseDay(k).getDay() === 0) sun++; }
     else st = k === todayKey ? 'notyet' : 'leave';
     if (st === 'leave') L++;
     H += worked; OT += ot;
@@ -5967,8 +6037,10 @@ function attSummary(events, mk, acc){
   const lop = Math.max(0, L - OFFS_PER_MONTH), otDays = Math.max(0, P - (effMonth - OFFS_PER_MONTH));
   const perDay = (+c.salary || 0) / B.days, perHour = perDay / (sh / 3600000), mult = +c.otMult || 1;
   const base = perDay * effMonth, lopAmt = lop * perDay, otDayPay = otDays * perDay, otHrPay = (OT / 3600000) * perHour * mult;
-  return {rows, c, sh, B, P, L, H, OT, lop, otDays, offsUsed:Math.min(L, OFFS_PER_MONTH), perDay, perHour, mult, base, lopAmt, otDayPay, otHrPay,
-          pay:base - lopAmt + otDayPay + otHrPay, done:B.e < todayKey, effMonth};
+  const inc = acc && acc._inc != null ? +acc._inc || 0 : acc && att.inc && att.incM === mk && att.inc[acc.uid] != null ? +att.inc[acc.uid] || 0 : 0;
+  const pay0 = base - lopAmt + otDayPay + otHrPay;
+  return {rows, c, sh, B, P, L, H, OT, lop, otDays, sun, offsUsed:Math.min(L, OFFS_PER_MONTH), perDay, perHour, mult, base, lopAmt, otDayPay, otHrPay, inc,
+          salary:base - lopAmt, extra:otDayPay + otHrPay, pay:pay0 + inc, done:B.e < todayKey, effMonth};
 }
 
 async function attLoad(){
@@ -5987,6 +6059,7 @@ async function attLoad(){
     const accs = await F.getDocs(F.collection(fs, 'orgs', orgCtx().orgId, 'members'));
     att.accts = accs.docs.map(d => Object.assign({uid:d.id}, d.data())).filter(a => !a.removed && a.role !== 'orgadmin')
       .sort((a, b) => roleRank(a.role) - roleRank(b.role) || fullName(a).localeCompare(fullName(b)));
+    if (payOn()){ const m0 = att.month; loadIncentives(m0).then(m => { att.inc = m; att.incM = m0; if (att.key === key) renderAttendance(); }); }
     if (att.detail) return watch(att.detail);
     await Promise.all(att.accts.map(async a => { const qs = await F.getDocs(q(a.uid)); att.ev[a.uid] = qs.docs.map(map); }));
     if (att.key === key) renderAttendance();
@@ -6119,8 +6192,8 @@ function attTeam(){
       <td><b>${esc(fullName(a))}</b>${a.role !== 'employee' && ROLE_LABEL[a.role] ? `<em class="rtag">${ROLE_LABEL[a.role]}</em>` : ''}<div class="stat">${esc(titleOf(a) ? titleOf(a) + ' · ' : '')}${esc(shiftTxt(attCfg(a)))}</div></td>
       <td>${today}</td><td class="num">${S.P}</td><td class="num">${S.offsUsed}/${OFFS_PER_MONTH}</td>
       <td class="num ${S.lop ? 'neg' : ''}">${S.lop || '—'}</td><td class="num">${hm(S.H)}</td>
-      <td class="num ${S.OT ? 'ot' : ''}">${S.OT ? hm(S.OT) : '—'}</td><td class="num ${S.otDays ? 'ot' : ''}">${S.otDays || '—'}</td>
-      ${pay ? `<td class="num">${+S.c.salary ? inr(S.c.salary) : '<span class="stat">not set</span>'}</td><td class="num"><b>${inr(S.pay)}</b></td>` : ''}
+      <td class="num ${S.OT ? 'ot' : ''}">${S.OT ? hm(S.OT) : '—'}</td><td class="num ${S.otDays ? 'ot' : ''}">${S.otDays || '—'}</td><td class="num">${S.sun || '—'}</td>
+      ${pay ? `<td class="num">${+S.c.salary ? inr(S.c.salary) : '<span class="stat">not set</span>'}</td><td class="num">${S.extra ? '+ ' + inr(S.extra) : '—'}</td>${feat('clinic') ? `<td class="num">${S.inc ? '+ ' + inr(S.inc) : '—'}</td>` : ''}<td class="num"><b>${inr(S.pay)}</b></td>` : ''}
       ${attRO() ? '' : `<td><button type="button" class="edbtn" data-staffed="${esc(a.uid)}" title="Mark or fix check-in / check-out times for any day of this month">✎ Edit times</button></td>`}</tr>`;
   }).join('');
   return `${cur ? `<div class="kpis">
@@ -6129,8 +6202,8 @@ function attTeam(){
       <div class="kpi"><div class="kl"><i class="dot s-prog"></i>Not in yet</div><div class="kv">${notIn}</div><div class="ks">today</div></div>
       ${pay ? `<div class="kpi"><div class="kl">Team payable</div><div class="kv">${inr(totPay)}</div><div class="ks">${cur ? 'so far this month' : 'this month'}</div></div>` : ''}</div>` : ''}
     <div class="stat">Click a person to see their daily and weekly hours${attRO() ? '' : pay ? ', fix entries, or set their shift and salary' : ', fix entries, or set their shift'}.</div>
-    <div class="awrap"><table class="atbl"><thead><tr><th>Staff</th><th>Today</th><th class="num">Present</th><th class="num">Offs used</th><th class="num">Loss of pay</th><th class="num">Hours</th><th class="num">OT hours</th><th class="num">OT days</th>${pay ? '<th class="num">Salary</th><th class="num">Payable</th>' : ''}${attRO() ? '' : '<th></th>'}</tr></thead>
-    <tbody>${rows}${pay ? `<tr class="tot"><td colspan="9">Total payable</td><td class="num">${inr(totPay)}</td>${attRO() ? '' : '<td></td>'}</tr>` : ''}</tbody></table></div>`;
+    <div class="awrap"><table class="atbl"><thead><tr><th>Staff</th><th>Today</th><th class="num">Present</th><th class="num">Offs used</th><th class="num">Loss of pay</th><th class="num">Hours</th><th class="num">OT hours</th><th class="num">OT days</th><th class="num">Sundays</th>${pay ? `<th class="num">Salary</th><th class="num">Extra hrs / days</th>${feat('clinic') ? '<th class="num">Incentive</th>' : ''}<th class="num">Payable</th>` : ''}${attRO() ? '' : '<th></th>'}</tr></thead>
+    <tbody>${rows}${pay ? `<tr class="tot"><td colspan="${feat('clinic') ? 12 : 11}">Total payable</td><td class="num">${inr(totPay)}</td>${attRO() ? '' : '<td></td>'}</tr>` : ''}</tbody></table></div>`;
 }
 
 function attDetail(){
@@ -6157,7 +6230,9 @@ function attDetail(){
         ${pr(`Loss of pay: ${S.lop} day(s) beyond ${OFFS_PER_MONTH} offs`, S.lop ? '− ' + inr(S.lopAmt) : inr(0))}
         ${pr(`Overtime days: ${S.otDays} × ${inr(S.perDay)}`, '+ ' + inr(S.otDayPay))}
         ${pr(`Overtime hours: ${hm(S.OT)} × ${inr(S.perHour)}/h × ${S.mult}`, '+ ' + inr(S.otHrPay))}
-        ${pr('Payable', inr(S.pay))}
+        ${feat('clinic') ? pr('Incentive (approved patient assists)', '+ ' + inr(S.inc)) : ''}
+        ${pr(`Salary ${inr(S.salary)} + extra hours / days ${inr(S.extra)}${feat('clinic') ? ' + incentive ' + inr(S.inc) : ''} = <b>Payable</b>`, '<b>' + inr(S.pay) + '</b>')}
+        <p class="stat" style="margin:6px 0 0">Sundays worked this month: <b>${S.sun}</b></p>
       </div>` : ''}
     </div>
     ${ro ? attTable(S, false) : attMonthEditor(S, a)}`;
