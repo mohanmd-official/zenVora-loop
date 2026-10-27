@@ -243,7 +243,7 @@ $('#clBody').addEventListener('click', async e => {
     try { await saveAMeta(m); cl.ameta = m; info(`${monthLabel(pm)} accounts closed.`); clinicSync(true); } catch(err){ info(errText(err)); } return renderClinic(); }
   const am2 = t.closest('[data-am2]'); if (am2){ cl.acc.month = mShift(cl.acc.month, +am2.dataset.am2); return renderClinic(); }
   const at = t.closest('[data-at]'); if (at){ cl.acc.tab = at.dataset.at; cl.acc.pre = null; return renderClinic(); }
-  const cm = t.closest('[data-commit]'); if (cm){ const c = ameta().commitments.find(x => x.id === cm.dataset.commit); if (c.id === 'petty') cl.acc.tab = 'petty'; else { cl.acc.tab = 'expenses'; cl.acc.pre = {category:c.name, amount:c.amount || '', desc:`${c.name} · ${monthLabel(cl.acc.month)}`, serviceMonth:cl.acc.month}; } return renderClinic(); }
+  const cm = t.closest('[data-commit]'); if (cm){ const c = ameta().commitments.find(x => x.id === cm.dataset.commit); if (c.id === 'petty') cl.acc.tab = 'petty'; else { cl.acc.tab = 'expenses'; cl.acc.exAdd = true; cl.acc.pre = {category:c.name, amount:c.amount || '', desc:`${c.name} · ${monthLabel(cl.acc.month)}`, serviceMonth:cl.acc.month}; } return renderClinic(); }
   const vb = t.closest('[data-vbill]'); if (vb){ const v = cl.acc.d.vendors.find(x => x.id === vb.closest('[data-ven]').dataset.ven); cl.acc.tab = 'expenses'; cl.acc.pre = {vendorId:v.id, category:v.type === 'Other' ? (expCats()[0] || '') : v.type, note:v.name + ' bill'}; return renderClinic(); }
   const rk = t.closest('[data-rk]'); if (rk){ cl.rep.kind = rk.dataset.rk; cl.rep.doc = ''; return renderClinic(); }
   const rd = t.closest('[data-repdoc]'); if (rd){ cl.rep.doc = rd.dataset.repdoc; const el = $('#repOut'); if (el){ el.innerHTML = clReportHtml(); numberTables(el); } return; }
@@ -309,6 +309,8 @@ $('#clBody').addEventListener('click', async e => {
       info(`${inr(amt)} salary to ${fullName(r.a)} recorded as a clinic expense.`); cl.acc.key = ''; return renderClinic(); }
     const su = t.closest('[data-salundo]'); if (su){ if (!confirm('Remove the salary payment entry?')) return; for (const id of su.dataset.salundo.split(',')){ const sn = await F.getDoc(cDoc('ledger', id)); await auditDelete('ledger', id, sn.exists() ? sn.data() : {}); await F.deleteDoc(cDoc('ledger', id)); } cl.acc.key = ''; return renderClinic(); }
     if (t.closest('#efClear')){ cl.acc.ef = {}; cl.clear = true; return renderClinic(); }
+    if (t.closest('#exAddBtn')){ cl.acc.exAdd = !cl.acc.exAdd; if (!cl.acc.exAdd) cl.acc.pre = null; return renderClinic(); }
+    const exs = t.closest('[data-exsrc]'); if (exs){ const f = cl.acc.ef = cl.acc.ef || {}; f.src = f.src === exs.dataset.exsrc ? '' : exs.dataset.exsrc; cl.clear = true; return renderClinic(); }
     const srl = t.closest('a.srcl[data-at]'); if (srl){ e.preventDefault(); cl.acc.tab = srl.dataset.at; return renderClinic(); }
     const tlo = t.closest('[data-tlopen]'); if (tlo){ cl.acc.tOpenFix = tlo.dataset.tlopen; return renderClinic(); }
     const tdl = t.closest('[data-tldel]'); if (tdl){ if (!confirm(`Delete the saved tally for ${fmtLong(tdl.dataset.tldel)}? The day goes back to "Not tallied yet" and can be counted again.`)) return;

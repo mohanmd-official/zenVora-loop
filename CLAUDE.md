@@ -5,7 +5,7 @@ Firebase Auth + Firestore (Spark plan). Deployed to GitHub Pages from `public/` 
 
 ## Golden rules (read these first)
 1. **Edit the modules in `src/`, never `public/index.html`.** It is generated: run `python3 build.py` after every change.
-   `python3 build.py --check` tells you if `public/index.html` is out of date. The workflow also builds before deploying.
+   `python3 build.py --check` tells you if `public/index.html` is out of date. Commit the rebuilt file with the module (the deploy publishes `public/` as is).
 2. The build joins `src/css/*.css` into one `<style>` and `src/js/*.js` into one `<script>` **in file-name order**.
    Everything shares one global scope, exactly like a single file: a module can call a function from any other module.
    Only *top-level code that runs immediately* depends on order (e.g. `const` used at load time must be in an earlier file).
@@ -25,7 +25,7 @@ Firebase Auth + Firestore (Spark plan). Deployed to GitHub Pages from `public/` 
 | 05-cloud-auth-login | Firebase start-up (`boot`, `startUser`), `refreshTabs` (which tabs show), theme, sync, sign-in & password pages, creating logins |
 | 06-organization | Organization page: People (add/edit, work timing), org chart, support access, billing |
 | 07-super-admin | Super Admin: onboarding organizations, features (agenda/attendance/payroll/clinic), plans |
-| 08-clinic-core-patient-list | clinic data (`cl`, doctors, treatment list), `nextNumber`, **left menu `renderSideNav`**, `renderClinic`, Patients list & search |
+| 08-clinic-core-patient-list | clinic data (`cl`, doctors, treatment list), `nextNumber`, **left feature menu `renderSideNav`** (Attendance + Clinic ▾; Home/Org/Board stay in the top bar), `renderClinic`, Patients list & search |
 | 09-clinic-patient-record | patient profile, treatments, medicines/Rx, billing tab, receipts (`printDoc`, `printReceipt`), visits, photos |
 | 10-clinic-appointments | Appointments day/week grid, doctor colours, status filters, booking (new/existing patient), auto-missed |
 | 11-clinic-shared-ui | reorderable sub-menus (`ordered`), report date range bar, charts (`stackChart`, `hbarChart`) |
@@ -63,6 +63,6 @@ visits/tally/accounts, toasts, theme refresh). `src/shell.html` is the page mark
   doctorReports, setup; `isOwnerLike()` = Account Manager or Chief doctor.
 
 ## Accounting rules (keep these true)
-- Each expense is recorded once, on its own page; Clinic expenses only adds them up. Petty top-ups and consultant payouts are not expenses.
+- Each expense is recorded once, on its own page; Clinic expenses only adds them up. Petty cash counts as an expense when the box is topped up (`pettyTopups`, openings excluded); petty spends are NOT added to Clinic expenses. Consultant payouts are not expenses (the fees are).
 - A month's obligations are due on day `dueDayOf()` (default 15) of the next month; reminders come from `payReminders`.
 - Never delete money records without `auditDelete`; changes append to `history`.

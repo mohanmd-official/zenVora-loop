@@ -55,9 +55,9 @@ async function auditPack(fy){
     zip.file('daily-tallies.csv', csvOf([['Date', 'Cash expected', 'Cash counted', 'Cash difference', 'UPI recorded', 'UPI per app', 'Cards & others recorded', 'Cards & others per app', 'Online difference', 'Note', 'By']].concat(tal.sort(by).map(t => { const g = t.digital || {}, v = (k, f) => g[k] ? +g[k][f] || 0 : 0;
       return [t.date, t.expected, t.counted, t.diff, v('upi', 'system'), v('upi', 'app'), v('card', 'system') + v('ccard', 'system') + v('other', 'system') + v('bank', 'system'), v('card', 'app') + v('ccard', 'app') + v('other', 'app') + v('bank', 'app'), t.digitalDiff || 0, t.note, t.by]; }))));
     const months = [...Array(12)].map((_, i) => mShift(`${fy}-04`, i));
-    zip.file('summary-by-month.csv', csvOf([['Month', 'Patient payments', 'Other income', 'Clinic expenses', 'Consultant fees', 'Petty cash spent', 'Net']].concat(months.map(m => {
+    zip.file('summary-by-month.csv', csvOf([['Month', 'Patient payments', 'Other income', 'Clinic expenses', 'Consultant fees', 'Petty cash top-ups', 'Net']].concat(months.map(m => {
       const inM = x => (x.date || '').slice(0, 7) === m, p = paidSum(pay.filter(inM)), oi = paidSum(led.filter(x => x.kind === 'income' && inM(x))), e = paidSum(led.filter(x => x.kind === 'expense' && inM(x)));
-      const cf = tr.filter(inM).reduce((s, t) => s + (+t.consultantFee || 0), 0), pc = paidSum(led.filter(x => x.kind === 'pettyspend' && inM(x)));
+      const cf = tr.filter(inM).reduce((s, t) => s + (+t.consultantFee || 0), 0), pc = paidSum(led.filter(x => x.kind === 'petty' && !x.opening && inM(x)));
       return [monthLabel(m), p, oi, e, cf, pc, p + oi - e - cf - pc]; }))));
     for (const x of exps.filter(x => x.hasDoc)){
       try { const s = await F.getDoc(cDoc('ledgerDocs', x.id)); if (!s.exists()) continue; const dd = s.data(), b64 = String(dd.data).split(',')[1], ext = (dd.mime || '').includes('pdf') ? 'pdf' : 'jpg';

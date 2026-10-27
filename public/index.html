@@ -495,13 +495,13 @@ td.pcodec{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;white-space:
 body.sidenav #clSeg{position:fixed;left:0;top:var(--hdrH,64px);bottom:0;width:210px;z-index:6;border-top:1px solid var(--line)}
 body.sidenav > .view, body.sidenav > .supbar, body.sidenav > .add{margin-left:210px}
 body.sidenav .clwrap{grid-template-columns:minmax(0,1fr)}
-body.sidenav #tabs{display:none}
-.sn-main{display:flex;flex-direction:column;gap:2px;padding-bottom:8px;margin-bottom:8px;border-bottom:1px solid var(--line)}
-.clnav a.sn-master{color:var(--ink);font-weight:700}.sn-chev{margin-left:auto;font-style:normal;padding:0 4px;border-radius:6px;color:var(--muted)}.sn-chev:hover{background:var(--line)}
+body.sidenav #tabs :is([data-view="attendance"],[data-view="clinic"]){display:none}   /* features live in the left menu */
+.sn-main{display:flex;flex-direction:column;gap:2px;margin-bottom:2px}
+.clnav a.sn-master{color:var(--ink);font-weight:700}.sn-chev{margin-left:auto;font-style:normal;padding:2px 9px;border-radius:6px;color:var(--muted);cursor:pointer}.sn-chev:hover{background:var(--line)}
 .sn-sub{display:flex;flex-direction:column;gap:2px;margin:2px 0 0 12px;padding-left:6px;border-left:2px solid color-mix(in srgb,var(--accent) 35%,var(--line))}
 .sn-sub a{padding:7px 10px!important;font-size:13px!important}
-@media (max-width:820px){body.sidenav #tabs{display:flex}body.sidenav #clSeg{position:static;width:auto;flex:none;display:none}body.sidenav.inclinic #clSeg{display:flex}
-  body.sidenav .sn-main,body.sidenav .sn-master{display:none!important}body.sidenav .sn-sub{margin:0;border:0;padding:0;flex-direction:row;flex-wrap:wrap}body.sidenav .sn-sub[hidden]{display:flex!important}
+@media (max-width:820px){body.sidenav #tabs :is([data-view="attendance"],[data-view="clinic"]){display:flex}body.sidenav #clSeg{position:static;width:auto;flex:none;display:none}body.sidenav.inclinic #clSeg{display:flex}
+  body.sidenav .sn-main,body.sidenav .sn-master,body.sidenav #clSeg > .clnavt{display:none!important}body.sidenav .sn-sub{margin:0;border:0;padding:0;flex-direction:row;flex-wrap:wrap}body.sidenav .sn-sub[hidden]{display:flex!important}
   body.sidenav > .view, body.sidenav > .supbar, body.sidenav > .add{margin-left:0}}
 @media (max-width:820px){.clwrap{grid-template-columns:1fr}.clnav{flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line);padding:6px}.clnavt{display:none}.clnav :is(button,a){flex:none}.clmain{padding:12px}}
 .pform{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 12px;align-items:end}
@@ -689,6 +689,23 @@ tr.sel td{background:color-mix(in srgb,var(--accent) 7%,transparent)}
 .dp:hover{background:var(--paper2,rgba(0,0,0,.03))}.dp input{margin:0}.dp:has(input:checked){background:color-mix(in srgb,var(--done) 10%,transparent)}
 .dp b{font-variant-numeric:tabular-nums}.tdiff:empty{display:none}
 
+/* Clinic expenses overview */
+.exhead{display:flex;gap:12px;align-items:stretch;flex-wrap:wrap;margin-bottom:10px}
+.extot,.exout{display:flex;flex-direction:column;justify-content:center;padding:12px 18px;border:1px solid var(--line);border-radius:14px;background:var(--paper);box-shadow:var(--shadow);min-width:200px}
+.extot{flex:1}.extot span,.exout span{font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.extot b{font-size:30px;font-weight:800;line-height:1.15;font-variant-numeric:tabular-nums}.exout b{font-size:24px;font-weight:800;font-variant-numeric:tabular-nums}
+.extot em,.exout em{font-style:normal;font-size:12px;color:var(--muted)}.exout.late{border-color:var(--high)}.exout.late b,.exout.late em{color:var(--high)}
+.exhead > button{align-self:center}
+.exbar{display:flex;height:10px;border-radius:999px;overflow:hidden;gap:2px;margin:2px 0 8px;background:var(--line)}.exbar i{display:block;min-width:4px}
+.exchips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.exchip{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;border:1px solid var(--line);background:var(--paper);font-size:12.5px;font-weight:600;color:var(--ink);box-shadow:none}
+.exchip i{width:9px;height:9px;border-radius:50%;background:var(--c)}.exchip b{font-variant-numeric:tabular-nums}.exchip.zero{opacity:.5}
+.exchip.on{border-color:var(--c);background:color-mix(in srgb,var(--c) 12%,var(--paper))}
+.exadd{margin-bottom:12px}.exoutl{margin-bottom:12px}.exoutl summary{cursor:pointer}.exoutl[open] summary{margin-bottom:6px}
+.exfilt{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:4px 0 8px}.exfilt select,.exfilt input{width:auto;padding:4px 6px;font-size:12.5px}.exfilt i{color:var(--muted);font-style:normal}.exfilt .sp{flex:1}
+.extag{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11.5px;font-weight:700;color:var(--c);background:color-mix(in srgb,var(--c) 12%,var(--paper));white-space:nowrap}
+a.srcl0{text-decoration:none}.extbl td{vertical-align:middle}.nowrap{white-space:nowrap}button.xdel{color:var(--high);padding:2px 7px}
+.orow .sub2{display:block}
 /* ---------- toasts ---------- */
 .toasts{position:fixed;top:12px;right:12px;display:flex;flex-direction:column;gap:8px;z-index:40;width:min(340px,calc(100% - 24px))}
 .toast{background:var(--paper);border-left:4px solid var(--prog);border-radius:10px;padding:10px 12px;box-shadow:0 8px 28px rgba(0,0,0,.25);animation:slide .25s ease-out}
@@ -3216,10 +3233,10 @@ const CI = {
 const CSECS = [['patients', 'Patients', () => can('patients') || can('treatments') || can('billing')], ['appointments', 'Appointments', () => can('appointments') || can('treatments')],
   ['accounts', 'Accounts', () => can('accounts') || can('petty') || can('tally') || isOwnerLike()], ['reports', 'Reports', () => can('reports') || can('doctorReports')], ['assists', 'Patient assists', () => !!(orgCtx() && !orgCtx().support)], ['setup', 'Clinic setup', () => can('setup')]];
 
-/* clinic organizations: one menu on the left of every page — Organization, Home, Attendance, Planning Board, and Clinic as the master
-   menu with its pages (Patients, Appointments, Accounts …) listed under it. On phones the top tabs stay and the Clinic pages show inside Clinic. */
+/* clinic organizations: Home, Organization and Planning Board stay in the top bar; the features (Attendance, and Clinic as a master menu
+   with its pages Patients, Appointments, Accounts …) sit in a menu on the left of every page. ▾ folds Clinic. On phones all tabs are on top. */
 const sideNavOn = () => { const oc = orgCtx(); return !!(oc && feat('clinic')); };
-const SN_MAIN = ['org', 'home', 'attendance', 'board'];
+const SN_MAIN = ['attendance'];
 function renderSideNav(){
   const nav = $('#clSeg'), oc = orgCtx(); if (!nav) return;
   const on = sideNavOn(); document.body.classList.toggle('sidenav', on);
@@ -3230,9 +3247,9 @@ function renderSideNav(){
   if (!secs.some(x => x[0] === cl.sec)) cl.sec = secs.length ? secs[0][0] : '';
   const main = SN_MAIN.map(k => $(`#tabs [data-view="${k}"]`)).filter(t => t && !t.hidden)
     .map(t => `<a data-goview="${t.dataset.view}" href="${t.getAttribute('href')}" class="${cur === t.dataset.view ? 'on' : ''}">${t.querySelector('svg').outerHTML}<span>${esc(t.querySelector('.lbl').textContent)}</span></a>`).join('');
-  const ct = $('#clinicTab'), clinicOn = ct && !ct.hidden, open = cl.navOpen !== false || v === 'clinic';
-  nav.innerHTML = `<div class="sn-main">${main}</div>`
-    + (clinicOn ? `<a class="sn-master${v === 'clinic' ? ' on' : ''}" data-goview="clinic" href="#/clinic" aria-expanded="${open}">${ct.querySelector('svg').outerHTML}<span>Clinic</span>${v === 'clinic' ? '<i class="sn-chev">▾</i>' : `<i class="sn-chev" data-sntoggle title="${open ? 'Collapse' : 'Expand'}">${open ? '▾' : '▸'}</i>`}</a>
+  const ct = $('#clinicTab'), clinicOn = ct && !ct.hidden, open = cl.navOpen !== false;
+  nav.innerHTML = `<div class="clnavt">Features</div>` + (main ? `<div class="sn-main">${main}</div>` : '')
+    + (clinicOn ? `<a class="sn-master${v === 'clinic' ? ' on' : ''}" data-goview="clinic" href="#/clinic" aria-expanded="${open}">${ct.querySelector('svg').outerHTML}<span>Clinic</span><i class="sn-chev" data-sntoggle role="button" title="${open ? 'Fold the Clinic menu' : 'Open the Clinic menu'}">${open ? '▾' : '▸'}</i></a>
       <div class="sn-sub" data-ord="csec" data-ordattr="s" data-ordv="1"${open ? '' : ' hidden'}>${ordered('csec', secs).map(([k, l]) => `<a draggable="true" data-s="${k}" href="#/clinic/${k}" class="${v === 'clinic' && k === cl.sec ? 'on' : ''}"><svg viewBox="0 0 16 16">${CI[k]}</svg><span>${l}</span></a>`).join('')}</div>` : '')
     + (oc && oc.support ? '<div class="stat" style="padding:8px 10px">Read-only support view</div>' : '');
 }
@@ -3892,30 +3909,32 @@ function clAccLoad(){
   }).catch(e => { a.d = {err:errText(e)}; again(); });
 }
 /* Clinic expenses = every real expense, each from the page where it is recorded (its source of truth):
-   Lab / Materials bills (vendors), Consultant fees (treatments + per-visit costs + manual fees), Staff salary (paid), Petty cash spends,
-   and Other expenses entered directly (rent, EB, loan …). NOT included: petty cash top-ups (a transfer), consultant payouts (paying a fee
-   already counted), patient payments and the daily tally (cash movement, not expenses). */
+   Lab / Materials bills (vendors), Consultant fees (treatments + per-visit costs + manual fees), Staff salary (paid), Petty cash TOP-UPS
+   (money handed to the petty box counts as spent; the individual petty spends are only on the Petty cash page, so nothing is counted twice),
+   and Other expenses entered directly (rent, EB, loan …). NOT included: petty box openings / count corrections, consultant payouts (paying
+   a fee already counted), patient payments and the daily tally (cash movement, not expenses). */
 function expSource(x){
   if (x.src === 'fee') return 'consult';
-  if (x.kind === 'pettyspend') return 'petty';
+  if (x.kind === 'petty' || x.kind === 'pettyspend') return 'petty';
   if (x.staffUid || x.category === 'Staff salary') return 'salary';
   if (x.vendorId){ const t = (vName(x.vendorId).type || x.category || ''); return t === 'Lab' ? 'lab' : t === 'Materials' ? 'materials' : 'other'; }
   if (x.doctorId) return 'consult';
   return 'other';
 }
-const EXP_SRC = {lab:['Lab', 'lab'], materials:['Materials', 'materials'], consult:['Consultants', 'consultants'], salary:['Staff salary', 'salary'], petty:['Petty cash', 'petty'], other:['Other expenses', 'expenses']};
+const EXP_SRC = {lab:['Lab', 'lab'], materials:['Materials', 'materials'], consult:['Consultants', 'consultants'], salary:['Staff salary', 'salary'], petty:['Petty cash', 'petty'], other:['Other', 'expenses']};
+const pettyTopups = (led, mk) => led.filter(x => x.kind === 'petty' && !x.opening && svcMonth(x) === mk);
 function expensesOf(led, fees, mk, opt = {}){
   const inM = x => svcMonth(x) === mk;
   const rows = led.filter(x => x.kind === 'expense' && inM(x)).map(x => Object.assign({src:'ledger'}, x))
     .concat(fees.filter(x => (x.date || '').slice(0, 7) === mk).map(t => ({src:'fee', id:t.id, date:t.date, category:'Consultant fees', amount:+t.consultantFee, doctorId:t.doctorId, patientName:t.patientName, note:t.typeName, by:t.by})));
-  if (opt.petty) rows.push(...led.filter(x => x.kind === 'pettyspend' && inM(x)).map(x => Object.assign({src:'ledger', category:x.adjust ? 'Petty cash · count correction' : 'Petty cash'}, x)));
+  if (opt.petty) rows.push(...pettyTopups(led, mk).map(x => Object.assign({src:'ledger', category:'Petty cash top-up', paid:true, mode:x.mode || 'cash'}, x, {from:x.source})));
   rows.forEach(x => x.source = expSource(x));
   return rows;
 }
 function monthNumbers(mk){
   const d = cl.acc.d, inM = x => (x.date || '').slice(0, 7) === mk;
   const income = paidSum(d.pay.filter(inM)) + paidSum(d.led.filter(x => x.kind === 'income' && inM(x))), exp = expensesOf(d.led, d.fees, mk), expense = paidSum(exp);
-  const petty = paidSum(d.led.filter(x => x.kind === 'pettyspend' && svcMonth(x) === mk));
+  const petty = paidSum(pettyTopups(d.led, mk));                                    // petty cash counts when the box is topped up
   return {income, expense, petty, net:income - expense - petty, exp};
 }
 function clAccounts(){
@@ -3950,12 +3969,12 @@ function accOverview(d){
       <text x="${x}" y="178" text-anchor="middle" font-size="11" fill="var(--muted)">${esc(parseDay(s.m + '-01').toLocaleDateString([], {month:'short'}))}</text>
       ${any ? `<text x="${x}" y="${Math.min(160 - hi, 160 - he) - 5}" text-anchor="middle" font-size="10.5" font-weight="650" fill="${s.net >= 0 ? 'var(--done)' : 'var(--high)'}">${s.net >= 0 ? '+' : '−'}${esc(inr(Math.abs(s.net)).slice(1))}</text>` : ''}`; }).join('');
   const byCat = {}; N.exp.forEach(x => byCat[x.category || 'Other'] = (byCat[x.category || 'Other'] || 0) + (+x.amount || 0));
-  if (N.petty) byCat['Petty cash spends'] = N.petty;
+  if (N.petty) byCat['Petty cash top-ups'] = N.petty;
   const cats = Object.entries(byCat).sort((x, y) => y[1] - x[1]), ct = cats.reduce((s, x) => s + x[1], 0);
   return `<div class="kpis">
       ${kpi('Income', inr(N.income), 'patient payments + other income')}
       ${kpi('Clinic expenses', inr(N.expense), `${N.exp.length} ${N.exp.length === 1 ? 'entry' : 'entries'}`, N.expense ? 'neg' : '')}
-      ${kpi('Petty cash spent', inr(N.petty), `box balance ${inr(d.pettyBal)}`)}
+      ${kpi('Petty cash top-ups', inr(N.petty), `box balance ${inr(d.pettyBal)}`)}
       ${kpi('Net', (N.net < 0 ? '− ' : '') + inr(Math.abs(N.net)), N.net < 0 ? 'loss this month' : N.income ? `${Math.round(N.net / N.income * 100)}% margin` : 'no income yet', N.net < 0 ? 'neg' : 'pos')}</div>
     <div class="acards">
       <div class="box wide"><h3>Clinic performance <span class="sub">last 6 months · <i class="lg" style="background:var(--done)"></i>income <i class="lg" style="background:var(--high)"></i>expenses</span></h3>
@@ -3990,58 +4009,52 @@ function expForm(pre, vendorType){
 }
 const vName = id => ((cl.acc.d && cl.acc.d.vendors) || []).find(v => v.id === id) || {};
 const billCell = x => x.hasDoc ? `<button class="ghost" data-billdoc="${esc(x.id)}" title="View bill copy">📎</button>` : '';
+const EXP_COL = {lab:'#0EA5E9', materials:'#8B5CF6', consult:'#F59E0B', salary:'#10B981', petty:'#EC4899', other:'#64748B'};
 function accExpenses(d){
   const a = cl.acc, w = canW('accounts'), f = a.ef = a.ef || {}, led = (d.led || []), fees = d.fees || [];
-  // the rows: by service month (or, with a date range, by date), every source in one list
+  // every source in one list, by the month each expense is for (or by date when a date range is picked)
   const months = f.from && f.to ? [...new Set(days(f.from, f.to).map(k => k.slice(0, 7)))] : [a.month];
-  let rows = months.flatMap(m => expensesOf(led, fees, m, {petty:true}));
-  if (f.from && f.to) rows = rows.filter(x => (x.date || '') >= f.from && (x.date || '') <= f.to);
-  const all = rows;
-  rows = rows.filter(x => (!f.src || x.source === f.src) && (!f.cat || x.category === f.cat) && (!f.mode || (x.mode || (x.source === 'petty' ? 'cash' : '')) === f.mode)
-    && (!f.st || (f.st === 'paid' ? x.src === 'ledger' && x.paid !== false : f.st === 'unpaid' ? x.paid === false : f.st === 'overdue' ? payState(x) === 'overdue' : true)));
-  rows.sort((x, y) => String(y.date).localeCompare(String(x.date)));
-  const tot = k => paidSum(all.filter(x => x.source === k));
-  // outstanding: unpaid bills (any month), consultant balances, salary still to pay for this month
-  const unpaid = (d.expAll || []).filter(x => x.paid === false), unpaidAmt = paidSum(unpaid), overdue = unpaid.filter(x => payState(x) === 'overdue');
+  let all = months.flatMap(m => expensesOf(led, fees, m, {petty:true}));
+  if (f.from && f.to) all = all.filter(x => (x.date || '') >= f.from && (x.date || '') <= f.to);
+  const rows = all.filter(x => (!f.src || x.source === f.src) && (!f.cat || x.category === f.cat) && (!f.mode || (x.mode || '') === f.mode)
+    && (!f.st || (f.st === 'paid' ? x.src === 'ledger' && x.paid !== false : f.st === 'unpaid' ? x.paid === false : f.st === 'overdue' ? payState(x) === 'overdue' : true)))
+    .sort((x, y) => String(y.date).localeCompare(String(x.date)));
+  const total = paidSum(all), bySrc = Object.keys(EXP_SRC).map(k => [k, paidSum(all.filter(x => x.source === k))]);
+  // outstanding: unpaid bills (any month), consultant balances, salary still to pay for a finished month
+  const unpaid = (d.expAll || []).filter(x => x.paid === false).sort((x, y) => xDue(x).localeCompare(xDue(y))), overdue = unpaid.filter(x => payState(x) === 'overdue');
   const cons = cl.doctors.filter(x => x.type === 'consultant').map(c => { const fe = (d.cfeesAll || []).filter(t => t.doctorId === c.id).reduce((s2, t) => s2 + (+t.consultantFee || 0), 0) + paidSum((d.cfeeManual || []).filter(x => x.doctorId === c.id));
     return {c, bal:fe - paidSum((d.cpay || []).filter(x => x.doctorId === c.id))}; }).filter(x => x.bal > 0);
-  const consOut = cons.reduce((s2, x) => s2 + x.bal, 0);
-  const sal = (d.staff || []).map(r => ({r, due:Math.max(0, Math.round(r.S.pay) - paidSum(r.paid))})).filter(x => x.due > 0), salOut = a.month < todayKey.slice(0, 7) ? sal.reduce((s2, x) => s2 + x.due, 0) : 0;
-  const outTot = unpaidAmt + consOut + salOut;
-  const cats = {}; all.forEach(x => cats[x.category || 'Other'] = (cats[x.category || 'Other'] || 0) + (+x.amount || 0));
-  const catRows = Object.entries(cats).sort((x, y) => y[1] - x[1]), ct = catRows.reduce((s2, x) => s2 + x[1], 0);
-  const srcLink = x => `<a class="srcl" data-at="${EXP_SRC[x.source][1]}" href="#/clinic/accounts/${EXP_SRC[x.source][1]}">${EXP_SRC[x.source][0]}</a>`;
-  const ref = x => x.src === 'fee' ? 'treatment' : x.billNo ? 'bill ' + x.billNo : x.appointmentId ? 'visit' : x.salMonth ? 'salary ' + monthLabel(x.salMonth).split(' ')[0] : x.kind === 'pettyspend' ? 'petty #' + String(x.id).slice(-4) : '#' + String(x.id).slice(-5);
+  const sal = a.month < todayKey.slice(0, 7) ? (d.staff || []).map(r => ({r, due:Math.max(0, Math.round(r.S.pay) - paidSum(r.paid))})).filter(x => x.due > 0) : [];
+  const outTot = paidSum(unpaid) + cons.reduce((s2, x) => s2 + x.bal, 0) + sal.reduce((s2, x) => s2 + x.due, 0), nOut = unpaid.length + cons.length + sal.length;
   const party = x => x.vendorId ? vName(x.vendorId).name || '' : x.doctorId ? dName(x.doctorId) : x.staffName || '';
-  const rowsHtml = rows.map(x => { const own = x.source === 'other' && x.src === 'ledger';
-    return `<tr${x.src === 'ledger' ? ` data-led="${esc(x.id)}"` : ''} class="${a.hl && a.hl === x.id ? 'hlrow' : ''}"><td>${esc(fmtShort(x.date))}${svcMonth(x) !== (x.date || '').slice(0, 7) ? `<span class="sub2">for ${esc(monthLabel(svcMonth(x)))}</span>` : ''}</td><td>${srcLink(x)}<span class="sub2">${esc(ref(x))}</span></td>
-      <td><b>${esc(x.category || '')}</b><span class="sub2">${esc([party(x), x.patientName, x.note].filter(Boolean).join(' · '))}</span></td>
-      <td>${esc((PMODES.find(m => m[0] === (x.mode || (x.source === 'petty' ? 'cash' : ''))) || [0, x.paid === false ? '—' : ''])[1])}</td>
-      <td>${x.src === 'fee' ? '<span class="stat">see Consultants</span>' : payPill(x)}</td><td class="num"><b>${inr(x.amount)}</b></td>
-      <td style="white-space:nowrap">${x.src === 'ledger' ? billCell(x) : ''}${w && x.src === 'ledger' && x.paid === false ? ' <button class="primary" data-billpay>Mark paid</button>' : ''}${w && own ? ' <button class="danger" data-ldel title="Delete (a copy is kept in the audit log)">✕</button>' : ''}</td></tr>`; }).join('');
+  const detail = x => [party(x), x.patientName && x.patientName !== party(x) ? x.patientName : '', x.note && !/^Consultant fee · /.test(x.note) ? x.note : '', x.billNo ? 'bill ' + x.billNo : '', x.kind === 'petty' ? ({drawer:'from the cash drawer', bank:'from the bank', owner:'from the owner'})[x.from] || '' : ''].filter(Boolean).join(' · ');
+  const tag = k => `<span class="extag" style="--c:${EXP_COL[k]}">${EXP_SRC[k][0]}</span>`;
+  const label = f.from && f.to ? `${fmtShort(f.from)} – ${fmtShort(f.to)}` : monthLabel(a.month);
   const sel = (id, opts, v, all0) => `<select id="${id}"><option value="">${all0}</option>${opts.map(([k, l]) => `<option value="${esc(k)}"${k === v ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select>`;
-  return `<div class="kpis kpis8">
-      ${kpi('Total clinic expenses', inr(paidSum(all)), f.from && f.to ? `${fmtShort(f.from)} – ${fmtShort(f.to)}` : esc(monthLabel(a.month)))}
-      ${kpi('Lab', inr(tot('lab')), 'bills')}${kpi('Materials', inr(tot('materials')), 'bills')}${kpi('Consultants', inr(tot('consult')), 'fees')}
-      ${kpi('Staff salary', inr(tot('salary')), 'paid')}${kpi('Petty cash spent', inr(tot('petty')), 'top-ups are transfers, not counted')}
-      ${kpi('Other operating', inr(tot('other')), 'rent, EB, loan, bills …')}${kpi('Outstanding', inr(outTot), overdue.length ? `<span class="neg">${plural(overdue.length, 'payment')} overdue</span>` : 'to pay', outTot ? 'neg' : '')}</div>
-    <div class="acards">
-      <div class="box"><h3>Outstanding payments <span class="sub">${esc(monthLabel(a.month))} obligations are due by ${esc(fmtLong(dueFor(a.month)))}</span></h3>
-        ${unpaid.sort((x, y) => xDue(x).localeCompare(xDue(y))).map(x => `<div class="orow" data-led="${esc(x.id)}"><span class="cdot ${payState(x) === 'overdue' ? 'late' : ''}"></span><div><b>${esc(x.category)}</b><span class="sub2">${esc([party(x), x.note].filter(Boolean).join(' · ').slice(0, 60))} · ${esc(monthLabel(svcMonth(x)))}</span></div><div class="opill">${payPill(x)}</div><b class="oamt">${inr(x.amount)}</b>${w ? '<button class="primary sm" data-billpay>Mark paid</button>' : '<span></span>'}</div>`).join('')}
-        ${cons.map(x => `<div class="orow"><span class="cdot"></span><div><b>Consultant</b><span class="sub2">${esc(x.c.name)}: fees not yet paid</span></div><div class="opill"><a class="srcl" data-at="consultants" href="#/clinic/accounts/consultants">Consultants</a></div><b class="oamt">${inr(x.bal)}</b><span></span></div>`).join('')}
-        ${salOut ? sal.map(x => `<div class="orow"><span class="cdot${todayKey > dueFor(a.month) ? ' late' : ''}"></span><div><b>Staff salary</b><span class="sub2">${esc(fullName(x.r.a))} · ${esc(monthLabel(a.month))}</span></div><div class="opill"><a class="srcl" data-at="salary" href="#/clinic/accounts/salary">Staff salary</a></div><b class="oamt">${inr(x.due)}</b><span></span></div>`).join('') : ''}
-        ${outTot ? '' : '<div class="stat">Nothing outstanding. 👏</div>'}</div>
-      <div class="box"><h3>By category</h3>${catRows.map(([c, v]) => `<div class="catrow"><span>${esc(c)}</span><div class="rbar wide"><i style="width:${ct ? v / ct * 100 : 0}%"></i></div><b>${inr(v)}</b></div>`).join('') || '<div class="stat">No expenses.</div>'}</div>
-    </div>
-    ${w ? `<details class="box" id="exAddBox"${a.pre ? ' open' : ''}><summary><b>+ Add another expense</b> <span class="stat">rent, EB, clinic loan, internet, maintenance, miscellaneous … Lab, materials, consultants, salary and petty cash are entered on their own pages and appear here automatically.</span></summary>${expForm(a.pre)}</details>` : ''}
-    <div class="vbar exfilt" style="padding:0 0 8px"><strong>${plural(rows.length, 'expense')}</strong>
-      <input type="date" id="efFrom" value="${esc(f.from || '')}" title="From (leave empty for the whole month)"><i>–</i><input type="date" id="efTo" value="${esc(f.to || '')}" title="To">
-      ${sel('efSrc', Object.entries(EXP_SRC).map(([k, v]) => [k, v[0]]), f.src, 'All sources')}${sel('efCat', Object.keys(cats).sort().map(c => [c, c]), f.cat, 'All categories')}
-      ${sel('efMode', PMODES, f.mode, 'Any method')}${sel('efSt', [['paid', 'Paid'], ['unpaid', 'Unpaid'], ['overdue', 'Overdue']], f.st, 'Any status')}
-      ${f.from || f.to || f.src || f.cat || f.mode || f.st ? '<button class="linkb" id="efClear">Clear filters</button>' : ''}<span class="sp"></span><b>${inr(paidSum(rows))}</b></div>
-    <div class="awrap" style="margin-top:0"><table class="atbl"><thead><tr><th>Date</th><th>Source · ref</th><th>Category · details</th><th>Method</th><th>Status</th><th class="num">Amount</th><th></th></tr></thead>
-    <tbody>${rowsHtml || '<tr><td colspan="7" class="stat">No expenses for this selection.</td></tr>'}${rowsHtml ? `<tr class="tot"><td colspan="5">Total</td><td class="num">${inr(paidSum(rows))}</td><td></td></tr>` : ''}</tbody></table></div>
-    <p class="stat">Each expense lives on its own page (click the source to open it); this page adds them up so nothing is entered or counted twice. Petty cash top-ups and consultant payouts are transfers / payments of amounts already counted, so they are not expenses. Daily tally is a cash check, not an expense.</p>`;
+  const outRow = (dot, title, sub, right, amt, btn) => `<div class="orow"><span class="cdot${dot}"></span><div><b>${title}</b><span class="sub2">${sub}</span></div><div class="opill">${right}</div><b class="oamt">${amt}</b>${btn || '<span></span>'}</div>`;
+  return `<div class="exhead">
+      <div class="extot"><span>Clinic expenses · ${esc(label)}</span><b>${inr(total)}</b><em>${plural(all.length, 'expense')}</em></div>
+      <div class="exout${overdue.length ? ' late' : ''}"><span>To pay</span><b>${inr(outTot)}</b><em>${overdue.length ? `${plural(overdue.length, 'payment')} overdue` : nOut ? `${plural(nOut, 'item')} · due by ${esc(fmtDM(dueFor(a.month)))}` : 'nothing outstanding'}</em></div>
+      ${w ? `<button class="primary" id="exAddBtn">${a.exAdd ? '✕ Close' : '+ Add expense'}</button>` : ''}</div>
+    <div class="exbar">${bySrc.filter(([, v]) => v).map(([k, v]) => `<i style="flex:${v};background:${EXP_COL[k]}" title="${EXP_SRC[k][0]} ${inr(v)}"></i>`).join('') || '<i style="flex:1;background:var(--line)"></i>'}</div>
+    <div class="exchips">${bySrc.map(([k, v]) => `<button class="exchip${f.src === k ? ' on' : ''}${v ? '' : ' zero'}" data-exsrc="${k}" style="--c:${EXP_COL[k]}" title="Show only ${EXP_SRC[k][0]}"><i></i>${EXP_SRC[k][0]}<b>${inr(v)}</b></button>`).join('')}</div>
+    ${w && a.exAdd ? `<div class="box exadd"><h3>Add an expense <span class="sub">rent, EB, clinic loan, internet, maintenance, miscellaneous … (lab, materials, consultants, salary and petty cash have their own pages)</span></h3>${expForm(a.pre)}</div>` : ''}
+    ${nOut ? `<details class="box exoutl"${overdue.length || a.exOutOpen ? ' open' : ''}><summary><b>Payments to make</b> <span class="stat">${plural(nOut, 'item')} · ${inr(outTot)}</span></summary>
+      ${unpaid.map(x => `<div class="orow" data-led="${esc(x.id)}"><span class="cdot${payState(x) === 'overdue' ? ' late' : ''}"></span><div><b>${esc(x.category)}</b><span class="sub2">${esc([party(x), x.note].filter(Boolean).join(' · ').slice(0, 60))} · ${esc(monthLabel(svcMonth(x)))}</span></div><div class="opill">${payPill(x)}</div><b class="oamt">${inr(x.amount)}</b>${w ? '<button class="primary sm" data-billpay>Mark paid</button>' : '<span></span>'}</div>`).join('')}
+      ${cons.map(x => outRow('', 'Consultant fees', esc(x.c.name) + ': not yet paid', `<a class="srcl" data-at="consultants" href="#/clinic/accounts/consultants">Pay in Consultants</a>`, inr(x.bal))).join('')}
+      ${sal.map(x => outRow(todayKey > dueFor(a.month) ? ' late' : '', 'Staff salary', esc(fullName(x.r.a)) + ' · ' + esc(monthLabel(a.month)), `<a class="srcl" data-at="salary" href="#/clinic/accounts/salary">Pay in Staff salary</a>`, inr(x.due))).join('')}</details>` : ''}
+    <div class="exfilt"><input type="date" id="efFrom" value="${esc(f.from || '')}" title="From (leave empty for the whole month)"><i>–</i><input type="date" id="efTo" value="${esc(f.to || '')}" title="To">
+      ${sel('efCat', [...new Set(all.map(x => x.category || 'Other'))].sort().map(c => [c, c]), f.cat, 'All categories')}${sel('efMode', PMODES, f.mode, 'Any method')}${sel('efSt', [['paid', 'Paid'], ['unpaid', 'Unpaid'], ['overdue', 'Overdue']], f.st, 'Any status')}
+      ${f.from || f.to || f.src || f.cat || f.mode || f.st ? '<button class="linkb" id="efClear">Clear filters</button>' : ''}<span class="sp"></span><span class="stat">${plural(rows.length, 'expense')} · <b>${inr(paidSum(rows))}</b></span></div>
+    <div class="awrap" style="margin-top:0"><table class="atbl extbl"><thead><tr><th>Date</th><th>Expense</th><th>From</th><th>Method</th><th>Status</th><th class="num">Amount</th><th></th></tr></thead><tbody>
+    ${rows.map(x => { const own = x.source === 'other' && x.src === 'ledger';
+      return `<tr${x.src === 'ledger' ? ` data-led="${esc(x.id)}"` : ''} class="${a.hl && a.hl === x.id ? 'hlrow' : ''}"><td class="nowrap">${esc(fmtDM(x.date))}${svcMonth(x) !== (x.date || '').slice(0, 7) ? `<span class="sub2">for ${esc(monthLabel(svcMonth(x)).split(' ')[0])}</span>` : ''}</td>
+        <td><b>${esc(x.category || '')}</b>${detail(x) ? `<span class="sub2">${esc(detail(x))}</span>` : ''}</td>
+        <td><a class="srcl0" data-at="${EXP_SRC[x.source][1]}" href="#/clinic/accounts/${EXP_SRC[x.source][1]}" title="Open ${EXP_SRC[x.source][0]}">${tag(x.source)}</a></td>
+        <td>${esc((PMODES.find(m => m[0] === x.mode) || [0, ''])[1])}</td><td>${x.src === 'fee' ? '<span class="stat">see Consultants</span>' : payPill(x)}</td><td class="num"><b>${inr(x.amount)}</b></td>
+        <td class="nowrap">${x.src === 'ledger' ? billCell(x) : ''}${w && x.src === 'ledger' && x.paid === false ? ' <button class="primary sm" data-billpay>Mark paid</button>' : ''}${w && own ? ' <button class="ghost xdel" data-ldel title="Delete (a copy is kept in the audit log)">✕</button>' : ''}</td></tr>`; }).join('') || '<tr><td colspan="7" class="stat">No expenses for this selection.</td></tr>'}
+    </tbody></table></div>
+    <p class="stat">Each expense is recorded once, on its own page; this page adds them up. Petty cash counts when the box is topped up (the spends are listed on the Petty cash page). Consultant payouts settle fees already counted; the Daily tally is a cash check, not an expense.</p>`;
 }
 function accPetty(d){
   const a = cl.acc, owner = canW('accounts'), spend = canW('petty') || owner, inM = x => (x.date || '').slice(0, 7) === a.month;
@@ -4268,9 +4281,9 @@ async function auditPack(fy){
     zip.file('daily-tallies.csv', csvOf([['Date', 'Cash expected', 'Cash counted', 'Cash difference', 'UPI recorded', 'UPI per app', 'Cards & others recorded', 'Cards & others per app', 'Online difference', 'Note', 'By']].concat(tal.sort(by).map(t => { const g = t.digital || {}, v = (k, f) => g[k] ? +g[k][f] || 0 : 0;
       return [t.date, t.expected, t.counted, t.diff, v('upi', 'system'), v('upi', 'app'), v('card', 'system') + v('ccard', 'system') + v('other', 'system') + v('bank', 'system'), v('card', 'app') + v('ccard', 'app') + v('other', 'app') + v('bank', 'app'), t.digitalDiff || 0, t.note, t.by]; }))));
     const months = [...Array(12)].map((_, i) => mShift(`${fy}-04`, i));
-    zip.file('summary-by-month.csv', csvOf([['Month', 'Patient payments', 'Other income', 'Clinic expenses', 'Consultant fees', 'Petty cash spent', 'Net']].concat(months.map(m => {
+    zip.file('summary-by-month.csv', csvOf([['Month', 'Patient payments', 'Other income', 'Clinic expenses', 'Consultant fees', 'Petty cash top-ups', 'Net']].concat(months.map(m => {
       const inM = x => (x.date || '').slice(0, 7) === m, p = paidSum(pay.filter(inM)), oi = paidSum(led.filter(x => x.kind === 'income' && inM(x))), e = paidSum(led.filter(x => x.kind === 'expense' && inM(x)));
-      const cf = tr.filter(inM).reduce((s, t) => s + (+t.consultantFee || 0), 0), pc = paidSum(led.filter(x => x.kind === 'pettyspend' && inM(x)));
+      const cf = tr.filter(inM).reduce((s, t) => s + (+t.consultantFee || 0), 0), pc = paidSum(led.filter(x => x.kind === 'petty' && !x.opening && inM(x)));
       return [monthLabel(m), p, oi, e, cf, pc, p + oi - e - cf - pc]; }))));
     for (const x of exps.filter(x => x.hasDoc)){
       try { const s = await F.getDoc(cDoc('ledgerDocs', x.id)); if (!s.exists()) continue; const dd = s.data(), b64 = String(dd.data).split(',')[1], ext = (dd.mime || '').includes('pdf') ? 'pdf' : 'jpg';
@@ -4458,7 +4471,7 @@ async function accSubmit(id, form){
       const fd = file ? await readFileData(file) : null;
       const ref = await add(x);
       if (fd) await F.setDoc(cDoc('ledgerDocs', ref.id), fd);
-      a.pre = null; a.busy = false; info(vt ? 'Bill added.' : 'Expense added.');
+      a.pre = null; a.busy = false; if (!vt) a.exAdd = false; info(vt ? 'Bill added.' : 'Expense added.');
     }
     if (id === 'accPinForm'){ if (num('#piAmt') <= 0) return info('Enter the amount.'); if (!val('#piNote')) return info('Add a note for this top-up.'); if (val('#piDate') > todayKey) return info("The date can't be in the future.");
       await add({kind:'petty', date:val('#piDate') || todayKey, mode:'cash', amount:num('#piAmt'), source:val('#piSrc') || 'drawer', note:val('#piNote')}); info(val('#piSrc') === 'drawer' ? 'Petty cash topped up (taken out of the main drawer: shows in that day\'s tally).' : 'Petty cash topped up.'); }
@@ -4928,7 +4941,7 @@ $('#clBody').addEventListener('click', async e => {
     try { await saveAMeta(m); cl.ameta = m; info(`${monthLabel(pm)} accounts closed.`); clinicSync(true); } catch(err){ info(errText(err)); } return renderClinic(); }
   const am2 = t.closest('[data-am2]'); if (am2){ cl.acc.month = mShift(cl.acc.month, +am2.dataset.am2); return renderClinic(); }
   const at = t.closest('[data-at]'); if (at){ cl.acc.tab = at.dataset.at; cl.acc.pre = null; return renderClinic(); }
-  const cm = t.closest('[data-commit]'); if (cm){ const c = ameta().commitments.find(x => x.id === cm.dataset.commit); if (c.id === 'petty') cl.acc.tab = 'petty'; else { cl.acc.tab = 'expenses'; cl.acc.pre = {category:c.name, amount:c.amount || '', desc:`${c.name} · ${monthLabel(cl.acc.month)}`, serviceMonth:cl.acc.month}; } return renderClinic(); }
+  const cm = t.closest('[data-commit]'); if (cm){ const c = ameta().commitments.find(x => x.id === cm.dataset.commit); if (c.id === 'petty') cl.acc.tab = 'petty'; else { cl.acc.tab = 'expenses'; cl.acc.exAdd = true; cl.acc.pre = {category:c.name, amount:c.amount || '', desc:`${c.name} · ${monthLabel(cl.acc.month)}`, serviceMonth:cl.acc.month}; } return renderClinic(); }
   const vb = t.closest('[data-vbill]'); if (vb){ const v = cl.acc.d.vendors.find(x => x.id === vb.closest('[data-ven]').dataset.ven); cl.acc.tab = 'expenses'; cl.acc.pre = {vendorId:v.id, category:v.type === 'Other' ? (expCats()[0] || '') : v.type, note:v.name + ' bill'}; return renderClinic(); }
   const rk = t.closest('[data-rk]'); if (rk){ cl.rep.kind = rk.dataset.rk; cl.rep.doc = ''; return renderClinic(); }
   const rd = t.closest('[data-repdoc]'); if (rd){ cl.rep.doc = rd.dataset.repdoc; const el = $('#repOut'); if (el){ el.innerHTML = clReportHtml(); numberTables(el); } return; }
@@ -4994,6 +5007,8 @@ $('#clBody').addEventListener('click', async e => {
       info(`${inr(amt)} salary to ${fullName(r.a)} recorded as a clinic expense.`); cl.acc.key = ''; return renderClinic(); }
     const su = t.closest('[data-salundo]'); if (su){ if (!confirm('Remove the salary payment entry?')) return; for (const id of su.dataset.salundo.split(',')){ const sn = await F.getDoc(cDoc('ledger', id)); await auditDelete('ledger', id, sn.exists() ? sn.data() : {}); await F.deleteDoc(cDoc('ledger', id)); } cl.acc.key = ''; return renderClinic(); }
     if (t.closest('#efClear')){ cl.acc.ef = {}; cl.clear = true; return renderClinic(); }
+    if (t.closest('#exAddBtn')){ cl.acc.exAdd = !cl.acc.exAdd; if (!cl.acc.exAdd) cl.acc.pre = null; return renderClinic(); }
+    const exs = t.closest('[data-exsrc]'); if (exs){ const f = cl.acc.ef = cl.acc.ef || {}; f.src = f.src === exs.dataset.exsrc ? '' : exs.dataset.exsrc; cl.clear = true; return renderClinic(); }
     const srl = t.closest('a.srcl[data-at]'); if (srl){ e.preventDefault(); cl.acc.tab = srl.dataset.at; return renderClinic(); }
     const tlo = t.closest('[data-tlopen]'); if (tlo){ cl.acc.tOpenFix = tlo.dataset.tlopen; return renderClinic(); }
     const tdl = t.closest('[data-tldel]'); if (tdl){ if (!confirm(`Delete the saved tally for ${fmtLong(tdl.dataset.tldel)}? The day goes back to "Not tallied yet" and can be counted again.`)) return;

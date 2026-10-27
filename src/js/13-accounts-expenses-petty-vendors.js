@@ -21,58 +21,52 @@ function expForm(pre, vendorType){
 }
 const vName = id => ((cl.acc.d && cl.acc.d.vendors) || []).find(v => v.id === id) || {};
 const billCell = x => x.hasDoc ? `<button class="ghost" data-billdoc="${esc(x.id)}" title="View bill copy">📎</button>` : '';
+const EXP_COL = {lab:'#0EA5E9', materials:'#8B5CF6', consult:'#F59E0B', salary:'#10B981', petty:'#EC4899', other:'#64748B'};
 function accExpenses(d){
   const a = cl.acc, w = canW('accounts'), f = a.ef = a.ef || {}, led = (d.led || []), fees = d.fees || [];
-  // the rows: by service month (or, with a date range, by date), every source in one list
+  // every source in one list, by the month each expense is for (or by date when a date range is picked)
   const months = f.from && f.to ? [...new Set(days(f.from, f.to).map(k => k.slice(0, 7)))] : [a.month];
-  let rows = months.flatMap(m => expensesOf(led, fees, m, {petty:true}));
-  if (f.from && f.to) rows = rows.filter(x => (x.date || '') >= f.from && (x.date || '') <= f.to);
-  const all = rows;
-  rows = rows.filter(x => (!f.src || x.source === f.src) && (!f.cat || x.category === f.cat) && (!f.mode || (x.mode || (x.source === 'petty' ? 'cash' : '')) === f.mode)
-    && (!f.st || (f.st === 'paid' ? x.src === 'ledger' && x.paid !== false : f.st === 'unpaid' ? x.paid === false : f.st === 'overdue' ? payState(x) === 'overdue' : true)));
-  rows.sort((x, y) => String(y.date).localeCompare(String(x.date)));
-  const tot = k => paidSum(all.filter(x => x.source === k));
-  // outstanding: unpaid bills (any month), consultant balances, salary still to pay for this month
-  const unpaid = (d.expAll || []).filter(x => x.paid === false), unpaidAmt = paidSum(unpaid), overdue = unpaid.filter(x => payState(x) === 'overdue');
+  let all = months.flatMap(m => expensesOf(led, fees, m, {petty:true}));
+  if (f.from && f.to) all = all.filter(x => (x.date || '') >= f.from && (x.date || '') <= f.to);
+  const rows = all.filter(x => (!f.src || x.source === f.src) && (!f.cat || x.category === f.cat) && (!f.mode || (x.mode || '') === f.mode)
+    && (!f.st || (f.st === 'paid' ? x.src === 'ledger' && x.paid !== false : f.st === 'unpaid' ? x.paid === false : f.st === 'overdue' ? payState(x) === 'overdue' : true)))
+    .sort((x, y) => String(y.date).localeCompare(String(x.date)));
+  const total = paidSum(all), bySrc = Object.keys(EXP_SRC).map(k => [k, paidSum(all.filter(x => x.source === k))]);
+  // outstanding: unpaid bills (any month), consultant balances, salary still to pay for a finished month
+  const unpaid = (d.expAll || []).filter(x => x.paid === false).sort((x, y) => xDue(x).localeCompare(xDue(y))), overdue = unpaid.filter(x => payState(x) === 'overdue');
   const cons = cl.doctors.filter(x => x.type === 'consultant').map(c => { const fe = (d.cfeesAll || []).filter(t => t.doctorId === c.id).reduce((s2, t) => s2 + (+t.consultantFee || 0), 0) + paidSum((d.cfeeManual || []).filter(x => x.doctorId === c.id));
     return {c, bal:fe - paidSum((d.cpay || []).filter(x => x.doctorId === c.id))}; }).filter(x => x.bal > 0);
-  const consOut = cons.reduce((s2, x) => s2 + x.bal, 0);
-  const sal = (d.staff || []).map(r => ({r, due:Math.max(0, Math.round(r.S.pay) - paidSum(r.paid))})).filter(x => x.due > 0), salOut = a.month < todayKey.slice(0, 7) ? sal.reduce((s2, x) => s2 + x.due, 0) : 0;
-  const outTot = unpaidAmt + consOut + salOut;
-  const cats = {}; all.forEach(x => cats[x.category || 'Other'] = (cats[x.category || 'Other'] || 0) + (+x.amount || 0));
-  const catRows = Object.entries(cats).sort((x, y) => y[1] - x[1]), ct = catRows.reduce((s2, x) => s2 + x[1], 0);
-  const srcLink = x => `<a class="srcl" data-at="${EXP_SRC[x.source][1]}" href="#/clinic/accounts/${EXP_SRC[x.source][1]}">${EXP_SRC[x.source][0]}</a>`;
-  const ref = x => x.src === 'fee' ? 'treatment' : x.billNo ? 'bill ' + x.billNo : x.appointmentId ? 'visit' : x.salMonth ? 'salary ' + monthLabel(x.salMonth).split(' ')[0] : x.kind === 'pettyspend' ? 'petty #' + String(x.id).slice(-4) : '#' + String(x.id).slice(-5);
+  const sal = a.month < todayKey.slice(0, 7) ? (d.staff || []).map(r => ({r, due:Math.max(0, Math.round(r.S.pay) - paidSum(r.paid))})).filter(x => x.due > 0) : [];
+  const outTot = paidSum(unpaid) + cons.reduce((s2, x) => s2 + x.bal, 0) + sal.reduce((s2, x) => s2 + x.due, 0), nOut = unpaid.length + cons.length + sal.length;
   const party = x => x.vendorId ? vName(x.vendorId).name || '' : x.doctorId ? dName(x.doctorId) : x.staffName || '';
-  const rowsHtml = rows.map(x => { const own = x.source === 'other' && x.src === 'ledger';
-    return `<tr${x.src === 'ledger' ? ` data-led="${esc(x.id)}"` : ''} class="${a.hl && a.hl === x.id ? 'hlrow' : ''}"><td>${esc(fmtShort(x.date))}${svcMonth(x) !== (x.date || '').slice(0, 7) ? `<span class="sub2">for ${esc(monthLabel(svcMonth(x)))}</span>` : ''}</td><td>${srcLink(x)}<span class="sub2">${esc(ref(x))}</span></td>
-      <td><b>${esc(x.category || '')}</b><span class="sub2">${esc([party(x), x.patientName, x.note].filter(Boolean).join(' · '))}</span></td>
-      <td>${esc((PMODES.find(m => m[0] === (x.mode || (x.source === 'petty' ? 'cash' : ''))) || [0, x.paid === false ? '—' : ''])[1])}</td>
-      <td>${x.src === 'fee' ? '<span class="stat">see Consultants</span>' : payPill(x)}</td><td class="num"><b>${inr(x.amount)}</b></td>
-      <td style="white-space:nowrap">${x.src === 'ledger' ? billCell(x) : ''}${w && x.src === 'ledger' && x.paid === false ? ' <button class="primary" data-billpay>Mark paid</button>' : ''}${w && own ? ' <button class="danger" data-ldel title="Delete (a copy is kept in the audit log)">✕</button>' : ''}</td></tr>`; }).join('');
+  const detail = x => [party(x), x.patientName && x.patientName !== party(x) ? x.patientName : '', x.note && !/^Consultant fee · /.test(x.note) ? x.note : '', x.billNo ? 'bill ' + x.billNo : '', x.kind === 'petty' ? ({drawer:'from the cash drawer', bank:'from the bank', owner:'from the owner'})[x.from] || '' : ''].filter(Boolean).join(' · ');
+  const tag = k => `<span class="extag" style="--c:${EXP_COL[k]}">${EXP_SRC[k][0]}</span>`;
+  const label = f.from && f.to ? `${fmtShort(f.from)} – ${fmtShort(f.to)}` : monthLabel(a.month);
   const sel = (id, opts, v, all0) => `<select id="${id}"><option value="">${all0}</option>${opts.map(([k, l]) => `<option value="${esc(k)}"${k === v ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select>`;
-  return `<div class="kpis kpis8">
-      ${kpi('Total clinic expenses', inr(paidSum(all)), f.from && f.to ? `${fmtShort(f.from)} – ${fmtShort(f.to)}` : esc(monthLabel(a.month)))}
-      ${kpi('Lab', inr(tot('lab')), 'bills')}${kpi('Materials', inr(tot('materials')), 'bills')}${kpi('Consultants', inr(tot('consult')), 'fees')}
-      ${kpi('Staff salary', inr(tot('salary')), 'paid')}${kpi('Petty cash spent', inr(tot('petty')), 'top-ups are transfers, not counted')}
-      ${kpi('Other operating', inr(tot('other')), 'rent, EB, loan, bills …')}${kpi('Outstanding', inr(outTot), overdue.length ? `<span class="neg">${plural(overdue.length, 'payment')} overdue</span>` : 'to pay', outTot ? 'neg' : '')}</div>
-    <div class="acards">
-      <div class="box"><h3>Outstanding payments <span class="sub">${esc(monthLabel(a.month))} obligations are due by ${esc(fmtLong(dueFor(a.month)))}</span></h3>
-        ${unpaid.sort((x, y) => xDue(x).localeCompare(xDue(y))).map(x => `<div class="orow" data-led="${esc(x.id)}"><span class="cdot ${payState(x) === 'overdue' ? 'late' : ''}"></span><div><b>${esc(x.category)}</b><span class="sub2">${esc([party(x), x.note].filter(Boolean).join(' · ').slice(0, 60))} · ${esc(monthLabel(svcMonth(x)))}</span></div><div class="opill">${payPill(x)}</div><b class="oamt">${inr(x.amount)}</b>${w ? '<button class="primary sm" data-billpay>Mark paid</button>' : '<span></span>'}</div>`).join('')}
-        ${cons.map(x => `<div class="orow"><span class="cdot"></span><div><b>Consultant</b><span class="sub2">${esc(x.c.name)}: fees not yet paid</span></div><div class="opill"><a class="srcl" data-at="consultants" href="#/clinic/accounts/consultants">Consultants</a></div><b class="oamt">${inr(x.bal)}</b><span></span></div>`).join('')}
-        ${salOut ? sal.map(x => `<div class="orow"><span class="cdot${todayKey > dueFor(a.month) ? ' late' : ''}"></span><div><b>Staff salary</b><span class="sub2">${esc(fullName(x.r.a))} · ${esc(monthLabel(a.month))}</span></div><div class="opill"><a class="srcl" data-at="salary" href="#/clinic/accounts/salary">Staff salary</a></div><b class="oamt">${inr(x.due)}</b><span></span></div>`).join('') : ''}
-        ${outTot ? '' : '<div class="stat">Nothing outstanding. 👏</div>'}</div>
-      <div class="box"><h3>By category</h3>${catRows.map(([c, v]) => `<div class="catrow"><span>${esc(c)}</span><div class="rbar wide"><i style="width:${ct ? v / ct * 100 : 0}%"></i></div><b>${inr(v)}</b></div>`).join('') || '<div class="stat">No expenses.</div>'}</div>
-    </div>
-    ${w ? `<details class="box" id="exAddBox"${a.pre ? ' open' : ''}><summary><b>+ Add another expense</b> <span class="stat">rent, EB, clinic loan, internet, maintenance, miscellaneous … Lab, materials, consultants, salary and petty cash are entered on their own pages and appear here automatically.</span></summary>${expForm(a.pre)}</details>` : ''}
-    <div class="vbar exfilt" style="padding:0 0 8px"><strong>${plural(rows.length, 'expense')}</strong>
-      <input type="date" id="efFrom" value="${esc(f.from || '')}" title="From (leave empty for the whole month)"><i>–</i><input type="date" id="efTo" value="${esc(f.to || '')}" title="To">
-      ${sel('efSrc', Object.entries(EXP_SRC).map(([k, v]) => [k, v[0]]), f.src, 'All sources')}${sel('efCat', Object.keys(cats).sort().map(c => [c, c]), f.cat, 'All categories')}
-      ${sel('efMode', PMODES, f.mode, 'Any method')}${sel('efSt', [['paid', 'Paid'], ['unpaid', 'Unpaid'], ['overdue', 'Overdue']], f.st, 'Any status')}
-      ${f.from || f.to || f.src || f.cat || f.mode || f.st ? '<button class="linkb" id="efClear">Clear filters</button>' : ''}<span class="sp"></span><b>${inr(paidSum(rows))}</b></div>
-    <div class="awrap" style="margin-top:0"><table class="atbl"><thead><tr><th>Date</th><th>Source · ref</th><th>Category · details</th><th>Method</th><th>Status</th><th class="num">Amount</th><th></th></tr></thead>
-    <tbody>${rowsHtml || '<tr><td colspan="7" class="stat">No expenses for this selection.</td></tr>'}${rowsHtml ? `<tr class="tot"><td colspan="5">Total</td><td class="num">${inr(paidSum(rows))}</td><td></td></tr>` : ''}</tbody></table></div>
-    <p class="stat">Each expense lives on its own page (click the source to open it); this page adds them up so nothing is entered or counted twice. Petty cash top-ups and consultant payouts are transfers / payments of amounts already counted, so they are not expenses. Daily tally is a cash check, not an expense.</p>`;
+  const outRow = (dot, title, sub, right, amt, btn) => `<div class="orow"><span class="cdot${dot}"></span><div><b>${title}</b><span class="sub2">${sub}</span></div><div class="opill">${right}</div><b class="oamt">${amt}</b>${btn || '<span></span>'}</div>`;
+  return `<div class="exhead">
+      <div class="extot"><span>Clinic expenses · ${esc(label)}</span><b>${inr(total)}</b><em>${plural(all.length, 'expense')}</em></div>
+      <div class="exout${overdue.length ? ' late' : ''}"><span>To pay</span><b>${inr(outTot)}</b><em>${overdue.length ? `${plural(overdue.length, 'payment')} overdue` : nOut ? `${plural(nOut, 'item')} · due by ${esc(fmtDM(dueFor(a.month)))}` : 'nothing outstanding'}</em></div>
+      ${w ? `<button class="primary" id="exAddBtn">${a.exAdd ? '✕ Close' : '+ Add expense'}</button>` : ''}</div>
+    <div class="exbar">${bySrc.filter(([, v]) => v).map(([k, v]) => `<i style="flex:${v};background:${EXP_COL[k]}" title="${EXP_SRC[k][0]} ${inr(v)}"></i>`).join('') || '<i style="flex:1;background:var(--line)"></i>'}</div>
+    <div class="exchips">${bySrc.map(([k, v]) => `<button class="exchip${f.src === k ? ' on' : ''}${v ? '' : ' zero'}" data-exsrc="${k}" style="--c:${EXP_COL[k]}" title="Show only ${EXP_SRC[k][0]}"><i></i>${EXP_SRC[k][0]}<b>${inr(v)}</b></button>`).join('')}</div>
+    ${w && a.exAdd ? `<div class="box exadd"><h3>Add an expense <span class="sub">rent, EB, clinic loan, internet, maintenance, miscellaneous … (lab, materials, consultants, salary and petty cash have their own pages)</span></h3>${expForm(a.pre)}</div>` : ''}
+    ${nOut ? `<details class="box exoutl"${overdue.length || a.exOutOpen ? ' open' : ''}><summary><b>Payments to make</b> <span class="stat">${plural(nOut, 'item')} · ${inr(outTot)}</span></summary>
+      ${unpaid.map(x => `<div class="orow" data-led="${esc(x.id)}"><span class="cdot${payState(x) === 'overdue' ? ' late' : ''}"></span><div><b>${esc(x.category)}</b><span class="sub2">${esc([party(x), x.note].filter(Boolean).join(' · ').slice(0, 60))} · ${esc(monthLabel(svcMonth(x)))}</span></div><div class="opill">${payPill(x)}</div><b class="oamt">${inr(x.amount)}</b>${w ? '<button class="primary sm" data-billpay>Mark paid</button>' : '<span></span>'}</div>`).join('')}
+      ${cons.map(x => outRow('', 'Consultant fees', esc(x.c.name) + ': not yet paid', `<a class="srcl" data-at="consultants" href="#/clinic/accounts/consultants">Pay in Consultants</a>`, inr(x.bal))).join('')}
+      ${sal.map(x => outRow(todayKey > dueFor(a.month) ? ' late' : '', 'Staff salary', esc(fullName(x.r.a)) + ' · ' + esc(monthLabel(a.month)), `<a class="srcl" data-at="salary" href="#/clinic/accounts/salary">Pay in Staff salary</a>`, inr(x.due))).join('')}</details>` : ''}
+    <div class="exfilt"><input type="date" id="efFrom" value="${esc(f.from || '')}" title="From (leave empty for the whole month)"><i>–</i><input type="date" id="efTo" value="${esc(f.to || '')}" title="To">
+      ${sel('efCat', [...new Set(all.map(x => x.category || 'Other'))].sort().map(c => [c, c]), f.cat, 'All categories')}${sel('efMode', PMODES, f.mode, 'Any method')}${sel('efSt', [['paid', 'Paid'], ['unpaid', 'Unpaid'], ['overdue', 'Overdue']], f.st, 'Any status')}
+      ${f.from || f.to || f.src || f.cat || f.mode || f.st ? '<button class="linkb" id="efClear">Clear filters</button>' : ''}<span class="sp"></span><span class="stat">${plural(rows.length, 'expense')} · <b>${inr(paidSum(rows))}</b></span></div>
+    <div class="awrap" style="margin-top:0"><table class="atbl extbl"><thead><tr><th>Date</th><th>Expense</th><th>From</th><th>Method</th><th>Status</th><th class="num">Amount</th><th></th></tr></thead><tbody>
+    ${rows.map(x => { const own = x.source === 'other' && x.src === 'ledger';
+      return `<tr${x.src === 'ledger' ? ` data-led="${esc(x.id)}"` : ''} class="${a.hl && a.hl === x.id ? 'hlrow' : ''}"><td class="nowrap">${esc(fmtDM(x.date))}${svcMonth(x) !== (x.date || '').slice(0, 7) ? `<span class="sub2">for ${esc(monthLabel(svcMonth(x)).split(' ')[0])}</span>` : ''}</td>
+        <td><b>${esc(x.category || '')}</b>${detail(x) ? `<span class="sub2">${esc(detail(x))}</span>` : ''}</td>
+        <td><a class="srcl0" data-at="${EXP_SRC[x.source][1]}" href="#/clinic/accounts/${EXP_SRC[x.source][1]}" title="Open ${EXP_SRC[x.source][0]}">${tag(x.source)}</a></td>
+        <td>${esc((PMODES.find(m => m[0] === x.mode) || [0, ''])[1])}</td><td>${x.src === 'fee' ? '<span class="stat">see Consultants</span>' : payPill(x)}</td><td class="num"><b>${inr(x.amount)}</b></td>
+        <td class="nowrap">${x.src === 'ledger' ? billCell(x) : ''}${w && x.src === 'ledger' && x.paid === false ? ' <button class="primary sm" data-billpay>Mark paid</button>' : ''}${w && own ? ' <button class="ghost xdel" data-ldel title="Delete (a copy is kept in the audit log)">✕</button>' : ''}</td></tr>`; }).join('') || '<tr><td colspan="7" class="stat">No expenses for this selection.</td></tr>'}
+    </tbody></table></div>
+    <p class="stat">Each expense is recorded once, on its own page; this page adds them up. Petty cash counts when the box is topped up (the spends are listed on the Petty cash page). Consultant payouts settle fees already counted; the Daily tally is a cash check, not an expense.</p>`;
 }
 function accPetty(d){
   const a = cl.acc, owner = canW('accounts'), spend = canW('petty') || owner, inM = x => (x.date || '').slice(0, 7) === a.month;

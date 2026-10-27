@@ -28,7 +28,7 @@ async function accSubmit(id, form){
       const fd = file ? await readFileData(file) : null;
       const ref = await add(x);
       if (fd) await F.setDoc(cDoc('ledgerDocs', ref.id), fd);
-      a.pre = null; a.busy = false; info(vt ? 'Bill added.' : 'Expense added.');
+      a.pre = null; a.busy = false; if (!vt) a.exAdd = false; info(vt ? 'Bill added.' : 'Expense added.');
     }
     if (id === 'accPinForm'){ if (num('#piAmt') <= 0) return info('Enter the amount.'); if (!val('#piNote')) return info('Add a note for this top-up.'); if (val('#piDate') > todayKey) return info("The date can't be in the future.");
       await add({kind:'petty', date:val('#piDate') || todayKey, mode:'cash', amount:num('#piAmt'), source:val('#piSrc') || 'drawer', note:val('#piNote')}); info(val('#piSrc') === 'drawer' ? 'Petty cash topped up (taken out of the main drawer: shows in that day\'s tally).' : 'Petty cash topped up.'); }

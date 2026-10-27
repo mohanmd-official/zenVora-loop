@@ -64,3 +64,20 @@ tr.sel td{background:color-mix(in srgb,var(--accent) 7%,transparent)}
 .dp:hover{background:var(--paper2,rgba(0,0,0,.03))}.dp input{margin:0}.dp:has(input:checked){background:color-mix(in srgb,var(--done) 10%,transparent)}
 .dp b{font-variant-numeric:tabular-nums}.tdiff:empty{display:none}
 
+/* Clinic expenses overview */
+.exhead{display:flex;gap:12px;align-items:stretch;flex-wrap:wrap;margin-bottom:10px}
+.extot,.exout{display:flex;flex-direction:column;justify-content:center;padding:12px 18px;border:1px solid var(--line);border-radius:14px;background:var(--paper);box-shadow:var(--shadow);min-width:200px}
+.extot{flex:1}.extot span,.exout span{font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.extot b{font-size:30px;font-weight:800;line-height:1.15;font-variant-numeric:tabular-nums}.exout b{font-size:24px;font-weight:800;font-variant-numeric:tabular-nums}
+.extot em,.exout em{font-style:normal;font-size:12px;color:var(--muted)}.exout.late{border-color:var(--high)}.exout.late b,.exout.late em{color:var(--high)}
+.exhead > button{align-self:center}
+.exbar{display:flex;height:10px;border-radius:999px;overflow:hidden;gap:2px;margin:2px 0 8px;background:var(--line)}.exbar i{display:block;min-width:4px}
+.exchips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.exchip{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;border:1px solid var(--line);background:var(--paper);font-size:12.5px;font-weight:600;color:var(--ink);box-shadow:none}
+.exchip i{width:9px;height:9px;border-radius:50%;background:var(--c)}.exchip b{font-variant-numeric:tabular-nums}.exchip.zero{opacity:.5}
+.exchip.on{border-color:var(--c);background:color-mix(in srgb,var(--c) 12%,var(--paper))}
+.exadd{margin-bottom:12px}.exoutl{margin-bottom:12px}.exoutl summary{cursor:pointer}.exoutl[open] summary{margin-bottom:6px}
+.exfilt{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:4px 0 8px}.exfilt select,.exfilt input{width:auto;padding:4px 6px;font-size:12.5px}.exfilt i{color:var(--muted);font-style:normal}.exfilt .sp{flex:1}
+.extag{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11.5px;font-weight:700;color:var(--c);background:color-mix(in srgb,var(--c) 12%,var(--paper));white-space:nowrap}
+a.srcl0{text-decoration:none}.extbl td{vertical-align:middle}.nowrap{white-space:nowrap}button.xdel{color:var(--high);padding:2px 7px}
+.orow .sub2{display:block}

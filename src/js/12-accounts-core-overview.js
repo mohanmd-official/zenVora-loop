@@ -81,30 +81,32 @@ function clAccLoad(){
   }).catch(e => { a.d = {err:errText(e)}; again(); });
 }
 /* Clinic expenses = every real expense, each from the page where it is recorded (its source of truth):
-   Lab / Materials bills (vendors), Consultant fees (treatments + per-visit costs + manual fees), Staff salary (paid), Petty cash spends,
-   and Other expenses entered directly (rent, EB, loan …). NOT included: petty cash top-ups (a transfer), consultant payouts (paying a fee
-   already counted), patient payments and the daily tally (cash movement, not expenses). */
+   Lab / Materials bills (vendors), Consultant fees (treatments + per-visit costs + manual fees), Staff salary (paid), Petty cash TOP-UPS
+   (money handed to the petty box counts as spent; the individual petty spends are only on the Petty cash page, so nothing is counted twice),
+   and Other expenses entered directly (rent, EB, loan …). NOT included: petty box openings / count corrections, consultant payouts (paying
+   a fee already counted), patient payments and the daily tally (cash movement, not expenses). */
 function expSource(x){
   if (x.src === 'fee') return 'consult';
-  if (x.kind === 'pettyspend') return 'petty';
+  if (x.kind === 'petty' || x.kind === 'pettyspend') return 'petty';
   if (x.staffUid || x.category === 'Staff salary') return 'salary';
   if (x.vendorId){ const t = (vName(x.vendorId).type || x.category || ''); return t === 'Lab' ? 'lab' : t === 'Materials' ? 'materials' : 'other'; }
   if (x.doctorId) return 'consult';
   return 'other';
 }
-const EXP_SRC = {lab:['Lab', 'lab'], materials:['Materials', 'materials'], consult:['Consultants', 'consultants'], salary:['Staff salary', 'salary'], petty:['Petty cash', 'petty'], other:['Other expenses', 'expenses']};
+const EXP_SRC = {lab:['Lab', 'lab'], materials:['Materials', 'materials'], consult:['Consultants', 'consultants'], salary:['Staff salary', 'salary'], petty:['Petty cash', 'petty'], other:['Other', 'expenses']};
+const pettyTopups = (led, mk) => led.filter(x => x.kind === 'petty' && !x.opening && svcMonth(x) === mk);
 function expensesOf(led, fees, mk, opt = {}){
   const inM = x => svcMonth(x) === mk;
   const rows = led.filter(x => x.kind === 'expense' && inM(x)).map(x => Object.assign({src:'ledger'}, x))
     .concat(fees.filter(x => (x.date || '').slice(0, 7) === mk).map(t => ({src:'fee', id:t.id, date:t.date, category:'Consultant fees', amount:+t.consultantFee, doctorId:t.doctorId, patientName:t.patientName, note:t.typeName, by:t.by})));
-  if (opt.petty) rows.push(...led.filter(x => x.kind === 'pettyspend' && inM(x)).map(x => Object.assign({src:'ledger', category:x.adjust ? 'Petty cash · count correction' : 'Petty cash'}, x)));
+  if (opt.petty) rows.push(...pettyTopups(led, mk).map(x => Object.assign({src:'ledger', category:'Petty cash top-up', paid:true, mode:x.mode || 'cash'}, x, {from:x.source})));
   rows.forEach(x => x.source = expSource(x));
   return rows;
 }
 function monthNumbers(mk){
   const d = cl.acc.d, inM = x => (x.date || '').slice(0, 7) === mk;
   const income = paidSum(d.pay.filter(inM)) + paidSum(d.led.filter(x => x.kind === 'income' && inM(x))), exp = expensesOf(d.led, d.fees, mk), expense = paidSum(exp);
-  const petty = paidSum(d.led.filter(x => x.kind === 'pettyspend' && svcMonth(x) === mk));
+  const petty = paidSum(pettyTopups(d.led, mk));                                    // petty cash counts when the box is topped up
   return {income, expense, petty, net:income - expense - petty, exp};
 }
 function clAccounts(){
@@ -139,12 +141,12 @@ function accOverview(d){
       <text x="${x}" y="178" text-anchor="middle" font-size="11" fill="var(--muted)">${esc(parseDay(s.m + '-01').toLocaleDateString([], {month:'short'}))}</text>
       ${any ? `<text x="${x}" y="${Math.min(160 - hi, 160 - he) - 5}" text-anchor="middle" font-size="10.5" font-weight="650" fill="${s.net >= 0 ? 'var(--done)' : 'var(--high)'}">${s.net >= 0 ? '+' : '−'}${esc(inr(Math.abs(s.net)).slice(1))}</text>` : ''}`; }).join('');
   const byCat = {}; N.exp.forEach(x => byCat[x.category || 'Other'] = (byCat[x.category || 'Other'] || 0) + (+x.amount || 0));
-  if (N.petty) byCat['Petty cash spends'] = N.petty;
+  if (N.petty) byCat['Petty cash top-ups'] = N.petty;
   const cats = Object.entries(byCat).sort((x, y) => y[1] - x[1]), ct = cats.reduce((s, x) => s + x[1], 0);
   return `<div class="kpis">
       ${kpi('Income', inr(N.income), 'patient payments + other income')}
       ${kpi('Clinic expenses', inr(N.expense), `${N.exp.length} ${N.exp.length === 1 ? 'entry' : 'entries'}`, N.expense ? 'neg' : '')}
-      ${kpi('Petty cash spent', inr(N.petty), `box balance ${inr(d.pettyBal)}`)}
+      ${kpi('Petty cash top-ups', inr(N.petty), `box balance ${inr(d.pettyBal)}`)}
       ${kpi('Net', (N.net < 0 ? '− ' : '') + inr(Math.abs(N.net)), N.net < 0 ? 'loss this month' : N.income ? `${Math.round(N.net / N.income * 100)}% margin` : 'no income yet', N.net < 0 ? 'neg' : 'pos')}</div>
     <div class="acards">
       <div class="box wide"><h3>Clinic performance <span class="sub">last 6 months · <i class="lg" style="background:var(--done)"></i>income <i class="lg" style="background:var(--high)"></i>expenses</span></h3>

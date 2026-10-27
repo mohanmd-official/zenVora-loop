@@ -99,10 +99,10 @@ const CI = {
 const CSECS = [['patients', 'Patients', () => can('patients') || can('treatments') || can('billing')], ['appointments', 'Appointments', () => can('appointments') || can('treatments')],
   ['accounts', 'Accounts', () => can('accounts') || can('petty') || can('tally') || isOwnerLike()], ['reports', 'Reports', () => can('reports') || can('doctorReports')], ['assists', 'Patient assists', () => !!(orgCtx() && !orgCtx().support)], ['setup', 'Clinic setup', () => can('setup')]];
 
-/* clinic organizations: one menu on the left of every page — Organization, Home, Attendance, Planning Board, and Clinic as the master
-   menu with its pages (Patients, Appointments, Accounts …) listed under it. On phones the top tabs stay and the Clinic pages show inside Clinic. */
+/* clinic organizations: Home, Organization and Planning Board stay in the top bar; the features (Attendance, and Clinic as a master menu
+   with its pages Patients, Appointments, Accounts …) sit in a menu on the left of every page. ▾ folds Clinic. On phones all tabs are on top. */
 const sideNavOn = () => { const oc = orgCtx(); return !!(oc && feat('clinic')); };
-const SN_MAIN = ['org', 'home', 'attendance', 'board'];
+const SN_MAIN = ['attendance'];
 function renderSideNav(){
   const nav = $('#clSeg'), oc = orgCtx(); if (!nav) return;
   const on = sideNavOn(); document.body.classList.toggle('sidenav', on);
@@ -113,9 +113,9 @@ function renderSideNav(){
   if (!secs.some(x => x[0] === cl.sec)) cl.sec = secs.length ? secs[0][0] : '';
   const main = SN_MAIN.map(k => $(`#tabs [data-view="${k}"]`)).filter(t => t && !t.hidden)
     .map(t => `<a data-goview="${t.dataset.view}" href="${t.getAttribute('href')}" class="${cur === t.dataset.view ? 'on' : ''}">${t.querySelector('svg').outerHTML}<span>${esc(t.querySelector('.lbl').textContent)}</span></a>`).join('');
-  const ct = $('#clinicTab'), clinicOn = ct && !ct.hidden, open = cl.navOpen !== false || v === 'clinic';
-  nav.innerHTML = `<div class="sn-main">${main}</div>`
-    + (clinicOn ? `<a class="sn-master${v === 'clinic' ? ' on' : ''}" data-goview="clinic" href="#/clinic" aria-expanded="${open}">${ct.querySelector('svg').outerHTML}<span>Clinic</span>${v === 'clinic' ? '<i class="sn-chev">▾</i>' : `<i class="sn-chev" data-sntoggle title="${open ? 'Collapse' : 'Expand'}">${open ? '▾' : '▸'}</i>`}</a>
+  const ct = $('#clinicTab'), clinicOn = ct && !ct.hidden, open = cl.navOpen !== false;
+  nav.innerHTML = `<div class="clnavt">Features</div>` + (main ? `<div class="sn-main">${main}</div>` : '')
+    + (clinicOn ? `<a class="sn-master${v === 'clinic' ? ' on' : ''}" data-goview="clinic" href="#/clinic" aria-expanded="${open}">${ct.querySelector('svg').outerHTML}<span>Clinic</span><i class="sn-chev" data-sntoggle role="button" title="${open ? 'Fold the Clinic menu' : 'Open the Clinic menu'}">${open ? '▾' : '▸'}</i></a>
       <div class="sn-sub" data-ord="csec" data-ordattr="s" data-ordv="1"${open ? '' : ' hidden'}>${ordered('csec', secs).map(([k, l]) => `<a draggable="true" data-s="${k}" href="#/clinic/${k}" class="${v === 'clinic' && k === cl.sec ? 'on' : ''}"><svg viewBox="0 0 16 16">${CI[k]}</svg><span>${l}</span></a>`).join('')}</div>` : '')
     + (oc && oc.support ? '<div class="stat" style="padding:8px 10px">Read-only support view</div>' : '');
 }
