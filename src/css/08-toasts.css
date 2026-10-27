@@ -1,0 +1,23 @@
+/* ---------- toasts ---------- */
+.toasts{position:fixed;top:12px;right:12px;display:flex;flex-direction:column;gap:8px;z-index:40;width:min(340px,calc(100% - 24px))}
+.toast{background:var(--paper);border-left:4px solid var(--prog);border-radius:10px;padding:10px 12px;box-shadow:0 8px 28px rgba(0,0,0,.25);animation:slide .25s ease-out}
+.toast.missed{border-left-color:var(--high)}
+.toast.info{border-left-color:var(--mint)}
+.toast .tt{font-weight:650;word-break:break-word}
+.toast .tb{font-size:12px;color:var(--muted);margin:2px 0 8px}
+.toast .ta{display:flex;gap:6px;flex-wrap:wrap}
+.toast .ta button{font-size:12px;padding:3px 8px}
+@keyframes slide{from{transform:translateX(30px);opacity:0}to{transform:none;opacity:1}}
+
+@media (max-width:1180px){.tabs.many .lbl{display:none}.tabs.many :is(button,a){padding:5px 9px}}
+@media (max-width:900px){.brand .tag{display:none}.tabs .lbl{display:none}.tabs :is(button,a){padding:5px 9px}}
+@media (max-width:700px){
+  body{overflow:auto}
+  .board{grid-template-columns:1fr}
+  .col{min-height:160px}
+  .add{flex-wrap:wrap}
+  .add #newTitle{flex-basis:100%}
+  #q{width:100%}
+  .cell{min-height:70px}
+}
+

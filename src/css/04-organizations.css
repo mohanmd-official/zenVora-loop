@@ -1,0 +1,45 @@
+/* organizations */
+.orgchip{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);font-weight:500;line-height:1.1}
+.sw{display:inline-block;width:10px;height:10px;border-radius:3px;flex:none;vertical-align:-1px}
+.supbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 14px 8px;padding:8px 12px;border-radius:10px;font-size:12.5px;background:color-mix(in srgb,var(--prog) 14%,var(--paper));border:1px solid color-mix(in srgb,var(--prog) 45%,transparent)}
+.supbar b{font-weight:700}
+#reqBell{position:relative;border-color:color-mix(in srgb,var(--prog) 55%,transparent);color:var(--prog);font-weight:650}
+.sect{display:flex;flex-direction:column;gap:10px}
+.otbl td .sub2{display:block;font-size:11px;color:var(--muted)}
+.fchips{display:flex;gap:4px;flex-wrap:wrap}
+.fchip{font-size:10.5px;font-weight:650;padding:1px 7px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.fchip.on{color:var(--accent-ink);border-color:color-mix(in srgb,var(--accent-ink) 45%,transparent)}
+.upill.sus{color:var(--prog);border-color:color-mix(in srgb,var(--prog) 50%,transparent)}
+.upill.gone{color:var(--high);border-color:color-mix(in srgb,var(--high) 45%,transparent)}
+.swatches{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.swatches button{width:24px;height:24px;border-radius:7px;padding:0;border:2px solid transparent}
+.swatches button.on{border-color:var(--ink)}
+.swatches input[type=color]{width:34px;height:26px;padding:0 2px;border-radius:7px}
+.feats{display:flex;gap:12px;flex-wrap:wrap}
+.feats label{flex-direction:row!important;align-items:center;gap:6px!important;text-transform:none!important;letter-spacing:0!important;font-size:12.5px!important;color:var(--ink)!important}
+.feats small{color:var(--muted);font-size:11px}
+.aform input[type=checkbox]{min-width:0;margin:0}
+.aform .swatches input[type=color]{min-width:0;width:34px}
+.feats{padding-top:3px}
+.flbl{display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.feats label{display:inline-flex!important;white-space:nowrap}
+.aform .grow{flex:1;min-width:200px}
+.aform .grow input,.aform .grow select{width:100%}
+.btnrow{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.req{border:1px solid var(--line);border-radius:10px;padding:9px 11px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.req.pending{border-color:color-mix(in srgb,var(--prog) 55%,transparent);background:color-mix(in srgb,var(--prog) 7%,var(--paper))}
+.req .rq{flex:1;min-width:220px}
+.req .rq b{display:block}
+.req .rq span{font-size:12px;color:var(--muted)}
+.grant{padding:10px 12px;border-radius:10px;border:1px solid color-mix(in srgb,var(--done) 45%,transparent);background:color-mix(in srgb,var(--done) 8%,var(--paper));display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.tree,.tree ul{list-style:none;margin:0;padding:0}
+.tree ul{margin-left:22px;padding-left:14px;border-left:1px dashed var(--line)}
+.tree li{margin:6px 0}
+.tnode{display:inline-flex;align-items:center;gap:9px;padding:6px 12px 6px 6px;border:1px solid var(--line);border-radius:999px;background:var(--paper);box-shadow:var(--shadow)}
+.tnode .uav{width:28px;height:28px;font-size:12px}
+.tnode b{font-size:12.5px}
+.tnode span{font-size:11.5px;color:var(--muted)}
+.tnode.off{opacity:.55}
+.peditrow td{background:var(--panel)}
+.legacy{margin-top:6px}
+

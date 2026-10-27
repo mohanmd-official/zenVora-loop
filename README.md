@@ -245,7 +245,9 @@ Optional hardening: GitHub → your profile **Settings → Pages → Add a verif
 
 ## Updating the app
 
-Edit files → `git push` → live in about a minute (watch the Actions tab).
+The code is split into small modules in `src/` (see `CLAUDE.md` for the map): `src/js/*.js` (one per area: appointments, accounts, tally, attendance …), `src/css/*.css` and `src/shell.html`. They are joined into the single `public/index.html` that is served.
+
+Edit a module → `python3 build.py` (rebuilds `public/index.html`) → `git push` → live in about a minute (watch the Actions tab). The deploy workflow also runs the build, so the site is right even if a build was forgotten. Don't edit `public/index.html` directly: the next build overwrites it.
 
 ## Good to know
 

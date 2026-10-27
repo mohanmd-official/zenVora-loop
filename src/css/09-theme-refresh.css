@@ -1,0 +1,95 @@
+/* =================== refreshed look (light & dark) =================== */
+body{background:radial-gradient(1200px 600px at -10% -20%,var(--glow1),transparent 60%),radial-gradient(900px 500px at 110% 120%,var(--glow2),transparent 60%),var(--bg);background-attachment:fixed;font-size:13.5px;letter-spacing:-.003em}
+::selection{background:color-mix(in srgb,var(--accent) 25%,transparent)}
+*{scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--muted) 40%,transparent) transparent}
+button{border-radius:10px;padding:6px 12px;transition:background .15s,border-color .15s,box-shadow .15s,transform .05s;font-weight:550}
+button:hover{border-color:color-mix(in srgb,var(--accent-ink) 45%,var(--line));background:var(--paper2)}
+button:active{transform:translateY(1px)}
+button.primary{background:linear-gradient(135deg,var(--accent),color-mix(in srgb,var(--accent) 70%,#a855f7));border:1px solid transparent;color:#fff;box-shadow:0 4px 14px color-mix(in srgb,var(--accent) 35%,transparent)}
+button.primary:hover{filter:brightness(1.07);background:linear-gradient(135deg,var(--accent),color-mix(in srgb,var(--accent) 70%,#a855f7));border-color:transparent}
+button.danger{color:var(--high)}
+button.ghost:hover{background:none}
+input,textarea,select{border-radius:10px;padding:7px 10px;background:var(--paper);transition:border-color .15s,box-shadow .15s}
+input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 18%,transparent)}
+.top{position:sticky;top:0;z-index:20;padding:10px 18px;gap:14px;background:color-mix(in srgb,var(--paper) 78%,transparent);backdrop-filter:saturate(1.6) blur(14px);-webkit-backdrop-filter:saturate(1.6) blur(14px);border-bottom:1px solid var(--line)}
+.brand .logo{width:34px;height:34px;border-radius:10px}
+.brand h1{font-size:17px}
+.tabs{background:var(--panel);border:1px solid var(--line);padding:4px;border-radius:14px;gap:3px}
+.tabs :is(button,a){padding:7px 13px;border-radius:10px;font-weight:600;color:var(--muted)}
+.tabs :is(button,a):hover{background:var(--paper);color:var(--ink);border-color:transparent}
+.tabs :is(button,a).on{background:var(--paper);color:var(--accent-ink);box-shadow:var(--shadow),inset 0 -2px 0 var(--accent)}
+.tabs svg{width:15px;height:15px}
+#themeBtn{width:36px;height:36px;padding:0;border-radius:12px;display:grid;place-items:center;font-size:16px}
+.seg{border-radius:11px;background:var(--panel);padding:3px;gap:2px;border:1px solid var(--line)}
+.seg button{border-radius:8px!important;padding:5px 11px;font-weight:600}
+.seg button+button{border-left:0}
+.seg button.on{background:var(--paper);color:var(--accent-ink);box-shadow:var(--shadow)}
+.kpi{position:relative;border-radius:16px;padding:14px 16px 13px;box-shadow:var(--shadow);overflow:hidden;background:linear-gradient(180deg,var(--paper),var(--paper2))}
+.kpi::before{content:"";position:absolute;inset:0 0 auto 0;height:3px;background:linear-gradient(90deg,var(--accent),var(--mint));opacity:.85}
+.kpi .kl{font-size:10.5px;letter-spacing:.07em;font-weight:650}
+.kpi .kv{font-size:24px;font-weight:780;letter-spacing:-.02em;margin-top:4px}
+.box,.hcard,.pform,.phead,.aq,.visit,.titem,.req,.grant,.punch{border-radius:16px;box-shadow:var(--shadow);background:var(--paper)}
+.box h3{font-size:13.5px;font-weight:700}
+.atbl{border-radius:16px;box-shadow:var(--shadow)}
+.atbl th{background:var(--paper2);font-size:10.5px;letter-spacing:.06em;padding:10px 12px}
+.atbl td{padding:9px 12px}
+.atbl tbody tr:not(.wk):not(.tot):hover td{background:color-mix(in srgb,var(--accent) 5%,var(--paper))}
+.atbl td.rn,.atbl th.rn{width:44px;text-align:right;color:var(--muted);font-variant-numeric:tabular-nums;font-size:11.5px;padding-right:4px}
+.col{border-radius:18px;background:color-mix(in srgb,var(--paper) 55%,transparent);border:1px solid var(--line);backdrop-filter:blur(6px)}
+.col h2{padding:12px 14px;font-size:11px}
+.card{border-radius:12px;padding:10px 12px;border:1px solid var(--line);border-left:4px solid var(--low);transition:transform .12s,box-shadow .12s}
+.card:hover{transform:translateY(-1px);box-shadow:var(--shadow-lg)}
+.add{padding:12px 18px 6px}
+.vbar{padding:10px 18px}
+.board{padding:0 18px 18px;gap:14px}
+.calwrap,.ins{padding-left:18px;padding-right:18px}
+.modal{border-radius:20px;box-shadow:var(--shadow-lg);border:1px solid var(--line)}
+.ov{background:rgba(8,12,28,.45);backdrop-filter:blur(4px)}
+.toast{border-radius:14px;box-shadow:var(--shadow-lg);border:1px solid var(--line)}
+.upill,.ast,.fchip,.epic{font-weight:650}
+.clnav{background:color-mix(in srgb,var(--paper) 60%,transparent);backdrop-filter:blur(8px)}
+.clnav :is(button,a).on{background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 14%,var(--paper)),var(--paper));box-shadow:var(--shadow),inset 3px 0 0 var(--accent)}
+.htabs :is(button,a){font-weight:600}
+.umenu{border-radius:16px;box-shadow:var(--shadow-lg)}
+.plannav{margin:12px 18px 0;border-bottom:1px solid var(--line)}
+/* home */
+.hbanner{border-radius:0 0 28px 28px;overflow:hidden}
+.hbanner::after{content:"";position:absolute;inset:0;background:radial-gradient(600px 200px at 85% 0%,rgba(255,255,255,.25),transparent 70%);pointer-events:none}
+.hgridw{padding:0 24px 8px;margin-top:-26px;position:relative;z-index:1}
+.hgridw .hwtop{background:color-mix(in srgb,var(--paper) 70%,transparent);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:14px;padding:8px 8px 8px 14px;box-shadow:var(--shadow)}
+.hlogo.zl{padding:0;background:none;box-shadow:none}
+.hlogo.zl svg{width:52px;height:52px;border-radius:14px}
+.hwgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start}
+.hw{background:var(--paper);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:16px;min-width:0}
+.hw.full{grid-column:1/-1}
+.hw h3{margin:0 0 10px;font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px}
+.hw h3 .ic{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;background:color-mix(in srgb,var(--accent) 12%,var(--paper));font-size:14px}
+.hw h3 .sp{flex:1}
+.hwtop{display:flex;align-items:center;gap:10px;margin:0 0 12px}
+.hwtop h2{margin:0;font-size:15px;font-weight:700;flex:1}
+.qa{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.qa button{display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:12px;border-radius:14px;text-align:left;background:var(--paper2)}
+.qa button b{font-size:13px}
+.qa button span{font-size:11.5px;color:var(--muted);font-weight:500}
+.qa button i{font-style:normal;font-size:18px}
+.wbar{height:10px;border-radius:999px;background:var(--panel);overflow:hidden;margin:8px 0}
+.wbar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--mint));border-radius:999px}
+.hnote{width:100%;min-height:110px;resize:vertical;background:color-mix(in srgb,#facc15 10%,var(--paper));border-color:color-mix(in srgb,#facc15 35%,var(--line))}
+.cz{display:flex;flex-direction:column;gap:6px;margin:10px 0}
+.czr{display:grid;grid-template-columns:auto 1fr auto auto auto;gap:8px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:12px;background:var(--paper)}
+.czr.off{opacity:.55}
+.czr small{display:block;color:var(--muted);font-size:11.5px}
+.trow{display:flex;gap:8px;align-items:center;padding:7px 0;border-bottom:1px dashed var(--line);font-size:13px}
+.trow:last-child{border-bottom:none}
+.trow b{flex:1;font-weight:550}
+.billbox .payrow:last-child{font-size:15px}
+.ast.billing{color:#0ea5a4}
+.achip.billing{border-color:#0ea5a4;background:color-mix(in srgb,#0ea5a4 12%,var(--paper))}
+.visit.billing{border-left-color:#0ea5a4}
+@media (max-width:900px){.hwgrid{grid-template-columns:1fr}.hw.full{grid-column:auto}.hgridw{padding:0 12px}}
+.btnrow label.vbchk{display:flex;flex-direction:row;gap:6px;align-items:center;text-transform:none;letter-spacing:0;font-size:13px;font-weight:500;color:var(--muted);white-space:nowrap;margin:0}
+.btnrow label.vbchk input{width:auto;margin:0}
+
+.tabs a,.clnav a,.htabs a{font:inherit;text-decoration:none;cursor:pointer;-webkit-user-drag:element}
+.htabs a{display:inline-block}
+a.plink{color:inherit;text-decoration:none}a.plink:hover{text-decoration:underline}
