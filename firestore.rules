@@ -188,6 +188,12 @@ service cloud.firestore {
           || (isOwner(o) && l == 'cf-' + request.resource.data.appointmentId && request.resource.data.kind == 'expense' && resource.data.appointmentId == request.resource.data.appointmentId);
         allow delete: if perm(o, 'accounts') || (isOwner(o) && l == 'cf-' + resource.data.appointmentId);
       }
+      // Audit log: a copy of every deleted money record (ledger entries, tallies). Write-once: nobody can change or remove it.
+      match /auditLog/{x} {
+        allow read: if perm(o, 'accounts') || isOwner(o) || supportOpen(o);
+        allow create: if (perm(o, 'accounts') || perm(o, 'tally') || perm(o, 'petty') || isOwner(o)) && request.resource.data.by == request.auth.token.email;
+        allow update, delete: if false;
+      }
       match /ledgerDocs/{l} {
         allow read, write: if perm(o, 'accounts');
       }

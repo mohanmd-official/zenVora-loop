@@ -491,6 +491,18 @@ td.pcodec{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;white-space:
 #v-clinic .kpis{margin-bottom:12px}
 #v-clinic .box{margin-bottom:12px}
 #v-clinic .acards{margin:0 0 12px}
+/* left menu for clinic organizations */
+body.sidenav #clSeg{position:fixed;left:0;top:var(--hdrH,64px);bottom:0;width:210px;z-index:6;border-top:1px solid var(--line)}
+body.sidenav > .view, body.sidenav > .supbar, body.sidenav > .add{margin-left:210px}
+body.sidenav .clwrap{grid-template-columns:minmax(0,1fr)}
+body.sidenav #tabs{display:none}
+.sn-main{display:flex;flex-direction:column;gap:2px;padding-bottom:8px;margin-bottom:8px;border-bottom:1px solid var(--line)}
+.clnav a.sn-master{color:var(--ink);font-weight:700}.sn-chev{margin-left:auto;font-style:normal;padding:0 4px;border-radius:6px;color:var(--muted)}.sn-chev:hover{background:var(--line)}
+.sn-sub{display:flex;flex-direction:column;gap:2px;margin:2px 0 0 12px;padding-left:6px;border-left:2px solid color-mix(in srgb,var(--accent) 35%,var(--line))}
+.sn-sub a{padding:7px 10px!important;font-size:13px!important}
+@media (max-width:820px){body.sidenav #tabs{display:flex}body.sidenav #clSeg{position:static;width:auto;flex:none;display:none}body.sidenav.inclinic #clSeg{display:flex}
+  body.sidenav .sn-main,body.sidenav .sn-master{display:none!important}body.sidenav .sn-sub{margin:0;border:0;padding:0;flex-direction:row;flex-wrap:wrap}body.sidenav .sn-sub[hidden]{display:flex!important}
+  body.sidenav > .view, body.sidenav > .supbar, body.sidenav > .add{margin-left:0}}
 @media (max-width:820px){.clwrap{grid-template-columns:1fr}.clnav{flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line);padding:6px}.clnavt{display:none}.clnav :is(button,a){flex:none}.clmain{padding:12px}}
 .pform{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 12px;align-items:end}
 .pform label input,.pform label select,.pform label textarea{width:100%;min-width:0!important}
@@ -658,7 +670,11 @@ button.aback{font-size:12px;color:var(--muted)}
 .dchips{display:flex;flex-wrap:wrap;gap:6px;flex:1}.dchip{padding:3px 9px;border-radius:999px;background:var(--panel);font-size:12.5px;font-weight:600;font-variant-numeric:tabular-nums}
 .tally+.tally{margin-top:12px}.tsum{border-top:1px solid var(--line);margin-top:6px;padding-top:6px}.tsum b{font-size:16px}
 .dtbl{width:100%;border-collapse:collapse;font-size:13px}.dtbl td,.dtbl th{padding:6px 4px;border-bottom:1px solid var(--line);vertical-align:top}.dtbl th{font-size:11.5px;color:var(--muted);font-weight:600}
-.dtbl details{font-size:12px}.dtbl .num{text-align:right}.dstat{font-weight:700;width:70px;text-align:right}.dstat.okc{color:var(--done)}
+.dtbl details{font-size:12px}
+.orow{display:grid;grid-template-columns:10px minmax(0,1fr) auto auto auto;gap:10px;align-items:center;padding:7px 0;border-bottom:1px dashed var(--line);font-size:13px}
+.orow .opill{text-align:right;white-space:nowrap}.orow .opill .sub2{display:block}.orow .oamt{white-space:nowrap;font-variant-numeric:tabular-nums}button.sm{padding:3px 9px;font-size:12px}
+.kpis8{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}a.srcl{font-weight:650;color:var(--accent-ink);text-decoration:none}a.srcl:hover{text-decoration:underline}
+.exfilt{flex-wrap:wrap;gap:6px}.exfilt select,.exfilt input{width:auto;padding:4px 6px}#exAddBox summary{cursor:pointer}#exAddBox[open] summary{margin-bottom:10px}tr.hlrow td{background:color-mix(in srgb,var(--prog) 14%,transparent)}.dtbl .num{text-align:right}.dstat{font-weight:700;width:70px;text-align:right}.dstat.okc{color:var(--done)}
 .cvh{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.cvh .sp{flex:1}.seg.mini button{padding:4px 10px;font-size:12.5px}
 .ccal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;margin:6px 0 12px}.cch{font-size:11px;color:var(--muted);font-weight:700;text-align:center}
 .ccd{min-height:58px;border:1px solid var(--line);border-radius:8px;padding:4px 6px;font-size:12px;display:flex;flex-direction:column;background:var(--paper)}.ccd span{color:var(--muted)}
@@ -1221,6 +1237,8 @@ function render(){
   const noTabs = ![...document.querySelectorAll('#tabs [data-view]')].some(b => !b.hidden);
   if (noTabs) document.querySelectorAll('.view').forEach(s => s.hidden = true);
   else ({board:renderBoard, calendar:renderCalendar, all:renderAll, insights:renderInsights, attendance:renderAttendance, clinic:renderClinic, org:renderOrg, orgs:renderOrgs, home:renderHome})[v]();
+  document.body.classList.toggle('inclinic', v === 'clinic');
+  renderSideNav();
   applyLogo();
   const od = agendaOn() ? state.items.filter(isPastDue).length : 0;
   $('#overdueStat').textContent = od ? `🔥 ${od} overdue` : '';
@@ -2040,7 +2058,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 'n'){ $('#newTitle').focus(); e.preventDefault(); }
 });
 
-let rsz; window.addEventListener('resize', () => { clearTimeout(rsz); rsz = setTimeout(() => { if (state.settings.view === 'insights') renderInsights(); }, 150); });
+let rsz; window.addEventListener('resize', () => { clearTimeout(rsz); rsz = setTimeout(() => { if (state.settings.view === 'insights') renderInsights(); if (sideNavOn()) renderSideNav(); }, 150); });
 window.addEventListener('storage', e => { if (mode === 'local' && appReady && e.key === KEY){ state = load(); render(); } });
 document.addEventListener('visibilitychange', () => { if (!document.hidden) checkReminders(); });
 
@@ -2223,6 +2241,7 @@ function refreshTabs(){
   $('#clinicTab').hidden = !(oc && feat('clinic'));          // every clinic member at least logs their Patient assists there
   $('#orgTab').hidden = !(oc && (oc.support || role === 'orgadmin' || role === 'manager'));
   $('#orgsTab').hidden = !isSup;
+  document.body.classList.toggle('sidenav', sideNavOn());
   $('#tabs').classList.toggle('many', [...document.querySelectorAll('#tabs [data-view]')].filter(b => !b.hidden).length > 6);
   ['#exportBtn', '#importBtn'].forEach(s => $(s).hidden = !agenda);
   if (!agenda) $('#notifBtn').hidden = true; else updNotifBtn();
@@ -3197,14 +3216,32 @@ const CI = {
 const CSECS = [['patients', 'Patients', () => can('patients') || can('treatments') || can('billing')], ['appointments', 'Appointments', () => can('appointments') || can('treatments')],
   ['accounts', 'Accounts', () => can('accounts') || can('petty') || can('tally') || isOwnerLike()], ['reports', 'Reports', () => can('reports') || can('doctorReports')], ['assists', 'Patient assists', () => !!(orgCtx() && !orgCtx().support)], ['setup', 'Clinic setup', () => can('setup')]];
 
+/* clinic organizations: one menu on the left of every page — Organization, Home, Attendance, Planning Board, and Clinic as the master
+   menu with its pages (Patients, Appointments, Accounts …) listed under it. On phones the top tabs stay and the Clinic pages show inside Clinic. */
+const sideNavOn = () => { const oc = orgCtx(); return !!(oc && feat('clinic')); };
+const SN_MAIN = ['org', 'home', 'attendance', 'board'];
+function renderSideNav(){
+  const nav = $('#clSeg'), oc = orgCtx(); if (!nav) return;
+  const on = sideNavOn(); document.body.classList.toggle('sidenav', on);
+  if (!on){ if (nav.parentElement === document.body){ $('#v-clinic .clwrap').prepend(nav); nav.innerHTML = ''; } return; }
+  if (nav.parentElement !== document.body) $('header.top').after(nav);                      // lift the menu out of the Clinic page so it shows on every page
+  document.documentElement.style.setProperty('--hdrH', Math.round($('header.top').getBoundingClientRect().bottom || 64) + 'px');
+  const v = state.settings.view, cur = AGENDA_VIEWS.includes(v) ? 'board' : v, secs = CSECS.filter(x => x[2]());
+  if (!secs.some(x => x[0] === cl.sec)) cl.sec = secs.length ? secs[0][0] : '';
+  const main = SN_MAIN.map(k => $(`#tabs [data-view="${k}"]`)).filter(t => t && !t.hidden)
+    .map(t => `<a data-goview="${t.dataset.view}" href="${t.getAttribute('href')}" class="${cur === t.dataset.view ? 'on' : ''}">${t.querySelector('svg').outerHTML}<span>${esc(t.querySelector('.lbl').textContent)}</span></a>`).join('');
+  const ct = $('#clinicTab'), clinicOn = ct && !ct.hidden, open = cl.navOpen !== false || v === 'clinic';
+  nav.innerHTML = `<div class="sn-main">${main}</div>`
+    + (clinicOn ? `<a class="sn-master${v === 'clinic' ? ' on' : ''}" data-goview="clinic" href="#/clinic" aria-expanded="${open}">${ct.querySelector('svg').outerHTML}<span>Clinic</span>${v === 'clinic' ? '<i class="sn-chev">▾</i>' : `<i class="sn-chev" data-sntoggle title="${open ? 'Collapse' : 'Expand'}">${open ? '▾' : '▸'}</i>`}</a>
+      <div class="sn-sub" data-ord="csec" data-ordattr="s" data-ordv="1"${open ? '' : ' hidden'}>${ordered('csec', secs).map(([k, l]) => `<a draggable="true" data-s="${k}" href="#/clinic/${k}" class="${v === 'clinic' && k === cl.sec ? 'on' : ''}"><svg viewBox="0 0 16 16">${CI[k]}</svg><span>${l}</span></a>`).join('')}</div>` : '')
+    + (oc && oc.support ? '<div class="stat" style="padding:8px 10px">Read-only support view</div>' : '');
+}
 function renderClinic(){
   const oc = orgCtx(); if (!oc || !feat('clinic') || window.__ordDrag || window.__apDrag) return;
   clLoad();
   const secs = CSECS.filter(s => s[2]());
   if (!secs.some(s => s[0] === cl.sec)) cl.sec = secs.length ? secs[0][0] : '';
-  $('#clSeg').dataset.ord = 'csec'; $('#clSeg').dataset.ordattr = 's'; $('#clSeg').dataset.ordv = '1';
-  $('#clSeg').innerHTML = `<div class="clnavt">Clinic</div>` + ordered('csec', secs).map(([k, l]) => `<a draggable="true" data-s="${k}" href="#/clinic/${k}" class="${k === cl.sec ? 'on' : ''}"><svg viewBox="0 0 16 16">${CI[k]}</svg><span>${l}</span></a>`).join('')
-    + (oc.support ? '<div class="stat" style="padding:8px 10px">Read-only support view</div>' : '');
+  renderSideNav();
   const body = $('#clBody');
   if (keepTyping(body)) return;
   parkAtt();
@@ -3778,7 +3815,6 @@ function presetRange(){ return [todayKey, todayKey]; }
    Petty cash is a separate cash box: the owner tops it up, front desk records what it is spent on.
    Daily tally = counting the main cash drawer by denomination against what the system expects. */
 const VENDOR_TYPES = ['Lab', 'Materials', 'Other'];
-const DUE_DAY = 15;
 const DENOMS = [500, 200, 100, 50, 20, 10, 5, 2, 1];
 const defaultAMeta = () => ({cats:[], commitments:[{id:'rent', name:'Rent', amount:0}]});
 const ameta = () => { const m = Object.assign(defaultAMeta(), cl.ameta || {}); m.commitments = (m.commitments || []).filter(c => c.id !== 'petty'); m.cats = m.cats || []; return m; };
@@ -3786,12 +3822,29 @@ const monthLabel = mk => parseDay(mk + '-01').toLocaleDateString([], {month:'lon
 const mShift = (mk, n) => { const d = parseDay(mk + '-01'); d.setMonth(d.getMonth() + n); return dayKey(d).slice(0, 7); };
 const mEnd = mk => monthBounds(mk).e;
 const expCats = () => { const m = ameta(); return [...new Set(m.commitments.map(c => c.name).concat(m.cats, ['Lab', 'Materials']))]; };
+/* ----- payment tracking: every obligation has a service month; it is due on day N (Commitments & categories, default 15) of the NEXT month ----- */
+const MODULE_CATS = ['Lab', 'Materials', 'Consultant fees', 'Staff salary'];        // these have their own pages; Clinic expenses only shows them
+const OTHER_CATS = ['Rent', 'Electricity (EB)', 'Clinic loan', 'Internet & phone', 'Water & utilities', 'Maintenance & repairs', 'Miscellaneous'];
+const otherCats = () => { const m = ameta(); return [...new Set(m.commitments.map(c => c.name).concat(OTHER_CATS, m.cats))].filter(c => !MODULE_CATS.includes(c)); };
+const dueDayOf = () => Math.min(28, Math.max(1, Math.round(+ameta().dueDay || 15)));
+const dueFor = mk => `${mShift(mk, 1)}-${pad2(dueDayOf())}`;
+const svcMonth = x => x.serviceMonth || (x.date || '').slice(0, 7);
+const xDue = x => x.dueDate || dueFor(svcMonth(x));
+const payState = x => x.paid !== false ? 'paid' : todayKey > xDue(x) ? 'overdue' : todayKey === xDue(x) ? 'today' : shiftDay(todayKey, 3) >= xDue(x) ? 'soon' : 'open';
+const PAYST = {paid:['Paid', 'on'], overdue:['Overdue', 'gone'], today:['Due today', 'gone'], soon:['Due soon', 'pend'], open:['Unpaid', 'pend']};
+const payPill = x => { const st = payState(x); return `<span class="upill ${PAYST[st][1]}">${PAYST[st][0]}</span>${st !== 'paid' ? `<span class="sub2">due ${esc(fmtDM(xDue(x)))}</span>` : x.paidDate ? `<span class="sub2">${esc(fmtDM(x.paidDate))}</span>` : ''}`; };
+/* every change to a money record keeps what it was before: who, when and the old values */
+const withHist = (x, change) => ({history:(x.history || []).concat([{at:Date.now(), by:cloud.user.email || '', change}]).slice(-30)});
+async function auditDelete(coll, id, data){
+  try { await cloud.F.addDoc(cCol('auditLog'), {coll, docId:id, action:'delete', data:JSON.parse(JSON.stringify(data || {})), by:cloud.user.email || '', at:Date.now()}); } catch(e){ console.warn('audit', e); }
+}
 const isOwner = () => { const oc = orgCtx(); return !!(oc && !oc.support && oc.role === 'orgadmin'); };
 function commitStatus(mk, led){
+  const due = dueFor(mk);
   return ameta().commitments.map(c => {
-    const xs = led.filter(x => (x.date || '').slice(0, 7) === mk && x.kind === 'expense' && x.category === c.name);
-    const done = xs.length > 0, late = !done && (mk < todayKey.slice(0, 7) || (mk === todayKey.slice(0, 7) && +todayKey.slice(8) >= DUE_DAY));
-    return {c, done, late, amt:paidSum(xs)};
+    const xs = led.filter(x => svcMonth(x) === mk && x.kind === 'expense' && x.category === c.name);
+    const done = xs.length > 0, late = !done && todayKey > due;
+    return {c, done, late, due, amt:paidSum(xs), unpaid:xs.filter(x => x.paid === false)};
   });
 }
 const ACC_TABS = [['overview', 'Overview', 'accounts'], ['tally', 'Daily tally', 'tally'], ['expenses', 'Clinic expenses', 'accounts'], ['petty', 'Petty cash', 'petty'],
@@ -3805,23 +3858,26 @@ function clAccLoad(){
   const again = () => { if (a.key === key && state.settings.view === 'clinic' && cl.sec === 'accounts') renderClinic(); };
   const q = (c, ...w) => F.getDocs(F.query(cCol(c), ...w)).then(docsOf);
   const W = F.where, full = can('accounts') || (a.tab === 'consultants' && isOwnerLike());
-  const from = mShift(a.month, -5) + '-01', to = mEnd(a.month);
+  const from = mShift(a.month, -5) + '-01', to = mEnd(a.month), toN = mEnd(mShift(a.month, 1));
   const jobs = {};
   if (full){
     jobs.pay = q('payments', W('date', '>=', from), W('date', '<=', to));
-    jobs.led = q('ledger', W('date', '>=', from), W('date', '<=', to));
+    jobs.led = q('ledger', W('date', '>=', from), W('date', '<=', toN));                   // + next month: bills for this month are often entered after it ends
     jobs.fees = q('treatments', W('date', '>=', from), W('date', '<=', to)).then(ts => ts.filter(t => +t.consultantFee > 0));
     jobs.vendors = q('vendors');
     jobs.cpay = q('ledger', W('kind', '==', 'cpayout'));
     jobs.cfeesAll = q('treatments', W('consultantFee', '>', 0));
     jobs.expAll = q('ledger', W('kind', '==', 'expense'));
   }
-  if (a.tab === 'salary' && feat('attendance') && canManageAtt()) jobs.staff = loadStaffPay(a.month);
+  if (a.tab === 'import' && can('accounts')) jobs.audit = q('auditLog').catch(() => []);
+  if (['salary', 'expenses'].includes(a.tab) && feat('attendance') && payOn() && canManageAtt() && !(orgCtx() || {}).support) jobs.staff = loadStaffPay(a.month).catch(() => null);
   if (full && a.tab === 'consultants') jobs.mAppts = q('appointments', W('date', '>=', a.month + '-01'), W('date', '<=', mEnd(a.month)));
   if (full || can('petty')){ jobs.pin = q('ledger', W('kind', '==', 'petty')); jobs.pout = q('ledger', W('kind', '==', 'pettyspend')); }
   if (a.tab === 'tally' && (full || can('tally'))){
     const d = a.tday || todayKey;
-    jobs.tPay = q('payments', W('date', '==', d)); jobs.tExp = q('ledger', W('kind', '==', 'expense'), W('date', '==', d));
+    jobs.tPay = q('payments', W('date', '==', d)); jobs.tExp = q('ledger', W('kind', '==', 'expense'), W('date', '==', d)).then(xs => q('ledger', W('kind', '==', 'expense'), W('paidDate', '==', d)).then(ys => xs.concat(ys.filter(y => !xs.some(z => z.id === y.id)))).catch(() => xs));
+    jobs.tPin = q('ledger', W('kind', '==', 'petty'), W('date', '==', d));
+    jobs.prevT = q('tallies', W('date', '<', d), F.orderBy('date', 'desc'), F.limit(1)).catch(() => []);
     const m0 = d.slice(0, 7) + '-01', lo = shiftDay(d, -40) < m0 ? shiftDay(d, -40) : m0;
     jobs.tallies = q('tallies', W('date', '>=', lo), W('date', '<=', mEnd(d.slice(0, 7))));
     jobs.mPay = q('payments', W('date', '>=', m0), W('date', '<=', mEnd(d.slice(0, 7))));
@@ -3835,15 +3891,31 @@ function clAccLoad(){
     a.d = d; again();
   }).catch(e => { a.d = {err:errText(e)}; again(); });
 }
-function expensesOf(led, fees, mk){
-  const inM = x => (x.date || '').slice(0, 7) === mk;
-  return led.filter(x => x.kind === 'expense' && inM(x)).map(x => Object.assign({src:'ledger'}, x))
-    .concat(fees.filter(inM).map(t => ({src:'fee', id:t.id, date:t.date, category:'Consultant fees', amount:+t.consultantFee, doctorId:t.doctorId, patientName:t.patientName, note:t.typeName, by:t.by})));
+/* Clinic expenses = every real expense, each from the page where it is recorded (its source of truth):
+   Lab / Materials bills (vendors), Consultant fees (treatments + per-visit costs + manual fees), Staff salary (paid), Petty cash spends,
+   and Other expenses entered directly (rent, EB, loan …). NOT included: petty cash top-ups (a transfer), consultant payouts (paying a fee
+   already counted), patient payments and the daily tally (cash movement, not expenses). */
+function expSource(x){
+  if (x.src === 'fee') return 'consult';
+  if (x.kind === 'pettyspend') return 'petty';
+  if (x.staffUid || x.category === 'Staff salary') return 'salary';
+  if (x.vendorId){ const t = (vName(x.vendorId).type || x.category || ''); return t === 'Lab' ? 'lab' : t === 'Materials' ? 'materials' : 'other'; }
+  if (x.doctorId) return 'consult';
+  return 'other';
+}
+const EXP_SRC = {lab:['Lab', 'lab'], materials:['Materials', 'materials'], consult:['Consultants', 'consultants'], salary:['Staff salary', 'salary'], petty:['Petty cash', 'petty'], other:['Other expenses', 'expenses']};
+function expensesOf(led, fees, mk, opt = {}){
+  const inM = x => svcMonth(x) === mk;
+  const rows = led.filter(x => x.kind === 'expense' && inM(x)).map(x => Object.assign({src:'ledger'}, x))
+    .concat(fees.filter(x => (x.date || '').slice(0, 7) === mk).map(t => ({src:'fee', id:t.id, date:t.date, category:'Consultant fees', amount:+t.consultantFee, doctorId:t.doctorId, patientName:t.patientName, note:t.typeName, by:t.by})));
+  if (opt.petty) rows.push(...led.filter(x => x.kind === 'pettyspend' && inM(x)).map(x => Object.assign({src:'ledger', category:x.adjust ? 'Petty cash · count correction' : 'Petty cash'}, x)));
+  rows.forEach(x => x.source = expSource(x));
+  return rows;
 }
 function monthNumbers(mk){
   const d = cl.acc.d, inM = x => (x.date || '').slice(0, 7) === mk;
   const income = paidSum(d.pay.filter(inM)) + paidSum(d.led.filter(x => x.kind === 'income' && inM(x))), exp = expensesOf(d.led, d.fees, mk), expense = paidSum(exp);
-  const petty = paidSum(d.led.filter(x => x.kind === 'pettyspend' && inM(x)));
+  const petty = paidSum(d.led.filter(x => x.kind === 'pettyspend' && svcMonth(x) === mk));
   return {income, expense, petty, net:income - expense - petty, exp};
 }
 function clAccounts(){
@@ -3861,8 +3933,8 @@ function clAccounts(){
     else if (cm && a.month === pm) banner += `<div class="nag" style="border-color:var(--done)">✓ ${esc(monthLabel(pm))} accounts closed by ${esc(cm.name || '')} on ${esc(fmtShort(dayKey(cm.at)))}</div>`; }
   if (can('accounts') && d.led && monthly){
     const cs = commitStatus(a.month, d.led), late = cs.filter(x => x.late), due = cs.filter(x => !x.done && !x.late);
-    banner += late.length ? `<div class="nag late">⚠ Overdue for ${esc(monthLabel(a.month))}: ${late.map(x => esc(x.c.name)).join(', ')}: these should be entered by the ${DUE_DAY}th.</div>`
-      : due.length ? `<div class="nag">Due by ${DUE_DAY} ${esc(parseDay(a.month + '-01').toLocaleDateString([], {month:'short'}))}: ${due.map(x => esc(x.c.name)).join(', ')}</div>` : '';
+    banner += late.length ? `<div class="nag late">⚠ Overdue for ${esc(monthLabel(a.month))}: ${late.map(x => esc(x.c.name)).join(', ')}: these were due by ${esc(fmtLong(dueFor(a.month)))}.</div>`
+      : due.length ? `<div class="nag">${esc(monthLabel(a.month))} commitments due by ${esc(fmtLong(dueFor(a.month)))}: ${due.map(x => esc(x.c.name)).join(', ')}</div>` : '';
   }
   return head + banner + ({overview:accOverview, tally:accTally, expenses:accExpenses, petty:accPetty, lab:() => accVendorTab('Lab'), materials:() => accVendorTab('Materials'), consultants:accConsultants, salary:accSalary, setup:accSetup, import:accImport})[a.tab](d);
 }
@@ -3888,7 +3960,7 @@ function accOverview(d){
     <div class="acards">
       <div class="box wide"><h3>Clinic performance <span class="sub">last 6 months · <i class="lg" style="background:var(--done)"></i>income <i class="lg" style="background:var(--high)"></i>expenses</span></h3>
         <svg viewBox="0 0 ${W} ${H}" class="perf" role="img" aria-label="Income and expenses for the last 6 months"><line x1="0" y1="160" x2="${W}" y2="160" stroke="var(--line)"/>${bars}</svg></div>
-      <div class="box"><h3>Monthly commitments <span class="sub">enter by the ${DUE_DAY}th</span></h3>
+      <div class="box"><h3>Monthly commitments <span class="sub">due by ${esc(fmtLong(dueFor(a.month)))}</span></h3>
         ${cs.map(x => `<div class="crow"><span class="cdot ${x.done ? 'ok' : x.late ? 'late' : ''}"></span><b>${esc(x.c.name)}</b><span class="stat">${x.done ? 'Entered ' + inr(x.amt) : x.c.amount ? 'Expected ' + inr(x.c.amount) : ''}</span><span class="sp"></span>
           ${x.done ? '<span class="upill on">Done</span>' : w ? `<button class="${x.late ? 'primary' : ''}" data-commit="${esc(x.c.id)}">Enter now</button>` : `<span class="upill ${x.late ? 'gone' : 'pend'}">${x.late ? 'Overdue' : 'Due'}</span>`}</div>`).join('') || '<div class="stat">No commitments set.</div>'}</div>
       <div class="box"><h3>Where the money went</h3>
@@ -3899,31 +3971,77 @@ function accOverview(d){
 function expForm(pre, vendorType){
   pre = pre || {};
   const vs = (cl.acc.d.vendors || []).filter(v => v.active !== false && (!vendorType || v.type === vendorType));
-  const cats = vendorType ? [vendorType] : expCats();
+  const cats = vendorType ? [vendorType] : otherCats(), sm = pre.serviceMonth || cl.acc.month;
   return `<form class="aform" id="accExpForm" data-vt="${esc(vendorType || '')}" novalidate>
     <label>Date<input type="date" id="exDate" value="${pre.date || (cl.acc.month === todayKey.slice(0, 7) ? todayKey : mEnd(cl.acc.month))}" max="${todayKey}"></label>
     ${vendorType ? `<label class="grow">${esc(vendorType)} vendor *<select id="exVendor">${vs.map(v => `<option value="${esc(v.id)}"${v.id === pre.vendorId ? ' selected' : ''}>${esc(v.name)}</option>`).join('')}</select></label>`
       : `<label>Category<select id="exCat">${cats.map(c => `<option${c === pre.category ? ' selected' : ''}>${esc(c)}</option>`).join('')}</select></label>
-         <label>Vendor<select id="exVendor"><option value="">—</option>${vs.map(v => `<option value="${esc(v.id)}"${v.id === pre.vendorId ? ' selected' : ''}>${esc(v.name)} (${esc(v.type)})</option>`).join('')}</select></label>`}
+         <label class="grow">Description *<input id="exDesc" value="${esc(pre.desc || '')}" placeholder="e.g. October rent, EB bill Sep–Oct"></label>`}
+    <label>For month<input type="month" id="exSvc" value="${esc(sm)}" title="The month this expense belongs to (service month)"></label>
     <label>Amount (₹) *<input type="number" id="exAmt" min="1" value="${pre.amount || ''}"></label>
     <label>Bill / invoice no.<input id="exBill" placeholder="optional"></label>
     <label>GST in bill (₹)<input type="number" id="exGst" min="0" placeholder="0"></label>
-    <label>${vendorType ? 'Payment' : 'Paid by'}<select id="exMode">${vendorType ? '<option value="unpaid">Not paid yet</option>' : ''}${PMODES.map(([m, l]) => `<option value="${m}">${vendorType ? 'Paid · ' : ''}${l}</option>`).join('')}</select></label>
-    <label class="grow">Note<input id="exNote" value="${esc(pre.note || '')}" placeholder="${vendorType === 'Lab' ? 'e.g. Zirconia crown · patient name' : vendorType ? 'e.g. Composite kit, gloves' : 'e.g. October rent'}"></label>
+    <label>Payment<select id="exMode"><option value="unpaid">Not paid yet</option>${PMODES.map(([m, l]) => `<option value="${m}"${!vendorType && m === 'cash' && pre.paid !== false ? ' selected' : ''}>Paid · ${l}</option>`).join('')}</select></label>
+    <label>Paid on<input type="date" id="exPaidOn" value="${todayKey}" max="${todayKey}" title="Date the money was paid"></label>
+    <label>Due date<input type="date" id="exDue" value="${esc(pre.dueDate || dueFor(sm))}" title="When it must be paid by (default: the ${dueDayOf()}th of the next month)"></label>
+    <label class="grow">Note<input id="exNote" value="${esc(pre.note || '')}" placeholder="${vendorType === 'Lab' ? 'e.g. Zirconia crown · patient name' : vendorType ? 'e.g. Composite kit, gloves' : 'optional'}"></label>
     <label>Bill copy (photo / PDF)<input type="file" id="exFile" accept="image/*,application/pdf"></label>
     <button class="primary" type="submit">${vendorType ? 'Add bill' : 'Add expense'}</button></form>`;
 }
 const vName = id => ((cl.acc.d && cl.acc.d.vendors) || []).find(v => v.id === id) || {};
 const billCell = x => x.hasDoc ? `<button class="ghost" data-billdoc="${esc(x.id)}" title="View bill copy">📎</button>` : '';
 function accExpenses(d){
-  const a = cl.acc, w = canW('accounts'), N = monthNumbers(a.month);
-  const rows = N.exp.slice().sort((x, y) => String(y.date).localeCompare(String(x.date))).map(x => `<tr${x.src === 'ledger' ? ` data-led="${esc(x.id)}"` : ''}><td>${esc(fmtShort(x.date))}</td><td><b>${esc(x.category)}</b>${x.src === 'fee' ? '<span class="sub2">auto · from treatment</span>' : ''}</td>
-    <td>${esc(x.vendorId ? vName(x.vendorId).name || '' : x.doctorId ? dName(x.doctorId) : '')}${x.patientName ? `<span class="sub2">${esc(x.patientName)}</span>` : ''}</td><td>${esc(x.note || '')}${x.billNo ? `<span class="sub2">Bill ${esc(x.billNo)}${+x.gst ? ' · GST ' + inr(x.gst) : ''}</span>` : ''}</td>
-    <td class="num">${inr(x.amount)}</td><td>${x.src === 'ledger' ? billCell(x) : ''}${w && x.src === 'ledger' ? '<button class="danger" data-ldel>✕</button>' : ''}</td></tr>`).join('');
-  return `${w ? `<div class="box"><h3>Add a clinic expense</h3>${expForm(a.pre)}</div>` : ''}
-    <div class="awrap"><table class="atbl"><thead><tr><th>Date</th><th>Category</th><th>Vendor / doctor</th><th>Note</th><th class="num">Amount</th><th></th></tr></thead>
-    <tbody>${rows || '<tr><td colspan="6" class="stat">No clinic expenses this month.</td></tr>'}${rows ? `<tr class="tot"><td colspan="4">Total clinic expenses</td><td class="num">${inr(N.expense)}</td><td></td></tr>` : ''}</tbody></table></div>
-    <p class="stat">Lab and material bills and consultant fees from treatments are included here automatically. Petty cash is kept separately.</p>`;
+  const a = cl.acc, w = canW('accounts'), f = a.ef = a.ef || {}, led = (d.led || []), fees = d.fees || [];
+  // the rows: by service month (or, with a date range, by date), every source in one list
+  const months = f.from && f.to ? [...new Set(days(f.from, f.to).map(k => k.slice(0, 7)))] : [a.month];
+  let rows = months.flatMap(m => expensesOf(led, fees, m, {petty:true}));
+  if (f.from && f.to) rows = rows.filter(x => (x.date || '') >= f.from && (x.date || '') <= f.to);
+  const all = rows;
+  rows = rows.filter(x => (!f.src || x.source === f.src) && (!f.cat || x.category === f.cat) && (!f.mode || (x.mode || (x.source === 'petty' ? 'cash' : '')) === f.mode)
+    && (!f.st || (f.st === 'paid' ? x.src === 'ledger' && x.paid !== false : f.st === 'unpaid' ? x.paid === false : f.st === 'overdue' ? payState(x) === 'overdue' : true)));
+  rows.sort((x, y) => String(y.date).localeCompare(String(x.date)));
+  const tot = k => paidSum(all.filter(x => x.source === k));
+  // outstanding: unpaid bills (any month), consultant balances, salary still to pay for this month
+  const unpaid = (d.expAll || []).filter(x => x.paid === false), unpaidAmt = paidSum(unpaid), overdue = unpaid.filter(x => payState(x) === 'overdue');
+  const cons = cl.doctors.filter(x => x.type === 'consultant').map(c => { const fe = (d.cfeesAll || []).filter(t => t.doctorId === c.id).reduce((s2, t) => s2 + (+t.consultantFee || 0), 0) + paidSum((d.cfeeManual || []).filter(x => x.doctorId === c.id));
+    return {c, bal:fe - paidSum((d.cpay || []).filter(x => x.doctorId === c.id))}; }).filter(x => x.bal > 0);
+  const consOut = cons.reduce((s2, x) => s2 + x.bal, 0);
+  const sal = (d.staff || []).map(r => ({r, due:Math.max(0, Math.round(r.S.pay) - paidSum(r.paid))})).filter(x => x.due > 0), salOut = a.month < todayKey.slice(0, 7) ? sal.reduce((s2, x) => s2 + x.due, 0) : 0;
+  const outTot = unpaidAmt + consOut + salOut;
+  const cats = {}; all.forEach(x => cats[x.category || 'Other'] = (cats[x.category || 'Other'] || 0) + (+x.amount || 0));
+  const catRows = Object.entries(cats).sort((x, y) => y[1] - x[1]), ct = catRows.reduce((s2, x) => s2 + x[1], 0);
+  const srcLink = x => `<a class="srcl" data-at="${EXP_SRC[x.source][1]}" href="#/clinic/accounts/${EXP_SRC[x.source][1]}">${EXP_SRC[x.source][0]}</a>`;
+  const ref = x => x.src === 'fee' ? 'treatment' : x.billNo ? 'bill ' + x.billNo : x.appointmentId ? 'visit' : x.salMonth ? 'salary ' + monthLabel(x.salMonth).split(' ')[0] : x.kind === 'pettyspend' ? 'petty #' + String(x.id).slice(-4) : '#' + String(x.id).slice(-5);
+  const party = x => x.vendorId ? vName(x.vendorId).name || '' : x.doctorId ? dName(x.doctorId) : x.staffName || '';
+  const rowsHtml = rows.map(x => { const own = x.source === 'other' && x.src === 'ledger';
+    return `<tr${x.src === 'ledger' ? ` data-led="${esc(x.id)}"` : ''} class="${a.hl && a.hl === x.id ? 'hlrow' : ''}"><td>${esc(fmtShort(x.date))}${svcMonth(x) !== (x.date || '').slice(0, 7) ? `<span class="sub2">for ${esc(monthLabel(svcMonth(x)))}</span>` : ''}</td><td>${srcLink(x)}<span class="sub2">${esc(ref(x))}</span></td>
+      <td><b>${esc(x.category || '')}</b><span class="sub2">${esc([party(x), x.patientName, x.note].filter(Boolean).join(' · '))}</span></td>
+      <td>${esc((PMODES.find(m => m[0] === (x.mode || (x.source === 'petty' ? 'cash' : ''))) || [0, x.paid === false ? '—' : ''])[1])}</td>
+      <td>${x.src === 'fee' ? '<span class="stat">see Consultants</span>' : payPill(x)}</td><td class="num"><b>${inr(x.amount)}</b></td>
+      <td style="white-space:nowrap">${x.src === 'ledger' ? billCell(x) : ''}${w && x.src === 'ledger' && x.paid === false ? ' <button class="primary" data-billpay>Mark paid</button>' : ''}${w && own ? ' <button class="danger" data-ldel title="Delete (a copy is kept in the audit log)">✕</button>' : ''}</td></tr>`; }).join('');
+  const sel = (id, opts, v, all0) => `<select id="${id}"><option value="">${all0}</option>${opts.map(([k, l]) => `<option value="${esc(k)}"${k === v ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select>`;
+  return `<div class="kpis kpis8">
+      ${kpi('Total clinic expenses', inr(paidSum(all)), f.from && f.to ? `${fmtShort(f.from)} – ${fmtShort(f.to)}` : esc(monthLabel(a.month)))}
+      ${kpi('Lab', inr(tot('lab')), 'bills')}${kpi('Materials', inr(tot('materials')), 'bills')}${kpi('Consultants', inr(tot('consult')), 'fees')}
+      ${kpi('Staff salary', inr(tot('salary')), 'paid')}${kpi('Petty cash spent', inr(tot('petty')), 'top-ups are transfers, not counted')}
+      ${kpi('Other operating', inr(tot('other')), 'rent, EB, loan, bills …')}${kpi('Outstanding', inr(outTot), overdue.length ? `<span class="neg">${plural(overdue.length, 'payment')} overdue</span>` : 'to pay', outTot ? 'neg' : '')}</div>
+    <div class="acards">
+      <div class="box"><h3>Outstanding payments <span class="sub">${esc(monthLabel(a.month))} obligations are due by ${esc(fmtLong(dueFor(a.month)))}</span></h3>
+        ${unpaid.sort((x, y) => xDue(x).localeCompare(xDue(y))).map(x => `<div class="orow" data-led="${esc(x.id)}"><span class="cdot ${payState(x) === 'overdue' ? 'late' : ''}"></span><div><b>${esc(x.category)}</b><span class="sub2">${esc([party(x), x.note].filter(Boolean).join(' · ').slice(0, 60))} · ${esc(monthLabel(svcMonth(x)))}</span></div><div class="opill">${payPill(x)}</div><b class="oamt">${inr(x.amount)}</b>${w ? '<button class="primary sm" data-billpay>Mark paid</button>' : '<span></span>'}</div>`).join('')}
+        ${cons.map(x => `<div class="orow"><span class="cdot"></span><div><b>Consultant</b><span class="sub2">${esc(x.c.name)}: fees not yet paid</span></div><div class="opill"><a class="srcl" data-at="consultants" href="#/clinic/accounts/consultants">Consultants</a></div><b class="oamt">${inr(x.bal)}</b><span></span></div>`).join('')}
+        ${salOut ? sal.map(x => `<div class="orow"><span class="cdot${todayKey > dueFor(a.month) ? ' late' : ''}"></span><div><b>Staff salary</b><span class="sub2">${esc(fullName(x.r.a))} · ${esc(monthLabel(a.month))}</span></div><div class="opill"><a class="srcl" data-at="salary" href="#/clinic/accounts/salary">Staff salary</a></div><b class="oamt">${inr(x.due)}</b><span></span></div>`).join('') : ''}
+        ${outTot ? '' : '<div class="stat">Nothing outstanding. 👏</div>'}</div>
+      <div class="box"><h3>By category</h3>${catRows.map(([c, v]) => `<div class="catrow"><span>${esc(c)}</span><div class="rbar wide"><i style="width:${ct ? v / ct * 100 : 0}%"></i></div><b>${inr(v)}</b></div>`).join('') || '<div class="stat">No expenses.</div>'}</div>
+    </div>
+    ${w ? `<details class="box" id="exAddBox"${a.pre ? ' open' : ''}><summary><b>+ Add another expense</b> <span class="stat">rent, EB, clinic loan, internet, maintenance, miscellaneous … Lab, materials, consultants, salary and petty cash are entered on their own pages and appear here automatically.</span></summary>${expForm(a.pre)}</details>` : ''}
+    <div class="vbar exfilt" style="padding:0 0 8px"><strong>${plural(rows.length, 'expense')}</strong>
+      <input type="date" id="efFrom" value="${esc(f.from || '')}" title="From (leave empty for the whole month)"><i>–</i><input type="date" id="efTo" value="${esc(f.to || '')}" title="To">
+      ${sel('efSrc', Object.entries(EXP_SRC).map(([k, v]) => [k, v[0]]), f.src, 'All sources')}${sel('efCat', Object.keys(cats).sort().map(c => [c, c]), f.cat, 'All categories')}
+      ${sel('efMode', PMODES, f.mode, 'Any method')}${sel('efSt', [['paid', 'Paid'], ['unpaid', 'Unpaid'], ['overdue', 'Overdue']], f.st, 'Any status')}
+      ${f.from || f.to || f.src || f.cat || f.mode || f.st ? '<button class="linkb" id="efClear">Clear filters</button>' : ''}<span class="sp"></span><b>${inr(paidSum(rows))}</b></div>
+    <div class="awrap" style="margin-top:0"><table class="atbl"><thead><tr><th>Date</th><th>Source · ref</th><th>Category · details</th><th>Method</th><th>Status</th><th class="num">Amount</th><th></th></tr></thead>
+    <tbody>${rowsHtml || '<tr><td colspan="7" class="stat">No expenses for this selection.</td></tr>'}${rowsHtml ? `<tr class="tot"><td colspan="5">Total</td><td class="num">${inr(paidSum(rows))}</td><td></td></tr>` : ''}</tbody></table></div>
+    <p class="stat">Each expense lives on its own page (click the source to open it); this page adds them up so nothing is entered or counted twice. Petty cash top-ups and consultant payouts are transfers / payments of amounts already counted, so they are not expenses. Daily tally is a cash check, not an expense.</p>`;
 }
 function accPetty(d){
   const a = cl.acc, owner = canW('accounts'), spend = canW('petty') || owner, inM = x => (x.date || '').slice(0, 7) === a.month;
@@ -3940,6 +4058,7 @@ function accPetty(d){
         <p class="stat" style="margin:6px 0 0">The difference is recorded as an opening balance (or a correction), so the balance shown always equals the cash you have.</p></div>` : ''}
       ${owner ? `<div class="box"><h3>Top up petty cash <span class="sub">clinic owner / accounts</span></h3><form class="aform" id="accPinForm" novalidate>
         <label>Date<input type="date" id="piDate" value="${dflt}" max="${todayKey}"></label><label>Amount (₹) *<input type="number" id="piAmt" min="1"></label>
+        <label>Taken from<select id="piSrc"><option value="drawer">Main cash drawer</option><option value="bank">Bank</option><option value="owner">Owner / other</option></select></label>
         <label class="grow">Note *<input id="piNote" placeholder="e.g. Weekly top-up handed to Riya"></label><button class="primary" type="submit">Top up</button></form></div>` : ''}
       ${spend ? `<div class="box"><h3>Record a petty cash spend <span class="sub">front desk</span></h3><form class="aform" id="accPoutForm" novalidate>
         <label>Date<input type="date" id="poDate" value="${dflt}" max="${todayKey}"></label><label>Amount (₹) *<input type="number" id="poAmt" min="1"></label>
@@ -3954,8 +4073,8 @@ function accVendorTab(type){
   const vs = d.vendors.filter(v => v.type === type);
   const all = d.billsAll.filter(x => vs.some(v => v.id === x.vendorId));
   const f = a.vf && vs.some(v => v.id === a.vf) ? a.vf : '';
-  const shown = all.filter(x => (!f || x.vendorId === f) && (a.vonly === 'unpaid' ? x.paid === false : (x.date || '').slice(0, 7) === a.month || x.paid === false)).sort((x, y) => String(y.date).localeCompare(String(x.date)));
-  const vrows = vs.map(v => { const bills = all.filter(x => x.vendorId === v.id), due = paidSum(bills.filter(x => x.paid === false)), mo = paidSum(bills.filter(x => (x.date || '').slice(0, 7) === a.month));
+  const shown = all.filter(x => (!f || x.vendorId === f) && (a.vonly === 'unpaid' ? x.paid === false : svcMonth(x) === a.month || x.paid === false)).sort((x, y) => String(y.date).localeCompare(String(x.date)));
+  const vrows = vs.map(v => { const bills = all.filter(x => x.vendorId === v.id), due = paidSum(bills.filter(x => x.paid === false)), mo = paidSum(bills.filter(x => svcMonth(x) === a.month));
     return `<tr data-ven="${esc(v.id)}"${v.active === false ? ' style="opacity:.55"' : ''} class="clk"><td><b>${esc(v.name)}</b><span class="sub2">${esc([v.phone, v.gstin && 'GSTIN ' + v.gstin, v.notes].filter(Boolean).join(' · '))}</span></td><td class="num">${inr(mo)}</td><td class="num"><b class="${due ? 'neg' : ''}">${inr(due)}</b></td>
       <td>${w ? `<div class="uact"><button data-vfilter>Show bills</button><button data-vact>${v.active === false ? 'Activate' : 'Hide'}</button></div>` : ''}</td></tr>`; }).join('');
   return `<div class="acards">
@@ -3969,7 +4088,7 @@ function accVendorTab(type){
       <span class="sp"></span><span class="stat">Unpaid total: <b class="neg">${inr(paidSum(shown.filter(x => x.paid === false)))}</b></span></div>
     <div class="awrap" style="margin-top:0"><table class="atbl"><thead><tr><th>Date</th><th>Vendor</th><th>Bill no.</th><th>Note</th><th class="num">GST</th><th class="num">Amount</th><th>Status</th><th></th></tr></thead><tbody>
       ${shown.map(x => `<tr data-led="${esc(x.id)}"><td>${esc(fmtShort(x.date))}</td><td>${esc(vName(x.vendorId).name || '')}</td><td>${esc(x.billNo || '—')}</td><td>${esc(x.note || '')}</td><td class="num">${+x.gst ? inr(x.gst) : '—'}</td><td class="num"><b>${inr(x.amount)}</b></td>
-        <td>${x.paid === false ? `<span class="upill pend">Unpaid</span>${w ? ' <button class="primary" data-billpay>Mark paid</button>' : ''}` : `<span class="upill on">Paid</span><span class="sub2">${esc(x.paidAt ? fmtShort(dayKey(x.paidAt)) : '')}</span>`}</td>
+        <td>${payPill(x)}${x.paid === false && w ? ' <button class="primary" data-billpay>Mark paid</button>' : ''}</td>
         <td>${billCell(x)}${w ? '<button class="danger" data-ldel>✕</button>' : ''}</td></tr>`).join('') || '<tr><td colspan="8" class="stat">No bills.</td></tr>'}
     </tbody></table></div>`;
 }
@@ -4095,7 +4214,10 @@ function accSalary(d){
 function accSetup(){
   const m = ameta(), w = canW('accounts');
   return `<div class="acards">
-    <div class="box"><h3>Monthly commitments <span class="sub">must be entered by the ${DUE_DAY}th of each month, or a reminder goes to the Planning Board</span></h3>
+    <div class="box"><h3>Payment due date <span class="sub">for every month's bills, salaries and commitments</span></h3>
+      <label class="stat">A month's payments are due by day <input type="number" id="stDueDay" min="1" max="28" value="${dueDayOf()}" style="width:70px"${w ? '' : ' disabled'}> of the next month
+        <span class="stat">(e.g. October's by ${esc(fmtLong(dueFor(todayKey.slice(0, 4) + '-10')))}). Reminders: 3 days before, on the day and when overdue.</span></label></div>
+    <div class="box"><h3>Monthly commitments <span class="sub">enter each month's amount by the due date, or a reminder goes to the Planning Board</span></h3>
       ${m.commitments.map(c => `<div class="crow" data-cm="${esc(c.id)}"><b>${esc(c.name)}</b><span class="sp"></span><label class="stat">Expected ₹ <input type="number" data-cmamt value="${+c.amount || ''}" min="0" style="width:100px"${w ? '' : ' disabled'}></label>${w ? '<button class="danger" data-cmdel>✕</button>' : ''}</div>`).join('') || '<div class="stat">None yet.</div>'}
       ${w ? `<form class="aform" id="accCmForm" novalidate style="margin-top:8px"><label class="grow">Add a commitment<input id="cmName" placeholder="e.g. Electricity, Internet, Salary"></label><label>Expected ₹<input type="number" id="cmAmt" min="0"></label><button class="primary" type="submit">Add</button></form>` : ''}</div>
     <div class="box"><h3>Expense categories <span class="sub">your own list, used in Clinic expenses</span></h3>
@@ -4119,7 +4241,10 @@ function accImport(){
     <div class="box"><h3>Year-end audit pack <span class="sub">for your auditor</span></h3>
       <p class="stat" style="margin:0 0 8px">Downloads one ZIP with income, expenses (with bill numbers and GST), vendor bills, consultant payments, petty cash, daily tallies, a month-by-month summary, and every attached bill copy.</p>
       <div class="btnrow"><select id="fySel">${fys.map(y => `<option value="${y}">FY ${y}-${String(y + 1).slice(2)} (Apr ${y} – Mar ${y + 1})</option>`).join('')}</select><button class="primary" id="auditBtn">⬇ Download audit pack</button></div></div>
-  </div>`;
+  </div>
+  ${(cl.acc.d && cl.acc.d.audit) ? `<div class="box" style="margin-top:12px"><h3>Audit log <span class="sub">every deleted money record is kept here, with who deleted it and when</span></h3>
+    ${tbl(['When', 'By', 'What', 'Details', '₹Amount'], cl.acc.d.audit.slice().sort((x, y) => (y.at || 0) - (x.at || 0)).slice(0, 100).map(x => { const d0 = x.data || {};
+      return {c:[esc(fmt(x.at)), esc((x.by || '').split('@')[0]), esc(x.coll === 'tallies' ? 'Daily tally ' + (d0.date || '') : (d0.kind === 'pettyspend' ? 'Petty spend' : d0.kind === 'petty' ? 'Petty top-up' : d0.kind || 'Entry') + (d0.category ? ' · ' + d0.category : '')), esc([d0.date, d0.note].filter(Boolean).join(' · ').slice(0, 80)), inr(d0.amount != null ? d0.amount : d0.counted || 0)]}; }))}</div>` : ''}`;
 }
 const csvOf = rows => rows.map(r => r.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
 function loadScript(src){ return new Promise((res, rej) => { if (document.querySelector(`script[src="${src}"]`)) return res(); const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('Could not load ' + src)); document.head.appendChild(s); }); }
@@ -4162,7 +4287,8 @@ async function auditPack(fy){
    GPay / UPI, cards and others entered from the apps and checked against the same report */
 const CHG = [200, 100, 50, 20, 10, 5, 2, 1];
 const TMODES = [['upi', 'GPay / UPI', ['upi']], ['card', 'Debit card', ['card']], ['ccard', 'Credit card', ['ccard']], ['other', 'Others', ['cheque', 'neft', 'rtgs', 'bank']]];
-const tCollected = t => (+t.counted || 0) - (+t.opening || 0) - (+t.change || 0) + (+t.cashExp || 0) + (+t.out || 0);
+/* cash received as per the count = closing count − opening − change − cash added from the bank + cash expenses + moved to petty cash + deposited */
+const tCollected = t => (+t.counted || 0) - (+t.opening || 0) - (+t.change || 0) - (+t.added || 0) + (+t.cashExp || 0) + (+t.toPetty || 0) + (+t.out || 0);
 const tOk = t => t && !t.diff && !t.digitalDiff && t.manual !== false;
 /* a saved tally checked against the payments as they are NOW (payments added or changed later turn a "Tallied" day into a mismatch) */
 function tFig(t, ps){
@@ -4173,25 +4299,31 @@ function tFig(t, ps){
 const denSum = (c, L) => (L || DENOMS).reduce((s, v) => s + v * (+(c || {})[v] || 0), 0);
 function tallyBase(){
   const a = cl.acc, d = a.d, day = a.tday || todayKey, all = (d.tallies || []).slice().sort((x, y) => String(y.date).localeCompare(String(x.date)));
-  const done = all.find(t => t.date === day), prev = all.find(t => t.date < day), tPay = d.tPay || [];
+  const done = all.find(t => t.date === day), prev = all.find(t => t.date < day) || (d.prevT || [])[0], tPay = d.tPay || [];
   const pays = tPay.filter(x => x.mode === 'cash');
   const dig = TMODES.map(([k, l, ms]) => { const ps = tPay.filter(x => ms.includes(x.mode)); return {k, l, ms, ps, sys:paidSum(ps)}; });
-  return {day, tallies:all, done, prev, pays, dig, cashIn:paidSum(pays), cashExp:paidSum((d.tExp || []).filter(x => x.mode === 'cash' && x.paid !== false))};
+  const pet = (d.tPin || []).filter(x => x.source === 'drawer' && !x.opening);                      // petty cash top-ups taken out of this drawer
+  return {day, tallies:all, done, prev, pays, dig, pet, toPetty:paidSum(pet), cashIn:paidSum(pays), cashExp:paidSum((d.tExp || []).filter(x => x.mode === 'cash' && x.paid !== false && (x.paidDate || x.date) === day))};
 }
 const denGrid = (L, pre, counts, w) => `<div class="denoms">${L.map(n => `<label><span>₹${n} ×</span><input type="number" min="0" id="${pre}${n}" data-den="${pre}" value="${+(counts || {})[n] || ''}" placeholder="0"${w ? '' : ' disabled'}><b id="${pre}T${n}">₹0</b></label>`).join('')}</div>`;
 function accTally(){
   const B = tallyBase(), {day, done, prev, pays} = B, w = canW('tally') || canW('accounts');
-  const fixedOpen = !!(done || prev), opening = done ? +done.opening || 0 : prev ? +prev.counted || 0 : 0;
+  const fix = cl.acc.tOpenFix === day && canW('accounts'), fixedOpen = !!(done || prev) && !fix, opening = done ? +done.opening || 0 : prev ? +prev.counted || 0 : 0;
   const openCounts = done ? done.openCounts || null : prev ? prev.counts || null : null;
+  const gap = !done && prev && prev.date < shiftDay(day, -1);
   const chip = (c, L) => (L || DENOMS).filter(n => +c[n]).map(n => `<span class="dchip">₹${n} × ${+c[n]}</span>`).join('') || '<span class="stat">no denominations saved</span>';
   const F0 = done ? tFig(done, cl.acc.d.tPay || []) : null;
   const status = done ? (F0.ok ? `<span class="upill on">Tallied ✓ · ${esc((done.by || '').split('@')[0])}</span>` : `<span class="upill gone">Not tallied · ${[F0.dc ? 'cash ' + (F0.dc > 0 ? '+' : '−') + inr(Math.abs(F0.dc)) : '', F0.dd ? 'online ' + (F0.dd > 0 ? '+' : '−') + inr(Math.abs(F0.dd)) : ''].filter(Boolean).join(', ') || 'not counted by hand'} against today's report</span>`)
     + (canW('accounts') ? ` <button class="linkb danger" data-tldel="${esc(day)}" title="Delete this saved tally (e.g. test entries), then count again">🗑 Delete this tally</button>` : '') : '<span class="upill pend">Not tallied yet</span>';
   return `<div class="vbar" style="padding:0 0 10px"><div class="daynav"><button data-td="-1">‹</button><button data-td="0"${day === todayKey ? ' disabled' : ''}>Today</button><button data-td="1"${day >= todayKey ? ' disabled' : ''}>›</button></div>
-      <strong>${esc(fmtLong(day))}</strong>${status}</div>
+      <strong>${esc(fmtLong(day))}</strong>${status}${done && done.history && done.history.length ? `<details class="stat thist"><summary>Changed ${plural(done.history.length, 'time')}</summary>${done.history.slice().reverse().map(h => `<div>${esc(fmt(h.at))} · ${esc((h.by || '').split('@')[0])}: before, counted ${inr((h.prev || {}).counted)} · opening ${inr((h.prev || {}).opening)}</div>`).join('')}</details>` : ''}</div>
     <div class="box topen"><div class="tob"><span>Opening cash</span><b class="big" id="tlOpenV">${inr(opening)}</b>
-      <span class="stat">${prev && !done ? 'left in the drawer at the tally on ' + esc(fmtDM(prev.date)) : done ? 'as tallied' : 'first tally: count what is in the drawer before today\'s collection'}</span></div>
-      ${fixedOpen ? `<div class="dchips">${openCounts ? chip(openCounts) : ''}</div>` : denGrid(DENOMS, 'op', {}, w)}</div>
+      <span class="stat">${fix ? 'correcting the opening: count again and give the reason' : prev && !done ? 'closing count of the last tally, ' + esc(fmtDM(prev.date)) : done ? 'as tallied' + (done.openingFix ? ` · corrected by ${esc((done.openingFix.by || '').split('@')[0])}: ${esc(done.openingFix.reason || '')}` : '') : 'first tally: count the cash in the drawer at the start of this day'}</span>
+      ${fixedOpen && canW('accounts') ? `<button class="linkb" data-tlopen="${esc(day)}" title="Correct the opening cash (recorded with your name and reason)">✎ Correct opening</button>` : ''}${fix ? '<button class="linkb" data-tlopen="">Cancel</button>' : ''}</div>
+      ${fixedOpen ? `<div class="dchips">${openCounts ? chip(openCounts) : ''}</div>` : denGrid(DENOMS, 'op', fix ? openCounts || {} : {}, w)}
+      ${fix ? '<input id="tlOpenWhy" placeholder="Reason for the correction *" style="flex-basis:100%">' : ''}
+      ${gap ? `<div class="nag" style="flex-basis:100%;margin:0">The last tally was on ${esc(fmtLong(prev.date))}; the days in between weren't tallied, so their cash isn't checked. The opening here is that day's closing count.</div>` : ''}
+      ${!done && !prev ? '<div class="stat" style="flex-basis:100%">Starting the tally today: earlier days are not assumed to be zero; they simply have no tally.</div>' : ''}</div>
     <div class="tally">
       <div class="box"><h3>Change taken <span class="sub">coins &amp; notes added to the drawer</span></h3>${denGrid(CHG, 'ch', done && done.changeCounts, w)}
         <div class="payrow tsum"><span>Change taken</span><b id="tlChangeV">₹0</b></div></div>
@@ -4199,12 +4331,17 @@ function accTally(){
         <div class="payrow tsum"><span>Cash in drawer</span><b id="tlCounted">₹0</b></div></div>
     </div>
     <div class="tally">
-      <div class="box tcash"><h3>Cash</h3>
-        <div class="payrow"><span>Cash in drawer − opening − change</span><span id="tlNet">—</span></div>
-        <div class="payrow"><span>+ Cash expenses paid from the drawer</span><span>${inr(B.cashExp)}</span></div>
-        <div class="payrow"><span>+ Cash taken out / deposited</span><span>${w ? `<input type="number" class="tin" id="tlOut" value="${done && +done.out || ''}" placeholder="0">` : inr(done && done.out)}</span></div>
-        <div class="payrow tsum"><span>Cash collected today</span><b id="tlColl">—</b></div>
-        <div class="payrow"><span>Collection report · cash <span class="stat">${plural(pays.length, 'payment')}</span></span><b>${inr(B.cashIn)}</b></div>
+      <div class="box tcash"><h3>Cash reconciliation</h3>
+        <div class="payrow"><span>Opening cash</span><span id="tlOpenR">${inr(opening)}</span></div>
+        <div class="payrow"><span>+ Cash received <span class="stat">Collection report · ${plural(pays.length, 'payment')}</span></span><span>${inr(B.cashIn)}</span></div>
+        <div class="payrow"><span>+ Change taken</span><span id="tlChangeR">₹0</span></div>
+        <div class="payrow"><span>+ Cash withdrawn from the bank / added</span><span>${w ? `<input type="number" class="tin" id="tlAdd" min="0" value="${done && +done.added || ''}" placeholder="0">` : inr(done && done.added)}</span></div>
+        <div class="payrow"><span>− Cash expenses paid from the drawer <span class="stat">from Accounts</span></span><span>${inr(B.cashExp)}</span></div>
+        <div class="payrow"><span>− Moved to petty cash <span class="stat">${B.pet.length ? 'petty top-ups from the drawer' : 'none today'}</span></span><span>${inr(B.toPetty)}</span></div>
+        <div class="payrow"><span>− Cash deposited into the bank / handed over</span><span>${w ? `<input type="number" class="tin" id="tlOut" min="0" value="${done && +done.out || ''}" placeholder="0">` : inr(done && done.out)}</span></div>
+        <div class="payrow tsum"><span>Expected closing cash</span><b id="tlExpV">—</b></div>
+        <div class="payrow"><span>Actual cash counted <span class="stat">closing balance</span></span><b id="tlCountR">—</b></div>
+        <div class="payrow"><span>Cash received as per the count <span class="stat">vs ${inr(B.cashIn)} in the report</span></span><span id="tlColl">—</span></div>
         <div class="tdiff" id="tlDiff"></div>
         ${w ? `<label class="ack tick" id="tlAckL"><input type="checkbox" id="tlAck"${done && done.manual ? ' checked' : ''}> I counted the cash by hand</label>` : ''}
         ${pays.length ? `<details class="stat"><summary>Cash payments</summary>${pays.map(x => `<div>${esc(x.patientName)} · ${esc(x.receiptNo || '')} · ${inr(x.amount)}</div>`).join('')}</details>` : ''}</div>
@@ -4243,17 +4380,18 @@ function tallyCalc(){
   const B = tallyBase(), n = id => { const e = $('#' + id); return e ? +e.value || 0 : 0; }, w = !!$('#tlSave');
   const cnt = (pre, L) => Object.fromEntries(L.map(v => [v, Math.max(0, n(pre + v))]));
   const showT = (pre, L, c) => L.forEach(v => { const b = $('#' + pre + 'T' + v); if (b) b.textContent = inr(v * c[v]); });
-  const fixedOpen = !$('#op500'), openCounts = fixedOpen ? (B.done ? B.done.openCounts || null : B.prev ? B.prev.counts || null : null) : cnt('op', DENOMS);
+  const fixedOpen = !$('#op500'), openCounts = fixedOpen ? (B.done ? B.done.openCounts || null : B.prev ? B.prev.counts || null : null) : cnt('op', DENOMS), openFix = !fixedOpen && !!$('#tlOpenWhy');
   const opening = fixedOpen ? (B.done ? +B.done.opening || 0 : B.prev ? +B.prev.counted || 0 : 0) : denSum(openCounts);
   if (!fixedOpen){ showT('op', DENOMS, openCounts); $('#tlOpenV').textContent = inr(opening); }
   const changeCounts = cnt('ch', CHG), change = denSum(changeCounts, CHG), counts = cnt('den', DENOMS), counted = denSum(counts);
   showT('ch', CHG, changeCounts); showT('den', DENOMS, counts);
-  const out = $('#tlOut') ? n('tlOut') : B.done ? +B.done.out || 0 : 0;
-  const expected = opening + B.cashIn + change - B.cashExp - out, diff = counted - expected, coll = counted - opening - change + B.cashExp + out;
-  $('#tlChangeV').textContent = inr(change); $('#tlCounted').textContent = inr(counted); $('#tlNet').textContent = inr(counted - opening - change); $('#tlColl').textContent = inr(coll);
+  const out = Math.max(0, $('#tlOut') ? n('tlOut') : B.done ? +B.done.out || 0 : 0), added = Math.max(0, $('#tlAdd') ? n('tlAdd') : B.done ? +B.done.added || 0 : 0);
+  const expected = opening + B.cashIn + change + added - B.cashExp - B.toPetty - out, diff = counted - expected, coll = counted - opening - change - added + B.cashExp + B.toPetty + out;
+  $('#tlChangeV').textContent = inr(change); $('#tlCounted').textContent = inr(counted); $('#tlColl').textContent = inr(coll);
+  $('#tlOpenR').textContent = inr(opening); $('#tlChangeR').textContent = inr(change); $('#tlExpV').textContent = inr(expected); $('#tlCountR').textContent = inr(counted);
   const ack = $('#tlAck') ? $('#tlAck').checked : !!(B.done && B.done.manual), dEl = $('#tlDiff');
   dEl.className = 'tdiff ' + (diff ? 'bad' : ack ? 'ok' : 'wait');
-  dEl.textContent = diff ? (diff > 0 ? `Excess ${inr(diff)} over the report` : `Short ${inr(-diff)} against the report`) : ack ? '✓ Cash tallied' : 'Matches the report · tick "counted by hand" to tally';
+  dEl.textContent = diff ? (diff > 0 ? `Excess ${inr(diff)}: counted is more than expected (against the report)` : `Short ${inr(-diff)}: counted is less than expected (against the report)`) : ack ? '✓ Cash tallied' : 'Matches the report · tick "counted by hand" to tally';
   const digital = {}; let digitalDiff = 0, blank = 0;
   B.dig.forEach(m => {
     const e = $('#dg_' + m.k), raw = e ? e.value.trim() : '', app = e ? (raw === '' ? (m.sys ? null : 0) : +raw || 0) : (((B.done || {}).digital || {})[m.k] || {}).app || 0;
@@ -4266,7 +4404,7 @@ function tallyCalc(){
   gEl.className = 'tdiff ' + (blank ? 'wait' : digitalDiff ? 'bad' : ackD ? 'ok' : 'wait');
   gEl.textContent = blank ? `Enter the amount for ${plural(blank, 'mode')} from the app / slip` : digitalDiff ? `Differs from the report by ${inr(Math.abs(digitalDiff))}` : ackD ? '✓ GPay / UPI, cards & others tallied' : 'Matches the report · tick "checked" to tally';
   const L1 = $('#tlAckL'), L2 = $('#tlAckDL'); if (L1) L1.classList.toggle('on', ack && !diff); if (L2) L2.classList.toggle('on', ackD && !digitalDiff && !blank);
-  return {B, opening, openCounts, change, changeCounts, out, counts, expected, counted, diff, digital, digitalDiff, blank, ack, ackD, w};
+  return {B, opening, openCounts, openFix, change, changeCounts, out, added, counts, expected, counted, diff, digital, digitalDiff, blank, ack, ackD, w};
 }
 async function saveTally(){
   const T = tallyCalc(); if (!T) return;
@@ -4275,10 +4413,19 @@ async function saveTally(){
   if (T.blank) return info('Enter the amount each app / slip shows (0 if nothing came in).');
   if (!T.ack || !T.ackD) return info('Tick "I counted the cash by hand" and "I checked each amount" to confirm.');
   if ((T.diff || T.digitalDiff) && !note) return info('It doesn\'t match the Collection report. Add a note explaining the difference.');
+  const D0 = T.B.done, by = cloud.user.email || '', now = Date.now(), why = T.openFix ? ($('#tlOpenWhy').value || '').trim() : '';
+  const oldOpen = D0 ? +D0.opening || 0 : T.B.prev ? +T.B.prev.counted || 0 : 0;
+  if (T.openFix && T.opening !== oldOpen && !why) return info('Give the reason for correcting the opening cash.');
+  if (cl.acc.tSaving) return; cl.acc.tSaving = true;                                   // no double submits
   try {
-    await cloud.F.setDoc(cDoc('tallies', T.B.day), {date:T.B.day, opening:T.opening, openCounts:T.openCounts || null, cashIn:T.B.cashIn, change:T.change, changeCounts:T.changeCounts, cashExp:T.B.cashExp, out:T.out, expected:T.expected,
-      counts:T.counts, counted:T.counted, diff:T.diff, digital:T.digital, digitalDiff:T.digitalDiff, unseen:0, manual:true, note, by:cloud.user.email || '', at:Date.now()});
-  } catch(e){ return info('Could not save: ' + errText(e)); }
+    const x = {date:T.B.day, opening:T.opening, openCounts:T.openCounts || null, cashIn:T.B.cashIn, change:T.change, changeCounts:T.changeCounts, added:T.added, cashExp:T.B.cashExp, toPetty:T.B.toPetty, out:T.out, expected:T.expected,
+      counts:T.counts, counted:T.counted, diff:T.diff, digital:T.digital, digitalDiff:T.digitalDiff, unseen:0, manual:true, note, by, at:now, createdBy:(D0 && (D0.createdBy || D0.by)) || by, createdAt:(D0 && (D0.createdAt || D0.at)) || now};
+    if (T.openFix && T.opening !== oldOpen) x.openingFix = {from:oldOpen, to:T.opening, reason:why, by, at:now};
+    else if (D0 && D0.openingFix) x.openingFix = D0.openingFix;
+    if (D0){ const {history, ...prevV} = D0; delete prevV.id; x.history = (D0.history || []).concat([{at:now, by, prev:prevV}]).slice(-20); }      // keep what it was before this change
+    await cloud.F.setDoc(cDoc('tallies', T.B.day), x);
+  } catch(e){ cl.acc.tSaving = false; return info('Could not save: ' + errText(e)); }
+  cl.acc.tSaving = false; cl.acc.tOpenFix = '';
   cl.acc.key = ''; cl.clear = true; info(T.diff || T.digitalDiff ? `Saved, but not tallied: cash ${inr(T.diff)}, online ${inr(T.digitalDiff)} against the report.` : 'Tallied ✓ Cash and online match the Collection report.'); renderClinic(); clinicSync(true);
 }
 const saveAMeta = m => cloud.F.setDoc(cDoc('clinicMeta', 'accounts'), m);
@@ -4293,17 +4440,28 @@ async function accSubmit(id, form){
   const add = x => F.addDoc(cCol('ledger'), Object.assign({at:Date.now(), by}, x));
   try {
     if (id === 'accExpForm'){
-      const vt = form.dataset.vt, amt = num('#exAmt'); if (amt <= 0) return info('Enter the amount.');
-      const vendorId = val('#exVendor'); if (vt && !vendorId) return info(`Add a ${vt.toLowerCase()} vendor first.`);
-      const mode = val('#exMode'), file = ($('#exFile').files || [])[0];
-      const x = {kind:'expense', date:val('#exDate') || todayKey, category:vt || val('#exCat'), vendorId, amount:amt, billNo:val('#exBill'), gst:num('#exGst'), note:val('#exNote'),
-        mode:mode === 'unpaid' ? '' : mode, paid:mode !== 'unpaid', paidAt:mode === 'unpaid' ? null : Date.now(), hasDoc:!!file};
+      const vt = form.dataset.vt, raw = +(($('#exAmt') || {}).value || 0), amt = Math.round(raw); if (!(raw > 0)) return info('Enter an amount above ₹0.');
+      const vendorId = vt ? val('#exVendor') : ''; if (vt && !vendorId) return info(`Add a ${vt.toLowerCase()} vendor first.`);
+      const mode = val('#exMode'), file = ($('#exFile').files || [])[0], date = val('#exDate') || todayKey, svc = val('#exSvc') || date.slice(0, 7), due = val('#exDue'), paidOn = val('#exPaidOn') || todayKey;
+      if (date > todayKey) return info("The bill date can't be in the future.");
+      if (!/^\d{4}-\d{2}$/.test(svc)) return info('Pick the month this expense is for.');
+      if (mode !== 'unpaid' && paidOn > todayKey) return info("The paid date can't be in the future.");
+      if (due && due < svc + '-01') return info('The due date is before the month it is for.');
+      const desc = vt ? '' : val('#exDesc'); if (!vt && !desc) return info('Describe the expense (e.g. October rent).');
+      const cat = vt || val('#exCat'); if (!vt && MODULE_CATS.includes(cat)) return info(`${cat} has its own page in Accounts: enter it there so it isn't counted twice.`);
+      const L = ((a.d && a.d.expAll) || []).concat((a.d && a.d.led) || []);
+      const dup = L.find(y => y.kind === 'expense' && y.category === cat && svcMonth(y) === svc && +y.amount === amt && (vt ? y.vendorId === vendorId && (y.billNo || '') === val('#exBill') : true));
+      if (dup && !confirm(`${cat} of ${inr(amt)} for ${monthLabel(svc)} is already recorded (${fmtShort(dup.date)}${dup.billNo ? ', bill ' + dup.billNo : ''}). Add it again?`)) return;
+      if (a.busy) return; a.busy = true;
+      const x = {kind:'expense', date, serviceMonth:svc, dueDate:due || dueFor(svc), category:cat, vendorId, amount:amt, billNo:val('#exBill'), gst:num('#exGst'), note:[desc, val('#exNote')].filter(Boolean).join(' · '),
+        mode:mode === 'unpaid' ? '' : mode, paid:mode !== 'unpaid', paidAt:mode === 'unpaid' ? null : Date.now(), paidDate:mode === 'unpaid' ? '' : paidOn, hasDoc:!!file, createdBy:by, createdAt:Date.now()};
       const fd = file ? await readFileData(file) : null;
       const ref = await add(x);
       if (fd) await F.setDoc(cDoc('ledgerDocs', ref.id), fd);
-      a.pre = null; info(vt ? 'Bill added.' : 'Expense added.');
+      a.pre = null; a.busy = false; info(vt ? 'Bill added.' : 'Expense added.');
     }
-    if (id === 'accPinForm'){ if (num('#piAmt') <= 0) return info('Enter the amount.'); if (!val('#piNote')) return info('Add a note for this top-up.'); await add({kind:'petty', date:val('#piDate') || todayKey, mode:'cash', amount:num('#piAmt'), note:val('#piNote')}); info('Petty cash topped up.'); }
+    if (id === 'accPinForm'){ if (num('#piAmt') <= 0) return info('Enter the amount.'); if (!val('#piNote')) return info('Add a note for this top-up.'); if (val('#piDate') > todayKey) return info("The date can't be in the future.");
+      await add({kind:'petty', date:val('#piDate') || todayKey, mode:'cash', amount:num('#piAmt'), source:val('#piSrc') || 'drawer', note:val('#piNote')}); info(val('#piSrc') === 'drawer' ? 'Petty cash topped up (taken out of the main drawer: shows in that day\'s tally).' : 'Petty cash topped up.'); }
     if (id === 'accPcountForm'){ const raw = val('#pcAmt'); if (raw === '') return info('Enter how much cash is in the petty box now.');
       const counted = Math.max(0, Math.round(+raw || 0)), bal = (a.d && a.d.pettyBal) || 0, diff = counted - bal;
       if (!diff) return info(`The box matches: ${inr(counted)}.`);
@@ -4328,7 +4486,7 @@ async function accSubmit(id, form){
       if (newCats.length){ m.cats = m.cats.concat(newCats); await saveAMeta(m); }
       info(`Imported ${ok.length} rows.`);
     }
-  } catch(e){ return info('Could not save: ' + errText(e)); }
+  } catch(e){ a.busy = false; return info('Could not save: ' + errText(e)); }
   a.key = ''; cl.clear = true; document.activeElement.blur(); renderClinic(); clinicSync(true);
 }
 
@@ -4526,7 +4684,11 @@ function clSetup(){
 }
 
 /* ---------- events ---------- */
-$('#clSeg').addEventListener('click', e => { const b = e.target.closest('[data-s]'); if (b){ cl.sec = b.dataset.s; if (cl.sec === 'setup') cl.members = null; if (cl.sec === 'assists') cl.asKey = ''; if (cl.sec === 'patients' && cl.pid){ cl.pUnsub.forEach(u => { try { u(); } catch(_){} }); cl.pUnsub = []; cl.pid = null; } cl.newP = false; renderClinic(); } });
+$('#clSeg').addEventListener('click', e => {
+  if (e.target.closest('[data-sntoggle]')){ e.preventDefault(); e.stopPropagation(); cl.navOpen = cl.navOpen === false; renderSideNav(); return; }
+  const g = e.target.closest('[data-goview]'); if (g){ if (g.dataset.goview === 'clinic') cl.navOpen = true; setView(g.dataset.goview); return; }
+  const b = e.target.closest('[data-s]'); if (b){ cl.sec = b.dataset.s; if (cl.sec === 'setup') cl.members = null; if (cl.sec === 'assists') cl.asKey = ''; if (cl.sec === 'patients' && cl.pid){ cl.pUnsub.forEach(u => { try { u(); } catch(_){} }); cl.pUnsub = []; cl.pid = null; } cl.newP = false;
+    if (state.settings.view !== 'clinic') setView('clinic'); else renderClinic(); } });
 /* type-to-search for long dropdowns (treatments, medicines): the select stays (hidden) and is set from the typed name */
 let srchN = 0;
 function enhanceSrch(sel){
@@ -4638,7 +4800,7 @@ document.addEventListener('change', e => { if (e.target.matches && e.target.matc
 }
 $('#clBody').addEventListener('input', e => {
   const mr = e.target.closest('[data-mr]'); if (mr && e.target.matches('[data-mf]')){ medCalc(mr); const tt = $('#rxTot'); if (tt) tt.textContent = inr([...document.querySelectorAll('#rxMeds [data-mr]')].reduce((s, r) => s + parseInt((r.querySelector('b[data-mf="cost"]').textContent || '0').replace(/[^0-9]/g, '') || 0), 0)); }
-  if (e.target.matches('#tlOut,[data-den],[data-dapp],#tlAck,#tlAckD')) tallyCalc();
+  if (e.target.matches('#tlOut,#tlAdd,[data-den],[data-dapp],#tlAck,#tlAckD')) tallyCalc();
   if (e.target.matches('[data-ccost]')){ clearTimeout(e.target._t); e.target._t = setTimeout(() => consSaveCost(e.target), 700); }
   if (e.target.id === 'clQ'){ cl.q = e.target.value; clearTimeout(clQTimer); clQTimer = setTimeout(clDoSearch, 250); }
   if (e.target.id === 'pfDob' && $('#pfAge')){ const a = $('#pfAge'); a.disabled = !!e.target.value; a.value = ''; a.placeholder = e.target.value ? ageOf({dob:e.target.value}) : 'if DOB unknown'; }
@@ -4651,6 +4813,10 @@ $('#clBody').addEventListener('change', async e => {
   if (t.id === 'aDocF'){ cl.aDoc = t.value; renderClinic(); }
   if (t.matches('[data-dcolor]')){ try { await F.updateDoc(cDoc('doctors', t.closest('[data-doc]').dataset.doc), {color:t.value}); info('Doctor colour saved.'); } catch(err){ info(errText(err)); } return; }
   if (t.id === 'vFilter'){ cl.acc.vf = t.value; renderClinic(); }
+  if (['efFrom', 'efTo', 'efSrc', 'efCat', 'efMode', 'efSt'].includes(t.id)){ const f = cl.acc.ef = cl.acc.ef || {}, k = {efFrom:'from', efTo:'to', efSrc:'src', efCat:'cat', efMode:'mode', efSt:'st'}[t.id]; f[k] = t.value;
+    if (f.from && f.to && f.from > f.to) [f.from, f.to] = [f.to, f.from];
+    if ((k === 'from' || k === 'to') && f.from && f.to && (f.from.slice(0, 7) < mShift(cl.acc.month, -5) || f.to.slice(0, 7) > mShift(cl.acc.month, 1))){ cl.acc.month = f.to.slice(0, 7) > todayKey.slice(0, 7) ? todayKey.slice(0, 7) : f.to.slice(0, 7); cl.acc.key = ''; }
+    cl.clear = true; document.activeElement.blur(); return renderClinic(); }
   if (t.id === 'vOnly'){ cl.acc.vonly = t.value; renderClinic(); }
   if (t.id === 'stLogo' && t.files[0]){ try { const logo = await logoFromFile(t.files[0]); await F.updateDoc(cloud.F.doc(cloud.fs, 'orgs', orgCtx().orgId), {logo}); info('Logo updated.'); } catch(err){ info(errText(err)); } return; }
   if (t.id === 'tfDoc'){ const dd = cl.doctors.find(x => x.id === t.value), f = $('#tfFeeWrap'); if (f) f.hidden = !(dd && dd.type === 'consultant'); }
@@ -4662,6 +4828,7 @@ $('#clBody').addEventListener('change', async e => {
   if (t.matches('[data-rpdoc]')){ cl.rep.dfil = t.value; document.activeElement.blur(); return renderClinic(); }
   try {
     if (t.matches('[data-tst]')){ await F.updateDoc(cDoc('treatments', t.closest('[data-tid]').dataset.tid), {status:t.value}); }
+    if (t.id === 'stDueDay'){ const v = Math.round(+t.value || 0); if (v < 1 || v > 28) return info('Pick a day from 1 to 28.'); const m = ameta(); m.dueDay = v; await saveAMeta(m); cl.ameta = Object.assign({}, cl.ameta || {}, {dueDay:v}); info(`Payments are now due by day ${v} of the next month.`); clinicSync(true); return renderClinic(); }
     if (t.matches('[data-cmamt]')){ const m = ameta(), c = m.commitments.find(x => x.id === t.closest('[data-cm]').dataset.cm); c.amount = Math.max(0, +t.value || 0); await saveAMeta(m); info('Saved.'); }
     if (t.matches('[data-asrate]')){ const d = cl.asst.d, cur = ((d.pay || []).find(p => p.id === 'rates') || {}).rates || {}, rates = Object.assign({}, cur, {[t.closest('[data-asr]').dataset.asr]:Math.max(0, +t.value || 0)});
       await F.setDoc(cDoc('assistPay', 'rates'), {rates}); const r = (d.pay || []).find(p => p.id === 'rates'); if (r) r.rates = rates; else (d.pay = d.pay || []).push({id:'rates', rates}); info('Saved.'); document.activeElement.blur(); return renderClinic(); }
@@ -4761,7 +4928,7 @@ $('#clBody').addEventListener('click', async e => {
     try { await saveAMeta(m); cl.ameta = m; info(`${monthLabel(pm)} accounts closed.`); clinicSync(true); } catch(err){ info(errText(err)); } return renderClinic(); }
   const am2 = t.closest('[data-am2]'); if (am2){ cl.acc.month = mShift(cl.acc.month, +am2.dataset.am2); return renderClinic(); }
   const at = t.closest('[data-at]'); if (at){ cl.acc.tab = at.dataset.at; cl.acc.pre = null; return renderClinic(); }
-  const cm = t.closest('[data-commit]'); if (cm){ const c = ameta().commitments.find(x => x.id === cm.dataset.commit); if (c.id === 'petty') cl.acc.tab = 'petty'; else { cl.acc.tab = 'expenses'; cl.acc.pre = {category:c.name, amount:c.amount || '', note:`${c.name} · ${monthLabel(cl.acc.month)}`}; } return renderClinic(); }
+  const cm = t.closest('[data-commit]'); if (cm){ const c = ameta().commitments.find(x => x.id === cm.dataset.commit); if (c.id === 'petty') cl.acc.tab = 'petty'; else { cl.acc.tab = 'expenses'; cl.acc.pre = {category:c.name, amount:c.amount || '', desc:`${c.name} · ${monthLabel(cl.acc.month)}`, serviceMonth:cl.acc.month}; } return renderClinic(); }
   const vb = t.closest('[data-vbill]'); if (vb){ const v = cl.acc.d.vendors.find(x => x.id === vb.closest('[data-ven]').dataset.ven); cl.acc.tab = 'expenses'; cl.acc.pre = {vendorId:v.id, category:v.type === 'Other' ? (expCats()[0] || '') : v.type, note:v.name + ' bill'}; return renderClinic(); }
   const rk = t.closest('[data-rk]'); if (rk){ cl.rep.kind = rk.dataset.rk; cl.rep.doc = ''; return renderClinic(); }
   const rd = t.closest('[data-repdoc]'); if (rd){ cl.rep.doc = rd.dataset.repdoc; const el = $('#repOut'); if (el){ el.innerHTML = clReportHtml(); numberTables(el); } return; }
@@ -4784,7 +4951,9 @@ $('#clBody').addEventListener('click', async e => {
     if (t.closest('[data-tdel]')){ if (!confirm('Delete this treatment?')) return; await F.deleteDoc(cDoc('treatments', t.closest('[data-tid]').dataset.tid)); }
     if (t.closest('[data-pdel]')){ if (!confirm('Delete this payment? Its receipt number will not be reused.')) return; await F.deleteDoc(cDoc('payments', t.closest('[data-pay]').dataset.pay)); }
     if (t.closest('[data-rcpt]')){ const x = (cl.pP || []).find(p => p.id === t.closest('[data-pay]').dataset.pay); if (x) printReceipt(x); }
-    if (t.closest('[data-ldel]')){ if (!confirm('Delete this entry?')) return; await F.deleteDoc(cDoc('ledger', t.closest('[data-led]').dataset.led)); cl.acc.key = ''; renderClinic(); clinicSync(true); }
+    if (t.closest('[data-ldel]')){ if (!confirm('Delete this entry? A copy is kept in the audit log.')) return; const id = t.closest('[data-led]').dataset.led, d = cl.acc.d;
+      let x = ((d.expAll || []).concat(d.led || [], d.pin || [], d.pout || [], d.cpay || [])).find(y => y.id === id); if (!x){ const sn = await F.getDoc(cDoc('ledger', id)); x = sn.exists() ? sn.data() : {}; }
+      await auditDelete('ledger', id, x); await F.deleteDoc(cDoc('ledger', id)); cl.acc.key = ''; renderClinic(); clinicSync(true); }
     if (t.closest('[data-vact]')){ const v = cl.acc.d.vendors.find(x => x.id === t.closest('[data-ven]').dataset.ven); await F.updateDoc(cDoc('vendors', v.id), {active:v.active === false}); cl.acc.key = ''; renderClinic(); }
     if (t.closest('[data-cmdel]')){ const m = ameta(); m.commitments = m.commitments.filter(c => c.id !== t.closest('[data-cm]').dataset.cm); await saveAMeta(m); }
     if (t.closest('[data-catdel]')){ const m = ameta(); m.cats = m.cats.filter(c => c !== t.closest('[data-cat]').dataset.cat); await saveAMeta(m); }
@@ -4811,17 +4980,24 @@ $('#clBody').addEventListener('click', async e => {
     const dc = t.closest('[data-doc2]'); if (dc && !t.closest('[data-docdel]')){ const x = (cl.pD || []).find(y => y.id === dc.dataset.doc2); return openStoredFile(cDoc('patients', cl.pid, 'docData', dc.dataset.doc2), x ? x.kind : 'Document'); }
     if (t.closest('[data-docdel]')){ if (!confirm('Delete this document?')) return; const id = t.closest('[data-doc2]').dataset.doc2; await F.deleteDoc(cDoc('patients', cl.pid, 'docs', id)); await F.deleteDoc(cDoc('patients', cl.pid, 'docData', id)); info('Document deleted.'); return; }
     const bd = t.closest('[data-billdoc]'); if (bd) return openStoredFile(cDoc('ledgerDocs', bd.dataset.billdoc), 'Bill');
-    if (t.closest('[data-billpay]')){ const id = t.closest('[data-led]').dataset.led, m = prompt('Paid how? Type: cash, upi, card, cheque, neft, rtgs or bank', 'bank'); if (m === null) return; const mode = (PMODES.find(p => p[0] === m.trim().toLowerCase()) || ['bank'])[0];
-      await F.updateDoc(cDoc('ledger', id), {paid:true, paidAt:Date.now(), mode}); info('Bill marked paid.'); cl.acc.key = ''; return renderClinic(); }
+    if (t.closest('[data-billpay]')){ const id = t.closest('[data-led]').dataset.led, d = cl.acc.d, x = ((d.expAll || []).concat(d.led || [])).find(y => y.id === id) || {};
+      const m = prompt('Paid how? Type: cash, upi, card, ccard (credit card), cheque, neft, rtgs or bank', 'bank'); if (m === null) return; const mode = (PMODES.find(p => p[0] === m.trim().toLowerCase()) || ['bank'])[0];
+      const pd = prompt('Paid on (YYYY-MM-DD):', todayKey); if (pd === null) return; if (!/^\d{4}-\d{2}-\d{2}$/.test(pd.trim()) || pd.trim() > todayKey) return info('Enter a valid date, not in the future (e.g. ' + todayKey + ').');
+      await F.updateDoc(cDoc('ledger', id), Object.assign({paid:true, paidAt:Date.now(), paidDate:pd.trim(), mode, paidBy:cloud.user.email || ''}, withHist(x, {paid:[false, true], mode, paidDate:pd.trim()})));
+      info(`Marked paid on ${fmtShort(pd.trim())}.`); cl.acc.key = ''; clinicSync(true); return renderClinic(); }
     if (t.closest('[data-vfilter]')){ cl.acc.vf = t.closest('[data-ven]').dataset.ven; return renderClinic(); }
     const td = t.closest('[data-td]'); if (td){ const n = +td.dataset.td, d0 = cl.acc.tday || todayKey; cl.acc.tday = n ? shiftDay(d0, n) : todayKey; if (cl.acc.tday > todayKey) cl.acc.tday = todayKey; return renderClinic(); }
     const sp = t.closest('[data-salpay]'); if (sp){ const uid = t.closest('[data-sal]').dataset.sal, r = (cl.acc.d.staff || []).find(x => x.a.uid === uid); if (!r) return;
       const amt = Math.round(+prompt(`Salary paid to ${fullName(r.a)} for ${monthLabel(cl.acc.month)} (₹):`, sp.dataset.salpay) || 0); if (amt <= 0) return;
       const mode = (prompt('Paid how? cash, upi, bank or cheque', 'bank') || 'bank').trim().toLowerCase();
-      await F.addDoc(cCol('ledger'), {kind:'expense', category:'Staff salary', staffUid:uid, staffName:fullName(r.a), salMonth:cl.acc.month, amount:amt, date:todayKey, mode, paid:true, paidAt:Date.now(), note:`Salary ${monthLabel(cl.acc.month)} · ${fullName(r.a)}`, at:Date.now(), by:cloud.user.email || ''});
+      await F.addDoc(cCol('ledger'), {kind:'expense', category:'Staff salary', staffUid:uid, staffName:fullName(r.a), salMonth:cl.acc.month, serviceMonth:cl.acc.month, dueDate:dueFor(cl.acc.month), amount:amt, date:todayKey, paidDate:todayKey, mode:(PMODES.find(p => p[0] === mode) || ['bank'])[0], paid:true, paidAt:Date.now(), note:`Salary ${monthLabel(cl.acc.month)} · ${fullName(r.a)}`, at:Date.now(), by:cloud.user.email || ''});
       info(`${inr(amt)} salary to ${fullName(r.a)} recorded as a clinic expense.`); cl.acc.key = ''; return renderClinic(); }
-    const su = t.closest('[data-salundo]'); if (su){ if (!confirm('Remove the salary payment entry?')) return; for (const id of su.dataset.salundo.split(',')) await F.deleteDoc(cDoc('ledger', id)); cl.acc.key = ''; return renderClinic(); }
+    const su = t.closest('[data-salundo]'); if (su){ if (!confirm('Remove the salary payment entry?')) return; for (const id of su.dataset.salundo.split(',')){ const sn = await F.getDoc(cDoc('ledger', id)); await auditDelete('ledger', id, sn.exists() ? sn.data() : {}); await F.deleteDoc(cDoc('ledger', id)); } cl.acc.key = ''; return renderClinic(); }
+    if (t.closest('#efClear')){ cl.acc.ef = {}; cl.clear = true; return renderClinic(); }
+    const srl = t.closest('a.srcl[data-at]'); if (srl){ e.preventDefault(); cl.acc.tab = srl.dataset.at; return renderClinic(); }
+    const tlo = t.closest('[data-tlopen]'); if (tlo){ cl.acc.tOpenFix = tlo.dataset.tlopen; return renderClinic(); }
     const tdl = t.closest('[data-tldel]'); if (tdl){ if (!confirm(`Delete the saved tally for ${fmtLong(tdl.dataset.tldel)}? The day goes back to "Not tallied yet" and can be counted again.`)) return;
+      { const sn = await F.getDoc(cDoc('tallies', tdl.dataset.tldel)); await auditDelete('tallies', tdl.dataset.tldel, sn.exists() ? sn.data() : {}); }
       await F.deleteDoc(cDoc('tallies', tdl.dataset.tldel)); cl.acc.key = ''; info('Tally deleted.'); clinicSync(true); return renderClinic(); }
     const tdy = t.closest('[data-tday]'); if (tdy){ cl.acc.tday = tdy.dataset.tday; return renderClinic(); }
     if (t.closest('#tlSave')) return saveTally();
@@ -5110,16 +5286,8 @@ async function clinicSyncNow(){
       ocats.add('close');
       if (!((am && am.closed) || {})[pm]) wpush('close', 'close-' + pm, 'Accounts', `Close the accounts for ${monthLabel(pm)}${+todayKey.slice(8) > 5 ? ' (was due by the 5th)' : ' by the 5th of this month'}`, {link:{sec:'accounts', tab:'overview', month:pm}});
       if (can('accounts') === true){
-        ['commit', 'vendor', 'lab', 'tally'].forEach(c => ocats.add(c));
-        if (+todayKey.slice(8) >= DUE_DAY){
-          const led = await q('ledger', W('date', '>=', mk + '-01'), W('date', '<=', mEnd(mk)));
-          const missing = commitStatus(mk, led).filter(x => !x.done).map(x => x.c.name);
-          if (missing.length) wpush('commit', 'acct-' + mk, 'Accounts', `Accounts need to be sorted for ${monthLabel(mk)}: ${missing.join(', ')}`, {link:{sec:'accounts'}});
-        }
-        const [vens, unpaid] = await Promise.all([q('vendors'), q('ledger', W('kind', '==', 'expense'), W('paid', '==', false))]);
-        const byV = {}; unpaid.filter(x => x.vendorId).forEach(x => (byV[x.vendorId] = byV[x.vendorId] || []).push(x));
-        Object.entries(byV).forEach(([vid, xs]) => { const v = vens.find(z => z.id === vid) || {name:'Vendor', type:'Other'}, lab = v.type === 'Lab';
-          wpush(lab ? 'lab' : 'vendor', (lab ? 'lab-' : 'vend-') + vid, lab ? 'Lab payments' : 'Vendor payments', `${lab ? 'Lab' : 'Vendor'} payment to be updated: ${v.name}, ${plural(xs.length, 'unpaid bill')} (${inr(paidSum(xs))})`, {link:{sec:'accounts', tab:lab ? 'lab' : 'materials'}}); });
+        ['commit', 'vendor', 'lab', 'tally', 'pay', 'paysum', 'salpay', 'conspay'].forEach(c => ocats.add(c));
+        await payReminders(wpush, q, W);
         const days = [1, 2, 3].map(n => shiftDay(todayKey, -n));
         const [pays, tals] = await Promise.all([q('payments', W('date', '>=', days[2]), W('date', '<=', days[0])), q('tallies', W('date', '>=', days[2]), W('date', '<=', days[0]))]);
         days.forEach(d => { if (pays.some(p => p.date === d) && !tals.some(t => t.date === d)) wpush('tally', 'tally-' + d, 'Daily tally', `Daily tally (cash + GPay / UPI) not done for ${fmtShort(d)}`, {link:{sec:'accounts', tab:'tally', day:d}}); });
@@ -5156,6 +5324,36 @@ async function clinicSyncNow(){
 /* Merge freshly worked-out reminders into the shared list (in a transaction, so two people syncing never undo each other):
    new ones are added open; ones whose work is done in the clinic close themselves ("auto"), except follow-ups,
    which stay until a person closes them; closed ones are kept 14 days so everyone can see who closed them. */
+/* payment reminders (Account Manager & Chief doctor): one per obligation, linked to its record; never duplicated (fixed ids) */
+async function payReminders(wpush, q, W){
+  const dd = dueDayOf(), pm = mShift(todayKey.slice(0, 7), -1), cm = todayKey.slice(0, 7), soon = shiftDay(todayKey, 3);
+  const whenTxt = due => todayKey > due ? `OVERDUE since ${fmtDM(due)}` : todayKey === due ? 'due TODAY' : `due ${fmtDM(due)}`;
+  const [vens, unpaid, ledR] = await Promise.all([q('vendors'), q('ledger', W('kind', '==', 'expense'), W('paid', '==', false)), q('ledger', W('date', '>=', mShift(pm, -1) + '-01'), W('date', '<=', todayKey))]);
+  // 1) every unpaid bill / expense: from 3 days before its due date until it is marked paid
+  unpaid.forEach(x => { const due = xDue(x); if (due > soon) return; const v = vens.find(z => z.id === x.vendorId) || {}, src = expSource(Object.assign({}, x, {vendorId:x.vendorId && v.type ? x.vendorId : ''}));
+    const tab = x.vendorId ? (v.type === 'Lab' ? 'lab' : v.type === 'Materials' ? 'materials' : 'expenses') : 'expenses';
+    wpush('pay', 'pay-' + x.id, 'Payments due', `Pay ${x.category}${v.name ? ' · ' + v.name : x.note ? ' · ' + x.note.slice(0, 40) : ''} ${inr(x.amount)} for ${monthLabel(svcMonth(x))}: ${whenTxt(due)}`,
+      {priority:todayKey >= due ? 'high' : 'med', link:{sec:'accounts', tab:'expenses', month:svcMonth(x), led:x.id}}); });
+  // 2) commitments (rent, EB …) not entered yet for last month / this month once its due date is near
+  [pm, cm].forEach(mk => { const due = dueFor(mk); if (due > soon) return;
+    const missing = commitStatus(mk, ledR).filter(x => !x.done).map(x => x.c.name);
+    if (missing.length) wpush('commit', 'acct-' + mk, 'Payments due', `Enter & pay ${monthLabel(mk)} commitments (${whenTxt(due)}): ${missing.join(', ')}`, {priority:todayKey >= due ? 'high' : 'med', link:{sec:'accounts', tab:'expenses', month:mk}}); });
+  // 3) staff salary for last month (people with a salary and no salary payment recorded)
+  if (feat('attendance') && payOn()){ const due = dueFor(pm);
+    if (due <= soon){ try { const mem = docsOf(await cloud.F.getDocs(cloud.F.collection(cloud.fs, 'orgs', orgCtx().orgId, 'members'))).filter(m => !m.removed && m.active !== false && m.role !== 'orgadmin' && +((m.att || {}).salary) > 0);
+      const paidS = (await q('ledger', W('kind', '==', 'expense'), W('category', '==', 'Staff salary'))).filter(x => x.salMonth === pm);
+      const left = mem.filter(m => !paidS.some(x => x.staffUid === m.id));
+      if (left.length) wpush('salpay', 'sal-' + pm, 'Payments due', `Pay ${monthLabel(pm)} salary (${whenTxt(due)}): ${left.map(m => fullName(m)).join(', ')}`, {priority:todayKey >= due ? 'high' : 'med', link:{sec:'accounts', tab:'salary', month:pm}}); } catch(e){} } }
+  // 4) consultants with fees not yet paid (up to the end of last month)
+  { const due = dueFor(pm);
+    if (due <= soon){ const [fees, man, outs] = await Promise.all([q('treatments', W('consultantFee', '>', 0)), q('ledger', W('kind', '==', 'expense')), q('ledger', W('kind', '==', 'cpayout'))]);
+      cl.doctors.filter(c => c.type === 'consultant').forEach(c => { const upto = mEnd(pm);
+        const owed = fees.filter(t => t.doctorId === c.id && t.date <= upto).reduce((s2, t) => s2 + (+t.consultantFee || 0), 0) + paidSum(man.filter(x => x.doctorId === c.id && !x.vendorId && (x.date || '') <= upto)) - paidSum(outs.filter(x => x.doctorId === c.id));
+        if (owed > 0) wpush('conspay', 'cons-' + c.id + '-' + pm, 'Payments due', `Pay ${c.name} ${inr(owed)} consultant fees up to ${monthLabel(pm)} (${whenTxt(due)})`, {priority:todayKey >= due ? 'high' : 'med', link:{sec:'accounts', tab:'consultants', month:pm}}); }); } }
+  // 5) monthly outstanding summary for last month
+  { const due = dueFor(pm), xs = unpaid.filter(x => svcMonth(x) === pm);
+    if (xs.length) wpush('paysum', 'paysum-' + pm, 'Payments due', `${monthLabel(pm)}: ${plural(xs.length, 'payment')} outstanding (${inr(paidSum(xs))}), ${whenTxt(due)}`, {priority:todayKey >= due ? 'high' : 'med', link:{sec:'accounts', tab:'expenses', month:pm}}); }
+}
 async function otMerge(docId, items, cats, manualCats){
   if (!cats.size) return;
   const {F, fs} = cloud, ref = cDoc('clinicMeta', docId), now = Date.now(), me = fullName(orgCtx().me) || cloud.user.email || '';
@@ -5241,7 +5439,9 @@ setInterval(() => { if (orgCtx() && appReady) clinicSync(); }, 10 * 60000);
 function openLink(link){
   if (!link) return;
   setView('clinic');
-  if (link.sec === 'accounts'){ cl.sec = 'accounts'; if (link.tab) cl.acc.tab = link.tab; if (link.day) cl.acc.tday = link.day; if (link.month) cl.acc.month = link.month; cl.acc.key = ''; return renderClinic(); }
+  if (link.sec === 'accounts'){ cl.sec = 'accounts'; if (link.tab) cl.acc.tab = link.tab; if (link.day) cl.acc.tday = link.day; if (link.month) cl.acc.month = link.month; cl.acc.hl = link.led || ''; if (link.led) cl.acc.ef = {}; cl.acc.key = '';
+    if (state.settings.view !== 'clinic') setView('clinic'); else renderClinic();
+    if (link.led) setTimeout(() => { const r = document.querySelector(`#clBody [data-led="${link.led}"]`); if (r) r.scrollIntoView({block:'center', behavior:'smooth'}); }, 900); return; }
   if (link.pid){ cl.sec = 'patients'; cl.ptab = link.tab || 'profile'; clOpenPatient(link.pid); }
 }
 
