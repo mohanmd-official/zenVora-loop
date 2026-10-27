@@ -19,7 +19,13 @@ async function clRunReport(){
     if (r.kind === 'treatments') d.t = docsOf(await F.getDocs(rq('treatments')));
     if (r.kind === 'doctors'){ d.t = docsOf(await F.getDocs(rq('treatments'))); d.a = docsOf(await F.getDocs(rq('appointments'))); }
     if (r.kind === 'appointments') d.a = docsOf(await F.getDocs(rq('appointments')));
-    if (r.kind === 'newpatients') d.p = docsOf(await F.getDocs(F.query(cCol('patients'), F.where('createdDay', '>=', r.from), F.where('createdDay', '<=', r.to))));
+    if (r.kind === 'newpatients'){        // a patient is "new" on their FIRST visit (first bill, treatment or completed appointment), not the day they were typed in
+      const upto = c => F.getDocs(F.query(cCol(c), F.where('date', '<=', r.to))).then(docsOf);
+      const [pay, tr, ap, pts] = await Promise.all([upto('payments'), upto('treatments'), F.getDocs(F.query(cCol('appointments'), F.where('status', '==', 'completed'))).then(docsOf), F.getDocs(cCol('patients')).then(docsOf)]);
+      const first = {}, seen = (id, day) => { if (id && day && day <= r.to && (!first[id] || day < first[id])) first[id] = day; };
+      pay.forEach(x => seen(x.patientId, x.date)); tr.filter(t => t.status !== 'planned').forEach(t => seen(t.patientId, t.date)); ap.forEach(a => seen(a.patientId, a.date));
+      d.p = pts.map(p => Object.assign(p, {firstDay:first[p.id] || p.createdDay || ''})).filter(p => p.firstDay >= r.from && p.firstDay <= r.to);
+    }
     if (r.kind === 'outstanding'){ const [t, p, pt] = await Promise.all([F.getDocs(cCol('treatments')), F.getDocs(cCol('payments')), F.getDocs(cCol('patients'))]); d.t = docsOf(t); d.pay = docsOf(p); d.pt = docsOf(pt); }
     if (r.key !== key) return;
     r.data = d; out();
@@ -133,14 +139,14 @@ function clReportHtml(){
       + tbl([G === 'month' ? 'Month' : G === 'year' ? 'Year' : 'Date', '#Total', ...st.map(s => '#' + ASTATUS[s])], rows, ['Total', A.length, ...st.map(s => A.filter(a => a.status === s).length)]);
   }
   if (r.kind === 'newpatients'){
-    const P = d.p.filter(p => !r.dfil || p.primaryDoctorId === r.dfil).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-    repCsv = [['Registered', 'Patient', 'ID', 'Phone', 'Referred by']].concat(P.map(p => [p.createdDay, pName(p), p.code, p.phone, p.referredBy || '']));
+    const P = d.p.filter(p => !r.dfil || p.primaryDoctorId === r.dfil).sort((a, b) => String(b.firstDay).localeCompare(String(a.firstDay)) || String(b.code || '').localeCompare(String(a.code || '')));
+    repCsv = [['First visit', 'Patient', 'ID', 'Phone', 'Referred by']].concat(P.map(p => [p.firstDay, pName(p), p.code, p.phone, p.referredBy || '']));
     const refs = {}; P.forEach(p => { const k2 = p.referredBy || 'Not recorded'; refs[k2] = (refs[k2] || 0) + 1; });
-    const kp = `<div class="kpis">${k('New patients', P.length, 'registered')}${Object.entries(refs).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([n, c]) => k('Referred by', esc(n), plural(c, 'patient'))).join('')}</div>`;
-    const cnt = pk => P.filter(p => perOf(G, p.createdDay || '') === pk).length;
+    const kp = `<div class="kpis">${k('New patients', P.length, 'first visit in this period')}${Object.entries(refs).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([n, c]) => k('Referred by', esc(n), plural(c, 'patient'))).join('')}</div>`;
+    const cnt = pk => P.filter(p => perOf(G, p.firstDay || '') === pk).length;
     if (chart) return bar('New patients') + kp + stackChart(periodsIn(G, r.from, r.to).map(pk => ({label:perLabel(G, pk), short:short(pk), parts:{v:cnt(pk)}})), ['v'], {v:'New patients'}, false);
     html = bar('New patients') + kp + (G !== 'day' ? perTable('By ' + (G === 'month' ? 'month' : 'year'), ['v'], {v:'New patients'}, pk => cnt(pk), false) : '')
-      + tbl(['Registered', 'Patient', 'Phone', 'Referred by'], P.map(p => ({attr:` class="clk" data-openp="${esc(p.id)}"`, c:[esc(fmtShort(p.createdDay)), `<b>${esc(pName(p))}</b><span class="sub2">${esc(p.code || '')}</span>`, esc(p.phone || ''), esc(p.referredBy || '—')]})), null, 'otbl');
+      + tbl(['First visit', 'Patient', 'Phone', 'Referred by'], P.map(p => ({attr:` class="clk" data-openp="${esc(p.id)}"`, c:[esc(fmtShort(p.firstDay)), `<b>${esc(pName(p))}</b><span class="sub2">${esc(p.code || '')}</span>`, esc(p.phone || ''), esc(p.referredBy || '—')]})), null, 'otbl');
   }
   return html;
 }

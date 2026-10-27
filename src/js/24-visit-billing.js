@@ -62,6 +62,14 @@ async function saveVisitPayment(){
     const x = {patientId:a.patientId, patientName:a.patientName, appointmentId:a.id, date:($('#vbDate') || {}).value || todayKey, amount, mode:$('#vbMode').value, doctorId:a.doctorId, note:$('#vbNote').value.trim(), receiptNo, createdAt:Date.now(), by:cloud.user.email || ''};
     const ref = await F.addDoc(cCol('payments'), x);
     B.P.push(Object.assign({id:ref.id}, x)); drawBill(); info(`${inr(amount)} received · ${receiptNo}`);
+    // back-entry: the bill is dated earlier than the visit → offer to move the visit and its treatments to the bill date too,
+    // so reports (collection, treatments, new patients, appointments) all show the same day
+    if (x.date < a.date && confirm(`The bill is dated ${fmtLong(x.date)} but this visit is on ${fmtLong(a.date)}. Move the visit and its treatments to ${fmtLong(x.date)} as well?`)){
+      try { const vt = B.T.filter(t => t.appointmentId === a.id), b = F.writeBatch(cloud.fs);
+        b.update(cDoc('appointments', a.id), {date:x.date, movedFrom:a.date + ' ' + (a.time || ''), movedAt:Date.now()}); vt.forEach(t => b.update(cDoc('treatments', t.id), {date:x.date}));
+        await b.commit(); vt.forEach(t => t.date = x.date); a.date = x.date; drawBill(); info(`Visit and ${plural(vt.length, 'treatment')} moved to ${fmtShort(x.date)}.`); }
+      catch(e){ info('The payment is saved, but the visit could not be moved: ' + errText(e)); }
+    }
   } catch(e){ info('Could not save: ' + errText(e)); }
 }
 $('#clOv').addEventListener('click', async e => {
