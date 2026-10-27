@@ -35,8 +35,8 @@ async function clinicSyncNow(){
           opush('miss', 'miss-' + a.id, 'Patient follow-ups', `Call ${a.patientName} to reschedule: missed ${fmtDM(a.date)} ${hm12(a.time)} with ${dName(a.doctorId)}`, {priority:'high', day:d1, link:{pid:a.patientId, tab:'appointments'}}); }
       }); }
     // ---- owner reminders: Account Manager and Chief doctor only ----
-    const owner = isOwnerLike();
-    if (owner){
+    const owner = isOwnerLike(), rem = remOn();          // the Account Manager can switch organization reminders off for everyone
+    if (owner && rem){
       if (oc.role === 'orgadmin') await ensureChiefFlag();
       const pm = mShift(mk, -1), am = cl.ameta || await F.getDoc(cDoc('clinicMeta', 'accounts')).then(s => s.exists() ? s.data() : null).catch(() => null);
       if (am) cl.ameta = am;
@@ -52,10 +52,10 @@ async function clinicSyncNow(){
         tals.filter(t => t.diff).forEach(t => wpush('tally', 'tdiff-' + t.date, 'Daily tally', `Cash ${t.diff > 0 ? 'excess' : 'shortfall'} of ${inr(Math.abs(t.diff))} on ${fmtShort(t.date)}: review`, {link:{sec:'accounts', tab:'tally', day:t.date}}));
       }
     }
-    await otMerge('orgTasks', ORG, cats, ['fu']);
-    if (owner) await otMerge('ownerTasks', OWN, ocats, []);
+    if (rem) await otMerge('orgTasks', ORG, cats, ['fu']);
+    if (owner && rem) await otMerge('ownerTasks', OWN, ocats, []);
     // ---- personal: only the visits waiting for your payment ----
-    if (can('billing') === true){
+    if (rem && can('billing') === true){
       (await q('appointments', W('status', '==', 'billing'))).forEach(a => push('bill-' + a.id, 'Billing pending', `Take payment & complete the visit: ${a.patientName} (${fmtDM(a.date)})`, {priority:'high', link:{pid:a.patientId, tab:'appointments'}}));
     }
     const remChanged = stable(R.map(r => r.id + r.title)) !== stable((cl.reminders || []).map(r => r.id + r.title));
@@ -65,7 +65,7 @@ async function clinicSyncNow(){
     let changed = false;
     // older versions copied every clinic reminder onto each person's board: those copies go; the shared ones live in "Organization reminders"
     const before = state.items.length;
-    state.items = state.items.filter(it => !/^zc-/.test(it.id) || /^zc-bill-/.test(it.id));
+    state.items = state.items.filter(it => !/^zc-/.test(it.id) || (/^zc-bill-/.test(it.id) && (rem || it.status === 'done')));
     if (state.items.length !== before) changed = true;
     R.forEach(r => {
       const it = state.items.find(i => i.id === r.id);
@@ -175,7 +175,7 @@ function otRow(t){
 let orgRemOpen = (() => { try { return localStorage.getItem('zl-orgrem') !== '0'; } catch(e){ return true; } })();
 function renderOrgRem(){
   const host = $('#orgRem'); if (!host) return;
-  const oc = orgCtx(); if (!oc || oc.support || !feat('clinic')){ host.innerHTML = ''; return; }
+  const oc = orgCtx(); if (!oc || oc.support || !feat('clinic') || !remOn()){ host.innerHTML = ''; return; }
   clLoad(); otWatch();
   const L = otList(), open = otOpen(), done = L.filter(t => t.status === 'done').sort((a, b) => (b.doneAt || 0) - (a.doneAt || 0)).slice(0, 30);
   host.innerHTML = `<div class="orgrem${orgRemOpen ? ' open' : ''}">

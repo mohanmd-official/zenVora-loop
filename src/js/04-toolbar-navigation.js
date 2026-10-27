@@ -47,13 +47,14 @@ importFile.onchange = () => {
   const f = importFile.files[0]; if (!f) return;
   f.text().then(t => {
     try { const s = JSON.parse(t); if (!Array.isArray(s.items)) throw 0;
-      if (confirm(mode === 'cloud' ? 'Replace everything in your account with this backup?' : 'Replace everything in the app with this backup?')){ state = normalize(s); commit(); info('Backup restored.'); }
+      if (confirm(mode === 'cloud' ? 'Replace everything in your account with this backup?' : 'Replace everything in the app with this backup?')){ s.items = (s.items || []).filter(i => !i.shared).concat(state.items.filter(i => i.shared)); state = normalize(s); commit(); info('Backup restored.'); }   // tasks shared with colleagues are theirs too: kept as they are
     } catch(e){ alert('That file is not a valid backup.'); }
     importFile.value = '';
   });
 };
 
 document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && $('#teamOv').classList.contains('on')){ $('#teamOv').classList.remove('on'); return; }
   if (e.key === 'Escape' && ov.classList.contains('on')){ closeModal(); return; }
   const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
   if (!appReady || typing || ov.classList.contains('on') || e.metaKey || e.ctrlKey || e.altKey) return;

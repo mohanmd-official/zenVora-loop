@@ -18,13 +18,14 @@ function render(){
   document.querySelectorAll('.planSeg button').forEach(b => b.classList.toggle('on', b.dataset.m === pm));
   document.querySelectorAll('.view').forEach(s => s.hidden = s.id !== 'v-' + v);
   $('#addForm').hidden = !agenda;
+  if (agenda) fillNewWho();
   const noTabs = ![...document.querySelectorAll('#tabs [data-view]')].some(b => !b.hidden);
   if (noTabs) document.querySelectorAll('.view').forEach(s => s.hidden = true);
   else ({board:renderBoard, calendar:renderCalendar, all:renderAll, insights:renderInsights, attendance:renderAttendance, clinic:renderClinic, org:renderOrg, orgs:renderOrgs, home:renderHome})[v]();
   document.body.classList.toggle('inclinic', v === 'clinic');
   renderSideNav();
   applyLogo();
-  const od = agendaOn() ? state.items.filter(isPastDue).length : 0;
+  const od = agendaOn() ? state.items.filter(it => isPastDue(it) && isMine(it)).length : 0;
   $('#overdueStat').textContent = od ? `🔥 ${od} overdue` : '';
   $('#overdueStat').hidden = !od;
   const oc = orgCtx(), nm = (oc && !oc.support ? oc.org.name : state.settings.name).trim(), sp = nm.lastIndexOf(' ');

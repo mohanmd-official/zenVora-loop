@@ -3,6 +3,7 @@ function renderBoard(){
   renderOrgRem();
   const past = boardDay < todayKey;
   const items = past ? pastDayItems(boardDay) : state.items.filter(i => i.day === boardDay);
+  renderWhoBar(items);
   document.body.classList.toggle('readonly', past);
   $('#dayPick').value = boardDay;
   $('#todayBtn').disabled = boardDay === todayKey;
@@ -24,7 +25,7 @@ function renderBoard(){
     b.textContent = '✨ Plan smarter. Live better. Add your first task for today above.';
     b.hidden = false;
   } else b.hidden = true;
-  buildColumns($('#board'), items, {ro:past});
+  buildColumns($('#board'), items.filter(whoMatch), {ro:past});
 }
 
 function buildColumns(host, items, opt = {}){
@@ -51,7 +52,7 @@ function buildColumns(host, items, opt = {}){
       const it = byId(e.dataTransfer.getData('text/plain')); if (!it) return;
       const after = [...L.querySelectorAll('.card:not(.dragging)')].find(c => { const r = c.getBoundingClientRect(); return e.clientY < r.top + r.height / 2; });
       state.items = state.items.filter(i => i !== it);
-      setStatus(it, col.id);
+      if (it.status !== col.id){ setStatus(it, col.id); noteStatus(it); }
       const idx = after ? state.items.findIndex(i => i.id === after.dataset.id) : -1;
       if (idx >= 0) state.items.splice(idx, 0, it); else state.items.push(it);
       placeOrd(it);
@@ -64,13 +65,12 @@ function cardEl(it, opt = {}){
   const ro = !!opt.ro, now = Date.now();
   const od = !ro && isOverdue(it), late = !ro && isLate(it), soon = !ro && isSoon(it);
   const c = document.createElement('div');
-  c.className = 'card ' + it.priority + (od ? ' overdue' : '') + (soon ? ' soon' : '') + (ro ? ' ro' : '');
+  c.className = 'card ' + it.priority + (od ? ' overdue' : '') + (soon ? ' soon' : '') + (ro ? ' ro' : '') + (it.shared ? ' shared' : '');
   c.draggable = !ro; c.dataset.id = it.id;
   const idx = ORDER.indexOf(it.status);
   const nc = (it.comments || []).filter(x => !x.sys).length;
   const showRem = !ro && it.remindAt && it.status !== 'done';
   let tags = '';
-  if (it.epic) tags += `<span class="epic" title="Added from the clinic">${esc(it.epic)}</span>`;
   if (it._snap) tags += `<span class="carry">↪ moved to ${esc(fmtShort(it.carriedTo))}</span>`;
   else if (!ro && it.carriedFrom && it.status !== 'done') tags += `<span class="carry" title="Not finished on ${esc(fmtShort(it.carriedFrom))}">↪ from ${esc(fmtDM(it.carriedFrom))}${it.carryCount > 1 ? ' ×' + it.carryCount : ''}</span>`;
   if (od) tags += `<span class="badge" title="Not started by its due time, so it was raised to High">OVERDUE ${dur(now - it.remindAt)}</span>`;
@@ -78,16 +78,19 @@ function cardEl(it, opt = {}){
   else if (soon) tags += `<span class="badge soon">Due in ${dur(it.remindAt - now)}</span>`;
   if (opt.showDay) tags += `<span class="dchip">${esc(it.status === 'done' && it.doneAt ? '✓ ' + relDay(dayKey(it.doneAt)) : relDay(it.day))}</span>`;
   if (showRem) tags += `<span class="rem ${it.remindAt <= now ? 'due' : ''}" title="Due time">⏰ ${esc(fmtTime(it.remindAt))}</span>`;
-  if (nc) tags += `<span>💬 ${nc}</span>`;
-  if (it.desc) tags += '<span>📝</span>';
-  c.innerHTML = `<div class="t">${esc(it.title)}</div><div class="meta">${tags}${ro ? '' : `<span class="mv">
+  if (nc) tags += `<span class="cc" title="${plural(nc, 'comment')}">💬 ${nc}</span>`;
+  const from = it.shared && it.createdBy && it.createdBy !== myUid() ? `<span class="from" title="Given to you by ${esc(it.createdByName || '')}">from ${esc(firstName(it.createdByName || '') || 'a colleague')}</span>` : '';
+  const who = it.assignee ? avatar(it.assignee.name, 'sm') : '<span class="av sm none" title="Unassigned">?</span>';
+  c.innerHTML = `<div class="ctop"><span class="pri p-${it.priority}">${PRI_NAME[it.priority]}</span>${it.epic ? `<span class="epic" title="Added from the clinic">${esc(it.epic)}</span>` : ''}${from}<span class="sp"></span>${who}</div>
+    <div class="t">${esc(it.title)}</div>${it.desc ? `<div class="cdesc">${esc(it.desc)}</div>` : ''}
+    <div class="meta">${tags}${ro ? '' : `<span class="mv">
       ${idx > 0 ? '<button class="ghost" data-mv="-1" title="Move back">◀</button>' : ''}
       ${idx < 2 ? '<button class="ghost" data-mv="1" title="Move forward">▶</button>' : ''}</span>`}</div>`;
   c.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', it.id); c.classList.add('dragging'); });
   c.addEventListener('dragend', () => c.classList.remove('dragging'));
   c.addEventListener('click', e => {
     const mv = e.target.closest('[data-mv]');
-    if (mv){ e.stopPropagation(); const n = idx + (+mv.dataset.mv); if (n >= 0 && n <= 2){ setStatus(it, ORDER[n]); commit(); } return; }
+    if (mv){ e.stopPropagation(); const n = idx + (+mv.dataset.mv); if (n >= 0 && n <= 2){ setStatus(it, ORDER[n]); noteStatus(it); commit(); } return; }
     openModal(it.id, it._snap ? it : null);
   });
   return c;
@@ -160,7 +163,7 @@ function calHandlers(){
 }
 
 /* ================= all tasks ================= */
-const allF = {q:'', status:'all', range:'all', pri:'all'};
+const allF = {q:'', status:'all', range:'all', pri:'all', who:'all'};
 const allSort = {k:'smart', dir:1};
 function periodOf(mode, k){
   if (mode === 'week'){ const s = weekStart(k); return {s, e:shiftDay(s, 6)}; }
@@ -174,10 +177,11 @@ function filteredTasks(){
     if (allF.status === 'due'){ if (!isPastDue(it)) return false; }
     else if (allF.status !== 'all' && it.status !== allF.status) return false;
     if (allF.pri !== 'all' && it.priority !== allF.pri) return false;
+    if (allF.who !== 'all' && whoKey(it) !== allF.who) return false;
     if (allF.range === 'upcoming' && !(it.day > todayKey && it.status !== 'done')) return false;
     if (r && !inScope(it, r.s, r.e)) return false;
     if (q){
-      const hay = (it.title + ' ' + (it.desc || '') + ' ' + it.comments.map(c => c.text).join(' ')).toLowerCase();
+      const hay = (it.title + ' ' + (it.desc || '') + ' ' + (it.assignee ? it.assignee.name : '') + ' ' + it.comments.map(c => c.text).join(' ')).toLowerCase();
       if (!hay.includes(q)) return false;
     }
     return true;
@@ -198,6 +202,7 @@ function renderAll(){
   document.querySelectorAll('#fStatus button').forEach(b => b.classList.toggle('on', b.dataset.s === allF.status));
   document.querySelectorAll('#allLayout button').forEach(b => b.classList.toggle('on', b.dataset.l === state.settings.allLayout));
   $('#fRange').value = allF.range; $('#fPri').value = allF.pri;
+  $('#fWho').innerHTML = whoFilterOpts(allF.who);
   const list = sortTasks(filteredTasks());
   const cnt = s => list.filter(i => i.status === s).length, due = list.filter(isPastDue).length;
   $('#allSummary').textContent = `${plural(list.length, 'task')} · ${cnt('todo')} to do · ${cnt('prog')} in progress · ${cnt('done')} completed` + (due ? ` · ${due} overdue` : '');
@@ -211,7 +216,7 @@ function renderAll(){
   body.className = 'allbody';
   if (!list.length){ body.innerHTML = `<div class="empty">${state.items.length ? 'No tasks match these filters.' : 'No tasks yet. Add one above.'}</div>`; return; }
   const th = (k, label) => `<th data-k="${k}">${label}${allSort.k === k ? (allSort.dir > 0 ? ' ▲' : ' ▼') : ''}</th>`;
-  body.innerHTML = `<table class="tbl"><thead><tr>${th('status','Status')}${th('title','Task')}${th('pri','Priority')}${th('day','Scheduled')}${th('due','Due')}${th('doneAt','Completed')}</tr></thead><tbody>${
+  body.innerHTML = `<table class="tbl"><thead><tr>${th('status','Status')}${th('title','Task')}<th>Assignee</th>${th('pri','Priority')}${th('day','Scheduled')}${th('due','Due')}${th('doneAt','Completed')}</tr></thead><tbody>${
     list.map(it => {
       const nc = it.comments.filter(c => !c.sys).length;
       const tags = (it.carryCount ? `<span class="tagi" title="Carried over ${it.carryCount}×">↪ ${it.carryCount}×</span>` : '')
@@ -219,6 +224,7 @@ function renderAll(){
       return `<tr data-id="${it.id}" class="${isPastDue(it) ? 'od' : ''}${it.status === 'done' ? ' isdone' : ''}">
         <td><select class="st s-${it.status}" data-id="${it.id}" aria-label="Status">${COLS.map(c => `<option value="${c.id}"${c.id === it.status ? ' selected' : ''}>${c.name}</option>`).join('')}</select></td>
         <td class="tt"><span class="ttl">${esc(it.title)}</span>${tags}</td>
+        <td>${it.assignee ? `<span class="whoc">${avatar(it.assignee.name, 'sm')}${esc(it.assignee.name)}</span>` : '<span class="muted">Unassigned</span>'}</td>
         <td><i class="pdot p-${it.priority}"></i>${PRI_NAME[it.priority]}</td>
         <td>${esc(relDay(it.day))}</td>
         <td>${it.remindAt ? esc(fmtTime(it.remindAt)) + (isPastDue(it) ? ' ⚠' : '') : '<span class="muted">—</span>'}</td>
@@ -230,11 +236,12 @@ function allHandlers(){
   $('#fStatus').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ allF.status = b.dataset.s; renderAll(); } });
   $('#fRange').addEventListener('change', e => { allF.range = e.target.value; renderAll(); });
   $('#fPri').addEventListener('change', e => { allF.pri = e.target.value; renderAll(); });
+  $('#fWho').addEventListener('change', e => { allF.who = e.target.value; renderAll(); });
   $('#allLayout').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ state.settings.allLayout = b.dataset.l; save(); renderAll(); } });
   const body = $('#allBody');
   body.addEventListener('change', e => {
     const s = e.target.closest('select.st'); if (!s) return;
-    const it = byId(s.dataset.id); if (it){ setStatus(it, s.value); commit(); }
+    const it = byId(s.dataset.id); if (it){ setStatus(it, s.value); noteStatus(it); commit(); }
   });
   body.addEventListener('click', e => {
     const h = e.target.closest('th[data-k]');
@@ -436,7 +443,8 @@ $('#addForm').addEventListener('submit', e => {
   const t = $('#newTitle'), tm = $('#newTime');
   const title = t.value.trim(); if (!title) return;
   let day = $('#newDay').value || todayKey; if (day < todayKey) day = todayKey;
-  const item = {id:uid(), title, priority:$('#newPri').value, status:'todo', desc:'', comments:[], created:Date.now(), day, plannedDay:day, ord:nextOrd()};
+  const item = {id:uid(), title, priority:$('#newPri').value, status:'todo', desc:$('#newDesc').value.trim(), comments:[], created:Date.now(), day, plannedDay:day, ord:nextOrd()};
+  if (mode === 'cloud') item.createdByName = myName();
   if (tm.value){
     const [h, mi] = tm.value.split(':').map(Number);
     const d = parseDay(day); d.setHours(h, mi, 0, 0);
@@ -448,7 +456,8 @@ $('#addForm').addEventListener('submit', e => {
     askPermission();
   }
   state.items.push(item);
-  t.value = ''; tm.value = ''; commit(); t.focus();
+  const w = $('#newWho').value; if (w && w !== '+') setAssignee(item, w, true);
+  t.value = ''; tm.value = ''; $('#newDesc').value = ''; commit(); t.focus();
 });
 
 /* ================= detail modal ================= */
@@ -460,7 +469,7 @@ function openModal(id, snap){
   const it = curItem(); if (!it){ openId = null; return; }
   const ro = !!openSnap;
   $('#modal').classList.toggle('ro', ro);
-  [mTitle, mStatus, mPri, mDesc, mRemind, mDay].forEach(x => x.disabled = ro);
+  [mTitle, mStatus, mPri, mDesc, mRemind, mDay, $('#mWho')].forEach(x => x.disabled = ro);
   fillModal(it);
   mNew.value = ''; ov.classList.add('on'); if (!ro) mTitle.focus();
 }
@@ -475,6 +484,14 @@ function fillModal(it){
   if (it.status === 'done' && it.doneAt) bits.push(`completed ${fmt(it.doneAt)}`);
   if (openSnap) bits.push(`snapshot from ${fmtShort(it.day)}`);
   $('#mMeta').textContent = bits.join(' · ');
+  $('#mKey').textContent = (it.epic ? it.epic : it.shared ? 'TEAM TASK' : 'TASK');
+  $('#mKey').className = 'tm-key s-' + it.status;
+  $('#mCrumb').textContent = `${colName(it.status)} · ${relDay(it.day)}`;
+  $('#mWho').innerHTML = assigneeOpts(it);
+  const rep = it.shared ? (it.createdByName || 'A colleague') : (it.createdByName || (mode === 'cloud' ? myName() : 'You'));
+  $('#mReporter').innerHTML = avatar(rep, 'sm') + `<span>${esc(rep)}</span>`;
+  $('#mMeAv').outerHTML = avatar(myName(), 'sm', 'mMeAv');
+  $('#mDelete').hidden = !!(it.shared && it.createdBy && it.createdBy !== myUid() && !isOrgAdmin());
   $('#mLink').hidden = !(it.link && orgCtx() && feat('clinic'));
   $('#mLink').onclick = () => { closeModal(); openLink(it.link); };
   renderComments();
@@ -483,11 +500,14 @@ function closeModal(){ ov.classList.remove('on'); openId = null; openSnap = null
 function renderComments(){
   const it = curItem(), box = $('#mComments');
   const cs = it.comments || [];
-  box.innerHTML = cs.length ? '' : '<div class="stat">No comments yet.</div>';
-  cs.forEach(cm => {
+  const n = cs.filter(c => !c.sys).length; $('#mCnt').textContent = n ? plural(n, 'comment') : '';
+  box.innerHTML = cs.length ? '' : '<div class="stat">No activity yet. Start the conversation above.</div>';
+  cs.slice().reverse().forEach(cm => {                         // newest first, like Jira
     const d = document.createElement('div'); d.className = 'cm' + (cm.sys ? ' sys' : '');
-    const del = openSnap || cm.sys ? '' : '<button class="ghost" title="Delete comment">✕</button>';
-    d.innerHTML = `<div class="when">${fmt(cm.at)}${del}</div><div class="txt">${esc(cm.text)}</div>`;
+    const mine = !cm.byUid || cm.byUid === myUid();
+    const del = openSnap || cm.sys || !mine ? '' : '<button class="ghost" title="Delete comment">✕</button>';
+    d.innerHTML = cm.sys ? `<div class="txt">${esc(cm.text)}</div><div class="when">${fmt(cm.at)}</div>`
+      : `${avatar(cm.by || (mode === 'cloud' ? myName() : 'You'), 'sm')}<div class="cmb"><div class="when"><b>${esc(cm.by || (mode === 'cloud' ? myName() : 'You'))}</b><span>${fmt(cm.at)}</span>${del}</div><div class="txt">${esc(cm.text)}</div></div>`;
     if (del) d.querySelector('button').onclick = () => { it.comments = it.comments.filter(x => x.id !== cm.id); save(); renderComments(); };
     box.appendChild(d);
   });
@@ -496,7 +516,7 @@ function upd(fn){ if (openSnap) return; const it = byId(openId); if (it){ fn(it)
 mTitle.addEventListener('input', () => upd(it => it.title = mTitle.value.trim() || it.title));
 mDesc.addEventListener('input', () => upd(it => it.desc = mDesc.value));
 mPri.addEventListener('change', () => upd(it => { it.priority = mPri.value; delete it.prevPriority; }));   // your manual choice wins
-mStatus.addEventListener('change', () => { upd(it => setStatus(it, mStatus.value)); const it = byId(openId); if (it) fillModal(it); });
+mStatus.addEventListener('change', () => { upd(it => { setStatus(it, mStatus.value); noteStatus(it); }); const it = byId(openId); if (it) fillModal(it); });
 mDay.addEventListener('change', () => {
   const it = byId(openId); if (!it) return;
   if (reschedule(it, mDay.value)){ save(); fillModal(it); } else mDay.value = it.day;
@@ -522,7 +542,7 @@ $('#mIcs').onclick = () => {
 };
 function postComment(){
   const text = mNew.value.trim(); if (!text) return;
-  upd(it => it.comments.push({id:uid(), text, at:Date.now()}));
+  upd(it => it.comments.push(Object.assign({id:uid(), text, at:Date.now()}, mode === 'cloud' ? {by:myName(), byUid:myUid()} : {})));
   mNew.value = ''; renderComments();
 }
 $('#mAddComment').onclick = postComment;
@@ -560,7 +580,7 @@ function checkReminders(){
   if (!appReady) return;
   const now = Date.now(); let changed = rollover();
   state.items.forEach(it => {
-    if (it.remindAt && !it.reminded && it.status !== 'done' && it.remindAt <= now){
+    if (it.remindAt && !it.reminded && it.status !== 'done' && it.remindAt <= now && isMine(it)){
       it.reminded = true; changed = true;
       fire(it, now - it.remindAt > 5 * 60000);
     }

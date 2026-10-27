@@ -46,7 +46,7 @@ function normalize(s){
   // v1 kept finished tasks of past days only inside the day snapshots → bring them back for stats/calendar
   const ids = new Set(s.items.map(i => i.id));
   Object.entries(s.history).forEach(([d, h]) => (h.items || []).forEach(x => {
-    if (x.status === 'done' && !ids.has(x.id)){
+    if (x.status === 'done' && !ids.has(x.id) && !x.shared){        // a colleague's shared task is never copied back onto your own board
       const c = JSON.parse(JSON.stringify(x));
       c.day = c.day || d; c.plannedDay = c.plannedDay || c.carriedFrom || c.day;
       c.comments = c.comments || [];
@@ -151,7 +151,8 @@ function rollover(){
       it.day = todayKey;
       it.carriedFrom = it.carriedFrom || d;
       it.carryCount = (it.carryCount || 0) + 1;
-      it.comments.push({id:uid(), sys:true, at:Date.now(), text:`↪ Carried over from ${fmtShort(d)} (not completed, was in ${colName(it.status)})`});
+      const cid = 'co-' + d;                                   // fixed id: a task shared with a colleague is carried by both boards, noted once
+      if (!it.comments.some(c => c.id === cid)) it.comments.push({id:cid, sys:true, at:Date.now(), text:`↪ Carried over from ${fmtShort(d)} (not completed, was in ${colName(it.status)})`});
     });
     ch = true;
   });

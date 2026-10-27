@@ -16,6 +16,7 @@ function orgLoad(){
     if (isOrgAdmin()){                                  // keep the seat count the Super Admin bills on up to date
       const seats = orgView.members.filter(m => m.active && !m.removed).length;
       if (oc.org.seats !== seats) F.updateDoc(F.doc(cloud.fs, 'orgs', oc.orgId), {seats}).catch(() => {});
+      dirSync(orgView.members);                         // the names colleagues pick from when giving a task
     }
     again();
   }, e => { orgView.members = []; info('People could not load: ' + (e.code || e.message)); again(); }));
@@ -27,7 +28,7 @@ function orgLoad(){
 
 function renderOrg(){
   const oc = orgCtx(); if (!oc) return;
-  const admin = isOrgAdmin(), secs = admin ? ['people', 'chart', 'support', 'billing'] : ['people', 'chart'];
+  const admin = isOrgAdmin(), secs = admin ? ['people', 'chart', 'planner', 'support', 'billing'] : ['people', 'chart'];
   if (!secs.includes(orgView.sec)) orgView.sec = 'people';
   document.querySelectorAll('#orgSeg button').forEach(b => { b.hidden = !secs.includes(b.dataset.s); b.classList.toggle('on', b.dataset.s === orgView.sec); });
   const pend = (orgView.reqs || []).filter(r => r.status === 'pending').length;
@@ -38,7 +39,7 @@ function renderOrg(){
   $('#orgStat').textContent = L ? `${(n => n + (n === 1 ? ' active person' : ' active people'))(L.filter(m => m.active && !m.removed).length)}${oc.support ? ' · read-only support view' : ''}` : '';
   const body = $('#orgBody');
   if (keepTyping(body)) return;
-  body.innerHTML = ({people:orgPeople, chart:orgChart, support:orgSupport, billing:orgBilling})[orgView.sec]();
+  body.innerHTML = ({people:orgPeople, chart:orgChart, planner:orgPlanner, support:orgSupport, billing:orgBilling})[orgView.sec]();
   numberTables(body);
 }
 
@@ -122,6 +123,24 @@ function orgChart(){
 
 const DUR = [[1, '1 hour'], [24, '24 hours'], [168, '7 days']];
 const durLabel = h => (DUR.find(d => d[0] === +h) || [0, `${h} hours`])[1];
+/* Planning Board switches for the whole organization (Account Manager): saved on the org as `planner` */
+function orgPlanner(){
+  const oc = orgCtx(), c = plannerCfg(), agenda = feat('agenda'), clinic = feat('clinic');
+  const sw = (k, on, title, sub, dis) => `<label class="psw${dis ? ' dis' : ''}"><input type="checkbox" data-pl="${k}"${on ? ' checked' : ''}${dis ? ' disabled' : ''}><span class="tg"></span><span class="pst"><b>${title}</b><small>${sub}</small></span></label>`;
+  return `<div class="sect"><div class="box"><h3>Planning Board for ${esc(oc.org.name)} <span class="sub">applies to everyone straight away</span></h3>
+    ${agenda ? '' : '<p class="stat" style="margin-top:0">The Planning Board is not part of your plan. Ask Zenvora Loop to add it.</p>'}
+    <div class="psws">
+      ${sw('board', c.board !== false, 'Planning Board for everyone', 'Off: only Account Managers keep the Planning Board. Everyone\'s tasks are kept and come back when you turn it on again.', !agenda)}
+      ${sw('rem', c.rem !== false, 'Organization reminders', clinic ? 'Clinic reminders (follow-ups, documents, payments due, tallies) on the Planning Board and Home, for everyone. Off: nobody sees them.' : 'Shared reminders on the Planning Board and Home (from the Clinic feature).', !(agenda || clinic))}
+      <div class="psw sel${agenda ? '' : ' dis'}"><span class="pst"><b>Who can give tasks to colleagues</b><small>A task given to someone shows on both boards (theirs and the person who gave it), like Jira. The Account Manager sees who did what in each task's activity.</small></span>
+        <select data-pl="assign"${agenda ? '' : ' disabled'}>${[['all', 'Everyone'], ['mgr', 'Managers & Account Managers'], ['off', 'Nobody (switched off)']].map(([v, l]) => `<option value="${v}"${c.assign === v ? ' selected' : ''}>${l}</option>`).join('')}</select></div>
+    </div></div></div>`;
+}
+async function savePlanner(k, v){
+  const oc = orgCtx(), cur = Object.assign({board:true, rem:true, assign:'all'}, oc.org.planner || {}), next = Object.assign({}, cur, {[k]:v});
+  try { await cloud.F.updateDoc(cloud.F.doc(cloud.fs, 'orgs', oc.orgId), {planner:next}); oc.org.planner = next; info('Saved for everyone in ' + oc.org.name + '.'); render(); }
+  catch(err){ info('Could not save: ' + errText(err)); renderOrg(); }
+}
 function orgSupport(){
   const oc = orgCtx(), org = oc.org, now = Date.now(), open = (org.supportUntil || 0) > now;
   const reqs = (orgView.reqs || []).slice().sort((a, b) => (b.requestedAt || 0) - (a.requestedAt || 0));
@@ -204,6 +223,7 @@ async function joinPending(uid, extra){
 }
 $('#orgSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ orgView.sec = b.dataset.s; orgView.edit = null; orgView.msg = null; renderOrg(); } });
 $('#orgBody').addEventListener('change', e => {
+  const pl = e.target.closest('[data-pl]'); if (pl) return savePlanner(pl.dataset.pl, pl.type === 'checkbox' ? pl.checked : pl.value);
   if (e.target.id === 'peCPre' && e.target.value){ const p = permsFromPreset(e.target.value); document.querySelectorAll('#pEdit [data-cp]').forEach(c => { if (!c.disabled) c.checked = !!p[c.dataset.cp]; }); e.target.value = ''; }
 });
 $('#orgBody').addEventListener('submit', async e => {

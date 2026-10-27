@@ -8,9 +8,13 @@ const ADMIN_EMAIL = String(window.ZL_ADMIN_EMAIL || 'mohanmd.official@gmail.com'
 // Organization context: null for the Super Admin's personal space; {orgId, org, me, role, support} inside an organization
 const orgCtx = () => (cloud && cloud.ctx) || null;
 const feat = f => { const c = orgCtx(); return c ? !!((c.org.features || {})[f]) : false; };
-const agendaOn = () => mode !== 'cloud' || !!(cloud && cloud.isSuper) || feat('agenda');
+// The Account Manager's Planning Board switches (orgs/{id}.planner): board = planner for everyone (off → only Account Managers),
+// rem = organization reminders, assign = who may give tasks to colleagues ('all' | 'mgr' | 'off')
+const plannerCfg = () => Object.assign({board:true, rem:true, assign:'all'}, ((orgCtx() || {}).org || {}).planner || {});
+const remOn = () => plannerCfg().rem !== false;
+const agendaOn = () => mode !== 'cloud' || !!(cloud && cloud.isSuper) || (feat('agenda') && (plannerCfg().board !== false || orgCtx().role === 'orgadmin'));
 const ROLE_LABEL = {orgadmin:'Account Manager', manager:'Manager', employee:'Employee'};
-const synced = {tasks:new Map(), days:new Map(), settings:''};
+const synced = {tasks:new Map(), days:new Map(), otasks:new Map(), settings:''};
 const stable = v => JSON.stringify(v, (k, x) => (x && typeof x === 'object' && !Array.isArray(x)) ? Object.keys(x).sort().reduce((o, kk) => (o[kk] = x[kk], o), {}) : x);
 const plain = o => JSON.parse(JSON.stringify(o));
 const taskData = it => { const o = plain(it); delete o._snap; return o; };
@@ -82,7 +86,7 @@ async function startUser(user){
   stopListeners();
   const {F, fs} = cloud, uid = user.uid;
   cloud.uid = uid; cloud.user = user; cloud.ctx = null; appReady = false;
-  synced.tasks.clear(); synced.days.clear(); synced.settings = '';
+  synced.tasks.clear(); synced.days.clear(); synced.otasks.clear(); synced.settings = ''; teamReset();
   $('#auth').hidden = true; showLoading('Loading Zenvora Loop…');
 
   // Who is this? The Super Admin, or a member of exactly one organization.
@@ -129,6 +133,7 @@ async function startUser(user){
   if (cloud.uid !== uid) return;                      // signed out while loading
   state = normalize({items, history, settings});
   synced.settings = isNew ? '' : stable(settings);
+  teamStart();                                        // tasks shared with colleagues (orgs/{id}/tasks) + the people directory
 
   attReset(); orgView.reset(); supers.reset(); cl.reset(); homeReset();
   if (!isSuper){
@@ -241,12 +246,20 @@ function pushChanges(){
   if (mode !== 'cloud' || !appReady || !cloud.uid || !agendaOn()) return;
   const {F, fs, uid} = cloud, ops = [], seen = new Set();
   const tref = id => F.doc(fs, 'users', uid, 'tasks', id), dref = k => F.doc(fs, 'users', uid, 'days', k);
+  const sops = [], sseen = new Set(), oref = id => F.doc(fs, 'orgs', orgCtx().orgId, 'tasks', id);
   state.items.forEach(it => {
+    if (it.shared){                                  // shared with a colleague: lives in the organization, not in your private board
+      if (!orgCtx()) return; sseen.add(it.id);
+      const d = sharedData(it), s = stable(d);
+      if (synced.otasks.get(it.id) !== s){ synced.otasks.set(it.id, s); sops.push(b => b.set(oref(it.id), d)); }
+      return;
+    }
     seen.add(it.id);
     const d = taskData(it), s = stable(d);
     if (synced.tasks.get(it.id) !== s){ synced.tasks.set(it.id, s); ops.push(b => b.set(tref(it.id), d)); }
   });
   [...synced.tasks.keys()].forEach(id => { if (!seen.has(id)){ synced.tasks.delete(id); ops.push(b => b.delete(tref(id))); } });
+  if (orgCtx()) [...synced.otasks.keys()].forEach(id => { if (!sseen.has(id)){ synced.otasks.delete(id); sops.push(b => b.delete(oref(id))); } });
   Object.entries(state.history).forEach(([k, v]) => { const d = plain(v), s = stable(d); if (synced.days.get(k) !== s){ synced.days.set(k, s); ops.push(b => b.set(dref(k), d)); } });
   [...synced.days.keys()].forEach(k => { if (!state.history[k]){ synced.days.delete(k); ops.push(b => b.delete(dref(k))); } });
   const st = stable(state.settings);
@@ -254,13 +267,14 @@ function pushChanges(){
     synced.settings = st;
     ops.push(b => b.set(F.doc(fs, 'users', uid), {settings:plain(state.settings), email:cloud.user.email || '', name:cloud.user.displayName || '', updatedAt:Date.now()}, {merge:true}));
   }
-  if (!ops.length){ if (!pendingWrites) setSync(navigator.onLine ? 'saved' : 'offline'); return; }
-  for (let i = 0; i < ops.length; i += 450){
-    const b = F.writeBatch(fs); ops.slice(i, i + 450).forEach(f => f(b));
+  if (!ops.length && !sops.length){ if (!pendingWrites) setSync(navigator.onLine ? 'saved' : 'offline'); return; }
+  const run = (list, shared) => { for (let i = 0; i < list.length; i += 450){     // shared tasks go in their own batch: one refusal never blocks your own board
+    const b = F.writeBatch(fs); list.slice(i, i + 450).forEach(f => f(b));
     pendingWrites++;
-    b.commit().then(() => { if (--pendingWrites === 0) setSync('saved'); })
-      .catch(e => { pendingWrites--; cloudError(e); });
-  }
+    b.commit().then(() => { if (--pendingWrites === 0){ setSync('saved'); teamReapply(); } })
+      .catch(e => { pendingWrites--; if (shared){ synced.otasks.clear(); teamReapply(true); } cloudError(e); });
+  } };
+  run(ops, false); run(sops, true);
 }
 function setSync(s){
   const t = {saved:'All changes saved to the cloud', saving:'Saving…', offline:'Offline: changes will sync when you reconnect', error:'Sync problem: changes may not be saved'}[s];

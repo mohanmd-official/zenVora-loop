@@ -68,6 +68,7 @@ Every organization's data lives under `orgs/<org-id>/…` in Firestore, so organ
 
 - **Organization → People:** add someone (name, email, job title, reports to, role) → **Create login** → copy the login details to them. **Edit** changes title / reports-to / role; **Disable** signs them out within seconds; **Remove** takes them off the team (adding the same email again restores them and their attendance).
 - **Organization → Org chart:** the reporting tree, built from "Reports to".
+- **Organization → Planning Board:** switches that apply to everyone straight away: **Planning Board for everyone** (off: only Account Managers keep it; everyone's tasks are kept), **Organization reminders** (off: nobody sees the clinic reminders on the Planning Board or Home), and **Who can give tasks to colleagues** (Everyone · Managers & Account Managers · Nobody).
 - **Organization → Support access:** when Zenvora Loop support asks to look at something, a **🛟 Support request** button and a pop-up appear. **Approve** for 1 hour, 24 hours or 7 days (read-only), or **Deny**. **Revoke now** closes it at any time.
 - **Organization → Billing:** plan, monthly fee, invoices and what's outstanding.
 
@@ -83,6 +84,10 @@ People created in the earlier single-admin version show up in **Organizations �
 
 - **Menu order:** drag the tabs at the top (Home, Planning Board, Clinic, Attendance, Organization) into the order you like; it is remembered.
 - **Planning Board:** a small menu at the top switches between **Board** (Daily kanban, Weekly and Monthly calendar), **All tasks** and **Insights**.
+- **Tasks like Jira:** every task has a **Description** (also in the add bar) and an **Assignee**. Click a task to open its panel: title and description on the left with the **Activity** (comments with who wrote them, plus notes such as "Riya moved this to In Progress"), and Status, Assignee, Reporter, Priority, day and due time on the right. Cards show the priority, the first lines of the description, comments and the assignee's face.
+  - **In an organization:** pick a colleague as the assignee and the task appears on **both boards** (theirs and yours) and stays in step; they get a "📥 … gave you a task" message. Only the two of you and the Account Manager can see it. Pick yourself or a team name again and it goes back to your own board. Reminders and the overdue count only nag the assignee.
+  - **Without an organization (personal planner), or for helpers without a login:** **👥 Team** on the board (or "＋ Add a team name…" in any Assignee list) keeps your own list of names to assign tasks to.
+  - The **Assignee** row above the board shows a face per person: click one to see only their tasks (All tasks has an Assignee filter and column too).
 - **Light / dark mode:** the 🌙 / ☀️ button in the top bar. Avatar → **Follow system light / dark** goes back to the computer's setting. Remembered per device.
 - **Numbered lists:** every table has a **No.** column, so you can say "row 12" on a call.
 - **Open in a new tab:** every menu item (top menu, Clinic menu, report / accounts / patient tabs) and every patient name is a real link: right-click → Open in new tab, or ⌘/Ctrl-click. The address bar always shows where you are (e.g. `#/clinic/patients/<id>`), so a page can be bookmarked or reloaded.
@@ -252,7 +257,7 @@ Edit a module → `python3 build.py` (rebuilds `public/index.html`) → `git pus
 
 ## Good to know
 
-- **Privacy:** each organization's people, attendance and invoices live under `orgs/{org-id}`; each person's planner lives under `users/{their-id}` and only they can read it.
+- **Privacy:** each organization's people, attendance and invoices live under `orgs/{org-id}`; each person's planner lives under `users/{their-id}` and only they can read it. A task given to a colleague lives under `orgs/{org-id}/tasks`, readable only by the person who gave it, the assignee and the Account Manager; `orgs/{org-id}/dir` holds just names and job titles so everyone can pick an assignee.
 - **Temporary passwords:** whoever creates a login (you for Account Managers, Account Managers for their staff) knows the temporary password until the person signs in and replaces it, which the app forces on first sign-in.
 - **Sync:** changes save automatically and appear live on your other devices. The dot on your avatar shows the status: green means saved, amber means saving, grey means offline (it syncs later), and red means there's a problem.
 - **Free limits (Firebase Spark):** 1 GiB of data, 50K reads and 20K writes per day. GitHub Pages has a soft limit of 100 GB of bandwidth per month. Both are plenty for personal and team use.

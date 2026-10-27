@@ -58,11 +58,13 @@
 
 <form class="add" id="addForm">
   <input id="newTitle" placeholder="Add a task for today…" autocomplete="off">
+  <input id="newDesc" placeholder="Description (optional)" autocomplete="off" title="What needs to be done: details, links, acceptance criteria">
   <input type="date" id="newDay" title="Scheduled day">
   <input type="time" id="newTime" title="Due time (optional): you get a reminder, and it turns red if still in To Do after this">
   <select id="newPri" title="Priority">
     <option value="low">Low</option><option value="med" selected>Medium</option><option value="high">High</option>
   </select>
+  <select id="newWho" title="Assignee"></select>
   <button class="primary" type="submit">Add</button>
 </form>
 
@@ -82,6 +84,7 @@
     <span class="stat" id="boardStat"></span>
   </div>
   <div id="orgRem"></div>
+  <div id="whoBar"></div>
   <div class="ro" id="roBanner" hidden></div>
   <div class="board" id="board"></div>
 </section>
@@ -115,6 +118,7 @@
     <select id="fPri" title="Priority">
       <option value="all">Any priority</option><option value="high">High</option><option value="med">Medium</option><option value="low">Low</option>
     </select>
+    <select id="fWho" title="Assignee"></select>
     <span class="sp"></span>
     <div class="seg" id="allLayout"><button data-l="list">☰ List</button><button data-l="board">▦ Board</button></div>
   </div>
@@ -148,7 +152,7 @@
 <!-- ORGANIZATION (Account Manager / managers) -->
 <section class="view" id="v-org" hidden>
   <div class="vbar">
-    <div class="seg" id="orgSeg"><button data-s="people">People</button><button data-s="chart">Org chart</button><button data-s="support">Support access</button><button data-s="billing">Billing</button></div>
+    <div class="seg" id="orgSeg"><button data-s="people">People</button><button data-s="chart">Org chart</button><button data-s="planner">Planning Board</button><button data-s="support">Support access</button><button data-s="billing">Billing</button></div>
     <strong id="orgTitle"></strong>
     <span class="sp"></span>
     <span class="stat" id="orgStat"></span>
@@ -217,42 +221,48 @@
 <div id="tip" hidden></div>
 
 <div class="ov" id="ov">
-  <div class="modal" id="modal">
-    <label>Title</label>
-    <input id="mTitle">
-    <div class="row" style="margin-top:4px">
-      <div><label>Status</label>
-        <select id="mStatus"><option value="todo">To Do</option><option value="prog">In Progress</option><option value="done">Completed</option></select></div>
-      <div><label>Priority</label>
-        <select id="mPri"><option value="low">Low</option><option value="med">Medium</option><option value="high">High</option></select></div>
-      <div><label>Scheduled day</label><input type="date" id="mDay"></div>
-    </div>
-    <label>Due time &amp; reminder</label>
-    <div class="row">
-      <input type="datetime-local" id="mRemind" style="flex:1;width:auto;min-width:200px">
-      <button id="mRemClear" class="ghost edit-only" title="Remove due time">Clear</button>
-    </div>
-    <div class="row chips edit-only">
-      <button data-q="15">+15 min</button><button data-q="30">+30 min</button><button data-q="60">+1 hr</button>
-      <button id="mIcs" title="Download a calendar event with an alert. Opens in the Mac Calendar app." style="margin-left:auto">📅 Add to Calendar</button>
-    </div>
-    <div class="mmeta" id="mMeta"></div>
-    <button id="mLink" class="primary" hidden style="margin:6px 0">Open in Clinic →</button>
-    <label>Notes</label>
-    <textarea id="mDesc" rows="3" placeholder="Details, links, context…"></textarea>
-    <label>Comments</label>
-    <div class="comments" id="mComments"></div>
-    <div class="row edit-only" style="margin-top:8px">
-      <textarea id="mNewComment" rows="2" placeholder="Write a comment… (⌘+Enter to post)" style="flex:1;width:auto"></textarea>
-      <button id="mAddComment" class="primary" style="align-self:flex-end">Post</button>
-    </div>
-    <div class="foot">
-      <button id="mDelete" class="danger edit-only">Delete</button>
+  <div class="modal tmodal" id="modal">
+    <div class="tm-head">
+      <span class="tm-key" id="mKey">TASK</span><span class="tm-crumb" id="mCrumb"></span>
       <span class="sp"></span>
-      <button id="mClose">Close</button>
+      <button id="mClose" class="ghost tm-x" title="Close (Esc)">✕</button>
+    </div>
+    <div class="tm-grid">
+      <div class="tm-main">
+        <input id="mTitle" class="tm-title" aria-label="Title" placeholder="Task title">
+        <div class="tm-lbl">Description</div>
+        <textarea id="mDesc" class="tm-desc" rows="5" placeholder="Add a description: what needs to be done, details, links, acceptance criteria…"></textarea>
+        <button id="mLink" class="primary" hidden style="margin:2px 0 6px">Open in Clinic →</button>
+        <div class="tm-lbl">Activity <span class="tm-cnt" id="mCnt"></span></div>
+        <div class="tm-new edit-only">
+          <span class="av" id="mMeAv"></span>
+          <div class="tm-newbox">
+            <textarea id="mNewComment" rows="2" placeholder="Add a comment… (⌘ / Ctrl + Enter to post)"></textarea>
+            <button id="mAddComment" class="primary">Post</button>
+          </div>
+        </div>
+        <div class="comments" id="mComments"></div>
+      </div>
+      <aside class="tm-side">
+        <div class="tm-f"><label>Status</label>
+          <select id="mStatus" class="tm-st"><option value="todo">To Do</option><option value="prog">In Progress</option><option value="done">Completed</option></select></div>
+        <div class="tm-f"><label>Assignee</label><select id="mWho"></select></div>
+        <div class="tm-f"><label>Reporter</label><div class="tm-rep" id="mReporter"></div></div>
+        <div class="tm-f"><label>Priority</label>
+          <select id="mPri"><option value="low">Low</option><option value="med">Medium</option><option value="high">High</option></select></div>
+        <div class="tm-f"><label>Scheduled day</label><input type="date" id="mDay"></div>
+        <div class="tm-f"><label>Due time &amp; reminder</label>
+          <div class="tm-due"><input type="datetime-local" id="mRemind"><button id="mRemClear" class="ghost edit-only" title="Remove due time">✕</button></div>
+          <div class="chips edit-only"><button data-q="15">+15m</button><button data-q="30">+30m</button><button data-q="60">+1h</button>
+            <button id="mIcs" title="Download a calendar event with an alert. Opens in the Mac Calendar app.">📅</button></div></div>
+        <div class="mmeta" id="mMeta"></div>
+        <button id="mDelete" class="danger edit-only tm-del">Delete task</button>
+      </aside>
     </div>
   </div>
 </div>
+
+<div class="ov" id="teamOv"><div class="modal teamm" id="teamModal"></div></div>
 
 <script>
 //@build:js

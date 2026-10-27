@@ -25,14 +25,14 @@ function homeLoad(){
 }
 function homeReset(){ if (home.unsub) try { home.unsub(); } catch(e){} Object.assign(home, {ev:null, unsub:null, key:'', team:null, appts:null, pay:null, inv:null}); }
 const isClinicUser = () => !!(orgCtx() && feat('clinic'));
-const myTasks = () => agendaOn() ? state.items : [];
+const myTasks = () => agendaOn() ? state.items.filter(isMine) : [];
 // the widget catalogue: who can have it, and how it draws
 const WIDGETS = {
   checkin:{t:'Check in / out', ic:'⏱', d:'Your attendance timer and Check in / Check out button', ok:() => !!(attSelf() && feat('attendance')), r:wCheckin},
   regs:{t:'Attendance approvals', ic:'🗂', d:'Regularization requests waiting for you', ok:() => !!(orgCtx() && !orgCtx().support && feat('attendance') && regPendingForMe().length), r:wRegs},
   mark:{t:'Mark attendance', ic:'🕘', d:'Check other staff in and out (attendance proxy)', ok:() => !!(orgCtx() && feat('attendance') && canMarkAtt()), r:wMark},
   team:{t:'My team', ic:'👥', d:'Your reporting manager and reportees', ok:() => !!(orgCtx() && !orgCtx().support), r:wTeam},
-  reminders:{t:'Reminders', ic:'🔔', d:'Everything the clinic needs from you: summaries, documents, follow-ups, tallies', ok:() => isClinicUser(), r:wReminders},
+  reminders:{t:'Reminders', ic:'🔔', d:'Everything the clinic needs from you: summaries, documents, follow-ups, tallies', ok:() => isClinicUser() && remOn(), r:wReminders},
   appts:{t:"Today's appointments", ic:'📅', d:'Who is coming today and where they are in the queue', ok:() => isClinicUser() && !!(can('appointments') || can('treatments')), r:wAppts},
   clinicToday:{t:'Clinic today', ic:'💰', d:"Today's collections by mode and patients seen", ok:() => isClinicUser() && !!(can('billing') || can('reports')), r:wClinicToday},
   tasksToday:{t:'My tasks today', ic:'✅', d:'Open tasks on your Planning Board for today', ok:() => agendaOn(), r:wTasksToday},

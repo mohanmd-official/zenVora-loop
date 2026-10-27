@@ -60,7 +60,32 @@ service cloud.firestore {
       // Super Admin manages plan/features/status but can't grant itself support access;
       // the Account Manager can only approve/revoke support access and keep the seat count.
       allow update: if (isSuper() && !changed().hasAny(['supportUntil', 'supportBy']))
-        || (isOrgAdmin(o) && changed().hasOnly(['supportUntil', 'supportBy', 'seats', 'logo', 'homeDefault']));
+        || (isOrgAdmin(o) && changed().hasOnly(['supportUntil', 'supportBy', 'seats', 'logo', 'homeDefault', 'planner']));
+
+      // Planning Board, shared tasks: a task given to a colleague. Only its reporter (createdBy), its assignee
+      // and the Account Manager can see it. Who may give tasks is the Account Manager's switch: orgs/{o}.planner.assign
+      function planOn() { return isMember(o) && hasFeature(o, 'agenda'); }
+      function assignMode() { return orgDoc(o).get('planner', {}).get('assign', 'all'); }
+      function canAssign() { return assignMode() == 'all' || (assignMode() == 'mgr' && isOrgManager(o)); }
+      match /tasks/{t} {
+        allow read: if planOn() && (resource.data.createdBy == request.auth.uid
+          || resource.data.assigneeUid == request.auth.uid || isOrgAdmin(o));
+        allow create: if planOn() && canAssign() && request.resource.data.createdBy == request.auth.uid;
+        allow update: if planOn()
+          && (resource.data.createdBy == request.auth.uid || resource.data.assigneeUid == request.auth.uid || isOrgAdmin(o))
+          && request.resource.data.createdBy == resource.data.createdBy
+          && (request.resource.data.get('assigneeUid', '') == resource.data.get('assigneeUid', '') || canAssign()
+              || resource.data.createdBy == request.auth.uid);
+        allow delete: if planOn() && (resource.data.createdBy == request.auth.uid || isOrgAdmin(o));
+      }
+      // People directory for picking an assignee: names & titles only (members/ stays private to managers)
+      match /dir/{uid} {
+        allow read: if isMember(o);
+        allow create, update: if isOrgAdmin(o)
+          || (isMember(o) && request.auth.uid == uid && request.resource.data.keys().hasOnly(['name', 'title', 'active', 'at'])
+              && request.resource.data.active == true);
+        allow delete: if isOrgAdmin(o);
+      }
 
       match /members/{uid} {
         allow read: if (signedIn() && request.auth.uid == uid) || isOrgManager(o) || supportOpen(o) || isProxy(o);

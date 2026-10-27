@@ -22,8 +22,9 @@ Firebase Auth + Firestore (Spark plan). Deployed to GitHub Pages from `public/` 
 | 02-render-routing-menus | `render`, `setView`, `renderSoon`, URL routing (`#/clinic/...`), drag-to-reorder top tabs |
 | 03-planner-board | Planning Board: kanban, calendar, all tasks, insights + charts, add form, task modal, reminders/notifications, tooltip |
 | 04-toolbar-navigation | top toolbar buttons, keyboard shortcuts, export/import |
-| 05-cloud-auth-login | Firebase start-up (`boot`, `startUser`), `refreshTabs` (which tabs show), theme, sync, sign-in & password pages, creating logins |
-| 06-organization | Organization page: People (add/edit, work timing), org chart, support access, billing |
+| 05-cloud-auth-login | Firebase start-up (`boot`, `startUser`), `refreshTabs` (which tabs show), `plannerCfg`/`remOn`/`agendaOn` (org Planning Board switches), theme, sync (`pushChanges`: personal tasks → users/, shared → orgs/{id}/tasks), sign-in & password pages, creating logins |
+| 05b-team-tasks | Jira-style assignment: `team`, `setAssignee`, `assigneeOpts`, shared-task listeners (`teamStart`, `mergeShared`), people directory (`dirSync`), avatars, assignee bar `renderWhoBar`, Team dialog, `isMine` |
+| 06-organization | Organization page: People (add/edit, work timing), org chart, **Planning Board switches** (`orgPlanner`, `savePlanner`), support access, billing |
 | 07-super-admin | Super Admin: onboarding organizations, features (agenda/attendance/payroll/clinic), plans |
 | 08-clinic-core-patient-list | clinic data (`cl`, doctors, treatment list), `nextNumber`, **left feature menu `renderSideNav`** (Attendance + Clinic ▾; Home/Org/Board stay in the top bar), `renderClinic`, Patients list & search |
 | 09-clinic-patient-record | patient profile, treatments, medicines/Rx, billing tab, receipts (`printDoc`, `printReceipt`), visits, photos |
@@ -49,10 +50,10 @@ Firebase Auth + Firestore (Spark plan). Deployed to GitHub Pages from `public/` 
 | 29-boot | starts the app (`boot()`), test hook `window.__zl` |
 
 `src/css/` follows the same areas (base/planner, auth, attendance, organizations, clinic layout & appointments, home,
-visits/tally/accounts, toasts, theme refresh). `src/shell.html` is the page markup (header, views, dialogs).
+visits/tally/accounts, toasts, theme refresh, team tasks: cards, task panel `.tmodal`, assignee bar, switches). `src/shell.html` is the page markup (header, views, dialogs).
 
 ## Data (Firestore) in one glance
-- `orgs/{orgId}`: org settings & features; `members/{uid}` (role orgadmin/manager/employee, `perms`, `att` work timing & salary, `isChief`).
+- `orgs/{orgId}`: org settings & features, `planner` {board, rem, assign:'all'|'mgr'|'off'} (Account Manager); `tasks/{id}` (a task given to a colleague: `createdBy`, `assigneeUid`, `assignee`{uid,name}, `shared:true`); `dir/{uid}` (name, title only, for picking assignees); `members/{uid}` (role orgadmin/manager/employee, `perms`, `att` work timing & salary, `isChief`).
 - Clinic: `patients` (+ docs/photos), `appointments`, `treatments` (`kind:'medicine'` for medicines), `payments`, `doctors`,
   `treatmentTypes`, `medicines`, `assists`, `assistPay`.
 - Accounts: `ledger` (kind `expense` | `income` | `petty` (top-up, a transfer) | `pettyspend` | `cpayout`; expenses carry
@@ -66,3 +67,9 @@ visits/tally/accounts, toasts, theme refresh). `src/shell.html` is the page mark
 - Each expense is recorded once, on its own page; Clinic expenses only adds them up. Petty cash counts as an expense when the box is topped up (`pettyTopups`, openings excluded); petty spends are NOT added to Clinic expenses. Consultant payouts are not expenses (the fees are).
 - A month's obligations are due on day `dueDayOf()` (default 15) of the next month; reminders come from `payReminders`.
 - Never delete money records without `auditDelete`; changes append to `history`.
+
+## Planning Board rules (keep these true)
+- A task with a colleague (another login) as assignee has `shared:true` and lives only in `orgs/{id}/tasks`; everything else stays in `users/{uid}/tasks`. `setAssignee` moves it; `pushChanges` writes each kind to its own place in separate batches.
+- Only the reporter (or the Account Manager) deletes a shared task; carried-over notes use a fixed id (`co-<day>`) so two boards never duplicate them.
+- `isMine(it)` decides reminders, the overdue count and Home "My tasks": a task you gave to someone else doesn't nag you.
+- New org-wide switches go in `orgs/{id}.planner` (the Account Manager may only change the fields listed in the `orgs/{o}` update rule).
