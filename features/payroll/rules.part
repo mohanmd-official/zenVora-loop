@@ -1,0 +1,52 @@
+// Attendance (feature: attendance). Staff check-ins are stamped with server time.
+match /attendance/{uid}/events/{eventId} {
+  allow read: if (hasFeature(o, 'attendance')
+                  && (isOrgManager(o) || isProxy(o) || (signedIn() && request.auth.uid == uid && isMember(o))))
+    || supportOpen(o);
+  allow create: if hasFeature(o, 'attendance') && (isOrgManager(o)
+    || (signedIn() && request.auth.uid == uid && isMember(o)
+        && request.resource.data.keys().hasOnly(['type', 'at', 'src'])
+        && request.resource.data.type in ['in', 'out']
+        && request.resource.data.src == 'self'
+        && request.resource.data.at == request.time)
+    || (isProxy(o)
+        && request.resource.data.keys().hasOnly(['type', 'at', 'src', 'by'])
+        && request.resource.data.type in ['in', 'out']
+        && request.resource.data.src == 'proxy'
+        && request.resource.data.by == request.auth.uid
+        && request.resource.data.at == request.time)
+    // an approved regularization: written by the person who approved it, at exactly the requested time
+    || (isMember(o)
+        && request.resource.data.keys().hasOnly(['type', 'at', 'src', 'reg', 'by'])
+        && request.resource.data.src == 'reg'
+        && request.resource.data.type in ['in', 'out']
+        && request.resource.data.by == request.auth.uid
+        && eventId == request.resource.data.reg + '-' + request.resource.data.type
+        && regAfter(o, request.resource.data.reg).uid == uid
+        && regAfter(o, request.resource.data.reg).status == 'approved'
+        && regAfter(o, request.resource.data.reg).decidedBy == request.auth.uid
+        && request.resource.data.at.toMillis() == regAfter(o, request.resource.data.reg).get(request.resource.data.type == 'in' ? 'inAt' : 'outAt', -1)));
+  allow update, delete: if hasFeature(o, 'attendance') && isOrgManager(o);
+}
+
+// Attendance regularization requests: the person (or a Proxy attendance person for them) asks;
+// their immediate reporting manager (or the Account Manager if they report to no one) approves.
+match /attRegs/{r} {
+  allow read: if hasFeature(o, 'attendance') && isMember(o)
+    && (resource.data.uid == request.auth.uid || resource.data.by == request.auth.uid
+        || resource.data.approver == request.auth.uid || isOrgAdmin(o));
+  allow create: if hasFeature(o, 'attendance') && isMember(o)
+    && request.resource.data.status == 'pending'
+    && request.resource.data.by == request.auth.uid
+    && (request.resource.data.uid == request.auth.uid || isProxy(o))
+    && request.resource.data.approver != request.resource.data.uid
+    && request.resource.data.approver == approverOf(o, request.resource.data.uid);
+  allow update: if hasFeature(o, 'attendance') && isMember(o)
+    && (resource.data.approver == request.auth.uid || isOrgAdmin(o))
+    && resource.data.uid != request.auth.uid
+    && resource.data.status == 'pending'
+    && request.resource.data.status in ['approved', 'rejected']
+    && request.resource.data.decidedBy == request.auth.uid
+    && changed().hasOnly(['status', 'decidedBy', 'decidedName', 'decidedAt']);
+  allow delete: if isMember(o) && resource.data.by == request.auth.uid && resource.data.status == 'pending';
+}

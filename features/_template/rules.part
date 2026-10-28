@@ -1,0 +1,4 @@
+// Example feature: only members of an organization that has the "example" switch on
+match /example/{x} {
+  allow read, write: if isMember(o) && hasFeature(o, 'example');
+}

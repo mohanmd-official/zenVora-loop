@@ -1,27 +1,81 @@
 #!/usr/bin/env python3
-"""Builds public/index.html from the modules in src/ (the app is still ONE file when served).
+"""Builds the app (public/index.html) and the security rules (firestore.rules) from core/ + features/.
 
-    python3 build.py           # write public/index.html
-    python3 build.py --check   # only check that public/index.html is up to date (exit 1 if not)
+    python3 build.py                    # build everything
+    python3 build.py --check            # only check that public/index.html and firestore.rules are up to date
+    python3 build.py --only payroll     # core + the named features (comma separated), written to build/ for testing
+    python3 build.py --list             # show the features and their order
 
-Edit the files in src/ — never public/index.html (it is overwritten on every build).
-The modules are joined in file-name order: src/css/*.css into <style>, src/js/*.js into one <script>,
-so everything shares one scope exactly as before (a function in one module can call one in another).
+Layout (edit these, never public/index.html or firestore.rules — both are overwritten on every build):
+    core/shell.html            the page markup; markers show where features are inserted
+    core/css/NN-*.css          core styles. NN < 50 come before the features' styles, NN >= 50 after (theme, toasts …)
+    core/js/NN-*.js            core code, in file-name order
+    core/boot.js               starts the app (always last)
+    core/firestore.rules       core security rules; "// @build:rules" is where each feature's rules.part goes
+    features/<name>/feature.json   {"name", "order", "enabled"}: features are joined in "order"
+    features/<name>/tab.html       its top-bar tab(s)            (optional)
+    features/<name>/view.html      its page section(s)           (optional)
+    features/<name>/css/*.css, js/*.js   its styles and code; js/99-register.js plugs it into core (ZL.add)
+    features/<name>/rules.part     its Firestore rules (inside match /orgs/{o})
+Everything ends up in ONE page and ONE script, so code shares one scope: features use core helpers freely,
+but core only reaches a feature through the hooks it registered (see core/js/03-feature-registry.js).
 """
-import glob, os, sys
+import glob, json, os, sys
 ROOT = os.path.dirname(os.path.abspath(__file__))
-SRC, OUT = os.path.join(ROOT, 'src'), os.path.join(ROOT, 'public', 'index.html')
 read = lambda p: open(p, encoding='utf-8').read()
-def build():
-    shell = read(os.path.join(SRC, 'shell.html'))
-    css = ''.join(read(p) for p in sorted(glob.glob(os.path.join(SRC, 'css', '*.css'))))
-    js = ''.join(read(p) for p in sorted(glob.glob(os.path.join(SRC, 'js', '*.js'))))
-    assert shell.count('/*@build:css*/\n') == 1 and shell.count('//@build:js\n') == 1, 'markers missing in src/shell.html'
-    return shell.replace('/*@build:css*/\n', css).replace('//@build:js\n', js)
+MARK = {'css': '/*@build:css*/\n', 'js': '//@build:js\n', 'tabs': '<!--@build:tabs-->\n', 'views': '<!--@build:views-->\n', 'rules': '// @build:rules\n'}
+
+def features(only=None):
+    out = []
+    for fj in glob.glob(os.path.join(ROOT, 'features', '*', 'feature.json')):
+        d = os.path.dirname(fj); meta = json.loads(read(fj)); meta['dir'] = d; meta['id'] = os.path.basename(d)
+        if only is not None: meta['enabled'] = meta['id'] in only
+        if meta.get('enabled', True): out.append(meta)
+    return sorted(out, key=lambda m: (m.get('order', 50), m['id']))
+
+def files(d, pat):
+    return sorted(glob.glob(os.path.join(d, pat)))
+
+def opt(p):
+    return read(p) if os.path.exists(p) else ''
+
+def build(only=None):
+    F = features(only)
+    core = os.path.join(ROOT, 'core')
+    ccss = files(os.path.join(core, 'css'), '*.css')
+    early = [p for p in ccss if int(os.path.basename(p)[:2]) < 50]; late = [p for p in ccss if p not in early]
+    css = ''.join(read(p) for p in early) + ''.join(read(p) for f in F for p in files(os.path.join(f['dir'], 'css'), '*.css')) + ''.join(read(p) for p in late)
+    js = ''.join(read(p) for p in files(os.path.join(core, 'js'), '*.js'))
+    js += ''.join(read(p) for f in F for p in files(os.path.join(f['dir'], 'js'), '*.js'))
+    js += read(os.path.join(core, 'boot.js'))
+    shell = read(os.path.join(core, 'shell.html'))
+    for k in ('css', 'js', 'tabs', 'views'): assert shell.count(MARK[k]) == 1, f'marker {MARK[k].strip()} missing in core/shell.html'
+    html = (shell.replace(MARK['css'], css).replace(MARK['js'], js)
+            .replace(MARK['tabs'], ''.join(opt(os.path.join(f['dir'], 'tab.html')) for f in F))
+            .replace(MARK['views'], ''.join(opt(os.path.join(f['dir'], 'view.html')) for f in F)))
+    rules = read(os.path.join(core, 'firestore.rules')); assert rules.count(MARK['rules']) == 1, 'marker // @build:rules missing in core/firestore.rules'
+    ind = rules.split(MARK['rules'])[0].rsplit('\n', 1)[-1]          # keep the marker's indentation
+    parts = ''.join(f"// ── feature: {f['name']} (features/{f['id']}/rules.part) ──\n" + opt(os.path.join(f['dir'], 'rules.part')).rstrip('\n') + '\n\n' for f in F)
+    rules = rules.replace(ind + MARK['rules'], ''.join(ind + l + '\n' if l else '\n' for l in parts.rstrip('\n').split('\n')))
+    banner = '// GENERATED by build.py from core/firestore.rules + features/*/rules.part: edit those, then run python3 build.py\n'
+    return html, banner + rules, F
+
 if __name__ == '__main__':
-    html = build()
-    if '--check' in sys.argv:
-        ok = os.path.exists(OUT) and read(OUT) == html
-        print('public/index.html is up to date' if ok else 'public/index.html is OUT OF DATE: run python3 build.py'); sys.exit(0 if ok else 1)
-    open(OUT, 'w', encoding='utf-8').write(html)
-    print(f'built public/index.html ({len(html) // 1024} KB) from {len(glob.glob(os.path.join(SRC, "js", "*.js")))} JS + {len(glob.glob(os.path.join(SRC, "css", "*.css")))} CSS modules')
+    a = sys.argv[1:]
+    only = a[a.index('--only') + 1].split(',') if '--only' in a else None
+    if '--list' in a:
+        for fj in sorted(glob.glob(os.path.join(ROOT, 'features', '*', 'feature.json')), key=lambda p: json.loads(read(p)).get('order', 50)):
+            m = json.loads(read(fj)); print(f"{m.get('order', 50):>3}  {os.path.basename(os.path.dirname(fj)):<16} {'on ' if m.get('enabled', True) else 'off'}  {m['name']}")
+        sys.exit(0)
+    html, rules, F = build(only)
+    OUT, RULES = os.path.join(ROOT, 'public', 'index.html'), os.path.join(ROOT, 'firestore.rules')
+    if '--check' in a:
+        ok1 = os.path.exists(OUT) and read(OUT) == html; ok2 = os.path.exists(RULES) and read(RULES) == rules
+        print('public/index.html is up to date' if ok1 else 'public/index.html is OUT OF DATE: run python3 build.py')
+        print('firestore.rules is up to date' if ok2 else 'firestore.rules is OUT OF DATE: run python3 build.py')
+        sys.exit(0 if ok1 and ok2 else 1)
+    if only is not None:
+        os.makedirs(os.path.join(ROOT, 'build'), exist_ok=True)
+        OUT, RULES = os.path.join(ROOT, 'build', 'index.html'), os.path.join(ROOT, 'build', 'firestore.rules')
+    open(OUT, 'w', encoding='utf-8').write(html); open(RULES, 'w', encoding='utf-8').write(rules)
+    print(f"built {os.path.relpath(OUT, ROOT)} ({len(html) // 1024} KB) + {os.path.relpath(RULES, ROOT)} · features: {', '.join(f['id'] for f in F) or 'none (core only)'}")

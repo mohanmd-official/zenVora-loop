@@ -1,0 +1,105 @@
+// ── Clinic (feature: clinic). Who may do what is set per person by the Account Manager (members/{uid}.perms).
+match /patients/{pid} {
+  allow read: if perm(o, 'patients') || perm(o, 'appointments') || perm(o, 'treatments') || perm(o, 'billing') || supportOpen(o);
+  allow create: if perm(o, 'patients');
+  allow update: if perm(o, 'patients') || perm(o, 'treatments');
+  allow delete: if isOrgAdmin(o) && clinicOn(o);
+  match /photos/{ph} {
+    allow read: if perm(o, 'treatments') || supportOpen(o);
+    allow create, update, delete: if perm(o, 'treatments');
+  }
+  match /photoData/{ph} {
+    allow read: if perm(o, 'treatments') || supportOpen(o);
+    allow create, update, delete: if perm(o, 'treatments');
+  }
+  match /docs/{dk} {
+    allow read: if perm(o, 'patients') || perm(o, 'treatments') || supportOpen(o);
+    allow create, update, delete: if perm(o, 'patients') || perm(o, 'treatments');
+  }
+  match /docData/{dk} {
+    allow read: if perm(o, 'patients') || perm(o, 'treatments') || supportOpen(o);
+    allow create, update, delete: if perm(o, 'patients') || perm(o, 'treatments');
+  }
+}
+match /appointments/{a} {
+  allow read: if perm(o, 'appointments') || perm(o, 'treatments') || perm(o, 'reports') || perm(o, 'doctorReports') || supportOpen(o);
+  allow write: if perm(o, 'appointments') || perm(o, 'treatments');
+}
+match /treatments/{t} {
+  allow read: if perm(o, 'treatments') || perm(o, 'billing') || perm(o, 'reports') || perm(o, 'doctorReports') || perm(o, 'accounts') || supportOpen(o);
+  allow create, delete: if perm(o, 'treatments');
+  allow update: if perm(o, 'treatments') || (perm(o, 'patients') && changed().hasOnly(['docAttached']));
+}
+match /payments/{p} {
+  allow read: if perm(o, 'billing') || perm(o, 'reports') || perm(o, 'accounts') || perm(o, 'tally') || supportOpen(o);
+  allow write: if perm(o, 'billing');
+}
+// Accounts ledger: income, expenses & bills, petty cash, consultant payments.
+// Front desk may only record petty cash spends; only Accounts (the owner) tops petty cash up.
+match /ledger/{l} {
+  allow read: if perm(o, 'accounts') || perm(o, 'reports') || supportOpen(o) || isOwner(o)
+    || (perm(o, 'petty') && resource.data.kind in ['petty', 'pettyspend'])
+    || (perm(o, 'tally') && resource.data.kind == 'expense');
+  // the Chief doctor (owner) may enter the per-patient cost of a consultant's visit (ledger id cf-<appointmentId>)
+  allow create: if perm(o, 'accounts') || (perm(o, 'petty') && request.resource.data.kind == 'pettyspend')
+    || (isOwner(o) && l == 'cf-' + request.resource.data.appointmentId && request.resource.data.kind == 'expense');
+  allow update: if perm(o, 'accounts')
+    || (isOwner(o) && l == 'cf-' + request.resource.data.appointmentId && request.resource.data.kind == 'expense' && resource.data.appointmentId == request.resource.data.appointmentId);
+  allow delete: if perm(o, 'accounts') || (isOwner(o) && l == 'cf-' + resource.data.appointmentId);
+}
+// Audit log: a copy of every deleted money record (ledger entries, tallies). Write-once: nobody can change or remove it.
+match /auditLog/{x} {
+  allow read: if perm(o, 'accounts') || isOwner(o) || supportOpen(o);
+  allow create: if (perm(o, 'accounts') || perm(o, 'tally') || perm(o, 'petty') || isOwner(o)) && request.resource.data.by == request.auth.token.email;
+  allow update, delete: if false;
+}
+match /ledgerDocs/{l} {
+  allow read, write: if perm(o, 'accounts');
+}
+match /tallies/{d} {
+  allow read: if perm(o, 'accounts') || perm(o, 'tally') || perm(o, 'reports') || supportOpen(o);
+  allow write: if perm(o, 'accounts') || perm(o, 'tally');
+}
+match /vendors/{v} {
+  allow read: if perm(o, 'accounts') || perm(o, 'reports') || supportOpen(o);
+  allow write: if perm(o, 'accounts');
+}
+match /doctors/{d} {
+  allow read: if clinicMember(o) || supportOpen(o);
+  allow write: if perm(o, 'setup');
+}
+match /treatmentTypes/{t} {
+  allow read: if clinicMember(o) || supportOpen(o);
+  allow write: if perm(o, 'setup');
+}
+match /medicines/{m} {
+  allow read: if clinicMember(o) || supportOpen(o);
+  allow write: if perm(o, 'setup');
+}
+match /clinicMeta/{d} {
+  // 'orgTasks': organization reminders everyone shares and anyone may close (patient follow-ups, documents, descriptions)
+  // 'ownerTasks': reminders only for the Account Manager and the Chief doctor (accounts closing, vendor & lab payments, tallies)
+  allow read: if (d != 'ownerTasks' && (clinicMember(o) || supportOpen(o))) || (d == 'ownerTasks' && (isOwner(o) || supportOpen(o)));
+  // 'reminders': patient reminders (follow-ups, summaries, documents, missed patients) shared with everyone in the clinic
+  allow write: if (d == 'counter' && (perm(o, 'patients') || perm(o, 'billing')))
+    || (d == 'accounts' && perm(o, 'accounts')) || (d == 'settings' && perm(o, 'setup'))
+    || (d == 'reminders' && clinicMember(o)) || (d == 'orgTasks' && clinicMember(o))
+    || (d == 'ownerTasks' && (isOwner(o) || perm(o, 'accounts')));
+}
+// Patient assists: staff log who they assisted each day; the Chief doctor (perm assistApprove) approves.
+// Staff see only their own entries and the approval status, never the incentive amount.
+match /assists/{x} {
+  allow read: if (clinicMember(o) && resource.data.uid == request.auth.uid)
+    || isOrgAdmin(o) || perm(o, 'assistApprove') || supportOpen(o);
+  allow create: if clinicMember(o) && request.resource.data.uid == request.auth.uid
+    && request.resource.data.status == 'pending';
+  allow update: if (perm(o, 'assistApprove') && changed().hasOnly(['status', 'approvedBy', 'approvedAt', 'approverName']))
+    || (clinicMember(o) && resource.data.uid == request.auth.uid && resource.data.status == 'pending'
+        && request.resource.data.status == 'pending' && request.resource.data.uid == request.auth.uid);
+  allow delete: if isOrgAdmin(o)
+    || (clinicMember(o) && resource.data.uid == request.auth.uid && resource.data.status == 'pending');
+}
+// Incentive amounts and rates: Account Manager only
+match /assistPay/{x} {
+  allow read, write: if isOrgAdmin(o) && clinicOn(o);
+}

@@ -1,0 +1,135 @@
+rules_version = '2';
+// ─────────────────────────────────────────────────────────────────────────────
+// Zenvora Loop: multi-organization security rules
+//
+//  Super Admin (email below)  → onboards / offboards organizations, sets features, theme & billing.
+//                               Can NOT read an organization's people or attendance unless that
+//                               organization's Account Manager approves a time-limited support request.
+//  Account Manager (orgadmin) → admin of their own organization only: people, roles, hierarchy,
+//                               approves support access, sees their billing.
+//  Manager                    → sees and corrects their organization's attendance.
+//  Employee                   → checks in / out, sees own attendance, uses enabled features.
+//  Proxy attendance            → staff the Account Manager ticks (e.g. reception) can check others in and out.
+//  Clinic (feature)           → patients, appointments, treatments, photos, billing, accounts, reports;
+//                               each person's clinic access is set by the Account Manager.
+//
+//  Every organization's data lives under /orgs/{orgId}/…, so organizations never see each other.
+// ─────────────────────────────────────────────────────────────────────────────
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function isSuper() {
+      return signedIn() && request.auth.token.email == 'mohanmd.official@gmail.com';   // ← Super Admin
+    }
+    function orgDoc(o) { return get(/databases/$(database)/documents/orgs/$(o)).data; }
+    function mem(o) { return get(/databases/$(database)/documents/orgs/$(o)/members/$(request.auth.uid)).data; }
+    function isMember(o) {
+      return signedIn() && orgDoc(o).status == 'active'
+        && mem(o).active == true && mem(o).get('removed', false) != true;
+    }
+    function isOrgAdmin(o) { return isMember(o) && mem(o).role == 'orgadmin'; }
+    function isOrgManager(o) { return isMember(o) && mem(o).role in ['orgadmin', 'manager']; }
+    function hasFeature(o, f) { return orgDoc(o).features.get(f, false) == true; }
+    function supportOpen(o) { return isSuper() && orgDoc(o).get('supportUntil', 0) > request.time.toMillis(); }
+    function changed() { return request.resource.data.diff(resource.data).affectedKeys(); }
+    function clinicOn(o) { return hasFeature(o, 'clinic'); }
+    function clinicMember(o) { return isMember(o) && clinicOn(o); }
+    // Proxy attendance: people the Account Manager ticks (members/{uid}.attProxy) may check others in and out
+    function isProxy(o) { return isMember(o) && hasFeature(o, 'attendance') && mem(o).get('attProxy', false) == true; }
+    function regAfter(o, id) { return getAfter(/databases/$(database)/documents/orgs/$(o)/attRegs/$(id)).data; }
+    function memberOf(o, uid) { return get(/databases/$(database)/documents/orgs/$(o)/members/$(uid)).data; }
+    function approverOf(o, uid) {
+      return memberOf(o, uid).get('reportsTo', '') != '' ? memberOf(o, uid).reportsTo : orgDoc(o).get('adminUid', '');
+    }
+    function isOwner(o) { return clinicMember(o) && (mem(o).role == 'orgadmin' || mem(o).get('isChief', false) == true); }
+    function perm(o, p) { return clinicMember(o) && (mem(o).role == 'orgadmin' || mem(o).get('perms', {}).get(p, false) == true); }
+
+    // Login directory: which organization a user belongs to
+    match /accounts/{uid} {
+      allow read: if isSuper() || (signedIn() && request.auth.uid == uid);
+      allow create: if isSuper()
+        || (request.resource.data.keys().hasOnly(['orgId', 'email', 'createdAt'])
+            && isOrgAdmin(request.resource.data.orgId));
+      allow update, delete: if isSuper();
+    }
+
+    match /orgs/{o} {
+      allow read: if isSuper() || isMember(o);
+      allow create: if isSuper() && request.resource.data.get('supportUntil', 0) == 0;
+      // Super Admin manages plan/features/status but can't grant itself support access;
+      // the Account Manager can only approve/revoke support access and keep the seat count.
+      allow update: if (isSuper() && !changed().hasAny(['supportUntil', 'supportBy']))
+        || (isOrgAdmin(o) && changed().hasOnly(['supportUntil', 'supportBy', 'seats', 'logo', 'homeDefault', 'planner']));
+
+      // Planning Board, shared tasks: a task given to a colleague. Only its reporter (createdBy), its assignee
+      // and the Account Manager can see it. Who may give tasks is the Account Manager's switch: orgs/{o}.planner.assign
+      function planOn() { return isMember(o) && hasFeature(o, 'agenda'); }
+      function assignMode() { return orgDoc(o).get('planner', {}).get('assign', 'all'); }
+      function canAssign() { return assignMode() == 'all' || (assignMode() == 'mgr' && isOrgManager(o)); }
+      match /tasks/{t} {
+        allow read: if planOn() && (resource.data.createdBy == request.auth.uid
+          || resource.data.assigneeUid == request.auth.uid || isOrgAdmin(o));
+        allow create: if planOn() && canAssign() && request.resource.data.createdBy == request.auth.uid;
+        allow update: if planOn()
+          && (resource.data.createdBy == request.auth.uid || resource.data.assigneeUid == request.auth.uid || isOrgAdmin(o))
+          && request.resource.data.createdBy == resource.data.createdBy
+          && (request.resource.data.get('assigneeUid', '') == resource.data.get('assigneeUid', '') || canAssign()
+              || resource.data.createdBy == request.auth.uid);
+        allow delete: if planOn() && (resource.data.createdBy == request.auth.uid || isOrgAdmin(o));
+      }
+      // People directory for picking an assignee: names & titles only (members/ stays private to managers)
+      match /dir/{uid} {
+        allow read: if isMember(o);
+        allow create, update: if isOrgAdmin(o)
+          || (isMember(o) && request.auth.uid == uid && request.resource.data.keys().hasOnly(['name', 'title', 'active', 'at'])
+              && request.resource.data.active == true);
+        allow delete: if isOrgAdmin(o);
+      }
+
+      match /members/{uid} {
+        allow read: if (signedIn() && request.auth.uid == uid) || isOrgManager(o) || supportOpen(o) || isProxy(o);
+        // Super Admin may only create the Account Manager it has just assigned on the org
+        allow create: if isOrgAdmin(o)
+          || (isSuper() && request.resource.data.role == 'orgadmin' && orgDoc(o).get('adminUid', '') == uid);
+        allow update: if isOrgAdmin(o)
+          || (isOrgManager(o) && changed().hasOnly(['att']))
+          || (signedIn() && request.auth.uid == uid && changed().hasOnly(['mustChangePassword', 'lastLogin'])
+              && request.resource.data.mustChangePassword == false);
+      }
+
+
+      // Support access requests: Super Admin asks, Account Manager decides
+      match /accessRequests/{r} {
+        allow read: if isSuper() || isOrgAdmin(o);
+        allow create: if isSuper() && request.resource.data.status == 'pending';
+        allow update: if isOrgAdmin(o) || (isSuper() && request.resource.data.status == 'cancelled');
+      }
+
+      // Logins that existed before organizations: Super Admin moves them in, Account Manager adds them
+      match /pending/{uid} {
+        allow read, delete: if isOrgAdmin(o);
+        allow create: if isSuper();
+      }
+
+      // Feature rules: build.py puts each features/<name>/rules.part here
+      // @build:rules
+
+      // Subscription billing: Super Admin writes, Account Manager can view
+      match /invoices/{i} {
+        allow read: if isSuper() || isOrgAdmin(o);
+        allow write: if isSuper();
+      }
+    }
+
+    // Personal Agenda boards (feature: agenda). Private to each person.
+    function myOrg() { return get(/databases/$(database)/documents/accounts/$(request.auth.uid)).data.orgId; }
+    function canPlan() { return isSuper() || (isMember(myOrg()) && hasFeature(myOrg(), 'agenda')); }
+    match /users/{uid} {
+      allow read, write: if signedIn() && request.auth.uid == uid && canPlan();
+      match /{document=**} {
+        allow read, write: if signedIn() && request.auth.uid == uid && canPlan();
+      }
+    }
+  }
+}

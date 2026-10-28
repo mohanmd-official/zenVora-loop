@@ -1,0 +1,31 @@
+/* tables, forms, cards and tags used on every page */
+.atbl{width:100%;border-collapse:separate;border-spacing:0;background:var(--paper);border:1px solid var(--line);border-radius:12px;overflow:hidden;font-variant-numeric:tabular-nums}
+.atbl th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:600;padding:8px 10px;border-bottom:1px solid var(--line);background:var(--paper);white-space:nowrap}
+.atbl td{padding:7px 10px;border-bottom:1px solid var(--line);white-space:nowrap;vertical-align:middle}
+.atbl tr:last-child td{border-bottom:none}
+.atbl tr.wk td{background:var(--panel);font-size:11.5px;font-weight:650;color:var(--muted)}
+.atbl tr.clk{cursor:pointer}
+.atbl tr.clk:hover td{background:var(--panel)}
+.atbl tr.tot td{font-weight:700;background:var(--panel)}
+.atbl .num{text-align:right}
+.atbl .ot{color:var(--done);font-weight:650}
+.atbl .neg{color:var(--high);font-weight:650}
+.awrap{overflow-x:auto;margin-top:10px}
+.acards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px;margin:10px 0}
+.aform{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end}
+.aform label{display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.aform input,.aform select{min-width:110px}
+.payrow{display:flex;justify-content:space-between;gap:10px;padding:4px 0;border-bottom:1px dashed var(--line);font-size:12.5px}
+.payrow:last-child{border-bottom:none;font-weight:800;font-size:14px;padding-top:8px}
+.abk{margin-bottom:8px}
+.pscroll{max-height:calc(100vh - 230px);overflow:auto}.pscroll thead th{position:sticky;top:0;z-index:1;background:var(--paper2,var(--paper))}
+[data-ord] > button{cursor:grab}[data-ord] > button:active{cursor:grabbing}[data-ord] > button.dragging{opacity:.45}
+.ahead{display:flex;align-items:center;gap:10px;margin:4px 0 6px}
+.ahead .uav{width:38px;height:38px;font-size:16px}
+.rtag{font-style:normal;font-size:10.5px;font-weight:700;color:var(--accent-ink);border:1px solid color-mix(in srgb,var(--accent-ink) 45%,transparent);border-radius:999px;padding:0 7px;margin-left:6px;vertical-align:1px}
+.localtag{font-size:11px;color:var(--muted);border:1px dashed var(--line);border-radius:999px;padding:1px 8px}
+button.linkb{border:none;background:none;padding:0 2px;color:var(--accent);font-size:12px;font-weight:600;text-decoration:underline;cursor:pointer}
+.pform .fhead,.fhead{flex-basis:100%;font-weight:700;font-size:12.5px;margin-top:6px}
+.cperm{border-top:1px dashed var(--line);padding-top:6px}
+label.ckl{display:flex;flex-direction:row;gap:6px;align-items:center;text-transform:none;letter-spacing:0;font-size:13px;font-weight:500;color:var(--muted);margin:0}
+label.ckl input{width:auto;margin:0}

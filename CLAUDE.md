@@ -1,66 +1,100 @@
 # Zenvora Loop — notes for Claude
 
-Multi-organization planner + clinic management app (Abbi's Dental Care is the main org). Plain HTML/CSS/JS, no framework,
+Multi-organization planner + feature platform (Abbi's Dental Care is the main org). Plain HTML/CSS/JS, no framework,
 Firebase Auth + Firestore (Spark plan). Deployed to GitHub Pages from `public/` by `.github/workflows/pages.yml`.
 
-## Golden rules (read these first)
-1. **Edit the modules in `src/`, never `public/index.html`.** It is generated: run `python3 build.py` after every change.
-   `python3 build.py --check` tells you if `public/index.html` is out of date. Commit the rebuilt file with the module (the deploy publishes `public/` as is).
-2. The build joins `src/css/*.css` into one `<style>` and `src/js/*.js` into one `<script>` **in file-name order**.
-   Everything shares one global scope, exactly like a single file: a module can call a function from any other module.
-   Only *top-level code that runs immediately* depends on order (e.g. `const` used at load time must be in an earlier file).
-3. Only open the module you need. Find a function with `grep -n "function name\|const name" src/js/*.js`.
-4. Keep the house style: compact one-line handlers, template strings for HTML, `esc()` on every user value, `inr()` for money.
-5. Firestore rules live in `firestore.rules`; if a change needs new access, update the rules **and** tell the user to publish them
-   (`pbcopy < firestore.rules`, then Firebase console → Firestore → Rules → Publish).
-6. After a change, the user deploys with `git add -A && git commit -m "…" && git push`.
+## Layout: core + one folder per feature
+```
+core/                 the platform: sign-in, Super Admin (onboard / offboard organizations), Organization page,
+                      Planning Board (tasks, team tasks), Home frame, the left "Features" menu, the feature registry
+features/payroll/     Attendance & payroll: check-in/out, team attendance, regularization, work timing, pay
+features/dental-clinic/  Dental clinic: patients, appointments, billing, accounts, reports, clinic reminders
+features/_template/   copy this to start a new feature (README inside)
+build.py              joins everything → public/index.html + firestore.rules (both GENERATED: never edit them)
+```
+Each feature folder: `feature.json` (name, order, enabled) · `tab.html` · `view.html` · `css/*.css` · `js/*.js`
+(ending with `99-register.js`) · `rules.part` (its Firestore rules, placed inside `match /orgs/{o}`).
 
-## Module map — `src/js/`
+## Golden rules (read these first)
+1. **Edit `core/` or `features/<name>/`, then run `python3 build.py`.** `python3 build.py --check` says if the
+   generated files are out of date. Commit the rebuilt `public/index.html` and `firestore.rules` with your change.
+2. **Core never calls a feature's functions by name.** It asks the registry (`core/js/03-feature-registry.js`):
+   views, menu, route, home widgets, person fields, board panel, task links, reset/start hooks. A feature plugs in
+   with `ZL.add({...})` in its `js/99-register.js`. Features may use anything in core (helpers, `cloud`, `state` …).
+3. **One feature talks to another only through `api`:** `ZL.api('payroll')` / `ZL.api('dental-clinic')` (null when
+   that feature isn't built). Example: Clinic → Accounts → Staff salary uses `PAY().attSummary(...)`.
+4. **Prove a feature is removable** after changing links between parts:
+   `python3 build.py --only payroll` / `--only dental-clinic` / `--only ""` (core only) write to `build/`.
+   Lint each for undefined names (eslint `no-undef`): there must be none.
+5. Everything is still ONE page and ONE script (one global scope). Order: core/js (file-name order) → each feature's
+   js (feature `order`, then file name) → core/boot.js. CSS: core/css `NN < 50` → features' css → core/css `NN >= 50`.
+   Only *top-level code that runs immediately* depends on this order.
+6. Keep the house style: compact one-line handlers, template strings for HTML, `esc()` on every user value, `inr()` for money.
+7. Rules: edit `core/firestore.rules` or `features/<name>/rules.part`, rebuild, and tell the user to publish
+   (`pbcopy < firestore.rules`, then Firebase console → Firestore → Rules → Publish).
+8. The user deploys with `git add -A && git commit -m "…" && git push`.
+
+## Core — `core/js/`
 | File | What's inside |
 |---|---|
-| 01-core-utils-state | constants, `$`, `esc`, dates (`dayKey`, `shiftDay`, `parseDay`, `todayKey`), app state, task logic |
-| 02-render-routing-menus | `render`, `setView`, `renderSoon`, URL routing (`#/clinic/...`), drag-to-reorder top tabs |
-| 03-planner-board | Planning Board: kanban, calendar, all tasks, insights + charts, add form, task modal, reminders/notifications, tooltip |
-| 04-toolbar-navigation | top toolbar buttons, keyboard shortcuts, export/import |
-| 05-cloud-auth-login | Firebase start-up (`boot`, `startUser`), `refreshTabs` (which tabs show), `plannerCfg`/`remOn`/`agendaOn` (org Planning Board switches), theme, sync (`pushChanges`: personal tasks → users/, shared → orgs/{id}/tasks), sign-in & password pages, creating logins |
-| 05b-team-tasks | Jira-style assignment: `team`, `setAssignee`, `assigneeOpts`, shared-task listeners (`teamStart`, `mergeShared`), people directory (`dirSync`), avatars, assignee bar `renderWhoBar`, Team dialog, `isMine` |
-| 06-organization | Organization page: People (add/edit, work timing), org chart, **Planning Board switches** (`orgPlanner`, `savePlanner`), support access, billing |
-| 07-super-admin | Super Admin: onboarding organizations, features (agenda/attendance/payroll/clinic), plans |
-| 08-clinic-core-patient-list | clinic data (`cl`, doctors, treatment list), `nextNumber`, **left feature menu `renderSideNav`** (Attendance + Clinic ▾; Home/Org/Board stay in the top bar), `renderClinic`, Patients list & search |
-| 09-clinic-patient-record | patient profile, treatments, medicines/Rx, billing tab, receipts (`printDoc`, `printReceipt`), visits, photos |
-| 10-clinic-appointments | Appointments day/week grid, doctor colours, status filters, booking (new/existing patient), auto-missed |
-| 11-clinic-shared-ui | reorderable sub-menus (`ordered`), report date range bar, charts (`stackChart`, `hbarChart`) |
-| 12-accounts-core-overview | Accounts tabs + data loader `clAccLoad`, payment-due helpers (`dueFor`, `svcMonth`, `payState`), audit (`withHist`, `auditDelete`), expense sources (`expensesOf`), Overview |
-| 13-accounts-expenses-petty-vendors | expense form `expForm`, **Clinic expenses overview**, Petty cash, Lab / Materials vendors & bills |
-| 14-accounts-consultants-salary | Consultants (visits, cost per patient, statements), Staff salary (`loadStaffPay`) |
-| 15-accounts-setup-import | Commitments & categories (due day), past data, audit log view, year-end audit pack |
-| 16-accounts-daily-tally | Daily tally (opening, denominations, reconciliation, digital modes, month table) |
-| 17-accounts-forms-save | `accSubmit`: saving every Accounts form (expenses, petty, vendors, commitments, imports) |
-| 18-reports | Reports (collection, treatments, doctors, outstanding, appointments, new patients), CSV/print |
-| 19-clinic-setup | Clinic setup page (doctors + colours, treatment & medicine price lists, receipt details) |
-| 20-clinic-events | **event handlers for all clinic pages** (clicks, changes, inputs), appointment drag-to-reschedule, tooth chart, type-to-search dropdowns, visit totals |
-| 21-visit-summary-docs | "What happened in this appointment?" (treatments, medicines, no-treatment/no-medicine), patient documents |
-| 22-planning-board-sync | `clinicSync` → Planning Board reminders (org + owner), payment reminders `payReminders`, `otMerge`, `openLink` |
-| 23-home-widgets | Home page widgets |
-| 24-visit-billing | bill after a visit: payment with bill date, No bill, complete visit, print |
-| 25-patient-assists | Patient assists + incentives (`incentivesByUid`) |
-| 26-attendance-regularization | regularization requests & approvals |
-| 27-dentee-import | importing the Dentee Excel export |
-| 28-attendance | Attendance (check-in/out, team, month editor, pay, Sundays, incentives) |
-| 29-boot | starts the app (`boot()`), test hook `window.__zl` |
+| 01-core-utils-state | constants, `$`, `esc`, dates (`dayKey`, `shiftDay`, `parseDay`, `todayKey`), planner state, task logic |
+| 02-shared-helpers | `inr`, `fullName`, `firstName`, `numberTables`, `kpi`, `tbl`, `docsOf`, `paidSum`, `hm`, `hm12`, `hms`, `tsMs`, `monthBounds`, `monthLabel`, `mShift`, `days`, `greet` |
+| 03-feature-registry | `ZL` (add / api / each / part / views / linkOwner), `openLink`, `resetFeatures`; the list of hooks |
+| 04-render-routing-menus | `render`, `setView`, `renderSoon`, URL routing (features add theirs via `route`), drag-to-reorder top tabs |
+| 05-feature-menu | reorderable sub-menus (`ordered`, `saveOrd`), the left **Features** menu `renderSideNav` (built from `views` + `menu`) |
+| 06-planner-board | Planning Board: kanban, calendar, all tasks, insights + charts, add form, task panel, reminders/notifications |
+| 07-toolbar-navigation | toolbar buttons, keyboard shortcuts (features add `key`), export/import |
+| 08-cloud-auth-login | Firebase start-up (`boot`, `startUser`), `refreshTabs`, `plannerCfg`/`remOn`/`agendaOn`, sync (`pushChanges`), sign-in & passwords, `FEATURES` (Super Admin switches; features add `flags`) |
+| 09-team-tasks | Jira-style assignment: `setAssignee`, shared tasks (`orgs/{id}/tasks`), people directory, avatars, assignee bar, Team dialog, `isMine` |
+| 10-organization | Organization page: People (features add fields via `person`), org chart, Planning Board switches, support access, billing |
+| 11-super-admin | Super Admin: onboarding / offboarding organizations, features, plans, support view |
+| 12-home | Home frame: layout, Customize, core widgets (tasks, team, quick actions, notes, Super Admin widgets); features add `home.widgets` |
+| boot.js | starts the app, test hook `window.__zl` (features add via `expose`) |
 
-`src/css/` follows the same areas (base/planner, auth, attendance, organizations, clinic layout & appointments, home,
-visits/tally/accounts, toasts, theme refresh, team tasks: cards, task panel `.tmodal`, assignee bar, switches). `src/shell.html` is the page markup (header, views, dialogs).
+## Payroll — `features/payroll/js/`
+| File | What's inside |
+|---|---|
+| 01-attendance-regularization | regularization requests & approvals (`regLoad`, `wRegs`) |
+| 02-attendance | Attendance (`att`, check-in/out `punch`, team, month editor, work timing `wtFields`/`wtRead`, `attSummary`, pay, Sundays, incentives) |
+| 03-home-widgets | Home: Check in / out, Mark attendance (`attHome`) |
+| 99-register | flags attendance + payroll, view `attendance` (key 5), Home widgets, person fields, `api` for other features |
+
+## Dental Clinic — `features/dental-clinic/js/`
+| File | What's inside |
+|---|---|
+| 01-core-patient-list | clinic data (`cl`, `can`/`canW`, `CSECS` pages, `CI` icons, `PAY()`), `renderClinic`, Patients list & search |
+| 02-patient-record | patient profile, treatments, medicines/Rx, billing tab, receipts (`printDoc`, `printReceipt`), visits, photos |
+| 03-appointments | Appointments day/week grid, doctor colours, status filters, booking, auto-missed |
+| 04-shared-ui | report date range bar, charts (`stackChart`, `hbarChart`) |
+| 05-accounts-core-overview | Accounts tabs + `clAccLoad`, payment-due helpers (`dueFor`, `svcMonth`, `payState`), audit (`withHist`, `auditDelete`), `expensesOf`, Overview |
+| 06-accounts-expenses-petty-vendors | expense form, Clinic expenses overview, Petty cash, Lab / Materials vendors |
+| 07-accounts-consultants-salary | Consultants, Staff salary (`loadStaffPay`, needs Payroll) |
+| 08-accounts-setup-import | Commitments & categories (due day), past data, audit log view, year-end pack |
+| 09-accounts-daily-tally | Daily tally |
+| 10-accounts-forms-save | `accSubmit`: saving every Accounts form |
+| 11-reports | Reports (collection, treatments, doctors, outstanding, appointments, new patients) |
+| 12-setup | Clinic setup (doctors + colours, price lists, receipt details) |
+| 13-events | event handlers for all clinic pages, `clGoSec`, drag-to-reschedule, tooth chart, type-to-search, `clinicAccessHtml` |
+| 14-visit-summary-docs | "What happened in this appointment?", patient documents |
+| 15-planning-board-sync | `clinicSync` → Planning Board reminders, `payReminders`, `otMerge`, `renderOrgRem`, `clOpenLink` |
+| 16-visit-billing | bill after a visit |
+| 17-patient-assists | Patient assists + incentives (`loadIncentives`, shared with Payroll via `api`) |
+| 18-dentee-import | importing the Dentee Excel export |
+| 19-home-widgets | Home: Reminders, Today's appointments, Clinic today, quick actions (`clHome`) |
+| 99-register | flag clinic, view + left menu with pages, routes `#/clinic/...`, board panel, task links, Home, person fields |
+
+## Adding a feature
+`cp -r features/_template features/<name>` → edit `feature.json` (`enabled: true`, `order`), ids in `tab.html`/`view.html`,
+code in `js/`, hooks in `js/99-register.js`, rules in `rules.part` → `python3 build.py`. The Super Admin turns its flag on per organization.
 
 ## Data (Firestore) in one glance
 - `orgs/{orgId}`: org settings & features, `planner` {board, rem, assign:'all'|'mgr'|'off'} (Account Manager); `tasks/{id}` (a task given to a colleague: `createdBy`, `assigneeUid`, `assignee`{uid,name}, `shared:true`); `dir/{uid}` (name, title only, for picking assignees); `members/{uid}` (role orgadmin/manager/employee, `perms`, `att` work timing & salary, `isChief`).
+- Payroll: `attendance/{uid}/events`, `attRegs`.
 - Clinic: `patients` (+ docs/photos), `appointments`, `treatments` (`kind:'medicine'` for medicines), `payments`, `doctors`,
-  `treatmentTypes`, `medicines`, `assists`, `assistPay`.
-- Accounts: `ledger` (kind `expense` | `income` | `petty` (top-up, a transfer) | `pettyspend` | `cpayout`; expenses carry
-  `serviceMonth`, `dueDate`, `paid`, `paidDate`, `history`), `ledgerDocs` (bill copies), `tallies/{date}`, `vendors`, `auditLog` (write-once).
-- `clinicMeta`: `counter`, `settings`, `accounts` (commitments, categories, `dueDay`, closed months), `orgTasks` / `ownerTasks` (shared reminders).
-- `attendance/{uid}/events`, `attRegs`.
-- Permissions in the app: `can(p)` / `canW(p)` with p in patients, appointments, treatments, billing, accounts, petty, tally, reports,
+  `treatmentTypes`, `medicines`, `assists`, `assistPay`; Accounts: `ledger` (kind `expense` | `income` | `petty` (top-up) | `pettyspend` | `cpayout`; expenses carry
+  `serviceMonth`, `dueDate`, `paid`, `paidDate`, `history`), `ledgerDocs`, `tallies/{date}`, `vendors`, `auditLog` (write-once);
+  `clinicMeta`: `counter`, `settings`, `accounts`, `orgTasks` / `ownerTasks` (shared reminders).
+- Clinic permissions: `can(p)` / `canW(p)` with p in patients, appointments, treatments, billing, accounts, petty, tally, reports,
   doctorReports, setup; `isOwnerLike()` = Account Manager or Chief doctor.
 
 ## Accounting rules (keep these true)

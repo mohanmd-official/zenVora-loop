@@ -1,0 +1,18 @@
+/* the "Features" menu on the left (filled by the features in features/) */
+.clnav{border-right:1px solid var(--line);padding:12px 8px;display:flex;flex-direction:column;gap:2px;background:var(--panel);overflow:auto}
+.clnavt{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:2px 10px 8px}
+.clnav :is(button,a){display:flex;align-items:center;gap:10px;border:0;background:none;text-align:left;padding:9px 10px;border-radius:9px;color:var(--muted);font-weight:550;font-size:13.5px}
+.clnav :is(button,a) svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.clnav :is(button,a):hover{background:var(--paper);color:var(--ink)}
+.clnav :is(button,a).on{background:var(--paper);color:var(--accent-ink);box-shadow:var(--shadow),inset 3px 0 0 var(--accent)}
+body.sidenav #clSeg{position:fixed;left:0;top:var(--hdrH,64px);bottom:0;width:210px;z-index:6;border-top:1px solid var(--line)}
+body.sidenav > .view, body.sidenav > .supbar, body.sidenav > .add{margin-left:210px}
+body.sidenav #tabs .ftab{display:none}   /* features live in the left menu */
+.sn-main{display:flex;flex-direction:column;gap:2px;margin-bottom:2px}
+.clnav a.sn-master{color:var(--ink);font-weight:700}.sn-chev{margin-left:auto;font-style:normal;padding:2px 9px;border-radius:6px;color:var(--muted);cursor:pointer}.sn-chev:hover{background:var(--line)}
+.sn-sub{display:flex;flex-direction:column;gap:2px;margin:2px 0 0 12px;padding-left:6px;border-left:2px solid color-mix(in srgb,var(--accent) 35%,var(--line))}
+.sn-sub a{padding:7px 10px!important;font-size:13px!important}
+@media (max-width:820px){body.sidenav #tabs .ftab{display:flex}body.sidenav #clSeg{position:static;width:auto;flex:none;display:none}body.sidenav.insubnav #clSeg{display:flex}
+  body.sidenav .sn-main,body.sidenav .sn-master,body.sidenav #clSeg > .clnavt{display:none!important}body.sidenav .sn-sub{margin:0;border:0;padding:0;flex-direction:row;flex-wrap:wrap}body.sidenav .sn-sub[hidden]{display:flex!important}
+  body.sidenav > .view, body.sidenav > .supbar, body.sidenav > .add{margin-left:0}}
+@media (max-width:820px){.clnav{flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line);padding:6px}.clnavt{display:none}.clnav :is(button,a){flex:none}}
