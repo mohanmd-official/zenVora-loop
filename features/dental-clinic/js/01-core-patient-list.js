@@ -114,7 +114,7 @@ function renderClinic(){
   cl.clear = false; cl.fkey = fkey;
   body.innerHTML = ({patients:() => cl.pid || cl.newP ? clPatient() : clPatients(), appointments:clAppointments, accounts:clAccounts, reports:clReports, assists:clAssists, setup:clSetup})[cl.sec]();
   if (saved) saved.forEach(([id, v]) => { const e = document.getElementById(id); if (e && body.contains(e) && !e.disabled && !['clQ', 'aPick', 'rgDate'].includes(e.id)){ if (e.type === 'checkbox') e.checked = v; else e.value = v; } });
-  tallyCalc();
+  tallyCalc(); if ($('#pyCash')) cashRefresh('py');
   if ($('#tfDoc') && $('#tfFeeWrap')){ const dd = cl.doctors.find(x => x.id === $('#tfDoc').value); $('#tfFeeWrap').hidden = !(dd && dd.type === 'consultant'); }
   body.scrollTop = y;
   if (cl.sec === 'reports') clRunReport();

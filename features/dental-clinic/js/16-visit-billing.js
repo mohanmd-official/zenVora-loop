@@ -34,13 +34,14 @@ function drawBill(){
         <label>Amount (₹)<input type="number" id="vbAmt" min="1" value="${due > 0 ? due : ''}"></label>
         <label>Mode<select id="vbMode">${PMODES.map(([k, l]) => `<option value="${k}">${l}</option>`).join('')}</select></label>
         <label class="grow">Note<input id="vbNote" placeholder="e.g. OPG + consultation"></label>
-        <button class="primary" type="submit">Save payment</button></form>` : '<p class="stat">You don\'t have Billing access: the front desk will take the payment from the queue (status "At billing").</p>'}
-    ${visitPays.length ? `<div class="hh">Receipts for this visit</div>${visitPays.map(x => `<div class="trow"><b>${esc(x.receiptNo)} · ${inr(x.amount)} · ${esc((PMODES.find(m => m[0] === x.mode) || [0, x.mode])[1])}</b><button data-vbrcpt="${esc(x.id)}">🖨 Print receipt</button></div>`).join('')}` : ''}
+        <button class="primary" type="submit">Save payment</button>${cashPanel('vb', true)}</form>` : '<p class="stat">You don\'t have Billing access: the front desk will take the payment from the queue (status "At billing").</p>'}
+    ${visitPays.length ? `<div class="hh">Receipts for this visit</div>${visitPays.map(x => `<div class="trow"><b>${esc(x.receiptNo)} · ${inr(x.amount)} · ${esc((PMODES.find(m => m[0] === x.mode) || [0, x.mode])[1])}</b>${x.cash ? `<span class="stat">${esc(cashLine(x))}</span>` : ''}<button data-vbrcpt="${esc(x.id)}">🖨 Print receipt</button></div>`).join('')}` : ''}
     <div class="btnrow" style="margin-top:14px">
       <button data-vbprint>🖨 Print bill</button><span class="sp"></span>
       ${w ? `<label class="vbchk" title="Complete the visit without taking a payment"><input type="checkbox" id="vbNoPay"${B.noPay ? ' checked' : ''}> <b>No bill</b>&nbsp;${visitNet > 0 ? `(no payment now: ${inr(due)} stays due)` : '(nothing to charge for this visit)'}</label>
         <button class="primary" id="vbDone"${done || B.noPay ? '' : ' disabled'}>Complete visit ✓</button>` : '<button id="vbLeave">Leave for billing</button>'}</div>`;
   numberTables($('#clOvBody'));
+  if ($('#vbCash')) cashRefresh('vb');
 }
 function printVisitBill(){
   const B = cl.bill, a = B.appt, visitT = B.T.filter(t => t.appointmentId === a.id && t.status !== 'planned'), visitPays = B.P.filter(x => x.appointmentId === a.id), due = billed(B.T) - paidSum(B.P);
@@ -57,10 +58,13 @@ async function saveVisitPayment(){
   const {F} = cloud, B = cl.bill, a = B.appt, amount = Math.round(+$('#vbAmt').value || 0);
   if (amount <= 0) return info('Enter the amount received.');
   if ((($('#vbDate') || {}).value || '') > todayKey) return info("The bill date can't be in the future.");
+  let cash = null;
+  try { cash = $('#vbMode').value === 'cash' ? cashRead('vb', amount) : null; } catch(e){ return info(errText(e)); }
   try {
     const receiptNo = await nextNumber('receipt', 'R-', 5);
     const x = {patientId:a.patientId, patientName:a.patientName, appointmentId:a.id, date:($('#vbDate') || {}).value || todayKey, amount, mode:$('#vbMode').value, doctorId:a.doctorId, note:$('#vbNote').value.trim(), receiptNo, createdAt:Date.now(), by:cloud.user.email || ''};
-    const ref = await F.addDoc(cCol('payments'), x);
+    if (cash) x.cash = cash;
+    const ref = await savePaymentDoc(x); CDX.vb = 0;
     B.P.push(Object.assign({id:ref.id}, x)); drawBill(); info(`${inr(amount)} received · ${receiptNo}`);
     // back-entry: the bill is dated earlier than the visit → offer to move the visit and its treatments to the bill date too,
     // so reports (collection, treatments, new patients, appointments) all show the same day

@@ -42,10 +42,13 @@ match /ledger/{l} {
     || (perm(o, 'tally') && resource.data.kind == 'expense');
   // the Chief doctor (owner) may enter the per-patient cost of a consultant's visit (ledger id cf-<appointmentId>)
   allow create: if perm(o, 'accounts') || (perm(o, 'petty') && request.resource.data.kind == 'pettyspend')
-    || (isOwner(o) && l == 'cf-' + request.resource.data.appointmentId && request.resource.data.kind == 'expense');
+    || (isOwner(o) && l == 'cf-' + request.resource.data.appointmentId && request.resource.data.kind == 'expense')
+    // billing: a patient's change taken from the petty box (ledger chg-<paymentId>, written with the payment)
+    || (perm(o, 'billing') && l == 'chg-' + request.resource.data.paymentId && request.resource.data.kind == 'pettyspend' && request.resource.data.change == true);
   allow update: if perm(o, 'accounts')
     || (isOwner(o) && l == 'cf-' + request.resource.data.appointmentId && request.resource.data.kind == 'expense' && resource.data.appointmentId == request.resource.data.appointmentId);
-  allow delete: if perm(o, 'accounts') || (isOwner(o) && l == 'cf-' + resource.data.appointmentId);
+  allow delete: if perm(o, 'accounts') || (isOwner(o) && l == 'cf-' + resource.data.appointmentId)
+    || (perm(o, 'billing') && l == 'chg-' + resource.data.paymentId && resource.data.get('change', false) == true);    // deleting the payment gives the change back
 }
 // Audit log: a copy of every deleted money record (ledger entries, tallies). Write-once: nobody can change or remove it.
 match /auditLog/{x} {

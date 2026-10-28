@@ -187,6 +187,7 @@ function clBilling(){
       <label>Towards doctor<select id="pyDoc">${docOpts(cl.p.primaryDoctorId, '— Clinic —')}</select></label>
       <label class="grow">Note<input id="pyNote" placeholder="e.g. RCT first sitting"></label>
       <button class="primary" type="submit">Save &amp; receipt</button>
+      ${cashPanel('py', true)}
     </form></div>` : ''}
     <div class="awrap" style="margin-top:0"><table class="atbl"><thead><tr><th>Receipt</th><th>Date</th><th>Mode</th><th>Note</th><th class="num">Amount</th><th></th></tr></thead><tbody>
       ${cl.pP === null ? '<tr><td colspan="6">Loading…</td></tr>' : P.map(x => `<tr data-pay="${esc(x.id)}"><td>${esc(x.receiptNo || '')}</td><td>${esc(fmtShort(x.date))}</td><td>${esc((PMODES.find(m => m[0] === x.mode) || [0, x.mode])[1])}</td><td>${esc(x.note || '')}</td><td class="num"><b>${inr(x.amount)}</b></td>
@@ -208,7 +209,7 @@ function printDoc(title, inner){
 function printReceipt(x, c){
   const p = (c && c.p) || cl.p, PT = (c && c.T) || cl.pT, P0 = (c && c.P) || cl.pP || [], P = P0.some(y => y.receiptNo === x.receiptNo) ? P0 : P0.concat([x]);
   printDoc('Payment receipt ' + (x.receiptNo || ''), `<p><b>Received from:</b> ${esc(pName(p))} (${esc(p.code || '')}) · ${esc(p.phone || '')}<br><b>Date:</b> ${esc(fmtLong(x.date))}<br><b>Mode:</b> ${esc((PMODES.find(m => m[0] === x.mode) || [0, x.mode])[1])}${x.doctorId ? `<br><b>Doctor:</b> ${esc(dName(x.doctorId))}` : ''}</p>
-    <table><tr><th>Description</th><th class="n">Amount</th></tr><tr><td>${esc(x.note || 'Dental treatment')}</td><td class="n">${inr(x.amount)}</td></tr><tr class="tot"><td>Total received</td><td class="n">${inr(x.amount)}</td></tr></table>
+    <table><tr><th>Description</th><th class="n">Amount</th></tr><tr><td>${esc(x.note || 'Dental treatment')}</td><td class="n">${inr(x.amount)}</td></tr><tr class="tot"><td>Total received</td><td class="n">${inr(x.amount)}</td></tr></table>${x.cash ? `<p class="muted">Cash: ${esc(cashLine(x))}</p>` : ''}
     <p class="muted">Treatment cost to date ${inr(billed(PT))} · paid ${inr(paidSum(P))} · balance ${inr(billed(PT) - paidSum(P))}</p>`);
 }
 /* patient's appointments */

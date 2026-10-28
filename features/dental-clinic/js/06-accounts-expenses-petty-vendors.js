@@ -75,7 +75,7 @@ function accPetty(d){
   const dflt = a.month === todayKey.slice(0, 7) ? todayKey : mEnd(a.month);
   const bal = d.pettyBal, everIn = (d.pin || []).length;
   return `<div class="kpis">${kpi('Cash in the petty box', inr(Math.max(0, bal)), bal < 0 ? `<span class="neg">${inr(-bal)} spent more than was topped up</span>` : 'top-ups minus spends: count the box to check', bal < 0 ? 'neg' : '')}
-      ${kpi('Topped up this month', inr(tin), esc(monthLabel(a.month)))}${kpi('Spent this month', inr(tout), plural(L.filter(x => x.kind === 'pettyspend').length, 'spend'))}</div>
+      ${kpi('Topped up this month', inr(tin), esc(monthLabel(a.month)))}${kpi('Spent this month', inr(tout), plural(L.filter(x => x.kind === 'pettyspend' && !x.change).length, 'spend') + (L.some(x => x.change) ? ` · ${inr(paidSum(L.filter(x => x.change)))} given as change` : ''))}</div>
     ${bal < 0 || !everIn ? `<div class="nag${bal < 0 ? ' late' : ''}">${bal < 0 ? `⚠ ${inr(-bal)} more has been recorded as spent than was ever topped up, so the balance can't be right.` : 'No top-up or opening balance has been recorded yet.'} ${owner ? 'Count the cash in the petty box and enter it below: that sets the correct balance.' : 'Ask the clinic owner to count the box and set the opening balance.'}</div>` : ''}
     <div class="acards">
       ${owner ? `<div class="box"><h3>Count the box / opening balance <span class="sub">enter the cash in the petty box right now</span></h3><form class="aform" id="accPcountForm" novalidate>
@@ -90,7 +90,7 @@ function accPetty(d){
         <label class="grow">Spent on *<input id="poNote" placeholder="e.g. Tea, courier, cleaning supplies"></label><button class="primary" type="submit">Add spend</button></form></div>` : ''}
     </div>
     <div class="awrap"><table class="atbl"><thead><tr><th>Date</th><th>Entry</th><th>Note</th><th class="num">Top-up</th><th class="num">Spent</th><th>By</th><th></th></tr></thead><tbody>
-      ${L.map(x => `<tr data-led="${esc(x.id)}"><td>${esc(fmtShort(x.date))}</td><td>${x.kind === 'petty' ? (x.opening ? '<b>Opening / count</b>' : '<b>Top-up</b>') : x.adjust ? 'Count correction' : 'Spend'}</td><td>${esc(x.note || '')}</td><td class="num">${x.kind === 'petty' ? inr(x.amount) : ''}</td><td class="num">${x.kind === 'pettyspend' ? inr(x.amount) : ''}</td><td class="stat">${esc((x.by || '').split('@')[0])}</td><td>${owner ? '<button class="danger" data-ldel>✕</button>' : ''}</td></tr>`).join('') || '<tr><td colspan="7" class="stat">No petty cash entries this month.</td></tr>'}
+      ${L.map(x => `<tr data-led="${esc(x.id)}"><td>${esc(fmtShort(x.date))}</td><td>${x.kind === 'petty' ? (x.opening ? '<b>Opening / count</b>' : '<b>Top-up</b>') : x.adjust ? 'Count correction' : x.change ? '<span title="Taken from the petty box to give a patient their change; the patient\'s notes went into the purse (see the daily tally)">Change to a patient</span>' : 'Spend'}</td><td>${esc(x.note || '')}</td><td class="num">${x.kind === 'petty' ? inr(x.amount) : ''}</td><td class="num">${x.kind === 'pettyspend' ? inr(x.amount) : ''}</td><td class="stat">${esc((x.by || '').split('@')[0])}</td><td>${owner && !x.change ? '<button class="danger" data-ldel>✕</button>' : x.change ? '<span class="stat" title="Delete the payment to undo it">from billing</span>' : ''}</td></tr>`).join('') || '<tr><td colspan="7" class="stat">No petty cash entries this month.</td></tr>'}
     </tbody></table></div>`;
 }
 function accVendorTab(type){

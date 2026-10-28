@@ -50,7 +50,7 @@
 #whoBar .sp{flex:1}
 
 /* task detail panel (Jira style): main column + details sidebar */
-#ov,#teamOv{z-index:30}
+.ov{z-index:30}                                   /* every dialog sits above the sticky top bar */
 .modal.tmodal{width:min(940px,100%);padding:0;overflow:hidden;display:flex;flex-direction:column;max-height:min(92vh,100%)}
 .tm-head{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line)}
 .tm-head .sp{flex:1}

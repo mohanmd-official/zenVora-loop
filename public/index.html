@@ -710,6 +710,25 @@ tr.sel td{background:color-mix(in srgb,var(--accent) 7%,transparent)}
 .extag{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11.5px;font-weight:700;color:var(--c);background:color-mix(in srgb,var(--c) 12%,var(--paper));white-space:nowrap}
 a.srcl0{text-decoration:none}.extbl td{vertical-align:middle}.nowrap{white-space:nowrap}button.xdel{color:var(--high);padding:2px 7px}
 .orow .sub2{display:block}
+/* cash denominations at billing */
+.cashd{flex-basis:100%;border:1px solid var(--line);border-radius:14px;background:var(--paper2);padding:12px 14px;display:flex;flex-direction:column;gap:10px;margin-top:4px}
+.cashd .cdh{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.cashd .cdl{font-size:12px;font-weight:700;color:var(--ink);text-transform:none;letter-spacing:0;display:flex;gap:8px;align-items:baseline}
+.cashd .cdl b{margin-left:auto;font-variant-numeric:tabular-nums;font-size:13px}.cashd .cdl small{color:var(--muted);font-weight:500}
+.cashd .cdsec{display:flex;flex-direction:column;gap:6px}.cashd .cdsec.dim{opacity:.45}
+.cdgrid{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:6px}
+.cdgrid label{display:flex!important;flex-direction:column!important;gap:2px!important;text-transform:none!important;letter-spacing:0!important;font-size:11.5px!important;color:var(--muted);font-weight:650}
+.cdgrid input{min-width:0!important;width:100%;text-align:center;padding:5px 4px}
+.cashd .cdchg{font-size:13px;padding:6px 10px;border-radius:9px;background:color-mix(in srgb,var(--prog) 12%,transparent)}
+.cashd .cdx{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.cashd .cdx select,.cashd .cdx input{width:auto;min-width:0}.cashd .cdx input[type=number]{width:120px}
+.cashd .cdst{font-size:12.5px;font-weight:650;padding:6px 10px;border-radius:9px}
+.cashd .cdst.ok{color:var(--done);background:color-mix(in srgb,var(--done) 12%,transparent)}
+.cashd .cdst.bad{color:var(--high);background:color-mix(in srgb,var(--high) 10%,transparent)}
+.cashd .cdst.wait{color:var(--muted);background:var(--panel)}
+.cashd[hidden]{display:none}
+.nag.soft{background:color-mix(in srgb,var(--todo) 9%,var(--paper));border-color:color-mix(in srgb,var(--todo) 30%,var(--line));color:var(--ink);margin:0 0 8px;font-size:12.5px}
+.cdmini{color:var(--muted)}
+@media (max-width:620px){.cdgrid{grid-template-columns:repeat(5,minmax(0,1fr))}}
 /* ---------- toasts ---------- */
 .toasts{position:fixed;top:12px;right:12px;display:flex;flex-direction:column;gap:8px;z-index:40;width:min(340px,calc(100% - 24px))}
 .toast{background:var(--paper);border-left:4px solid var(--prog);border-radius:10px;padding:10px 12px;box-shadow:0 8px 28px rgba(0,0,0,.25);animation:slide .25s ease-out}
@@ -880,7 +899,7 @@ a.plink{color:inherit;text-decoration:none}a.plink:hover{text-decoration:underli
 #whoBar .sp{flex:1}
 
 /* task detail panel (Jira style): main column + details sidebar */
-#ov,#teamOv{z-index:30}
+.ov{z-index:30}                                   /* every dialog sits above the sticky top bar */
 .modal.tmodal{width:min(940px,100%);padding:0;overflow:hidden;display:flex;flex-direction:column;max-height:min(92vh,100%)}
 .tm-head{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line)}
 .tm-head .sp{flex:1}
@@ -4494,7 +4513,7 @@ function renderClinic(){
   cl.clear = false; cl.fkey = fkey;
   body.innerHTML = ({patients:() => cl.pid || cl.newP ? clPatient() : clPatients(), appointments:clAppointments, accounts:clAccounts, reports:clReports, assists:clAssists, setup:clSetup})[cl.sec]();
   if (saved) saved.forEach(([id, v]) => { const e = document.getElementById(id); if (e && body.contains(e) && !e.disabled && !['clQ', 'aPick', 'rgDate'].includes(e.id)){ if (e.type === 'checkbox') e.checked = v; else e.value = v; } });
-  tallyCalc();
+  tallyCalc(); if ($('#pyCash')) cashRefresh('py');
   if ($('#tfDoc') && $('#tfFeeWrap')){ const dd = cl.doctors.find(x => x.id === $('#tfDoc').value); $('#tfFeeWrap').hidden = !(dd && dd.type === 'consultant'); }
   body.scrollTop = y;
   if (cl.sec === 'reports') clRunReport();
@@ -4741,6 +4760,7 @@ function clBilling(){
       <label>Towards doctor<select id="pyDoc">${docOpts(cl.p.primaryDoctorId, '— Clinic —')}</select></label>
       <label class="grow">Note<input id="pyNote" placeholder="e.g. RCT first sitting"></label>
       <button class="primary" type="submit">Save &amp; receipt</button>
+      ${cashPanel('py', true)}
     </form></div>` : ''}
     <div class="awrap" style="margin-top:0"><table class="atbl"><thead><tr><th>Receipt</th><th>Date</th><th>Mode</th><th>Note</th><th class="num">Amount</th><th></th></tr></thead><tbody>
       ${cl.pP === null ? '<tr><td colspan="6">Loading…</td></tr>' : P.map(x => `<tr data-pay="${esc(x.id)}"><td>${esc(x.receiptNo || '')}</td><td>${esc(fmtShort(x.date))}</td><td>${esc((PMODES.find(m => m[0] === x.mode) || [0, x.mode])[1])}</td><td>${esc(x.note || '')}</td><td class="num"><b>${inr(x.amount)}</b></td>
@@ -4762,7 +4782,7 @@ function printDoc(title, inner){
 function printReceipt(x, c){
   const p = (c && c.p) || cl.p, PT = (c && c.T) || cl.pT, P0 = (c && c.P) || cl.pP || [], P = P0.some(y => y.receiptNo === x.receiptNo) ? P0 : P0.concat([x]);
   printDoc('Payment receipt ' + (x.receiptNo || ''), `<p><b>Received from:</b> ${esc(pName(p))} (${esc(p.code || '')}) · ${esc(p.phone || '')}<br><b>Date:</b> ${esc(fmtLong(x.date))}<br><b>Mode:</b> ${esc((PMODES.find(m => m[0] === x.mode) || [0, x.mode])[1])}${x.doctorId ? `<br><b>Doctor:</b> ${esc(dName(x.doctorId))}` : ''}</p>
-    <table><tr><th>Description</th><th class="n">Amount</th></tr><tr><td>${esc(x.note || 'Dental treatment')}</td><td class="n">${inr(x.amount)}</td></tr><tr class="tot"><td>Total received</td><td class="n">${inr(x.amount)}</td></tr></table>
+    <table><tr><th>Description</th><th class="n">Amount</th></tr><tr><td>${esc(x.note || 'Dental treatment')}</td><td class="n">${inr(x.amount)}</td></tr><tr class="tot"><td>Total received</td><td class="n">${inr(x.amount)}</td></tr></table>${x.cash ? `<p class="muted">Cash: ${esc(cashLine(x))}</p>` : ''}
     <p class="muted">Treatment cost to date ${inr(billed(PT))} · paid ${inr(paidSum(P))} · balance ${inr(billed(PT) - paidSum(P))}</p>`);
 }
 /* patient's appointments */
@@ -5259,7 +5279,7 @@ function accPetty(d){
   const dflt = a.month === todayKey.slice(0, 7) ? todayKey : mEnd(a.month);
   const bal = d.pettyBal, everIn = (d.pin || []).length;
   return `<div class="kpis">${kpi('Cash in the petty box', inr(Math.max(0, bal)), bal < 0 ? `<span class="neg">${inr(-bal)} spent more than was topped up</span>` : 'top-ups minus spends: count the box to check', bal < 0 ? 'neg' : '')}
-      ${kpi('Topped up this month', inr(tin), esc(monthLabel(a.month)))}${kpi('Spent this month', inr(tout), plural(L.filter(x => x.kind === 'pettyspend').length, 'spend'))}</div>
+      ${kpi('Topped up this month', inr(tin), esc(monthLabel(a.month)))}${kpi('Spent this month', inr(tout), plural(L.filter(x => x.kind === 'pettyspend' && !x.change).length, 'spend') + (L.some(x => x.change) ? ` · ${inr(paidSum(L.filter(x => x.change)))} given as change` : ''))}</div>
     ${bal < 0 || !everIn ? `<div class="nag${bal < 0 ? ' late' : ''}">${bal < 0 ? `⚠ ${inr(-bal)} more has been recorded as spent than was ever topped up, so the balance can't be right.` : 'No top-up or opening balance has been recorded yet.'} ${owner ? 'Count the cash in the petty box and enter it below: that sets the correct balance.' : 'Ask the clinic owner to count the box and set the opening balance.'}</div>` : ''}
     <div class="acards">
       ${owner ? `<div class="box"><h3>Count the box / opening balance <span class="sub">enter the cash in the petty box right now</span></h3><form class="aform" id="accPcountForm" novalidate>
@@ -5274,7 +5294,7 @@ function accPetty(d){
         <label class="grow">Spent on *<input id="poNote" placeholder="e.g. Tea, courier, cleaning supplies"></label><button class="primary" type="submit">Add spend</button></form></div>` : ''}
     </div>
     <div class="awrap"><table class="atbl"><thead><tr><th>Date</th><th>Entry</th><th>Note</th><th class="num">Top-up</th><th class="num">Spent</th><th>By</th><th></th></tr></thead><tbody>
-      ${L.map(x => `<tr data-led="${esc(x.id)}"><td>${esc(fmtShort(x.date))}</td><td>${x.kind === 'petty' ? (x.opening ? '<b>Opening / count</b>' : '<b>Top-up</b>') : x.adjust ? 'Count correction' : 'Spend'}</td><td>${esc(x.note || '')}</td><td class="num">${x.kind === 'petty' ? inr(x.amount) : ''}</td><td class="num">${x.kind === 'pettyspend' ? inr(x.amount) : ''}</td><td class="stat">${esc((x.by || '').split('@')[0])}</td><td>${owner ? '<button class="danger" data-ldel>✕</button>' : ''}</td></tr>`).join('') || '<tr><td colspan="7" class="stat">No petty cash entries this month.</td></tr>'}
+      ${L.map(x => `<tr data-led="${esc(x.id)}"><td>${esc(fmtShort(x.date))}</td><td>${x.kind === 'petty' ? (x.opening ? '<b>Opening / count</b>' : '<b>Top-up</b>') : x.adjust ? 'Count correction' : x.change ? '<span title="Taken from the petty box to give a patient their change; the patient\'s notes went into the purse (see the daily tally)">Change to a patient</span>' : 'Spend'}</td><td>${esc(x.note || '')}</td><td class="num">${x.kind === 'petty' ? inr(x.amount) : ''}</td><td class="num">${x.kind === 'pettyspend' ? inr(x.amount) : ''}</td><td class="stat">${esc((x.by || '').split('@')[0])}</td><td>${owner && !x.change ? '<button class="danger" data-ldel>✕</button>' : x.change ? '<span class="stat" title="Delete the payment to undo it">from billing</span>' : ''}</td></tr>`).join('') || '<tr><td colspan="7" class="stat">No petty cash entries this month.</td></tr>'}
     </tbody></table></div>`;
 }
 function accVendorTab(type){
@@ -5496,8 +5516,9 @@ async function auditPack(fy){
    GPay / UPI, cards and others entered from the apps and checked against the same report */
 const CHG = [200, 100, 50, 20, 10, 5, 2, 1];
 const TMODES = [['upi', 'GPay / UPI', ['upi']], ['card', 'Debit card', ['card']], ['ccard', 'Credit card', ['ccard']], ['other', 'Others', ['cheque', 'neft', 'rtgs', 'bank']]];
-/* cash received as per the count = closing count − opening − change − cash added from the bank + cash expenses + moved to petty cash + deposited */
-const tCollected = t => (+t.counted || 0) - (+t.opening || 0) - (+t.change || 0) - (+t.added || 0) + (+t.cashExp || 0) + (+t.toPetty || 0) + (+t.out || 0);
+/* cash received as per the count = closing count − opening − change − cash added from the bank − patients' change paid from petty cash / elsewhere
+   (that cash stayed in the purse) + cash expenses + moved to petty cash + deposited */
+const tCollected = t => (+t.counted || 0) - (+t.opening || 0) - (+t.change || 0) - (+t.added || 0) - (+t.chPetty || 0) - (+t.chOther || 0) + (+t.cashExp || 0) + (+t.toPetty || 0) + (+t.out || 0);
 const tOk = t => t && !t.diff && !t.digitalDiff && t.manual !== false;
 /* a saved tally checked against the payments as they are NOW (payments added or changed later turn a "Tallied" day into a mismatch) */
 function tFig(t, ps){
@@ -5512,7 +5533,11 @@ function tallyBase(){
   const pays = tPay.filter(x => x.mode === 'cash');
   const dig = TMODES.map(([k, l, ms]) => { const ps = tPay.filter(x => ms.includes(x.mode)); return {k, l, ms, ps, sys:paidSum(ps)}; });
   const pet = (d.tPin || []).filter(x => x.source === 'drawer' && !x.opening);                      // petty cash top-ups taken out of this drawer
-  return {day, tallies:all, done, prev, pays, dig, pet, toPetty:paidSum(pet), cashIn:paidSum(pays), cashExp:paidSum((d.tExp || []).filter(x => x.mode === 'cash' && x.paid !== false && (x.paidDate || x.date) === day))};
+  // notes counted at billing: what came into the purse and what went out of it as change; change paid from petty cash / elsewhere
+  const withDen = pays.filter(x => x.cash), denIn = {}, denOut = {};
+  withDen.forEach(x => DENOMS.forEach(v => { denIn[v] = (denIn[v] || 0) + (+(x.cash.in || {})[v] || 0); denOut[v] = (denOut[v] || 0) + (+(x.cash.out || {})[v] || 0); }));
+  const chPetty = withDen.reduce((s, x) => s + (+x.cash.petty || 0), 0), chOther = withDen.reduce((s, x) => s + (+x.cash.other || 0), 0);
+  return {day, tallies:all, done, prev, pays, dig, pet, withDen, denIn, denOut, noDen:pays.length - withDen.length, chPetty, chOther, toPetty:paidSum(pet), cashIn:paidSum(pays), cashExp:paidSum((d.tExp || []).filter(x => x.mode === 'cash' && x.paid !== false && (x.paidDate || x.date) === day))};
 }
 const denGrid = (L, pre, counts, w) => `<div class="denoms">${L.map(n => `<label><span>₹${n} ×</span><input type="number" min="0" id="${pre}${n}" data-den="${pre}" value="${+(counts || {})[n] || ''}" placeholder="0"${w ? '' : ' disabled'}><b id="${pre}T${n}">₹0</b></label>`).join('')}</div>`;
 function accTally(){
@@ -5520,6 +5545,9 @@ function accTally(){
   const fix = cl.acc.tOpenFix === day && canW('accounts'), fixedOpen = !!(done || prev) && !fix, opening = done ? +done.opening || 0 : prev ? +prev.counted || 0 : 0;
   const openCounts = done ? done.openCounts || null : prev ? prev.counts || null : null;
   const gap = !done && prev && prev.date < shiftDay(day, -1);
+  // not tallied yet: fill the closing count with what should be in the purse (opening notes + notes received at billing − change given from the purse)
+  const exp = {}; DENOMS.forEach(v => { exp[v] = Math.max(0, (+(openCounts || {})[v] || 0) + (B.denIn[v] || 0) - (B.denOut[v] || 0)); });
+  const prefill = !done && (B.withDen.length || openCounts) ? exp : null;
   const chip = (c, L) => (L || DENOMS).filter(n => +c[n]).map(n => `<span class="dchip">₹${n} × ${+c[n]}</span>`).join('') || '<span class="stat">no denominations saved</span>';
   const F0 = done ? tFig(done, cl.acc.d.tPay || []) : null;
   const status = done ? (F0.ok ? `<span class="upill on">Tallied ✓ · ${esc((done.by || '').split('@')[0])}</span>` : `<span class="upill gone">Not tallied · ${[F0.dc ? 'cash ' + (F0.dc > 0 ? '+' : '−') + inr(Math.abs(F0.dc)) : '', F0.dd ? 'online ' + (F0.dd > 0 ? '+' : '−') + inr(Math.abs(F0.dd)) : ''].filter(Boolean).join(', ') || 'not counted by hand'} against today's report</span>`)
@@ -5534,16 +5562,20 @@ function accTally(){
       ${gap ? `<div class="nag" style="flex-basis:100%;margin:0">The last tally was on ${esc(fmtLong(prev.date))}; the days in between weren't tallied, so their cash isn't checked. The opening here is that day's closing count.</div>` : ''}
       ${!done && !prev ? '<div class="stat" style="flex-basis:100%">Starting the tally today: earlier days are not assumed to be zero; they simply have no tally.</div>' : ''}</div>
     <div class="tally">
-      <div class="box"><h3>Change taken <span class="sub">coins &amp; notes added to the drawer</span></h3>${denGrid(CHG, 'ch', done && done.changeCounts, w)}
-        <div class="payrow tsum"><span>Change taken</span><b id="tlChangeV">₹0</b></div></div>
-      <div class="box"><h3>Today's cash in the drawer <span class="sub">count every note and coin</span></h3>${denGrid(DENOMS, 'den', done && done.counts, w)}
-        <div class="payrow tsum"><span>Cash in drawer</span><b id="tlCounted">₹0</b></div></div>
+      <div class="box"><h3>Change brought in <span class="sub">coins &amp; notes added to the purse (e.g. from the bank)</span></h3>${denGrid(CHG, 'ch', done && done.changeCounts, w)}
+        <div class="payrow tsum"><span>Change brought in</span><b id="tlChangeV">₹0</b></div></div>
+      <div class="box"><h3>Cash in the purse now <span class="sub">count every note and coin</span></h3>
+        ${prefill ? `<div class="nag soft">Filled in from ${B.withDen.length ? plural(B.withDen.length, 'cash bill') + "'s notes" : 'the opening cash'}${openCounts ? ' and the opening cash' : ''}. Count the purse and change only what differs.${B.noDen ? ` ${plural(B.noDen, 'cash payment')} had no notes counted, so ${B.noDen === 1 ? 'it isn\'t' : 'they aren\'t'} included.` : ''}${B.cashExp || B.toPetty ? ' Cash paid out for expenses / petty cash isn\'t taken off note by note: take those notes out too.' : ''}</div>` : ''}
+        ${denGrid(DENOMS, 'den', done ? done.counts : prefill, w)}
+        <div class="payrow tsum"><span>Cash in the purse</span><b id="tlCounted">₹0</b></div></div>
     </div>
     <div class="tally">
       <div class="box tcash"><h3>Cash reconciliation</h3>
         <div class="payrow"><span>Opening cash</span><span id="tlOpenR">${inr(opening)}</span></div>
         <div class="payrow"><span>+ Cash received <span class="stat">Collection report · ${plural(pays.length, 'payment')}</span></span><span>${inr(B.cashIn)}</span></div>
-        <div class="payrow"><span>+ Change taken</span><span id="tlChangeR">₹0</span></div>
+        <div class="payrow"><span>+ Change brought in</span><span id="tlChangeR">₹0</span></div>
+        ${B.chPetty || (done && +done.chPetty) ? `<div class="payrow"><span>+ Patients' change paid from petty cash <span class="stat">their notes stayed in the purse · booked out of the petty box</span></span><span>${inr(B.chPetty)}</span></div>` : ''}
+        ${B.chOther || (done && +done.chOther) ? `<div class="payrow"><span>+ Patients' change paid from elsewhere <span class="stat">${esc([...new Set(B.withDen.flatMap(x => (x.cash.xs || []).filter(s => s.src === 'other').map(s => s.name)))].join(', '))}</span></span><span>${inr(B.chOther)}</span></div>` : ''}
         <div class="payrow"><span>+ Cash withdrawn from the bank / added</span><span>${w ? `<input type="number" class="tin" id="tlAdd" min="0" value="${done && +done.added || ''}" placeholder="0">` : inr(done && done.added)}</span></div>
         <div class="payrow"><span>− Cash expenses paid from the drawer <span class="stat">from Accounts</span></span><span>${inr(B.cashExp)}</span></div>
         <div class="payrow"><span>− Moved to petty cash <span class="stat">${B.pet.length ? 'petty top-ups from the drawer' : 'none today'}</span></span><span>${inr(B.toPetty)}</span></div>
@@ -5553,7 +5585,7 @@ function accTally(){
         <div class="payrow"><span>Cash received as per the count <span class="stat">vs ${inr(B.cashIn)} in the report</span></span><span id="tlColl">—</span></div>
         <div class="tdiff" id="tlDiff"></div>
         ${w ? `<label class="ack tick" id="tlAckL"><input type="checkbox" id="tlAck"${done && done.manual ? ' checked' : ''}> I counted the cash by hand</label>` : ''}
-        ${pays.length ? `<details class="stat"><summary>Cash payments</summary>${pays.map(x => `<div>${esc(x.patientName)} · ${esc(x.receiptNo || '')} · ${inr(x.amount)}</div>`).join('')}</details>` : ''}</div>
+        ${pays.length ? `<details class="stat"><summary>Cash payments</summary>${pays.map(x => `<div>${esc(x.patientName)} · ${esc(x.receiptNo || '')} · ${inr(x.amount)}${x.cash ? ` · <span class="cdmini">${esc(cashLine(x))}</span>` : ' · <i>notes not counted</i>'}</div>`).join('')}</details>` : ''}</div>
       <div class="box"><h3>GPay / UPI, cards &amp; others</h3>
         <table class="dtbl"><thead><tr><th></th><th class="num">Report</th><th class="num">App / slip</th><th></th></tr></thead><tbody>
         ${B.dig.map(m => { const dm = (done && done.digital && done.digital[m.k]) || {};
@@ -5595,7 +5627,7 @@ function tallyCalc(){
   const changeCounts = cnt('ch', CHG), change = denSum(changeCounts, CHG), counts = cnt('den', DENOMS), counted = denSum(counts);
   showT('ch', CHG, changeCounts); showT('den', DENOMS, counts);
   const out = Math.max(0, $('#tlOut') ? n('tlOut') : B.done ? +B.done.out || 0 : 0), added = Math.max(0, $('#tlAdd') ? n('tlAdd') : B.done ? +B.done.added || 0 : 0);
-  const expected = opening + B.cashIn + change + added - B.cashExp - B.toPetty - out, diff = counted - expected, coll = counted - opening - change - added + B.cashExp + B.toPetty + out;
+  const expected = opening + B.cashIn + change + added + B.chPetty + B.chOther - B.cashExp - B.toPetty - out, diff = counted - expected, coll = counted - opening - change - added - B.chPetty - B.chOther + B.cashExp + B.toPetty + out;
   $('#tlChangeV').textContent = inr(change); $('#tlCounted').textContent = inr(counted); $('#tlColl').textContent = inr(coll);
   $('#tlOpenR').textContent = inr(opening); $('#tlChangeR').textContent = inr(change); $('#tlExpV').textContent = inr(expected); $('#tlCountR').textContent = inr(counted);
   const ack = $('#tlAck') ? $('#tlAck').checked : !!(B.done && B.done.manual), dEl = $('#tlDiff');
@@ -5627,7 +5659,7 @@ async function saveTally(){
   if (T.openFix && T.opening !== oldOpen && !why) return info('Give the reason for correcting the opening cash.');
   if (cl.acc.tSaving) return; cl.acc.tSaving = true;                                   // no double submits
   try {
-    const x = {date:T.B.day, opening:T.opening, openCounts:T.openCounts || null, cashIn:T.B.cashIn, change:T.change, changeCounts:T.changeCounts, added:T.added, cashExp:T.B.cashExp, toPetty:T.B.toPetty, out:T.out, expected:T.expected,
+    const x = {date:T.B.day, opening:T.opening, openCounts:T.openCounts || null, cashIn:T.B.cashIn, change:T.change, changeCounts:T.changeCounts, added:T.added, chPetty:T.B.chPetty, chOther:T.B.chOther, cashExp:T.B.cashExp, toPetty:T.B.toPetty, out:T.out, expected:T.expected,
       counts:T.counts, counted:T.counted, diff:T.diff, digital:T.digital, digitalDiff:T.digitalDiff, unseen:0, manual:true, note, by, at:now, createdBy:(D0 && (D0.createdBy || D0.by)) || by, createdAt:(D0 && (D0.createdAt || D0.at)) || now};
     if (T.openFix && T.opening !== oldOpen) x.openingFix = {from:oldOpen, to:T.opening, reason:why, by, at:now};
     else if (D0 && D0.openingFix) x.openingFix = D0.openingFix;
@@ -6069,9 +6101,11 @@ $('#clBody').addEventListener('submit', async e => {
     }
     if (id === 'clPayForm'){
       const amount = Math.round(+$('#pyAmt').value || 0); if (amount <= 0) return info('Enter the amount.');
+      const cash = $('#pyMode').value === 'cash' ? cashRead('py', amount) : null;            // notes received + change given (daily tally, petty cash)
       const receiptNo = await nextNumber('receipt', 'R-', 5);
       const x = {patientId:cl.pid, patientName:pName(cl.p), date:$('#pyDate').value || todayKey, amount, mode:$('#pyMode').value, doctorId:$('#pyDoc').value, note:$('#pyNote').value.trim(), receiptNo, createdAt:Date.now(), by};
-      await F.addDoc(cCol('payments'), x);
+      if (cash) x.cash = cash;
+      await savePaymentDoc(x); CDX.py = 0; cl.clear = true;
       info(`${inr(amount)} received · ${receiptNo}`); printReceipt(x);
     }
     if (id === 'clPhForm') return clUploadPhotos();
@@ -6158,7 +6192,7 @@ $('#clBody').addEventListener('click', async e => {
     const asd = t.closest('[data-asday]'); if (asd) return asDecide(cl.asst.d.all.filter(x => x.status === 'pending' && x.date === asd.dataset.asday).map(x => x.id), 'approved');
     if (t.closest('[data-asdel]')){ if (!confirm('Delete this entry?')) return; await F.deleteDoc(cDoc('assists', t.closest('[data-as]').dataset.as)); cl.asKey = ''; info('Deleted.'); return renderClinic(); }
     if (t.closest('[data-tdel]')){ if (!confirm('Delete this treatment?')) return; await F.deleteDoc(cDoc('treatments', t.closest('[data-tid]').dataset.tid)); }
-    if (t.closest('[data-pdel]')){ if (!confirm('Delete this payment? Its receipt number will not be reused.')) return; await F.deleteDoc(cDoc('payments', t.closest('[data-pay]').dataset.pay)); }
+    if (t.closest('[data-pdel]')){ if (!confirm('Delete this payment? Its receipt number will not be reused.')) return; const pid = t.closest('[data-pay]').dataset.pay; await deletePaymentDoc(pid, (cl.pP || []).find(p => p.id === pid)); }
     if (t.closest('[data-rcpt]')){ const x = (cl.pP || []).find(p => p.id === t.closest('[data-pay]').dataset.pay); if (x) printReceipt(x); }
     if (t.closest('[data-ldel]')){ if (!confirm('Delete this entry? A copy is kept in the audit log.')) return; const id = t.closest('[data-led]').dataset.led, d = cl.acc.d;
       let x = ((d.expAll || []).concat(d.led || [], d.pin || [], d.pout || [], d.cpay || [])).find(y => y.id === id); if (!x){ const sn = await F.getDoc(cDoc('ledger', id)); x = sn.exists() ? sn.data() : {}; }
@@ -6692,13 +6726,14 @@ function drawBill(){
         <label>Amount (₹)<input type="number" id="vbAmt" min="1" value="${due > 0 ? due : ''}"></label>
         <label>Mode<select id="vbMode">${PMODES.map(([k, l]) => `<option value="${k}">${l}</option>`).join('')}</select></label>
         <label class="grow">Note<input id="vbNote" placeholder="e.g. OPG + consultation"></label>
-        <button class="primary" type="submit">Save payment</button></form>` : '<p class="stat">You don\'t have Billing access: the front desk will take the payment from the queue (status "At billing").</p>'}
-    ${visitPays.length ? `<div class="hh">Receipts for this visit</div>${visitPays.map(x => `<div class="trow"><b>${esc(x.receiptNo)} · ${inr(x.amount)} · ${esc((PMODES.find(m => m[0] === x.mode) || [0, x.mode])[1])}</b><button data-vbrcpt="${esc(x.id)}">🖨 Print receipt</button></div>`).join('')}` : ''}
+        <button class="primary" type="submit">Save payment</button>${cashPanel('vb', true)}</form>` : '<p class="stat">You don\'t have Billing access: the front desk will take the payment from the queue (status "At billing").</p>'}
+    ${visitPays.length ? `<div class="hh">Receipts for this visit</div>${visitPays.map(x => `<div class="trow"><b>${esc(x.receiptNo)} · ${inr(x.amount)} · ${esc((PMODES.find(m => m[0] === x.mode) || [0, x.mode])[1])}</b>${x.cash ? `<span class="stat">${esc(cashLine(x))}</span>` : ''}<button data-vbrcpt="${esc(x.id)}">🖨 Print receipt</button></div>`).join('')}` : ''}
     <div class="btnrow" style="margin-top:14px">
       <button data-vbprint>🖨 Print bill</button><span class="sp"></span>
       ${w ? `<label class="vbchk" title="Complete the visit without taking a payment"><input type="checkbox" id="vbNoPay"${B.noPay ? ' checked' : ''}> <b>No bill</b>&nbsp;${visitNet > 0 ? `(no payment now: ${inr(due)} stays due)` : '(nothing to charge for this visit)'}</label>
         <button class="primary" id="vbDone"${done || B.noPay ? '' : ' disabled'}>Complete visit ✓</button>` : '<button id="vbLeave">Leave for billing</button>'}</div>`;
   numberTables($('#clOvBody'));
+  if ($('#vbCash')) cashRefresh('vb');
 }
 function printVisitBill(){
   const B = cl.bill, a = B.appt, visitT = B.T.filter(t => t.appointmentId === a.id && t.status !== 'planned'), visitPays = B.P.filter(x => x.appointmentId === a.id), due = billed(B.T) - paidSum(B.P);
@@ -6715,10 +6750,13 @@ async function saveVisitPayment(){
   const {F} = cloud, B = cl.bill, a = B.appt, amount = Math.round(+$('#vbAmt').value || 0);
   if (amount <= 0) return info('Enter the amount received.');
   if ((($('#vbDate') || {}).value || '') > todayKey) return info("The bill date can't be in the future.");
+  let cash = null;
+  try { cash = $('#vbMode').value === 'cash' ? cashRead('vb', amount) : null; } catch(e){ return info(errText(e)); }
   try {
     const receiptNo = await nextNumber('receipt', 'R-', 5);
     const x = {patientId:a.patientId, patientName:a.patientName, appointmentId:a.id, date:($('#vbDate') || {}).value || todayKey, amount, mode:$('#vbMode').value, doctorId:a.doctorId, note:$('#vbNote').value.trim(), receiptNo, createdAt:Date.now(), by:cloud.user.email || ''};
-    const ref = await F.addDoc(cCol('payments'), x);
+    if (cash) x.cash = cash;
+    const ref = await savePaymentDoc(x); CDX.vb = 0;
     B.P.push(Object.assign({id:ref.id}, x)); drawBill(); info(`${inr(amount)} received · ${receiptNo}`);
     // back-entry: the bill is dated earlier than the visit → offer to move the visit and its treatments to the bill date too,
     // so reports (collection, treatments, new patients, appointments) all show the same day
@@ -7072,6 +7110,91 @@ function clHomeClick(e){
   const rm = e.target.closest('[data-rem]'); if (rm){ const r = (cl.reminders || []).find(x => x.id === rm.dataset.rem); if (r && r.link) openLink(r.link); return true; }
   const ho = e.target.closest('[data-hopen]'); if (ho){ openLink({pid:ho.dataset.hopen, tab:'appointments'}); return true; }
 }
+/* ---------- cash denominations at billing ----------
+   When a patient pays in cash, the front desk counts the notes received and the change given back, and says where
+   the change came from: the purse (cash drawer) with its notes, and/or another place such as petty cash (an amount).
+   Saved on the payment as `cash` {in, out, inTotal, outTotal, xs:[{src:'petty'|'other', name, amount}], petty, other, change}.
+   The daily tally adds it all up (expected notes in the purse), and change taken from petty cash is booked out of the
+   petty box (ledger chg-<paymentId>, kind pettyspend, change:true; not an expense, it went into the purse). */
+const CDX = {};                                          // form prefix → number of "other place" rows
+const cdCounts = (pre, part) => Object.fromEntries(DENOMS.map(v => [v, Math.max(0, Math.floor(+(($('#' + pre + part + v) || {}).value) || 0))]).filter(([, n]) => n));
+const cdGrid = (pre, part) => `<div class="cdgrid">${DENOMS.map(v => `<label><span>₹${v}</span><input type="number" min="0" step="1" id="${pre}${part}${v}" data-cd="${pre}" placeholder="0" inputmode="numeric"></label>`).join('')}</div>`;
+const cdChips = c => DENOMS.filter(v => +(c || {})[v]).map(v => `<span class="dchip">₹${v} × ${+c[v]}</span>`).join('');
+function cashPanel(pre, show){
+  const n = CDX[pre] || 0;
+  return `<div class="cashd" id="${pre}Cash"${show ? '' : ' hidden'}>
+    <div class="cdh"><b>💵 Cash denominations</b><span class="stat">count the notes: they go into the daily tally by themselves</span></div>
+    <div class="cdsec"><div class="cdl">Received from the patient <b id="${pre}InT">₹0</b></div>${cdGrid(pre, 'In')}</div>
+    <div class="cdchg" id="${pre}ChgL">Change to give back: <b id="${pre}ChgV">₹0</b></div>
+    <div class="cdsec" id="${pre}OutBox"><div class="cdl">Change from the purse <small>(cash drawer)</small> <b id="${pre}OutT">₹0</b></div>${cdGrid(pre, 'Out')}</div>
+    <div class="cdxs">${[...Array(n)].map((_, i) => `<div class="cdx" data-cdx="${i}">
+      <span class="cdl">Change from</span><select id="${pre}X${i}Src" data-cd="${pre}"><option value="petty">Petty cash</option><option value="other">Somewhere else…</option></select>
+      <input id="${pre}X${i}Name" data-cd="${pre}" placeholder="Where? (e.g. Doctor's wallet)" hidden><input type="number" min="0" step="1" id="${pre}X${i}Amt" data-cd="${pre}" placeholder="₹ amount">
+      <button type="button" class="ghost" data-cdrm="${pre}" title="Remove">✕</button></div>`).join('')}</div>
+    <button type="button" class="linkb" data-cdadd="${pre}">+ Take part of the change from another place (e.g. petty cash)</button>
+    <div class="cdst" id="${pre}St"></div></div>`;
+}
+// read the panel; amount = the payment amount. Returns the figures (and fills in the totals on screen)
+function cashCalc(pre, amount){
+  if (!$('#' + pre + 'Cash')) return null;
+  const inC = cdCounts(pre, 'In'), outC = cdCounts(pre, 'Out'), inT = denSum(inC), outT = denSum(outC);
+  const xs = [...Array(CDX[pre] || 0)].map((_, i) => {
+    const src = ($('#' + pre + 'X' + i + 'Src') || {}).value || 'petty', nm = $('#' + pre + 'X' + i + 'Name');
+    if (nm) nm.hidden = src !== 'other';
+    return {src, name:src === 'petty' ? 'Petty cash' : ((nm || {}).value || '').trim(), amount:Math.max(0, Math.round(+(($('#' + pre + 'X' + i + 'Amt') || {}).value) || 0))};
+  }).filter(x => x.amount);
+  const xT = xs.reduce((s, x) => s + x.amount, 0), change = Math.max(0, inT - amount), left = change - outT - xT;
+  const set = (id, t) => { const e = $('#' + pre + id); if (e) e.textContent = t; };
+  set('InT', inr(inT)); set('OutT', inr(outT)); set('ChgV', inr(change));
+  const st = $('#' + pre + 'St'), msg = !inT ? ['wait', 'Enter the notes the patient gave.'] : inT < amount ? ['bad', `That's ${inr(amount - inT)} less than the amount (${inr(amount)}).`]
+    : left > 0 ? ['wait', `${inr(left)} of the change still to say where it came from.`] : left < 0 ? ['bad', `The change entered is ${inr(-left)} more than the change due.`]
+    : ['ok', change ? `✓ ${inr(inT)} received, ${inr(change)} change given` + (xT ? ` (${xs.map(x => inr(x.amount) + ' from ' + (x.name || 'elsewhere')).join(', ')})` : '') : `✓ Exact amount received`];
+  if (st){ st.className = 'cdst ' + msg[0]; st.textContent = msg[1]; }
+  const ob = $('#' + pre + 'OutBox'); if (ob) ob.classList.toggle('dim', !change);
+  return {inC, outC, inT, outT, xs, xT, change, left, ok:msg[0] === 'ok'};
+}
+// the `cash` field to save on a payment (throws a readable error when the counts don't add up)
+function cashRead(pre, amount){
+  const c = cashCalc(pre, amount); if (!c) return null;
+  if (!c.inT) throw custom('Enter the cash denominations the patient gave (the notes go into the daily tally).');
+  if (!c.ok) throw custom($('#' + pre + 'St').textContent);
+  if (c.xs.some(x => x.src === 'other' && !x.name)) throw custom('Say where the rest of the change came from.');
+  const petty = c.xs.filter(x => x.src === 'petty').reduce((s, x) => s + x.amount, 0), other = c.xT - petty;
+  return {in:c.inC, out:c.outC, inTotal:c.inT, outTotal:c.outT, change:c.change, xs:c.xs, petty, other};
+}
+// save a payment (and the petty-cash entry for change taken from the petty box) in one go
+async function savePaymentDoc(x){
+  const {F, fs} = cloud, ref = F.doc(cCol('payments')), b = F.writeBatch(fs);
+  b.set(ref, x);
+  if (x.cash && x.cash.petty > 0) b.set(cDoc('ledger', 'chg-' + ref.id), {kind:'pettyspend', change:true, paymentId:ref.id, date:x.date, mode:'cash', amount:x.cash.petty,
+    note:`Change given to ${x.patientName} (${x.receiptNo})`, by:cloud.user.email || '', at:Date.now()});
+  await b.commit();
+  return ref;
+}
+async function deletePaymentDoc(id, x){
+  const {F, fs} = cloud, b = F.writeBatch(fs);
+  b.delete(cDoc('payments', id));
+  if (x && x.cash && x.cash.petty > 0) b.delete(cDoc('ledger', 'chg-' + id));          // the change goes back to the petty box
+  await b.commit();
+}
+const cashLine = x => x && x.cash ? `Received ${inr(x.cash.inTotal)}${x.cash.change ? ` · change ${inr(x.cash.change)}${x.cash.xs && x.cash.xs.length ? ' (' + x.cash.xs.map(s => inr(s.amount) + ' from ' + s.name).join(', ') + (x.cash.outTotal ? ', ' + inr(x.cash.outTotal) + ' from the purse' : '') + ')' : ''}` : ''}` : '';
+// show / recount while typing (Bill after a visit: prefix vb, patient's Billing tab: py)
+const CD_FORMS = {vb:['#vbAmt', '#vbMode'], py:['#pyAmt', '#pyMode']};
+function cashRefresh(pre){ const [a, m] = CD_FORMS[pre], box = $('#' + pre + 'Cash'); if (!box) return; box.hidden = ($(m) || {}).value !== 'cash'; if (!box.hidden) cashCalc(pre, Math.round(+($(a) || {}).value || 0)); }
+document.addEventListener('input', e => { const t = e.target; if (t.dataset && t.dataset.cd) return cashRefresh(t.dataset.cd); for (const p in CD_FORMS) if (t.matches(CD_FORMS[p].join(','))) return cashRefresh(p); });
+document.addEventListener('change', e => { const t = e.target; if (t.dataset && t.dataset.cd) return cashRefresh(t.dataset.cd); for (const p in CD_FORMS) if (t.matches(CD_FORMS[p][1])) return cashRefresh(p); });
+document.addEventListener('click', e => {
+  const ad = e.target.closest('[data-cdadd]'), rm = e.target.closest('[data-cdrm]'); if (!ad && !rm) return;
+  const pre = (ad || rm).dataset.cdadd || (ad || rm).dataset.cdrm, box = $('#' + pre + 'Cash'); if (!box) return;
+  const keep = [...box.querySelectorAll('input[id],select[id]')].map(el => [el.id, el.value]);            // redraw the panel, keeping what was typed
+  const gone = rm ? +rm.closest('[data-cdx]').dataset.cdx : -1, n = CDX[pre] || 0;
+  if (ad) CDX[pre] = n + 1;
+  else { CDX[pre] = n - 1; for (let i = gone; i < n - 1; i++) ['Src', 'Name', 'Amt'].forEach(k => { const nx = keep.find(([id]) => id === pre + 'X' + (i + 1) + k), cur = keep.find(([id]) => id === pre + 'X' + i + k); if (cur && nx) cur[1] = nx[1]; }); }
+  box.outerHTML = cashPanel(pre, true);
+  keep.forEach(([id, v]) => { const el = document.getElementById(id); if (el) el.value = v; });
+  if (ad){ const s = $('#' + pre + 'X' + n + 'Amt'); const c = cashCalc(pre, Math.round(+($(CD_FORMS[pre][0]) || {}).value || 0)); if (s && c && c.left > 0) s.value = c.left; s && s.focus(); }
+  cashRefresh(pre);
+});
 /* ================= Dental Clinic: how this feature plugs into core (see core/js/03-feature-registry.js) ================= */
 ZL.add({
   id:'dental-clinic',

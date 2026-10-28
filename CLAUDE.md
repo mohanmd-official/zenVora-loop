@@ -81,6 +81,7 @@ Each feature folder: `feature.json` (name, order, enabled) · `tab.html` · `vie
 | 17-patient-assists | Patient assists + incentives (`loadIncentives`, shared with Payroll via `api`) |
 | 18-dentee-import | importing the Dentee Excel export |
 | 19-home-widgets | Home: Reminders, Today's appointments, Clinic today, quick actions (`clHome`) |
+| 20-cash-denominations | notes received / change given at billing (`cashPanel`, `cashCalc`, `cashRead`), `savePaymentDoc` / `deletePaymentDoc` (payment + petty `chg-<id>`), `cashLine` |
 | 99-register | flag clinic, view + left menu with pages, routes `#/clinic/...`, board panel, task links, Home, person fields |
 
 ## Adding a feature
@@ -101,6 +102,9 @@ code in `js/`, hooks in `js/99-register.js`, rules in `rules.part` → `python3 
 - Each expense is recorded once, on its own page; Clinic expenses only adds them up. Petty cash counts as an expense when the box is topped up (`pettyTopups`, openings excluded); petty spends are NOT added to Clinic expenses. Consultant payouts are not expenses (the fees are).
 - A month's obligations are due on day `dueDayOf()` (default 15) of the next month; reminders come from `payReminders`.
 - Never delete money records without `auditDelete`; changes append to `history`.
+- Cash payments carry `cash` {in, out, inTotal, outTotal, change, xs, petty, other}. The daily tally pre-fills the purse count from them and adds
+  `chPetty` / `chOther` (change paid from petty cash / elsewhere: those notes stayed in the purse) to the expected cash. Change from petty cash is a
+  `pettyspend` ledger entry `chg-<paymentId>` with `change:true` (written/deleted together with the payment, not an expense).
 
 ## Planning Board rules (keep these true)
 - A task with a colleague (another login) as assignee has `shared:true` and lives only in `orgs/{id}/tasks`; everything else stays in `users/{uid}/tasks`. `setAssignee` moves it; `pushChanges` writes each kind to its own place in separate batches.

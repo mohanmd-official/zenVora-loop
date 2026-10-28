@@ -173,9 +173,11 @@ $('#clBody').addEventListener('submit', async e => {
     }
     if (id === 'clPayForm'){
       const amount = Math.round(+$('#pyAmt').value || 0); if (amount <= 0) return info('Enter the amount.');
+      const cash = $('#pyMode').value === 'cash' ? cashRead('py', amount) : null;            // notes received + change given (daily tally, petty cash)
       const receiptNo = await nextNumber('receipt', 'R-', 5);
       const x = {patientId:cl.pid, patientName:pName(cl.p), date:$('#pyDate').value || todayKey, amount, mode:$('#pyMode').value, doctorId:$('#pyDoc').value, note:$('#pyNote').value.trim(), receiptNo, createdAt:Date.now(), by};
-      await F.addDoc(cCol('payments'), x);
+      if (cash) x.cash = cash;
+      await savePaymentDoc(x); CDX.py = 0; cl.clear = true;
       info(`${inr(amount)} received · ${receiptNo}`); printReceipt(x);
     }
     if (id === 'clPhForm') return clUploadPhotos();
@@ -262,7 +264,7 @@ $('#clBody').addEventListener('click', async e => {
     const asd = t.closest('[data-asday]'); if (asd) return asDecide(cl.asst.d.all.filter(x => x.status === 'pending' && x.date === asd.dataset.asday).map(x => x.id), 'approved');
     if (t.closest('[data-asdel]')){ if (!confirm('Delete this entry?')) return; await F.deleteDoc(cDoc('assists', t.closest('[data-as]').dataset.as)); cl.asKey = ''; info('Deleted.'); return renderClinic(); }
     if (t.closest('[data-tdel]')){ if (!confirm('Delete this treatment?')) return; await F.deleteDoc(cDoc('treatments', t.closest('[data-tid]').dataset.tid)); }
-    if (t.closest('[data-pdel]')){ if (!confirm('Delete this payment? Its receipt number will not be reused.')) return; await F.deleteDoc(cDoc('payments', t.closest('[data-pay]').dataset.pay)); }
+    if (t.closest('[data-pdel]')){ if (!confirm('Delete this payment? Its receipt number will not be reused.')) return; const pid = t.closest('[data-pay]').dataset.pay; await deletePaymentDoc(pid, (cl.pP || []).find(p => p.id === pid)); }
     if (t.closest('[data-rcpt]')){ const x = (cl.pP || []).find(p => p.id === t.closest('[data-pay]').dataset.pay); if (x) printReceipt(x); }
     if (t.closest('[data-ldel]')){ if (!confirm('Delete this entry? A copy is kept in the audit log.')) return; const id = t.closest('[data-led]').dataset.led, d = cl.acc.d;
       let x = ((d.expAll || []).concat(d.led || [], d.pin || [], d.pout || [], d.cpay || [])).find(y => y.id === id); if (!x){ const sn = await F.getDoc(cDoc('ledger', id)); x = sn.exists() ? sn.data() : {}; }
