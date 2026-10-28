@@ -1,0 +1,31 @@
+# Publishes the app (the public/ folder) to Firebase Hosting on every push to main → https://app.abbisdentalcare.com
+# Works with a PRIVATE repo on the free GitHub plan.
+# One-time setup (README → "Host at app.abbisdentalcare.com"): repo secret FIREBASE_SERVICE_ACCOUNT_ZENVORA_LOOP.
+name: Deploy to Firebase Hosting
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  checks: write
+
+concurrency:
+  group: firebase-hosting
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generated files are up to date (python3 build.py was run)
+        run: python3 build.py --check
+      - uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_ZENVORA_LOOP }}
+          projectId: zenvora-loop
+          channelId: live

@@ -1,7 +1,7 @@
 # Zenvora Loop — notes for Claude
 
 Multi-organization planner + feature platform (Abbi's Dental Care is the main org). Plain HTML/CSS/JS, no framework,
-Firebase Auth + Firestore (Spark plan). Deployed to GitHub Pages from `public/` by `.github/workflows/pages.yml`.
+Firebase Auth + Firestore (Spark plan). Hosted privately on Firebase Hosting at https://app.abbisdentalcare.com: `.github/workflows/firebase-hosting.yml` deploys `public/` on every push to main (private repo; `noindex`).
 
 ## Layout: core + one folder per feature
 ```
