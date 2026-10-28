@@ -1,12 +1,10 @@
-# Publishes the app (the public/ folder) to Firebase Hosting on every push to main → https://app.abbisdentalcare.com
-# Works with a PRIVATE repo on the free GitHub plan.
+# NOT IN USE YET (the app is on GitHub Pages: pages.yml). Kept for later: Firebase Hosting works with a PRIVATE repo on the free plan.
+# To switch: README → "Later: private repo with Firebase Hosting", then change `on:` below back to push on main.
 # One-time setup (README → "Host at app.abbisdentalcare.com"): repo secret FIREBASE_SERVICE_ACCOUNT_ZENVORA_LOOP.
 name: Deploy to Firebase Hosting
 
 on:
-  push:
-    branches: [main]
-  workflow_dispatch:
+  workflow_dispatch:          # manual only for now
 
 permissions:
   contents: read

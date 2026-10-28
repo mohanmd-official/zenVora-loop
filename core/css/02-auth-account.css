@@ -66,3 +66,9 @@
 .uact{display:flex;gap:4px}
 .uact button{font-size:12px;padding:3px 8px}
 @media (max-width:700px){.adduser{grid-template-columns:1fr}.urow{grid-template-columns:32px 1fr auto}.ulast{display:none}.uact{grid-column:1/-1}}
+/* an organization's own sign-in link (#/o/<orgId>): its logo and name on the sign-in page */
+.auth-brand.org img{width:52px;height:52px;object-fit:contain;border-radius:12px;background:#fff;box-shadow:0 4px 12px rgba(0,0,0,.12);flex:none}
+.auth-brand .auth-ini{width:52px;height:52px;border-radius:12px;color:#fff;font-size:22px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none}
+.auth-brand small .link{font-size:12px;padding:0}
+.olink{display:flex;align-items:center;gap:10px 14px;flex-wrap:wrap;background:color-mix(in srgb,var(--accent) 7%,var(--paper));border:1px solid color-mix(in srgb,var(--accent) 25%,var(--line));border-radius:12px;padding:10px 14px;margin-bottom:12px}
+.olink code{flex:1;min-width:220px;font-size:12.5px;background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:6px 9px;word-break:break-all}

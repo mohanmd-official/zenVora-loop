@@ -152,6 +152,7 @@ async function startUser(user){
       if (!d || d.status !== 'active'){ pendingAuthMsg = 'Your organization\'s Zenvora Loop access is currently paused. Please contact your Account Manager.'; return doSignOut(); }
       const hadAgenda = agendaOn();
       oc.org = d; applyTheme(d.color);
+      if (oc.role === 'orgadmin' && !oc.support) brandSync(oc.orgId, d);     // name / logo / colour changed → the sign-in link shows it
       if (hadAgenda !== agendaOn()){ pushChanges(); setTimeout(() => location.reload(), 300); return; }   // the plan changed: reload to (un)load the planner
       refreshTabs(); if (appReady) render();
     }, () => {                                     // can't read the org any more: either they were turned off or the org was paused
@@ -298,7 +299,7 @@ function signedOut(){
   state = normalize({}); ov.classList.remove('on'); $('#toasts').innerHTML = '';
   $('#userWrap').hidden = true; $('#userMenu').hidden = true;
   $('#pwScreen').hidden = true;
-  hideLoading(); showAuth('signin');
+  hideLoading(); showAuth('signin'); authBrand();
   if (pendingAuthMsg){ authMsg(pendingAuthMsg); pendingAuthMsg = ''; }
 }
 async function doSignOut(){
@@ -433,7 +434,46 @@ async function createAuthUser(name, email, pass){
   return c.user.uid;
 }
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const inviteText = (orgName, email, pass) => `You're invited to ${orgName} on Zenvora Loop 👋\n\nOpen:  ${location.origin + location.pathname}\nEmail: ${email}\nTemporary password: ${pass}\n\nYou'll be asked to set your own password when you first sign in.`;
+/* ---------- each organization's own sign-in link: <app address>#/o/<orgId> ----------
+   The link shows the organization's name, logo and colour on the sign-in page (from brand/{orgId}, the only thing anyone can
+   read without signing in). Signing in still decides the organization: the link only changes how the page looks. */
+const appBase = () => location.origin + location.pathname;
+const orgLink = orgId => appBase() + '#/o/' + orgId;
+const BRAND_KEY = 'zl-brand';
+async function brandSync(orgId, org){                 // keep the public sign-in branding in step with the organization
+  if (!cloud || !orgId || !org) return;
+  const {F, fs} = cloud, want = {name:org.name || '', color:org.color || '', logo:org.logo || '', active:org.status === 'active'};
+  try { const s = await F.getDoc(F.doc(fs, 'brand', orgId)), cur = s.exists() ? s.data() : null;
+    if (!cur || ['name', 'color', 'logo', 'active'].some(k => cur[k] !== want[k])) await F.setDoc(F.doc(fs, 'brand', orgId), Object.assign(want, {at:Date.now()})); }
+  catch(e){ console.warn('brand', e); }
+}
+const AUTH_BRAND0 = $('#auth .auth-brand') ? $('#auth .auth-brand').innerHTML : '';
+function authBrandShow(b){
+  const el = $('#auth .auth-brand'); if (!el) return;
+  if (!b){ el.innerHTML = AUTH_BRAND0; el.classList.remove('org'); $('#authSub').textContent = 'Sign in with the email and password you were given.'; applyTheme(null); return; }
+  el.classList.add('org');
+  el.innerHTML = `${b.logo ? `<img src="${b.logo}" alt="">` : `<span class="auth-ini" style="background:${esc(b.color || '#4338CA')}">${initial(b.name)}</span>`}<div><b>${esc(b.name)}</b><small>on Zenvora Loop · <button type="button" class="link" id="brandOff" title="Not from ${esc(b.name)}? Show the plain sign-in page">not ${esc(b.name)}?</button></small></div>`;
+  $('#authSub').textContent = `Sign in to ${b.name} with the email and password you were given.`;
+  applyTheme(b.color);
+}
+async function authBrand(){                           // #/o/<orgId> link → show that organization on the sign-in page (and remember it)
+  const m = (location.hash || '').match(/^#\/o\/([a-z0-9][a-z0-9-]{1,29})/);
+  let saved = null; try { saved = JSON.parse(localStorage.getItem(BRAND_KEY) || 'null'); } catch(e){}
+  const id = m ? m[1] : saved && saved.id;
+  if (!id){ authBrandShow(null); return; }
+  if (saved && saved.id === id) authBrandShow(saved);                    // instant, then refresh
+  try {
+    const s = await cloud.F.getDoc(cloud.F.doc(cloud.fs, 'brand', id)), b = s.exists() ? s.data() : null;
+    if (!b || b.active === false){ try { localStorage.removeItem(BRAND_KEY); } catch(e){} authBrandShow(null); return; }
+    const keep = {id, name:b.name, color:b.color, logo:b.logo}; try { localStorage.setItem(BRAND_KEY, JSON.stringify(keep)); } catch(e){}
+    if (!$('#auth').hidden) authBrandShow(keep);
+  } catch(e){ if (!saved || saved.id !== id) authBrandShow(null); }
+}
+document.addEventListener('click', e => { if (e.target.closest('#brandOff')){ try { localStorage.removeItem(BRAND_KEY); } catch(_){} if (/^#\/o\//.test(location.hash)) history.replaceState(null, '', location.pathname); authBrandShow(null); } });
+const shareLinkHtml = (orgId, who) => `<div class="olink"><span>🔗 <b>Sign-in link for ${esc(who)}</b> <span class="stat">shows your name and logo on the sign-in page</span></span><code id="olinkV">${esc(orgLink(orgId))}</code><button type="button" data-copylink="${esc(orgLink(orgId))}">📋 Copy link</button></div>`;
+document.addEventListener('click', e => { const b = e.target.closest('[data-copylink]'); if (!b) return; const t = b.dataset.copylink;
+  (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => info('Link copied.'), () => prompt('Copy this link:', t)); });
+const inviteText = (orgName, email, pass, orgId) => `You're invited to ${orgName} on Zenvora Loop 👋\n\nOpen:  ${orgId ? orgLink(orgId) : appBase()}\nEmail: ${email}\nTemporary password: ${pass}\n\nYou'll be asked to set your own password when you first sign in.`;
 const shareHtml = (id, text) => text ? `<div class="share"><pre id="${id}">${esc(text)}</pre><button type="button" data-copy="${id}">📋 Copy login details</button></div>` : '';
 const msgHtml = m => m ? `<div class="auth-err${m.ok ? ' ok' : ''}" style="margin-top:8px">${esc(m.t)}</div>` : '';
 const errText = err => err && err.code === 'custom' ? err.message

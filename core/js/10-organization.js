@@ -53,7 +53,7 @@ function orgPeople(){
   if (!orgView.tmp) orgView.tmp = genPass();
   let top = '';
   if (admin){
-    top = `<div class="box"><h3>Add a person <span class="sub">creates their login for ${esc(oc.org.name)}</span></h3>
+    top = shareLinkHtml(oc.orgId, oc.org.name) + `<div class="box"><h3>Add a person <span class="sub">creates their login for ${esc(oc.org.name)}</span></h3>
       <form class="aform" id="pAdd" novalidate>
         <label class="grow">Full name<input id="paName" autocomplete="off" placeholder="e.g. Priya S"></label>
         <label class="grow">Email<input id="paEmail" type="email" autocomplete="off" placeholder="name@example.com"></label>
@@ -206,7 +206,7 @@ async function addPerson(){
         await F.setDoc(F.doc(fs, 'accounts', uid), {orgId:oc.orgId, email, createdAt:now});
         const mg = (orgView.members || []).find(m => m.uid === reportsTo);
         await F.setDoc(orgDoc('members', uid), Object.assign({email, name, title, reportsTo, reportsToName:mg ? fullName(mg) : '', reportsToTitle:mg ? (mg.title || ROLE_LABEL[mg.role] || '') : '', role, perms, active:true, removed:false, mustChangePassword:true, createdAt:now, createdBy:cloud.user.email || ''}, extra));
-        orgView.share = inviteText(oc.org.name, email, pass);
+        orgView.share = inviteText(oc.org.name, email, pass, oc.orgId);
         orgView.msg = {t:`${name} can now sign in. Share the login details below.`, ok:true};
       }
     }

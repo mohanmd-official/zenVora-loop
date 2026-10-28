@@ -111,6 +111,7 @@ function orgsDetail(){
   const nextDue = shiftDay(todayKey, 10);
   return `<button class="abk" id="orgsBack">← Organizations</button>
     <div class="ahead">${o.logo ? `<img src="${o.logo}" style="width:38px;height:38px;object-fit:contain;border-radius:10px;background:#fff">` : `<div class="uav" style="background:${esc(o.color || '#3730A3')};border-radius:10px">${initial(o.name)}</div>`}<div><b style="font-size:16px">${esc(o.name)}</b> <span class="upill ${st[1]}">${st[0]}</span><div class="stat">ID ${esc(o.id)} · onboarded ${o.createdAt ? esc(fmtShort(dayKey(o.createdAt))) : '—'} · ${o.seats || 0} ${o.seats === 1 ? 'person' : 'people'}</div></div></div>
+    ${shareLinkHtml(o.id, o.name)}
     ${msgHtml(supers.dmsg)}${shareHtml('amShare', supers.dshare)}
     <div class="acards">
       <div class="box"><h3>Plan, features &amp; theme</h3>
@@ -187,7 +188,7 @@ async function onboardOrg(){
     await F.setDoc(F.doc(fs, 'orgs', id, 'members', uid), {email:amEmail, name:amName, role:'orgadmin', title:'Account Manager', reportsTo:'', active:true, removed:false, mustChangePassword:true, createdAt:now, createdBy:by});
     await F.setDoc(F.doc(fs, 'accounts', uid), {orgId:id, email:amEmail, createdAt:now});
     supers.onboard = false; supers.tmp = genPass();
-    supers.share = inviteText(name, amEmail, pass);
+    supers.share = inviteText(name, amEmail, pass, id); brandSync(id, {name, color, logo, status:'active'});
     supers.msg = {t:`${name} is live. Send ${amName} their login details: they'll set their own password and can then add their team.`, ok:true};
   } catch(err){ supers.msg = {t:errText(err)}; return formErr('obForm', supers.msg, '#obSubmit'); }
   document.activeElement.blur(); renderOrgs();
@@ -209,7 +210,7 @@ async function assignAccountManager(o){
     await F.updateDoc(F.doc(fs, 'orgs', o.id), {adminUid:uid, adminEmail:email});
     await F.setDoc(F.doc(fs, 'orgs', o.id, 'members', uid), {email, name, role:'orgadmin', title:'Account Manager', reportsTo:'', active:true, removed:false, mustChangePassword:true, createdAt:now, createdBy:by});
     await F.setDoc(F.doc(fs, 'accounts', uid), {orgId:o.id, email, createdAt:now});
-    supers.tmp = genPass(); supers.dshare = inviteText(o.name, email, pass);
+    supers.tmp = genPass(); supers.dshare = inviteText(o.name, email, pass, o.id);
     supers.dmsg = {t:`${name} is now an Account Manager of ${o.name}.`, ok:true};
   } catch(err){ supers.dmsg = {t:errText(err)}; return formErr('amForm', supers.dmsg, '#amForm button[type=submit]'); }
   document.activeElement.blur(); renderOrgs();
@@ -247,6 +248,7 @@ $('#orgsBody').addEventListener('submit', async e => {
       const name = $('#osName').value.trim(); if (!name) throw custom('Enter the organization name.');
       const lf = ($('#osLogo').files || [])[0], extra = lf ? {logo:await logoFromFile(lf)} : {};
       await F.updateDoc(F.doc(fs, 'orgs', o.id), {...extra, name, color:$('#osColor').value, features:readFeats('osF'), plan:Object.assign({}, o.plan || {}, {name:$('#osPlan').value.trim() || 'Standard', fee:Math.max(0, +$('#osFee').value || 0)})});
+      brandSync(o.id, Object.assign({}, o, extra, {name, color:$('#osColor').value}));
       info(`Saved ${name}.`);
     }
     if (e.target.id === 'rqForm'){
@@ -292,7 +294,7 @@ $('#orgsBody').addEventListener('click', async e => {
     const to = stb.dataset.st;
     if (to === 'offboarded' && !confirm(`Offboard ${o.name}?\n\nEveryone in ${o.name} loses access immediately. Their data is kept, so you can reactivate them later.`)) return;
     if (to === 'suspended' && !confirm(`Suspend ${o.name}? Nobody there can sign in until you reactivate it.`)) return;
-    try { await F.updateDoc(F.doc(fs, 'orgs', o.id), {status:to, statusAt:Date.now()}); info(`${o.name}: ${OST[to][0].toLowerCase()}.`); } catch(err){ info('That did not work: ' + errText(err)); }
+    try { await F.updateDoc(F.doc(fs, 'orgs', o.id), {status:to, statusAt:Date.now()}); brandSync(o.id, Object.assign({}, o, {status:to})); info(`${o.name}: ${OST[to][0].toLowerCase()}.`); } catch(err){ info('That did not work: ' + errText(err)); }
     return;
   }
   const cb = e.target.closest('[data-cancel]');

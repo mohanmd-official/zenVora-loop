@@ -54,6 +54,14 @@ service cloud.firestore {
       allow update, delete: if isSuper();
     }
 
+    // Sign-in page branding for an organization's own link (<app>#/o/<orgId>): name, colour, logo, active. The only thing
+    // anyone can read without signing in; the Super Admin and that organization's Account Manager keep it up to date.
+    match /brand/{o} {
+      allow read: if true;
+      allow write: if (isSuper() || isOrgAdmin(o))
+        && request.resource.data.keys().hasOnly(['name', 'color', 'logo', 'active', 'at']);
+    }
+
     match /orgs/{o} {
       allow read: if isSuper() || isMember(o);
       allow create: if isSuper() && request.resource.data.get('supportUntil', 0) == 0;

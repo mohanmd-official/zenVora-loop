@@ -1,7 +1,7 @@
 # Zenvora Loop — notes for Claude
 
 Multi-organization planner + feature platform (Abbi's Dental Care is the main org). Plain HTML/CSS/JS, no framework,
-Firebase Auth + Firestore (Spark plan). Hosted privately on Firebase Hosting at https://app.abbisdentalcare.com: `.github/workflows/firebase-hosting.yml` deploys `public/` on every push to main (private repo; `noindex`).
+Firebase Auth + Firestore (Spark plan). Hosted on GitHub Pages at https://app.abbisdentalcare.com: `.github/workflows/pages.yml` deploys `public/` on every push to main (`noindex`). `firebase-hosting.yml` is a manual-only option for a private repo later.
 
 ## Layout: core + one folder per feature
 ```
@@ -89,6 +89,7 @@ Each feature folder: `feature.json` (name, order, enabled) · `tab.html` · `vie
 code in `js/`, hooks in `js/99-register.js`, rules in `rules.part` → `python3 build.py`. The Super Admin turns its flag on per organization.
 
 ## Data (Firestore) in one glance
+- `brand/{orgId}` (public, read without sign-in): name, color, logo, active, for the organization's sign-in link `#/o/<orgId>` (`authBrand`, kept in step by `brandSync` from Super Admin edits and the Account Manager's session).
 - `orgs/{orgId}`: org settings & features, `planner` {board, rem, assign:'all'|'mgr'|'off'} (Account Manager); `tasks/{id}` (a task given to a colleague: `createdBy`, `assigneeUid`, `assignee`{uid,name}, `shared:true`); `dir/{uid}` (name, title only, for picking assignees); `members/{uid}` (role orgadmin/manager/employee, `perms`, `att` work timing & salary, `isChief`).
 - Payroll: `attendance/{uid}/events`, `attRegs`.
 - Clinic: `patients` (+ docs/photos), `appointments`, `treatments` (`kind:'medicine'` for medicines), `payments`, `doctors`,
