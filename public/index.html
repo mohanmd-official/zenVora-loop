@@ -729,6 +729,18 @@ a.srcl0{text-decoration:none}.extbl td{vertical-align:middle}.nowrap{white-space
 .nag.soft{background:color-mix(in srgb,var(--todo) 9%,var(--paper));border-color:color-mix(in srgb,var(--todo) 30%,var(--line));color:var(--ink);margin:0 0 8px;font-size:12.5px}
 .cdmini{color:var(--muted)}
 @media (max-width:620px){.cdgrid{grid-template-columns:repeat(5,minmax(0,1fr))}}
+/* daily tally, simplified: count the purse → does it match? → more */
+.tmain{margin-bottom:12px}
+.tpurse h3,.tcash h3{font-size:15px}
+.ttot{display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid var(--line);margin-top:6px;padding-top:8px}
+.ttot span{font-weight:700}.ttot b{font-size:26px;font-weight:800;font-variant-numeric:tabular-nums}
+.tlalt{display:flex!important;flex-direction:row!important;align-items:center;gap:8px;justify-content:flex-end;font-size:12.5px;color:var(--muted);margin-top:6px;text-transform:none!important;letter-spacing:0!important}
+.tlalt input:disabled{opacity:.45}
+.tcash .tsum b{font-size:20px}
+.tmore{margin-bottom:12px}.tmore>summary{cursor:pointer;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}.tmore[open]>summary{margin-bottom:12px}
+.tmore .topen{border-bottom:1px dashed var(--line);padding-bottom:12px}
+.tmh{font-size:13px;margin:0 0 8px}
+.tfirst{margin-bottom:12px;font-size:13.5px}
 /* ---------- toasts ---------- */
 .toasts{position:fixed;top:12px;right:12px;display:flex;flex-direction:column;gap:8px;z-index:40;width:min(340px,calc(100% - 24px))}
 .toast{background:var(--paper);border-left:4px solid var(--prog);border-radius:10px;padding:10px 12px;box-shadow:0 8px 28px rgba(0,0,0,.25);animation:slide .25s ease-out}
@@ -5537,64 +5549,70 @@ function tallyBase(){
   const withDen = pays.filter(x => x.cash), denIn = {}, denOut = {};
   withDen.forEach(x => DENOMS.forEach(v => { denIn[v] = (denIn[v] || 0) + (+(x.cash.in || {})[v] || 0); denOut[v] = (denOut[v] || 0) + (+(x.cash.out || {})[v] || 0); }));
   const chPetty = withDen.reduce((s, x) => s + (+x.cash.petty || 0), 0), chOther = withDen.reduce((s, x) => s + (+x.cash.other || 0), 0);
-  return {day, tallies:all, done, prev, pays, dig, pet, withDen, denIn, denOut, noDen:pays.length - withDen.length, chPetty, chOther, toPetty:paidSum(pet), cashIn:paidSum(pays), cashExp:paidSum((d.tExp || []).filter(x => x.mode === 'cash' && x.paid !== false && (x.paidDate || x.date) === day))};
+  const first = !prev && (!done || !!done.start);                                // first tally: what is counted now is the starting point
+  return {day, tallies:all, done, prev, first, pays, dig, pet, withDen, denIn, denOut, noDen:pays.length - withDen.length, chPetty, chOther, toPetty:paidSum(pet), cashIn:paidSum(pays), cashExp:paidSum((d.tExp || []).filter(x => x.mode === 'cash' && x.paid !== false && (x.paidDate || x.date) === day))};
 }
 const denGrid = (L, pre, counts, w) => `<div class="denoms">${L.map(n => `<label><span>₹${n} ×</span><input type="number" min="0" id="${pre}${n}" data-den="${pre}" value="${+(counts || {})[n] || ''}" placeholder="0"${w ? '' : ' disabled'}><b id="${pre}T${n}">₹0</b></label>`).join('')}</div>`;
 function accTally(){
-  const B = tallyBase(), {day, done, prev, pays} = B, w = canW('tally') || canW('accounts');
-  const fix = cl.acc.tOpenFix === day && canW('accounts'), fixedOpen = !!(done || prev) && !fix, opening = done ? +done.opening || 0 : prev ? +prev.counted || 0 : 0;
+  const B = tallyBase(), {day, done, prev, pays, first} = B, w = canW('tally') || canW('accounts');
+  const fix = cl.acc.tOpenFix === day && canW('accounts') && !first, opening = done ? +done.opening || 0 : prev ? +prev.counted || 0 : 0;
   const openCounts = done ? done.openCounts || null : prev ? prev.counts || null : null;
   const gap = !done && prev && prev.date < shiftDay(day, -1);
-  // not tallied yet: fill the closing count with what should be in the purse (opening notes + notes received at billing − change given from the purse)
-  const exp = {}; DENOMS.forEach(v => { exp[v] = Math.max(0, (+(openCounts || {})[v] || 0) + (B.denIn[v] || 0) - (B.denOut[v] || 0)); });
-  const prefill = !done && (B.withDen.length || openCounts) ? exp : null;
   const chip = (c, L) => (L || DENOMS).filter(n => +c[n]).map(n => `<span class="dchip">₹${n} × ${+c[n]}</span>`).join('') || '<span class="stat">no denominations saved</span>';
+  // not tallied yet: fill the purse count with what should be in it (opening notes + notes received at billing − change given from the purse)
+  const exp = {}; DENOMS.forEach(v => { exp[v] = Math.max(0, (+(openCounts || {})[v] || 0) + (B.denIn[v] || 0) - (B.denOut[v] || 0)); });
+  const prefill = !done && !first && openCounts ? exp : null;
   const F0 = done ? tFig(done, cl.acc.d.tPay || []) : null;
   const status = done ? (F0.ok ? `<span class="upill on">Tallied ✓ · ${esc((done.by || '').split('@')[0])}</span>` : `<span class="upill gone">Not tallied · ${[F0.dc ? 'cash ' + (F0.dc > 0 ? '+' : '−') + inr(Math.abs(F0.dc)) : '', F0.dd ? 'online ' + (F0.dd > 0 ? '+' : '−') + inr(Math.abs(F0.dd)) : ''].filter(Boolean).join(', ') || 'not counted by hand'} against today's report</span>`)
     + (canW('accounts') ? ` <button class="linkb danger" data-tldel="${esc(day)}" title="Delete this saved tally (e.g. test entries), then count again">🗑 Delete this tally</button>` : '') : '<span class="upill pend">Not tallied yet</span>';
+  const more = fix || (done && (+done.change || +done.added || +done.out)) || B.cashExp || B.toPetty;
+  const row = (l, v, id) => `<div class="payrow"><span>${l}</span><span${id ? ` id="${id}"` : ''}>${v}</span></div>`;
   return `<div class="vbar" style="padding:0 0 10px"><div class="daynav"><button data-td="-1">‹</button><button data-td="0"${day === todayKey ? ' disabled' : ''}>Today</button><button data-td="1"${day >= todayKey ? ' disabled' : ''}>›</button></div>
       <strong>${esc(fmtLong(day))}</strong>${status}${done && done.history && done.history.length ? `<details class="stat thist"><summary>Changed ${plural(done.history.length, 'time')}</summary>${done.history.slice().reverse().map(h => `<div>${esc(fmt(h.at))} · ${esc((h.by || '').split('@')[0])}: before, counted ${inr((h.prev || {}).counted)} · opening ${inr((h.prev || {}).opening)}</div>`).join('')}</details>` : ''}</div>
-    <div class="box topen"><div class="tob"><span>Opening cash</span><b class="big" id="tlOpenV">${inr(opening)}</b>
-      <span class="stat">${fix ? 'correcting the opening: count again and give the reason' : prev && !done ? 'closing count of the last tally, ' + esc(fmtDM(prev.date)) : done ? 'as tallied' + (done.openingFix ? ` · corrected by ${esc((done.openingFix.by || '').split('@')[0])}: ${esc(done.openingFix.reason || '')}` : '') : 'first tally: count the cash in the drawer at the start of this day'}</span>
-      ${fixedOpen && canW('accounts') ? `<button class="linkb" data-tlopen="${esc(day)}" title="Correct the opening cash (recorded with your name and reason)">✎ Correct opening</button>` : ''}${fix ? '<button class="linkb" data-tlopen="">Cancel</button>' : ''}</div>
-      ${fixedOpen ? `<div class="dchips">${openCounts ? chip(openCounts) : ''}</div>` : denGrid(DENOMS, 'op', fix ? openCounts || {} : {}, w)}
-      ${fix ? '<input id="tlOpenWhy" placeholder="Reason for the correction *" style="flex-basis:100%">' : ''}
-      ${gap ? `<div class="nag" style="flex-basis:100%;margin:0">The last tally was on ${esc(fmtLong(prev.date))}; the days in between weren't tallied, so their cash isn't checked. The opening here is that day's closing count.</div>` : ''}
-      ${!done && !prev ? '<div class="stat" style="flex-basis:100%">Starting the tally today: earlier days are not assumed to be zero; they simply have no tally.</div>' : ''}</div>
-    <div class="tally">
-      <div class="box"><h3>Change brought in <span class="sub">coins &amp; notes added to the purse (e.g. from the bank)</span></h3>${denGrid(CHG, 'ch', done && done.changeCounts, w)}
-        <div class="payrow tsum"><span>Change brought in</span><b id="tlChangeV">₹0</b></div></div>
-      <div class="box"><h3>Cash in the purse now <span class="sub">count every note and coin</span></h3>
-        ${prefill ? `<div class="nag soft">Filled in from ${B.withDen.length ? plural(B.withDen.length, 'cash bill') + "'s notes" : 'the opening cash'}${openCounts ? ' and the opening cash' : ''}. Count the purse and change only what differs.${B.noDen ? ` ${plural(B.noDen, 'cash payment')} had no notes counted, so ${B.noDen === 1 ? 'it isn\'t' : 'they aren\'t'} included.` : ''}${B.cashExp || B.toPetty ? ' Cash paid out for expenses / petty cash isn\'t taken off note by note: take those notes out too.' : ''}</div>` : ''}
+    ${first ? `<div class="nag soft tfirst">🆕 <b>First tally.</b> Count <b>all the cash in the purse now</b>, today's collections included, and save. That is your starting point: from the next tally on, every day is checked against it.</div>` : ''}
+    ${gap ? `<div class="nag">The last tally was on ${esc(fmtLong(prev.date))}; the days in between weren't tallied, so their cash isn't checked. The opening here is that day's closing count.</div>` : ''}
+    <div class="tally tmain">
+      <div class="box tpurse"><h3>💵 Cash in the purse now <span class="sub">count every note and coin</span></h3>
+        ${prefill ? `<div class="nag soft">Filled in from the opening cash${B.withDen.length ? ` and ${plural(B.withDen.length, 'cash bill')}'s notes` : ''}. Count the purse and change only what differs.${B.noDen ? ` ${plural(B.noDen, 'cash payment')} had no notes counted, so ${B.noDen === 1 ? "it isn't" : "they aren't"} included.` : ''}${B.cashExp || B.toPetty ? " Cash paid out for expenses / petty cash isn't taken off note by note: take those notes out too." : ''}</div>` : ''}
         ${denGrid(DENOMS, 'den', done ? done.counts : prefill, w)}
-        <div class="payrow tsum"><span>Cash in the purse</span><b id="tlCounted">₹0</b></div></div>
-    </div>
-    <div class="tally">
-      <div class="box tcash"><h3>Cash reconciliation</h3>
-        <div class="payrow"><span>Opening cash</span><span id="tlOpenR">${inr(opening)}</span></div>
-        <div class="payrow"><span>+ Cash received <span class="stat">Collection report · ${plural(pays.length, 'payment')}</span></span><span>${inr(B.cashIn)}</span></div>
-        <div class="payrow"><span>+ Change brought in</span><span id="tlChangeR">₹0</span></div>
-        ${B.chPetty || (done && +done.chPetty) ? `<div class="payrow"><span>+ Patients' change paid from petty cash <span class="stat">their notes stayed in the purse · booked out of the petty box</span></span><span>${inr(B.chPetty)}</span></div>` : ''}
-        ${B.chOther || (done && +done.chOther) ? `<div class="payrow"><span>+ Patients' change paid from elsewhere <span class="stat">${esc([...new Set(B.withDen.flatMap(x => (x.cash.xs || []).filter(s => s.src === 'other').map(s => s.name)))].join(', '))}</span></span><span>${inr(B.chOther)}</span></div>` : ''}
-        <div class="payrow"><span>+ Cash withdrawn from the bank / added</span><span>${w ? `<input type="number" class="tin" id="tlAdd" min="0" value="${done && +done.added || ''}" placeholder="0">` : inr(done && done.added)}</span></div>
-        <div class="payrow"><span>− Cash expenses paid from the drawer <span class="stat">from Accounts</span></span><span>${inr(B.cashExp)}</span></div>
-        <div class="payrow"><span>− Moved to petty cash <span class="stat">${B.pet.length ? 'petty top-ups from the drawer' : 'none today'}</span></span><span>${inr(B.toPetty)}</span></div>
-        <div class="payrow"><span>− Cash deposited into the bank / handed over</span><span>${w ? `<input type="number" class="tin" id="tlOut" min="0" value="${done && +done.out || ''}" placeholder="0">` : inr(done && done.out)}</span></div>
-        <div class="payrow tsum"><span>Expected closing cash</span><b id="tlExpV">—</b></div>
-        <div class="payrow"><span>Actual cash counted <span class="stat">closing balance</span></span><b id="tlCountR">—</b></div>
-        <div class="payrow"><span>Cash received as per the count <span class="stat">vs ${inr(B.cashIn)} in the report</span></span><span id="tlColl">—</span></div>
+        <div class="ttot"><span>Cash in the purse</span><b id="tlCounted">₹0</b></div>
+        ${w ? `<label class="tlalt">Not counting notes? Type the total <input type="number" class="tin" id="tlTotal" min="0" value="${done && !done.counts ? +done.counted || '' : ''}" placeholder="₹ total"></label>
+        <label class="ack tick" id="tlAckL"><input type="checkbox" id="tlAck"${done && done.manual ? ' checked' : ''}> I counted the cash by hand</label>` : ''}</div>
+      <div class="box tcash"><h3>Does it match?</h3>
+        ${first ? row('Opening cash <span class="stat">worked out: what you counted − today\'s cash</span>', '—', 'tlOpenR') : row(`Opening cash <span class="stat">${prev && !done ? 'closing count of ' + esc(fmtDM(prev.date)) : 'as tallied'}${done && done.openingFix ? ' · corrected' : ''}</span>`, inr(opening), 'tlOpenR')}
+        ${row(`+ Cash received <span class="stat">Collection report · ${plural(pays.length, 'payment')}</span>`, inr(B.cashIn))}
+        ${B.chPetty || (done && +done.chPetty) ? row("+ Patients' change paid from petty cash <span class=\"stat\">their notes stayed in the purse</span>", inr(B.chPetty)) : ''}
+        ${B.chOther || (done && +done.chOther) ? row(`+ Patients' change paid from elsewhere <span class="stat">${esc([...new Set(B.withDen.flatMap(x => (x.cash.xs || []).filter(s => s.src === 'other').map(s => s.name)))].join(', '))}</span>`, inr(B.chOther)) : ''}
+        ${row('± Other cash in / out <span class="stat">change brought in, bank, expenses, petty cash (below)</span>', '₹0', 'tlOtherR')}
+        <div class="payrow tsum"><span>Expected in the purse</span><b id="tlExpV">—</b></div>
+        <div class="payrow"><span>Counted</span><b id="tlCountR">—</b></div>
         <div class="tdiff" id="tlDiff"></div>
-        ${w ? `<label class="ack tick" id="tlAckL"><input type="checkbox" id="tlAck"${done && done.manual ? ' checked' : ''}> I counted the cash by hand</label>` : ''}
+        <div class="payrow stat"><span>Cash received as per the count <span class="stat">vs ${inr(B.cashIn)} in the report</span></span><span id="tlColl">—</span></div>
         ${pays.length ? `<details class="stat"><summary>Cash payments</summary>${pays.map(x => `<div>${esc(x.patientName)} · ${esc(x.receiptNo || '')} · ${inr(x.amount)}${x.cash ? ` · <span class="cdmini">${esc(cashLine(x))}</span>` : ' · <i>notes not counted</i>'}</div>`).join('')}</details>` : ''}</div>
-      <div class="box"><h3>GPay / UPI, cards &amp; others</h3>
-        <table class="dtbl"><thead><tr><th></th><th class="num">Report</th><th class="num">App / slip</th><th></th></tr></thead><tbody>
-        ${B.dig.map(m => { const dm = (done && done.digital && done.digital[m.k]) || {};
-          return `<tr><td><b>${esc(m.l)}</b>${m.ps.length ? `<details class="stat"><summary>${plural(m.ps.length, 'payment')}</summary>${m.ps.map(x => `<div>${esc(x.patientName || '')} · ${inr(x.amount)}${m.ms.length > 1 ? ' · ' + esc(x.mode) : ''}</div>`).join('')}</details>` : ''}</td>
-            <td class="num">${inr(m.sys)}</td><td class="num">${w ? `<input type="number" class="tin" id="dg_${m.k}" data-dapp="${m.k}" value="${done && dm.app != null ? dm.app : ''}" placeholder="${m.sys ? 'enter' : '0'}">` : inr(dm.app)}</td><td id="dgDiff_${m.k}" class="dstat"></td></tr>`; }).join('')}
-        </tbody></table>
-        <div class="tdiff" id="tlDigDiff"></div>
-        ${w ? `<label class="ack tick" id="tlAckDL"><input type="checkbox" id="tlAckD"${done && done.manual ? ' checked' : ''}> I checked each amount in the app / slip</label>` : ''}</div>
     </div>
+    <details class="box tmore"${more ? ' open' : ''}><summary><b>More</b> <span class="stat">opening cash · change brought in · bank withdrawals &amp; deposits · expenses &amp; petty cash</span></summary>
+      ${first ? '' : `<div class="topen"><div class="tob"><span>Opening cash</span><b class="big" id="tlOpenV">${inr(opening)}</b>
+        <span class="stat">${fix ? 'correcting the opening: count again and give the reason' : prev && !done ? 'closing count of the last tally, ' + esc(fmtDM(prev.date)) : 'as tallied' + (done && done.openingFix ? ` · corrected by ${esc((done.openingFix.by || '').split('@')[0])}: ${esc(done.openingFix.reason || '')}` : '')}</span>
+        ${!fix && canW('accounts') ? `<button class="linkb" data-tlopen="${esc(day)}" title="Correct the opening cash (recorded with your name and reason)">✎ Correct opening</button>` : ''}${fix ? '<button class="linkb" data-tlopen="">Cancel</button>' : ''}</div>
+        ${fix ? denGrid(DENOMS, 'op', openCounts || {}, w) : `<div class="dchips">${openCounts ? chip(openCounts) : ''}</div>`}
+        ${fix ? '<input id="tlOpenWhy" placeholder="Reason for the correction *" style="flex-basis:100%">' : ''}</div>`}
+      <div class="tally">
+        <div><h3 class="tmh">Change brought in <span class="sub">coins &amp; notes added to the purse (e.g. from the bank)</span></h3>${denGrid(CHG, 'ch', done && done.changeCounts, w)}
+          <div class="payrow tsum"><span>Change brought in</span><b id="tlChangeV">₹0</b></div></div>
+        <div><h3 class="tmh">Bank, expenses &amp; petty cash</h3>
+          <div class="payrow"><span>+ Cash withdrawn from the bank / added</span><span>${w ? `<input type="number" class="tin" id="tlAdd" min="0" value="${done && +done.added || ''}" placeholder="0">` : inr(done && done.added)}</span></div>
+          ${row('− Cash expenses paid from the purse <span class="stat">from Accounts</span>', inr(B.cashExp))}
+          ${row(`− Moved to petty cash <span class="stat">${B.pet.length ? 'petty top-ups from the purse' : 'none today'}</span>`, inr(B.toPetty))}
+          <div class="payrow"><span>− Cash deposited into the bank / handed over</span><span>${w ? `<input type="number" class="tin" id="tlOut" min="0" value="${done && +done.out || ''}" placeholder="0">` : inr(done && done.out)}</span></div></div>
+      </div></details>
+    <div class="box"><h3>GPay / UPI, cards &amp; others</h3>
+      <table class="dtbl"><thead><tr><th></th><th class="num">Report</th><th class="num">App / slip</th><th></th></tr></thead><tbody>
+      ${B.dig.map(m => { const dm = (done && done.digital && done.digital[m.k]) || {};
+        return `<tr><td><b>${esc(m.l)}</b>${m.ps.length ? `<details class="stat"><summary>${plural(m.ps.length, 'payment')}</summary>${m.ps.map(x => `<div>${esc(x.patientName || '')} · ${inr(x.amount)}${m.ms.length > 1 ? ' · ' + esc(x.mode) : ''}</div>`).join('')}</details>` : ''}</td>
+          <td class="num">${inr(m.sys)}</td><td class="num">${w ? `<input type="number" class="tin" id="dg_${m.k}" data-dapp="${m.k}" value="${done && dm.app != null ? dm.app : ''}" placeholder="${m.sys ? 'enter' : '0'}">` : inr(dm.app)}</td><td id="dgDiff_${m.k}" class="dstat"></td></tr>`; }).join('')}
+      </tbody></table>
+      <div class="tdiff" id="tlDigDiff"></div>
+      ${w ? `<label class="ack tick" id="tlAckDL"><input type="checkbox" id="tlAckD"${done && done.manual ? ' checked' : ''}> I checked each amount in the app / slip</label>` : ''}</div>
     ${w ? `<div class="btnrow" style="margin-top:10px"><input id="tlNote" placeholder="Note (required if anything doesn't match)" style="flex:1;min-width:200px" value="${esc(done ? done.note || '' : '')}"><button class="primary" id="tlSave">${done ? 'Update tally' : 'Save tally'}</button></div>` : ''}
     ${tallyMonth(B)}`;
 }
@@ -5618,21 +5636,26 @@ function tallyMonth(B){
 }
 function tallyCalc(){
   if (!$('#tlColl')) return null;
-  const B = tallyBase(), n = id => { const e = $('#' + id); return e ? +e.value || 0 : 0; }, w = !!$('#tlSave');
+  const B = tallyBase(), n = id => { const e = $('#' + id); return e ? +e.value || 0 : 0; }, w = !!$('#tlSave'), set = (id, t) => { const e = $('#' + id); if (e) e.textContent = t; };
   const cnt = (pre, L) => Object.fromEntries(L.map(v => [v, Math.max(0, n(pre + v))]));
   const showT = (pre, L, c) => L.forEach(v => { const b = $('#' + pre + 'T' + v); if (b) b.textContent = inr(v * c[v]); });
-  const fixedOpen = !$('#op500'), openCounts = fixedOpen ? (B.done ? B.done.openCounts || null : B.prev ? B.prev.counts || null : null) : cnt('op', DENOMS), openFix = !fixedOpen && !!$('#tlOpenWhy');
-  const opening = fixedOpen ? (B.done ? +B.done.opening || 0 : B.prev ? +B.prev.counted || 0 : 0) : denSum(openCounts);
-  if (!fixedOpen){ showT('op', DENOMS, openCounts); $('#tlOpenV').textContent = inr(opening); }
-  const changeCounts = cnt('ch', CHG), change = denSum(changeCounts, CHG), counts = cnt('den', DENOMS), counted = denSum(counts);
-  showT('ch', CHG, changeCounts); showT('den', DENOMS, counts);
+  const openFix = !!$('#op500'), openCounts = openFix ? cnt('op', DENOMS) : B.first ? null : (B.done ? B.done.openCounts || null : B.prev ? B.prev.counts || null : null);
+  if (openFix){ showT('op', DENOMS, openCounts); set('tlOpenV', inr(denSum(openCounts))); }
+  const changeCounts = cnt('ch', CHG), change = denSum(changeCounts, CHG), gridCounts = cnt('den', DENOMS), gridSum = denSum(gridCounts);
+  showT('ch', CHG, changeCounts); showT('den', DENOMS, gridCounts);
+  const tot = $('#tlTotal'); if (tot){ tot.disabled = gridSum > 0; if (gridSum) tot.value = ''; }
+  const byTotal = !gridSum && tot && +tot.value > 0, counted = byTotal ? Math.round(+tot.value) : gridSum, counts = byTotal ? null : gridCounts;   // notes counted, or just the total typed
   const out = Math.max(0, $('#tlOut') ? n('tlOut') : B.done ? +B.done.out || 0 : 0), added = Math.max(0, $('#tlAdd') ? n('tlAdd') : B.done ? +B.done.added || 0 : 0);
-  const expected = opening + B.cashIn + change + added + B.chPetty + B.chOther - B.cashExp - B.toPetty - out, diff = counted - expected, coll = counted - opening - change - added - B.chPetty - B.chOther + B.cashExp + B.toPetty + out;
-  $('#tlChangeV').textContent = inr(change); $('#tlCounted').textContent = inr(counted); $('#tlColl').textContent = inr(coll);
-  $('#tlOpenR').textContent = inr(opening); $('#tlChangeR').textContent = inr(change); $('#tlExpV').textContent = inr(expected); $('#tlCountR').textContent = inr(counted);
+  const flow = B.cashIn + change + added + B.chPetty + B.chOther - B.cashExp - B.toPetty - out;            // today's cash in − out
+  const opening = openFix ? denSum(openCounts) : B.first ? Math.max(0, counted - flow) : (B.done ? +B.done.opening || 0 : B.prev ? +B.prev.counted || 0 : 0);
+  const expected = opening + flow, diff = counted - expected, coll = counted - opening - change - added - B.chPetty - B.chOther + B.cashExp + B.toPetty + out;
+  const other = change + added - B.cashExp - B.toPetty - out;
+  set('tlChangeV', inr(change)); set('tlCounted', inr(counted)); set('tlColl', inr(coll)); set('tlOpenR', inr(opening)); set('tlOtherR', (other < 0 ? '− ' : '') + inr(Math.abs(other)));
+  set('tlExpV', inr(expected)); set('tlCountR', inr(counted));
   const ack = $('#tlAck') ? $('#tlAck').checked : !!(B.done && B.done.manual), dEl = $('#tlDiff');
-  dEl.className = 'tdiff ' + (diff ? 'bad' : ack ? 'ok' : 'wait');
-  dEl.textContent = diff ? (diff > 0 ? `Excess ${inr(diff)}: counted is more than expected (against the report)` : `Short ${inr(-diff)}: counted is less than expected (against the report)`) : ack ? '✓ Cash tallied' : 'Matches the report · tick "counted by hand" to tally';
+  const startNow = B.first && !openFix;
+  dEl.className = 'tdiff ' + (startNow && !counted ? 'wait' : diff ? 'bad' : ack ? 'ok' : 'wait');
+  dEl.textContent = startNow && !counted ? 'Count the cash in the purse now (or type the total).' : startNow && !diff ? (ack ? `✓ Starting point: opening ${inr(opening)} + today's cash = ${inr(counted)} in the purse` : `Starting point: ${inr(counted)} in the purse · tick "counted by hand" to save`) : diff ? (diff > 0 ? `Excess ${inr(diff)}: counted is more than expected (against the report)` : `Short ${inr(-diff)}: counted is less than expected (against the report)`) : ack ? '✓ Cash tallied' : 'Matches the report · tick "counted by hand" to tally';
   const digital = {}; let digitalDiff = 0, blank = 0;
   B.dig.forEach(m => {
     const e = $('#dg_' + m.k), raw = e ? e.value.trim() : '', app = e ? (raw === '' ? (m.sys ? null : 0) : +raw || 0) : (((B.done || {}).digital || {})[m.k] || {}).app || 0;
@@ -5650,7 +5673,7 @@ function tallyCalc(){
 async function saveTally(){
   const T = tallyCalc(); if (!T) return;
   const note = (($('#tlNote') || {}).value || '').trim();
-  if (!T.counted && !confirm('The drawer count is empty. Save with ₹0 in the drawer?')) return;
+  if (!T.counted && !confirm('The purse count is empty. Save with ₹0 in the purse?')) return;
   if (T.blank) return info('Enter the amount each app / slip shows (0 if nothing came in).');
   if (!T.ack || !T.ackD) return info('Tick "I counted the cash by hand" and "I checked each amount" to confirm.');
   if ((T.diff || T.digitalDiff) && !note) return info('It doesn\'t match the Collection report. Add a note explaining the difference.');
@@ -5660,7 +5683,7 @@ async function saveTally(){
   if (cl.acc.tSaving) return; cl.acc.tSaving = true;                                   // no double submits
   try {
     const x = {date:T.B.day, opening:T.opening, openCounts:T.openCounts || null, cashIn:T.B.cashIn, change:T.change, changeCounts:T.changeCounts, added:T.added, chPetty:T.B.chPetty, chOther:T.B.chOther, cashExp:T.B.cashExp, toPetty:T.B.toPetty, out:T.out, expected:T.expected,
-      counts:T.counts, counted:T.counted, diff:T.diff, digital:T.digital, digitalDiff:T.digitalDiff, unseen:0, manual:true, note, by, at:now, createdBy:(D0 && (D0.createdBy || D0.by)) || by, createdAt:(D0 && (D0.createdAt || D0.at)) || now};
+      counts:T.counts, counted:T.counted, start:!!T.B.first && !T.openFix, diff:T.diff, digital:T.digital, digitalDiff:T.digitalDiff, unseen:0, manual:true, note, by, at:now, createdBy:(D0 && (D0.createdBy || D0.by)) || by, createdAt:(D0 && (D0.createdAt || D0.at)) || now};
     if (T.openFix && T.opening !== oldOpen) x.openingFix = {from:oldOpen, to:T.opening, reason:why, by, at:now};
     else if (D0 && D0.openingFix) x.openingFix = D0.openingFix;
     if (D0){ const {history, ...prevV} = D0; delete prevV.id; x.history = (D0.history || []).concat([{at:now, by, prev:prevV}]).slice(-20); }      // keep what it was before this change
@@ -6041,7 +6064,7 @@ document.addEventListener('change', e => { if (e.target.matches && e.target.matc
 }
 $('#clBody').addEventListener('input', e => {
   const mr = e.target.closest('[data-mr]'); if (mr && e.target.matches('[data-mf]')){ medCalc(mr); const tt = $('#rxTot'); if (tt) tt.textContent = inr([...document.querySelectorAll('#rxMeds [data-mr]')].reduce((s, r) => s + parseInt((r.querySelector('b[data-mf="cost"]').textContent || '0').replace(/[^0-9]/g, '') || 0), 0)); }
-  if (e.target.matches('#tlOut,#tlAdd,[data-den],[data-dapp],#tlAck,#tlAckD')) tallyCalc();
+  if (e.target.matches('#tlOut,#tlAdd,#tlTotal,[data-den],[data-dapp],#tlAck,#tlAckD')) tallyCalc();
   if (e.target.matches('[data-ccost]')){ clearTimeout(e.target._t); e.target._t = setTimeout(() => consSaveCost(e.target), 700); }
   if (e.target.id === 'clQ'){ cl.q = e.target.value; clearTimeout(clQTimer); clQTimer = setTimeout(clDoSearch, 250); }
   if (e.target.id === 'pfDob' && $('#pfAge')){ const a = $('#pfAge'); a.disabled = !!e.target.value; a.value = ''; a.placeholder = e.target.value ? ageOf({dob:e.target.value}) : 'if DOB unknown'; }

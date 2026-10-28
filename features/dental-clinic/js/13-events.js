@@ -113,7 +113,7 @@ document.addEventListener('change', e => { if (e.target.matches && e.target.matc
 }
 $('#clBody').addEventListener('input', e => {
   const mr = e.target.closest('[data-mr]'); if (mr && e.target.matches('[data-mf]')){ medCalc(mr); const tt = $('#rxTot'); if (tt) tt.textContent = inr([...document.querySelectorAll('#rxMeds [data-mr]')].reduce((s, r) => s + parseInt((r.querySelector('b[data-mf="cost"]').textContent || '0').replace(/[^0-9]/g, '') || 0), 0)); }
-  if (e.target.matches('#tlOut,#tlAdd,[data-den],[data-dapp],#tlAck,#tlAckD')) tallyCalc();
+  if (e.target.matches('#tlOut,#tlAdd,#tlTotal,[data-den],[data-dapp],#tlAck,#tlAckD')) tallyCalc();
   if (e.target.matches('[data-ccost]')){ clearTimeout(e.target._t); e.target._t = setTimeout(() => consSaveCost(e.target), 700); }
   if (e.target.id === 'clQ'){ cl.q = e.target.value; clearTimeout(clQTimer); clQTimer = setTimeout(clDoSearch, 250); }
   if (e.target.id === 'pfDob' && $('#pfAge')){ const a = $('#pfAge'); a.disabled = !!e.target.value; a.value = ''; a.placeholder = e.target.value ? ageOf({dob:e.target.value}) : 'if DOB unknown'; }

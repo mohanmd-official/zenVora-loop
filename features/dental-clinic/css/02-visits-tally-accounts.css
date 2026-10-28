@@ -98,3 +98,15 @@ a.srcl0{text-decoration:none}.extbl td{vertical-align:middle}.nowrap{white-space
 .nag.soft{background:color-mix(in srgb,var(--todo) 9%,var(--paper));border-color:color-mix(in srgb,var(--todo) 30%,var(--line));color:var(--ink);margin:0 0 8px;font-size:12.5px}
 .cdmini{color:var(--muted)}
 @media (max-width:620px){.cdgrid{grid-template-columns:repeat(5,minmax(0,1fr))}}
+/* daily tally, simplified: count the purse → does it match? → more */
+.tmain{margin-bottom:12px}
+.tpurse h3,.tcash h3{font-size:15px}
+.ttot{display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid var(--line);margin-top:6px;padding-top:8px}
+.ttot span{font-weight:700}.ttot b{font-size:26px;font-weight:800;font-variant-numeric:tabular-nums}
+.tlalt{display:flex!important;flex-direction:row!important;align-items:center;gap:8px;justify-content:flex-end;font-size:12.5px;color:var(--muted);margin-top:6px;text-transform:none!important;letter-spacing:0!important}
+.tlalt input:disabled{opacity:.45}
+.tcash .tsum b{font-size:20px}
+.tmore{margin-bottom:12px}.tmore>summary{cursor:pointer;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}.tmore[open]>summary{margin-bottom:12px}
+.tmore .topen{border-bottom:1px dashed var(--line);padding-bottom:12px}
+.tmh{font-size:13px;margin:0 0 8px}
+.tfirst{margin-bottom:12px;font-size:13.5px}

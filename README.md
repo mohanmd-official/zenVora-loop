@@ -208,7 +208,9 @@ Home → **Reminders** shows the open organization reminders (with **✓ Close**
   Change taken from petty cash is booked out of the petty box automatically (**Petty cash** shows it as *Change to a patient*);
   deleting the payment puts it back. The receipt shows the cash received and the change.
 - **Daily tally** (a cash check, not an expense):
-  - **Start on any date**, even mid-month: the very first tally asks you to count the opening cash by denomination (₹500 … ₹1, each subtotal and the total worked out). Days before it are simply "not tallied"; they are never assumed to be zero.
+  - **One thing to fill in: the cash in the purse now** (count the notes ₹500 … ₹1, or just type the total). Next to it, **Does it match?** shows the opening, today's cash received, any other cash in/out, the **expected** amount and the difference.
+  - **First tally (any date, even mid-month):** count **all** the cash in the purse, today's collections included. The opening is worked out from it (counted − today's cash), so that day is your starting point. Days before it are simply "not tallied"; they are never assumed to be zero.
+  - Opening cash, change brought in, bank withdrawals / deposits, expenses and petty cash are under **More** (opens by itself when something is there).
   - From then on, **opening cash = the closing count of the last tally** (shown with its denominations; a note appears when days in between weren't tallied). The Account Manager can **✎ Correct opening** with a reason; the correction and the earlier version are kept (**Changed N times**).
   - **Change brought in** (₹200 … ₹1, e.g. coins from the bank) and the **cash in the purse now** are counted by denomination.
   - **Filled in for you:** when cash bills had their notes counted (below), the purse count is already filled in = opening notes + notes received from patients − change given from the purse. Just count the purse and correct what differs.
