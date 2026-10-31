@@ -2499,6 +2499,7 @@ async function boot(){
 
 async function startUser(user){
   if (cloud.uid === user.uid && appReady){ updateUserChip(user); return; }
+  setAddress(APP_BASE + (/^#\/o\//.test(location.hash) ? '' : location.hash));    // signed in: back to the app's own address
   stopListeners();
   const {F, fs} = cloud, uid = user.uid;
   cloud.uid = uid; cloud.user = user; cloud.ctx = null; appReady = false;
@@ -2850,18 +2851,25 @@ async function createAuthUser(name, email, pass){
   return c.user.uid;
 }
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-/* ---------- each organization's own sign-in link: <app address>#/o/<orgId> ----------
-   The link shows the organization's name, logo and colour on the sign-in page (from brand/{orgId}, the only thing anyone can
-   read without signing in). Signing in still decides the organization: the link only changes how the page looks. */
-const appBase = () => location.origin + location.pathname;
-const orgLink = orgId => appBase() + '#/o/' + orgId;
+/* ---------- each organization's own sign-in link: <app address>/<link name>, e.g. app.abbisdentalcare.com/abbisdentalcare ----------
+   The host has no page at /<link name>, so it serves 404.html, which sends the browser to <app>#/o/<link name>; the app then
+   shows that organization's name, logo and colour on the sign-in page (from brand/<link name>: the only thing anyone can read
+   without signing in) and puts the short address back in the address bar. Signing in still decides the organization.
+   The link name is the organization ID unless the Super Admin gives it another one (orgs/{id}.link). */
+const APP_BASE = location.origin + location.pathname.replace(/[^/]*$/, '');        // where the app lives (index.html)
+const appBase = () => APP_BASE;
+const linkName = (orgId, org) => (org && org.link) || orgId;
+const orgLink = name => APP_BASE + name;
+const LINK_RE = /^[a-z0-9][a-z0-9-]{1,29}$/;
 const BRAND_KEY = 'zl-brand';
-async function brandSync(orgId, org){                 // keep the public sign-in branding in step with the organization
+async function brandSync(orgId, org, oldLink){        // keep the public sign-in branding in step with the organization
   if (!cloud || !orgId || !org) return;
-  const {F, fs} = cloud, want = {name:org.name || '', color:org.color || '', logo:org.logo || '', active:org.status === 'active'};
-  try { const s = await F.getDoc(F.doc(fs, 'brand', orgId)), cur = s.exists() ? s.data() : null;
-    if (!cur || ['name', 'color', 'logo', 'active'].some(k => cur[k] !== want[k])) await F.setDoc(F.doc(fs, 'brand', orgId), Object.assign(want, {at:Date.now()})); }
-  catch(e){ console.warn('brand', e); }
+  const {F, fs} = cloud, key = linkName(orgId, org), want = {orgId, name:org.name || '', color:org.color || '', logo:org.logo || '', active:org.status === 'active'};
+  try {
+    if (oldLink && oldLink !== key){ const o = await F.getDoc(F.doc(fs, 'brand', oldLink)); if (o.exists() && o.data().active !== false) await F.setDoc(F.doc(fs, 'brand', oldLink), Object.assign({}, o.data(), {orgId, active:false, at:Date.now()})); }
+    const s = await F.getDoc(F.doc(fs, 'brand', key)), cur = s.exists() ? s.data() : null;
+    if (!cur || ['orgId', 'name', 'color', 'logo', 'active'].some(k => cur[k] !== want[k])) await F.setDoc(F.doc(fs, 'brand', key), Object.assign(want, {at:Date.now()}));
+  } catch(e){ console.warn('brand', e); }
 }
 const AUTH_BRAND0 = $('#auth .auth-brand') ? $('#auth .auth-brand').innerHTML : '';
 function authBrandShow(b){
@@ -2872,24 +2880,26 @@ function authBrandShow(b){
   $('#authSub').textContent = `Sign in to ${b.name} with the email and password you were given.`;
   applyTheme(b.color);
 }
-async function authBrand(){                           // #/o/<orgId> link → show that organization on the sign-in page (and remember it)
+const setAddress = url => { try { if (location.href !== url) history.replaceState(null, '', url); } catch(e){} };
+async function authBrand(){                           // /<link name> (via 404.html → #/o/<link name>) → show that organization on the sign-in page
   const m = (location.hash || '').match(/^#\/o\/([a-z0-9][a-z0-9-]{1,29})/);
   let saved = null; try { saved = JSON.parse(localStorage.getItem(BRAND_KEY) || 'null'); } catch(e){}
   const id = m ? m[1] : saved && saved.id;
+  if (m) setAddress(orgLink(id));                                       // show the short address while signing in
   if (!id){ authBrandShow(null); return; }
   if (saved && saved.id === id) authBrandShow(saved);                    // instant, then refresh
   try {
     const s = await cloud.F.getDoc(cloud.F.doc(cloud.fs, 'brand', id)), b = s.exists() ? s.data() : null;
-    if (!b || b.active === false){ try { localStorage.removeItem(BRAND_KEY); } catch(e){} authBrandShow(null); return; }
+    if (!b || b.active === false){ try { localStorage.removeItem(BRAND_KEY); } catch(e){} if (m) setAddress(APP_BASE); authBrandShow(null); return; }
     const keep = {id, name:b.name, color:b.color, logo:b.logo}; try { localStorage.setItem(BRAND_KEY, JSON.stringify(keep)); } catch(e){}
     if (!$('#auth').hidden) authBrandShow(keep);
   } catch(e){ if (!saved || saved.id !== id) authBrandShow(null); }
 }
-document.addEventListener('click', e => { if (e.target.closest('#brandOff')){ try { localStorage.removeItem(BRAND_KEY); } catch(_){} if (/^#\/o\//.test(location.hash)) history.replaceState(null, '', location.pathname); authBrandShow(null); } });
-const shareLinkHtml = (orgId, who) => `<div class="olink"><span>🔗 <b>Sign-in link for ${esc(who)}</b> <span class="stat">shows your name and logo on the sign-in page</span></span><code id="olinkV">${esc(orgLink(orgId))}</code><button type="button" data-copylink="${esc(orgLink(orgId))}">📋 Copy link</button></div>`;
+document.addEventListener('click', e => { if (e.target.closest('#brandOff')){ try { localStorage.removeItem(BRAND_KEY); } catch(_){} setAddress(APP_BASE); authBrandShow(null); } });
+const shareLinkHtml = (name, who) => `<div class="olink"><span>🔗 <b>Sign-in link for ${esc(who)}</b> <span class="stat">shows your name and logo on the sign-in page</span></span><code id="olinkV">${esc(orgLink(name))}</code><button type="button" data-copylink="${esc(orgLink(name))}">📋 Copy link</button></div>`;
 document.addEventListener('click', e => { const b = e.target.closest('[data-copylink]'); if (!b) return; const t = b.dataset.copylink;
   (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => info('Link copied.'), () => prompt('Copy this link:', t)); });
-const inviteText = (orgName, email, pass, orgId) => `You're invited to ${orgName} on Zenvora Loop 👋\n\nOpen:  ${orgId ? orgLink(orgId) : appBase()}\nEmail: ${email}\nTemporary password: ${pass}\n\nYou'll be asked to set your own password when you first sign in.`;
+const inviteText = (orgName, email, pass, link) => `You're invited to ${orgName} on Zenvora Loop 👋\n\nOpen:  ${link ? orgLink(link) : APP_BASE}\nEmail: ${email}\nTemporary password: ${pass}\n\nYou'll be asked to set your own password when you first sign in.`;
 const shareHtml = (id, text) => text ? `<div class="share"><pre id="${id}">${esc(text)}</pre><button type="button" data-copy="${id}">📋 Copy login details</button></div>` : '';
 const msgHtml = m => m ? `<div class="auth-err${m.ok ? ' ok' : ''}" style="margin-top:8px">${esc(m.t)}</div>` : '';
 const errText = err => err && err.code === 'custom' ? err.message
@@ -3177,7 +3187,7 @@ function orgPeople(){
   if (!orgView.tmp) orgView.tmp = genPass();
   let top = '';
   if (admin){
-    top = shareLinkHtml(oc.orgId, oc.org.name) + `<div class="box"><h3>Add a person <span class="sub">creates their login for ${esc(oc.org.name)}</span></h3>
+    top = shareLinkHtml(linkName(oc.orgId, oc.org), oc.org.name) + `<div class="box"><h3>Add a person <span class="sub">creates their login for ${esc(oc.org.name)}</span></h3>
       <form class="aform" id="pAdd" novalidate>
         <label class="grow">Full name<input id="paName" autocomplete="off" placeholder="e.g. Priya S"></label>
         <label class="grow">Email<input id="paEmail" type="email" autocomplete="off" placeholder="name@example.com"></label>
@@ -3330,7 +3340,7 @@ async function addPerson(){
         await F.setDoc(F.doc(fs, 'accounts', uid), {orgId:oc.orgId, email, createdAt:now});
         const mg = (orgView.members || []).find(m => m.uid === reportsTo);
         await F.setDoc(orgDoc('members', uid), Object.assign({email, name, title, reportsTo, reportsToName:mg ? fullName(mg) : '', reportsToTitle:mg ? (mg.title || ROLE_LABEL[mg.role] || '') : '', role, perms, active:true, removed:false, mustChangePassword:true, createdAt:now, createdBy:cloud.user.email || ''}, extra));
-        orgView.share = inviteText(oc.org.name, email, pass, oc.orgId);
+        orgView.share = inviteText(oc.org.name, email, pass, linkName(oc.orgId, oc.org));
         orgView.msg = {t:`${name} can now sign in. Share the login details below.`, ok:true};
       }
     }
@@ -3544,13 +3554,14 @@ function orgsDetail(){
   const nextDue = shiftDay(todayKey, 10);
   return `<button class="abk" id="orgsBack">← Organizations</button>
     <div class="ahead">${o.logo ? `<img src="${o.logo}" style="width:38px;height:38px;object-fit:contain;border-radius:10px;background:#fff">` : `<div class="uav" style="background:${esc(o.color || '#3730A3')};border-radius:10px">${initial(o.name)}</div>`}<div><b style="font-size:16px">${esc(o.name)}</b> <span class="upill ${st[1]}">${st[0]}</span><div class="stat">ID ${esc(o.id)} · onboarded ${o.createdAt ? esc(fmtShort(dayKey(o.createdAt))) : '—'} · ${o.seats || 0} ${o.seats === 1 ? 'person' : 'people'}</div></div></div>
-    ${shareLinkHtml(o.id, o.name)}
+    ${shareLinkHtml(linkName(o.id, o), o.name)}
     ${msgHtml(supers.dmsg)}${shareHtml('amShare', supers.dshare)}
     <div class="acards">
       <div class="box"><h3>Plan, features &amp; theme</h3>
         <form class="aform" id="osForm" novalidate>
           <label class="grow">Organization name<input id="osName" value="${esc(o.name)}"></label>
           <div class="flbl">Theme colour${swatchesHtml('osColor', o.color || PALETTE[0])}</div>
+          <label class="grow">Sign-in link <span class="stat">${esc(APP_BASE)}…</span><input id="osLink" value="${esc(linkName(o.id, o))}" placeholder="${esc(o.id)}" title="Lower-case letters, numbers and dashes, e.g. abbisdentalcare"></label>
           <label>Logo ${o.logo ? `<img src="${o.logo}" style="height:28px;vertical-align:middle;border-radius:6px">` : '<span class="neg">missing</span>'}<input type="file" id="osLogo" accept="image/*"></label>
           <div class="flbl grow">Features${featsHtml('osF', o.features || {})}</div>
           <label>Plan name<input id="osPlan" value="${esc(p.name || 'Standard')}"></label>
@@ -3643,7 +3654,7 @@ async function assignAccountManager(o){
     await F.updateDoc(F.doc(fs, 'orgs', o.id), {adminUid:uid, adminEmail:email});
     await F.setDoc(F.doc(fs, 'orgs', o.id, 'members', uid), {email, name, role:'orgadmin', title:'Account Manager', reportsTo:'', active:true, removed:false, mustChangePassword:true, createdAt:now, createdBy:by});
     await F.setDoc(F.doc(fs, 'accounts', uid), {orgId:o.id, email, createdAt:now});
-    supers.tmp = genPass(); supers.dshare = inviteText(o.name, email, pass, o.id);
+    supers.tmp = genPass(); supers.dshare = inviteText(o.name, email, pass, linkName(o.id, o));
     supers.dmsg = {t:`${name} is now an Account Manager of ${o.name}.`, ok:true};
   } catch(err){ supers.dmsg = {t:errText(err)}; return formErr('amForm', supers.dmsg, '#amForm button[type=submit]'); }
   document.activeElement.blur(); renderOrgs();
@@ -3680,8 +3691,12 @@ $('#orgsBody').addEventListener('submit', async e => {
     if (e.target.id === 'osForm'){
       const name = $('#osName').value.trim(); if (!name) throw custom('Enter the organization name.');
       const lf = ($('#osLogo').files || [])[0], extra = lf ? {logo:await logoFromFile(lf)} : {};
+      const link = ($('#osLink').value || '').trim().toLowerCase() || o.id, oldLink = linkName(o.id, o);
+      if (!LINK_RE.test(link)) throw custom('The sign-in link needs 2–30 lower-case letters, numbers or dashes (e.g. abbisdentalcare).');
+      if (link !== oldLink){ const t = await F.getDoc(F.doc(fs, 'brand', link)); if (t.exists() && t.data().orgId && t.data().orgId !== o.id) throw custom(`The link "${link}" is already used by another organization.`); }
+      extra.link = link;
       await F.updateDoc(F.doc(fs, 'orgs', o.id), {...extra, name, color:$('#osColor').value, features:readFeats('osF'), plan:Object.assign({}, o.plan || {}, {name:$('#osPlan').value.trim() || 'Standard', fee:Math.max(0, +$('#osFee').value || 0)})});
-      brandSync(o.id, Object.assign({}, o, extra, {name, color:$('#osColor').value}));
+      brandSync(o.id, Object.assign({}, o, extra, {name, color:$('#osColor').value}), linkName(o.id, o));
       info(`Saved ${name}.`);
     }
     if (e.target.id === 'rqForm'){

@@ -89,7 +89,7 @@ Each feature folder: `feature.json` (name, order, enabled) · `tab.html` · `vie
 code in `js/`, hooks in `js/99-register.js`, rules in `rules.part` → `python3 build.py`. The Super Admin turns its flag on per organization.
 
 ## Data (Firestore) in one glance
-- `brand/{orgId}` (public, read without sign-in): name, color, logo, active, for the organization's sign-in link `#/o/<orgId>` (`authBrand`, kept in step by `brandSync` from Super Admin edits and the Account Manager's session).
+- `brand/{link name}` (public, read without sign-in): orgId, name, color, logo, active, for the organization's sign-in link `<app>/<link name>` (`public/404.html` → `#/o/<link name>` → `authBrand`, which restores the short address). Link name = `orgs/{id}.link` or the org ID (`linkName`, `orgLink`, `LINK_RE`); set by the Super Admin; kept in step by `brandSync` (old link doc set `active:false`). Rules: an Account Manager may only write the brand doc named after their org ID or their `link`.
 - `orgs/{orgId}`: org settings & features, `planner` {board, rem, assign:'all'|'mgr'|'off'} (Account Manager); `tasks/{id}` (a task given to a colleague: `createdBy`, `assigneeUid`, `assignee`{uid,name}, `shared:true`); `dir/{uid}` (name, title only, for picking assignees); `members/{uid}` (role orgadmin/manager/employee, `perms`, `att` work timing & salary, `isChief`).
 - Payroll: `attendance/{uid}/events`, `attRegs`.
 - Clinic: `patients` (+ docs/photos), `appointments`, `treatments` (`kind:'medicine'` for medicines), `payments`, `doctors`,

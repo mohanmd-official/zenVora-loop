@@ -83,6 +83,7 @@ async function boot(){
 
 async function startUser(user){
   if (cloud.uid === user.uid && appReady){ updateUserChip(user); return; }
+  setAddress(APP_BASE + (/^#\/o\//.test(location.hash) ? '' : location.hash));    // signed in: back to the app's own address
   stopListeners();
   const {F, fs} = cloud, uid = user.uid;
   cloud.uid = uid; cloud.user = user; cloud.ctx = null; appReady = false;
@@ -434,18 +435,25 @@ async function createAuthUser(name, email, pass){
   return c.user.uid;
 }
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-/* ---------- each organization's own sign-in link: <app address>#/o/<orgId> ----------
-   The link shows the organization's name, logo and colour on the sign-in page (from brand/{orgId}, the only thing anyone can
-   read without signing in). Signing in still decides the organization: the link only changes how the page looks. */
-const appBase = () => location.origin + location.pathname;
-const orgLink = orgId => appBase() + '#/o/' + orgId;
+/* ---------- each organization's own sign-in link: <app address>/<link name>, e.g. app.abbisdentalcare.com/abbisdentalcare ----------
+   The host has no page at /<link name>, so it serves 404.html, which sends the browser to <app>#/o/<link name>; the app then
+   shows that organization's name, logo and colour on the sign-in page (from brand/<link name>: the only thing anyone can read
+   without signing in) and puts the short address back in the address bar. Signing in still decides the organization.
+   The link name is the organization ID unless the Super Admin gives it another one (orgs/{id}.link). */
+const APP_BASE = location.origin + location.pathname.replace(/[^/]*$/, '');        // where the app lives (index.html)
+const appBase = () => APP_BASE;
+const linkName = (orgId, org) => (org && org.link) || orgId;
+const orgLink = name => APP_BASE + name;
+const LINK_RE = /^[a-z0-9][a-z0-9-]{1,29}$/;
 const BRAND_KEY = 'zl-brand';
-async function brandSync(orgId, org){                 // keep the public sign-in branding in step with the organization
+async function brandSync(orgId, org, oldLink){        // keep the public sign-in branding in step with the organization
   if (!cloud || !orgId || !org) return;
-  const {F, fs} = cloud, want = {name:org.name || '', color:org.color || '', logo:org.logo || '', active:org.status === 'active'};
-  try { const s = await F.getDoc(F.doc(fs, 'brand', orgId)), cur = s.exists() ? s.data() : null;
-    if (!cur || ['name', 'color', 'logo', 'active'].some(k => cur[k] !== want[k])) await F.setDoc(F.doc(fs, 'brand', orgId), Object.assign(want, {at:Date.now()})); }
-  catch(e){ console.warn('brand', e); }
+  const {F, fs} = cloud, key = linkName(orgId, org), want = {orgId, name:org.name || '', color:org.color || '', logo:org.logo || '', active:org.status === 'active'};
+  try {
+    if (oldLink && oldLink !== key){ const o = await F.getDoc(F.doc(fs, 'brand', oldLink)); if (o.exists() && o.data().active !== false) await F.setDoc(F.doc(fs, 'brand', oldLink), Object.assign({}, o.data(), {orgId, active:false, at:Date.now()})); }
+    const s = await F.getDoc(F.doc(fs, 'brand', key)), cur = s.exists() ? s.data() : null;
+    if (!cur || ['orgId', 'name', 'color', 'logo', 'active'].some(k => cur[k] !== want[k])) await F.setDoc(F.doc(fs, 'brand', key), Object.assign(want, {at:Date.now()}));
+  } catch(e){ console.warn('brand', e); }
 }
 const AUTH_BRAND0 = $('#auth .auth-brand') ? $('#auth .auth-brand').innerHTML : '';
 function authBrandShow(b){
@@ -456,24 +464,26 @@ function authBrandShow(b){
   $('#authSub').textContent = `Sign in to ${b.name} with the email and password you were given.`;
   applyTheme(b.color);
 }
-async function authBrand(){                           // #/o/<orgId> link → show that organization on the sign-in page (and remember it)
+const setAddress = url => { try { if (location.href !== url) history.replaceState(null, '', url); } catch(e){} };
+async function authBrand(){                           // /<link name> (via 404.html → #/o/<link name>) → show that organization on the sign-in page
   const m = (location.hash || '').match(/^#\/o\/([a-z0-9][a-z0-9-]{1,29})/);
   let saved = null; try { saved = JSON.parse(localStorage.getItem(BRAND_KEY) || 'null'); } catch(e){}
   const id = m ? m[1] : saved && saved.id;
+  if (m) setAddress(orgLink(id));                                       // show the short address while signing in
   if (!id){ authBrandShow(null); return; }
   if (saved && saved.id === id) authBrandShow(saved);                    // instant, then refresh
   try {
     const s = await cloud.F.getDoc(cloud.F.doc(cloud.fs, 'brand', id)), b = s.exists() ? s.data() : null;
-    if (!b || b.active === false){ try { localStorage.removeItem(BRAND_KEY); } catch(e){} authBrandShow(null); return; }
+    if (!b || b.active === false){ try { localStorage.removeItem(BRAND_KEY); } catch(e){} if (m) setAddress(APP_BASE); authBrandShow(null); return; }
     const keep = {id, name:b.name, color:b.color, logo:b.logo}; try { localStorage.setItem(BRAND_KEY, JSON.stringify(keep)); } catch(e){}
     if (!$('#auth').hidden) authBrandShow(keep);
   } catch(e){ if (!saved || saved.id !== id) authBrandShow(null); }
 }
-document.addEventListener('click', e => { if (e.target.closest('#brandOff')){ try { localStorage.removeItem(BRAND_KEY); } catch(_){} if (/^#\/o\//.test(location.hash)) history.replaceState(null, '', location.pathname); authBrandShow(null); } });
-const shareLinkHtml = (orgId, who) => `<div class="olink"><span>🔗 <b>Sign-in link for ${esc(who)}</b> <span class="stat">shows your name and logo on the sign-in page</span></span><code id="olinkV">${esc(orgLink(orgId))}</code><button type="button" data-copylink="${esc(orgLink(orgId))}">📋 Copy link</button></div>`;
+document.addEventListener('click', e => { if (e.target.closest('#brandOff')){ try { localStorage.removeItem(BRAND_KEY); } catch(_){} setAddress(APP_BASE); authBrandShow(null); } });
+const shareLinkHtml = (name, who) => `<div class="olink"><span>🔗 <b>Sign-in link for ${esc(who)}</b> <span class="stat">shows your name and logo on the sign-in page</span></span><code id="olinkV">${esc(orgLink(name))}</code><button type="button" data-copylink="${esc(orgLink(name))}">📋 Copy link</button></div>`;
 document.addEventListener('click', e => { const b = e.target.closest('[data-copylink]'); if (!b) return; const t = b.dataset.copylink;
   (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => info('Link copied.'), () => prompt('Copy this link:', t)); });
-const inviteText = (orgName, email, pass, orgId) => `You're invited to ${orgName} on Zenvora Loop 👋\n\nOpen:  ${orgId ? orgLink(orgId) : appBase()}\nEmail: ${email}\nTemporary password: ${pass}\n\nYou'll be asked to set your own password when you first sign in.`;
+const inviteText = (orgName, email, pass, link) => `You're invited to ${orgName} on Zenvora Loop 👋\n\nOpen:  ${link ? orgLink(link) : APP_BASE}\nEmail: ${email}\nTemporary password: ${pass}\n\nYou'll be asked to set your own password when you first sign in.`;
 const shareHtml = (id, text) => text ? `<div class="share"><pre id="${id}">${esc(text)}</pre><button type="button" data-copy="${id}">📋 Copy login details</button></div>` : '';
 const msgHtml = m => m ? `<div class="auth-err${m.ok ? ' ok' : ''}" style="margin-top:8px">${esc(m.t)}</div>` : '';
 const errText = err => err && err.code === 'custom' ? err.message

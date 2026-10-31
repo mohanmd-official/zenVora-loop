@@ -111,13 +111,14 @@ function orgsDetail(){
   const nextDue = shiftDay(todayKey, 10);
   return `<button class="abk" id="orgsBack">← Organizations</button>
     <div class="ahead">${o.logo ? `<img src="${o.logo}" style="width:38px;height:38px;object-fit:contain;border-radius:10px;background:#fff">` : `<div class="uav" style="background:${esc(o.color || '#3730A3')};border-radius:10px">${initial(o.name)}</div>`}<div><b style="font-size:16px">${esc(o.name)}</b> <span class="upill ${st[1]}">${st[0]}</span><div class="stat">ID ${esc(o.id)} · onboarded ${o.createdAt ? esc(fmtShort(dayKey(o.createdAt))) : '—'} · ${o.seats || 0} ${o.seats === 1 ? 'person' : 'people'}</div></div></div>
-    ${shareLinkHtml(o.id, o.name)}
+    ${shareLinkHtml(linkName(o.id, o), o.name)}
     ${msgHtml(supers.dmsg)}${shareHtml('amShare', supers.dshare)}
     <div class="acards">
       <div class="box"><h3>Plan, features &amp; theme</h3>
         <form class="aform" id="osForm" novalidate>
           <label class="grow">Organization name<input id="osName" value="${esc(o.name)}"></label>
           <div class="flbl">Theme colour${swatchesHtml('osColor', o.color || PALETTE[0])}</div>
+          <label class="grow">Sign-in link <span class="stat">${esc(APP_BASE)}…</span><input id="osLink" value="${esc(linkName(o.id, o))}" placeholder="${esc(o.id)}" title="Lower-case letters, numbers and dashes, e.g. abbisdentalcare"></label>
           <label>Logo ${o.logo ? `<img src="${o.logo}" style="height:28px;vertical-align:middle;border-radius:6px">` : '<span class="neg">missing</span>'}<input type="file" id="osLogo" accept="image/*"></label>
           <div class="flbl grow">Features${featsHtml('osF', o.features || {})}</div>
           <label>Plan name<input id="osPlan" value="${esc(p.name || 'Standard')}"></label>
@@ -210,7 +211,7 @@ async function assignAccountManager(o){
     await F.updateDoc(F.doc(fs, 'orgs', o.id), {adminUid:uid, adminEmail:email});
     await F.setDoc(F.doc(fs, 'orgs', o.id, 'members', uid), {email, name, role:'orgadmin', title:'Account Manager', reportsTo:'', active:true, removed:false, mustChangePassword:true, createdAt:now, createdBy:by});
     await F.setDoc(F.doc(fs, 'accounts', uid), {orgId:o.id, email, createdAt:now});
-    supers.tmp = genPass(); supers.dshare = inviteText(o.name, email, pass, o.id);
+    supers.tmp = genPass(); supers.dshare = inviteText(o.name, email, pass, linkName(o.id, o));
     supers.dmsg = {t:`${name} is now an Account Manager of ${o.name}.`, ok:true};
   } catch(err){ supers.dmsg = {t:errText(err)}; return formErr('amForm', supers.dmsg, '#amForm button[type=submit]'); }
   document.activeElement.blur(); renderOrgs();
@@ -247,8 +248,12 @@ $('#orgsBody').addEventListener('submit', async e => {
     if (e.target.id === 'osForm'){
       const name = $('#osName').value.trim(); if (!name) throw custom('Enter the organization name.');
       const lf = ($('#osLogo').files || [])[0], extra = lf ? {logo:await logoFromFile(lf)} : {};
+      const link = ($('#osLink').value || '').trim().toLowerCase() || o.id, oldLink = linkName(o.id, o);
+      if (!LINK_RE.test(link)) throw custom('The sign-in link needs 2–30 lower-case letters, numbers or dashes (e.g. abbisdentalcare).');
+      if (link !== oldLink){ const t = await F.getDoc(F.doc(fs, 'brand', link)); if (t.exists() && t.data().orgId && t.data().orgId !== o.id) throw custom(`The link "${link}" is already used by another organization.`); }
+      extra.link = link;
       await F.updateDoc(F.doc(fs, 'orgs', o.id), {...extra, name, color:$('#osColor').value, features:readFeats('osF'), plan:Object.assign({}, o.plan || {}, {name:$('#osPlan').value.trim() || 'Standard', fee:Math.max(0, +$('#osFee').value || 0)})});
-      brandSync(o.id, Object.assign({}, o, extra, {name, color:$('#osColor').value}));
+      brandSync(o.id, Object.assign({}, o, extra, {name, color:$('#osColor').value}), linkName(o.id, o));
       info(`Saved ${name}.`);
     }
     if (e.target.id === 'rqForm'){

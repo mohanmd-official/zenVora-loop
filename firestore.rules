@@ -55,12 +55,16 @@ service cloud.firestore {
       allow update, delete: if isSuper();
     }
 
-    // Sign-in page branding for an organization's own link (<app>#/o/<orgId>): name, colour, logo, active. The only thing
-    // anyone can read without signing in; the Super Admin and that organization's Account Manager keep it up to date.
-    match /brand/{o} {
+    // Sign-in page branding for an organization's short link (<app>/<link name>): name, colour, logo, active, orgId.
+    // The only thing anyone can read without signing in. Written by the Super Admin, or by that organization's
+    // Account Manager for its own link name (the org ID or the name the Super Admin set in orgs/{id}.link).
+    match /brand/{b} {
       allow read: if true;
-      allow write: if (isSuper() || isOrgAdmin(o))
-        && request.resource.data.keys().hasOnly(['name', 'color', 'logo', 'active', 'at']);
+      allow create, update: if request.resource.data.keys().hasOnly(['orgId', 'name', 'color', 'logo', 'active', 'at'])
+        && (isSuper()
+            || (isOrgAdmin(request.resource.data.orgId)
+                && (b == request.resource.data.orgId || b == orgDoc(request.resource.data.orgId).get('link', ''))
+                && (resource == null || resource.data.get('orgId', request.resource.data.orgId) == request.resource.data.orgId)));
     }
 
     match /orgs/{o} {

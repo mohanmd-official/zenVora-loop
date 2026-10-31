@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="robots" content="noindex, nofollow"><title>Zenvora Loop</title>
+<script>
+/* An organization's short link, e.g. app.abbisdentalcare.com/abbisdentalcare: there is no such page, so the host serves
+   this one. Send the browser to the app with the link name (#/o/<name>); the app shows that organization's sign-in page
+   and puts the short address back. On a github.io address the app lives one folder down (/<repo>/). */
+(function(){
+  var p = location.pathname, gh = /\.github\.io$/.test(location.hostname);
+  var base = gh ? '/' + (p.split('/')[1] || '') + '/' : '/';
+  var name = (p.indexOf(base) === 0 ? p.slice(base.length) : '').split('/')[0].toLowerCase();
+  location.replace(base + (/^[a-z0-9][a-z0-9-]{1,29}$/.test(name) ? '#/o/' + name : ''));
+})();
+</script></head><body style="font-family:system-ui;color:#667085;text-align:center;padding-top:20vh">Opening Zenvora Loop…</body></html>
