@@ -16,6 +16,10 @@ const billBadge = b => `<span class="upill ${BST[b.status][1]}">${BST[b.status][
 const billLive = b => !!b && b.status !== 'cancelled';
 const billDue = b => Math.max(0, (+b.total || 0) - (+b.paid || 0));
 const billPayable = b => ['pending', 'ack', 'partly'].includes(b.status) && billDue(b) > 0;
+// edit an issued bill or a payment, with a reason (Owner, Account Manager, or the "Edit / cancel bills" permission)
+const canEditMoney = () => canW('billing') && (isAdminRole(orgCtx().role) || can('cancelBills') === true);
+const histNote = h => (h || []).filter(x => x.reason).map(x => `${fmt(x.at)} · ${String(x.by || '').split('@')[0]}: ${x.change}${x.reason ? ' (' + x.reason + ')' : ''}`).join('\n');
+const editedTag = x => (x.history || []).some(h => h.reason && /^edited/.test(h.change || '')) ? ` <span class="upill pend" title="${esc(histNote(x.history))}">edited</span>` : '';
 const canCancelBill = b => canW('billing') && (!(+b.paid) || isAdminRole(orgCtx().role) || can('cancelBills') === true);
 const liveBillIds = B => new Set((B || []).filter(billLive).map(b => b.id));
 // a treatment is locked while it is on a live, issued bill
@@ -143,7 +147,7 @@ function clBills(){
       <div class="btnrow"><button class="primary" type="submit">Generate bill</button><button type="button" data-nbdraft>Save as draft</button></div></form></div>` : ''}
     <div class="awrap" style="margin-top:0"><table class="atbl"><thead><tr><th>Bill</th><th>Date</th><th>Visit</th><th>Treatments</th><th class="num">Total</th><th class="num">Paid</th><th class="num">Outstanding</th><th>Status</th><th></th></tr></thead><tbody>
     ${B.map(b => `<tr data-bill="${esc(b.id)}" class="clk${b.status === 'cancelled' ? ' gone' : ''}"><td><b>${esc(b.billNo)}</b>${b.replaces ? `<span class="sub2">replaces ${esc((B.find(x => x.id === b.replaces) || {}).billNo || '')}</span>` : ''}</td><td>${esc(fmtShort(b.date))}</td><td>${b.appointmentId ? esc(fmtShort(((cl.pA || []).find(a => a.id === b.appointmentId) || {}).date || b.date)) : '—'}</td>
-      <td>${esc((b.items || []).map(i => i.name).join(', '))}</td><td class="num">${inr(b.total)}</td><td class="num">${inr(b.paid)}</td><td class="num ${billDue(b) && billLive(b) ? 'neg' : ''}">${billLive(b) ? inr(billDue(b)) : '—'}</td><td>${billBadge(b)}${b.cancel ? `<span class="sub2">${esc(b.cancel.reason)}${b.cancel.payments === 'moved' ? ' · payments moved' : b.cancel.payments === 'refunded' ? ' · refunded' : ''}</span>` : ''}</td><td>${open === b.id ? '▾' : '▸'}</td></tr>
+      <td>${esc((b.items || []).map(i => i.name).join(', '))}</td><td class="num">${inr(b.total)}</td><td class="num">${inr(b.paid)}</td><td class="num ${billDue(b) && billLive(b) ? 'neg' : ''}">${billLive(b) ? inr(billDue(b)) : '—'}</td><td>${billBadge(b)}${editedTag(b)}${b.cancel ? `<span class="sub2">${esc(b.cancel.reason)}${b.cancel.payments === 'moved' ? ' · payments moved' : b.cancel.payments === 'refunded' ? ' · refunded' : ''}</span>` : ''}</td><td>${open === b.id ? '▾' : '▸'}</td></tr>
       ${open === b.id ? `<tr class="billx" data-bill="${esc(b.id)}"><td colspan="9">${billDetail(b)}</td></tr>` : ''}`).join('') || '<tr><td colspan="9" class="stat">No bills yet.</td></tr>'}
     </tbody></table></div></div>`;
 }
@@ -153,7 +157,8 @@ function billDetail(b){
     ${(b.items || []).map(i => `<tr><td>${esc(i.name)}${i.tooth ? ' (' + esc(i.tooth) + ')' : ''}</td><td>${esc(dName(i.doctorId) || '')}</td><td class="num">${inr(i.cost)}</td><td class="num">${+i.discount ? inr(i.discount) : '—'}</td><td class="num">${inr(i.net)}</td></tr>`).join('')}
     <tr class="tot"><td colspan="4">Total</td><td class="num">${inr(b.total)}</td></tr></tbody></table></div>
     ${pays.length ? `<div class="stat">Payments: ${pays.map(x => `${esc(x.receiptNo)} ${esc(fmtShort(x.date))} ${inr(x.amount)} ${esc((PMODES.find(m => m[0] === x.mode) || [0, x.mode])[1])}`).join(' · ')}</div>` : ''}
-    <div class="btnrow" style="margin-top:6px"><button data-bprint>🖨 Print bill</button>
+    ${cl.billEdit === b.id ? billEditForm(b) : ''}
+    <div class="btnrow" style="margin-top:6px"><button data-bprint>🖨 Print bill</button>${billLive(b) && b.status !== 'draft' && canEditMoney() && cl.billEdit !== b.id ? '<button data-bedit>✎ Edit bill</button>' : ''}
       ${w && b.status === 'draft' ? '<button class="primary" data-bissue>Issue bill</button>' : ''}${w && ['pending', 'ack'].includes(b.status) && !+b.paid ? '<button data-breopen title="Back to a draft to correct the treatments (no payment yet)">Reopen to edit</button>' : ''}
       ${billLive(b) && canCancelBill(b) ? '<span class="sp"></span><button class="danger" data-bcancel>Cancel bill…</button>' : ''}</div>
     ${w && billPayable(b) ? payForm('py', b) : billLive(b) && b.status !== 'draft' && !billDue(b) ? '' : ''}`;
@@ -163,15 +168,63 @@ function clPayments(){
   const bal = billed(cl.pT) - paidSum(cl.pP);
   return `<div class="sect"><div class="kpis">${kpi('Total paid', inr(paidSum(P)), plural(P.filter(x => x.amount > 0).length, 'payment'))}${kpi('Outstanding balance', inr(bal), 'all treatments − payments', bal > 0 ? 'neg' : '')}</div>
     <div class="awrap" style="margin-top:0"><table class="atbl"><thead><tr><th>Receipt</th><th>Bill</th><th>Date</th><th>Method</th><th>Transaction ref.</th><th>Note</th><th class="num">Amount</th><th></th></tr></thead><tbody>
-      ${cl.pP === null ? '<tr><td colspan="8">Loading…</td></tr>' : P.map(x => `<tr data-pay="${esc(x.id)}"><td>${esc(x.receiptNo || '')}${x.kind === 'refund' ? ' <span class="upill gone">Refund</span>' : ''}</td><td>${esc(x.billNo || (B.find(b => b.id === x.billId) || {}).billNo || '—')}</td><td>${esc(fmtShort(x.date))}</td><td>${esc((PMODES.find(m => m[0] === x.mode) || [0, x.mode])[1])}</td><td>${esc(x.txnRef || '')}</td><td>${esc(x.note || '')}${x.cash ? `<span class="sub2">${esc(cashLine(x))}</span>` : ''}</td><td class="num"><b class="${x.amount < 0 ? 'neg' : ''}">${inr(x.amount)}</b></td>
-        <td><button data-rcpt>🖨 Receipt</button></td></tr>`).join('') || '<tr><td colspan="8" class="stat">No payments yet.</td></tr>'}
+      ${cl.pP === null ? '<tr><td colspan="8">Loading…</td></tr>' : P.map(x => `<tr data-pay="${esc(x.id)}"><td>${esc(x.receiptNo || '')}${x.kind === 'refund' ? ' <span class="upill gone">Refund</span>' : ''}${editedTag(x)}</td><td>${esc(x.billNo || (B.find(b => b.id === x.billId) || {}).billNo || '—')}</td><td>${esc(fmtShort(x.date))}</td><td>${esc((PMODES.find(m => m[0] === x.mode) || [0, x.mode])[1])}</td><td>${esc(x.txnRef || '')}</td><td>${esc(x.note || '')}${x.cash ? `<span class="sub2">${esc(cashLine(x))}</span>` : ''}</td><td class="num"><b class="${x.amount < 0 ? 'neg' : ''}">${inr(x.amount)}</b></td>
+        <td style="white-space:nowrap"><button data-rcpt>🖨 Receipt</button>${canEditMoney() && x.kind !== 'refund' && x.amount > 0 ? ' <button data-pedit>✎ Edit</button>' : ''}</td></tr>
+        ${cl.payEdit === x.id ? `<tr class="asedrow"><td colspan="8">${payEditForm(x)}</td></tr>` : ''}`).join('') || '<tr><td colspan="8" class="stat">No payments yet.</td></tr>'}
     </tbody></table></div></div>`;
+}
+function billEditForm(b){
+  return `<form class="aform" id="clBillEdit" data-bill="${esc(b.id)}" novalidate style="margin:8px 0"><div class="full fhead">Edit ${esc(b.billNo)}</div>
+    <label>Bill date<input type="date" id="beDate" value="${esc(b.date)}" max="${todayKey}"></label>
+    ${(b.items || []).map((i, n) => `<div class="full beitem"><b>${esc(i.name)}${i.tooth ? ' (' + esc(i.tooth) + ')' : ''}</b><label>Charge<input type="number" min="0" data-bec="${n}" value="${+i.cost || 0}"></label><label>Discount<input type="number" min="0" data-bed="${n}" value="${+i.discount || 0}"></label></div>`).join('')}
+    <label class="grow">Reason *<input id="beWhy" placeholder="e.g. discount agreed with the doctor"></label><button class="primary" type="submit">Save</button><button type="button" data-bedx>Cancel</button></form>`;
+}
+function payEditForm(x){
+  return `<form class="aform" id="clPayEdit" data-pay="${esc(x.id)}" novalidate>
+    <label>Date<input type="date" id="peDate" value="${esc(x.date)}" max="${todayKey}"></label><label>Amount (₹)<input type="number" id="peAmt" min="1" value="${+x.amount}"></label>
+    <label>Method<select id="peMode">${PMODES.map(([k, l]) => `<option value="${k}"${k === x.mode ? ' selected' : ''}>${l}</option>`).join('')}</select></label>
+    <label>Transaction ref.<input id="peRef" value="${esc(x.txnRef || '')}"></label><label class="grow">Note<input id="peNote" value="${esc(x.note || '')}"></label>
+    <label class="grow">Reason *<input id="peWhy" placeholder="e.g. wrong amount entered"></label><button class="primary" type="submit">Save</button><button type="button" data-pedx>Cancel</button></form>`;
+}
+const billStatusFor = (paid, total) => paid > 0 && paid >= total ? 'paid' : paid > 0 ? 'partly' : 'ack';
+const moneyAudit = (type, target, before, after, reason) => cloud.F.addDoc(cloud.F.collection(cloud.fs, 'orgs', orgCtx().orgId, 'audit'), {at:Date.now(), by:cloud.user.email || '', byName:fullName(orgCtx().me) || '', type, target, before, after, change:'edited', reason}).catch(() => {});
+// edit an issued bill's date / charges / discounts: the treatments behind it change with it (the patient's balance stays right)
+async function saveBillEdit(b){
+  const why = $('#beWhy').value.trim(); if (!why) throw custom('Enter the reason for the change.');
+  const items = (b.items || []).map((i, n) => { const cost = Math.max(0, Math.round(+($(`[data-bec="${n}"]`) || {}).value || 0)), discount = Math.min(cost, Math.max(0, Math.round(+($(`[data-bed="${n}"]`) || {}).value || 0))); return Object.assign({}, i, {cost, discount, net:cost - discount}); });
+  const sums = billSums(items), date = $('#beDate').value || b.date, now = Date.now(), by = cloud.user.email || '';
+  const changes = items.map((i, n) => [i, b.items[n]]).filter(([a, o]) => a.cost !== o.cost || a.discount !== o.discount);
+  if (!changes.length && date === b.date) throw custom('Nothing was changed.');
+  const desc = changes.map(([a, o]) => `${a.name} ${inr(o.net)} → ${inr(a.net)}`).concat(date !== b.date ? [`date ${b.date} → ${date}`] : []).join(', ');
+  const upd = Object.assign({items, date, status:billStatusFor(+b.paid || 0, sums.total), history:(b.history || []).concat([{at:now, by, change:'edited: ' + desc, reason:why, before:{total:b.total, date:b.date}}])}, sums);
+  const {F, fs} = cloud, bt = F.writeBatch(fs); bt.update(cDoc('bills', b.id), upd);
+  changes.forEach(([a]) => { if (a.treatmentId) bt.update(cDoc('treatments', a.treatmentId), {cost:a.cost, discount:a.discount}); });
+  await bt.commit(); moneyAudit('bill', {id:b.id, billNo:b.billNo, patientId:b.patientId}, {total:b.total, date:b.date}, {total:sums.total, date}, why);
+  Object.assign(b, upd); return desc;
+}
+// edit a payment: date, amount, method, ref, note. Its bill's paid total moves with it in the same write.
+async function savePayEdit(x){
+  const why = $('#peWhy').value.trim(); if (!why) throw custom('Enter the reason for the change.');
+  const amount = Math.round(+$('#peAmt').value || 0); if (amount <= 0) throw custom('Enter the amount.');
+  const upd = {date:$('#peDate').value || x.date, amount, mode:$('#peMode').value, txnRef:$('#peRef').value.trim(), note:$('#peNote').value.trim()};
+  const diff = Object.keys(upd).filter(k => upd[k] !== (x[k] ?? (k === 'txnRef' || k === 'note' ? '' : x[k]))); if (!diff.length) throw custom('Nothing was changed.');
+  const b = x.billId ? (cl.pB || []).find(y => y.id === x.billId) : null;
+  if (b && amount !== x.amount && (+b.paid || 0) - x.amount + amount > b.total) throw custom(`That would be more than the bill's total ${inr(b.total)}.`);
+  const desc = diff.map(k => k === 'amount' ? `amount ${inr(x.amount)} → ${inr(amount)}` : `${k} ${x[k] || '—'} → ${upd[k] || '—'}`).join(', '), now = Date.now(), by = cloud.user.email || '';
+  if (x.cash && (amount !== x.amount || upd.mode !== 'cash')) upd.cash = null;                   // the counted notes no longer match: recount in the tally
+  upd.history = (x.history || []).concat([{at:now, by, change:'edited: ' + desc, reason:why, before:{date:x.date, amount:x.amount, mode:x.mode}}]);
+  const {F, fs} = cloud, bt = F.writeBatch(fs); bt.update(cDoc('payments', x.id), upd);
+  if (b && amount !== x.amount){ const paid = (+b.paid || 0) - x.amount + amount; bt.update(cDoc('bills', b.id), {paid, status:billStatusFor(paid, b.total), editPay:x.id, history:(b.history || []).concat([{at:now, by, change:`edited: payment ${x.receiptNo} ${inr(x.amount)} → ${inr(amount)}`, reason:why}])}); }
+  await bt.commit(); moneyAudit('payment', {id:x.id, receiptNo:x.receiptNo, billId:x.billId || '', patientId:x.patientId}, {date:x.date, amount:x.amount, mode:x.mode}, {date:upd.date, amount, mode:upd.mode}, why);
+  return desc;
 }
 async function billAction(e){
   const t = e.target, row = t.closest('[data-bill]'); if (!row) return false;
   const b = (cl.pB || []).find(x => x.id === row.dataset.bill); if (!b) return false;
   const T = id => (cl.pT || []).filter(x => (b.items || []).some(i => i.treatmentId === x.id));
   try {
+    if (t.closest('[data-bedit]')){ cl.billEdit = b.id; renderClinic(); return true; }
+    if (t.closest('[data-bedx]')){ cl.billEdit = null; renderClinic(); return true; }
     if (t.closest('[data-bprint]')){ printBill(b, cl.p, cl.pP); return true; }
     if (t.closest('[data-bissue]')){ await issueBill(b, T()); info(`${b.billNo} issued.`); renderClinic(); return true; }
     if (t.closest('[data-breopen]')){ await reopenBill(b); info(`${b.billNo} is a draft again: change the treatments, then Issue.`); renderClinic(); return true; }

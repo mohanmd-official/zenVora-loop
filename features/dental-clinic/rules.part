@@ -28,6 +28,10 @@ match /appointments/{a} {
 // Treatments: once on a live, issued bill (billId) they are locked until that bill is cancelled (only the visit date may move)
 function billDoc(b) { return get(/databases/$(database)/documents/orgs/$(o)/bills/$(b)).data; }
 function billAfter(b) { return getAfter(/databases/$(database)/documents/orgs/$(o)/bills/$(b)).data; }
+// edits of issued bills and payments: Owner, Account Manager, or the 'Edit / cancel bills' permission, always with a reason in history
+function moneyEditor() { return isOrgAdmin(o) || (perm(o, 'billing') && perm(o, 'cancelBills')); }
+function reasonAdded() { return request.resource.data.history.size() == resource.data.get('history', []).size() + 1
+  && request.resource.data.history[request.resource.data.history.size() - 1].reason.size() > 0; }
 function tFree() { return resource.data.get('billId', '') == '' || billDoc(resource.data.billId).status in ['cancelled', 'draft']; }
 match /treatments/{t} {
   allow read: if perm(o, 'treatments') || perm(o, 'billing') || perm(o, 'reports') || perm(o, 'doctorReports') || perm(o, 'accounts') || supportOpen(o);
@@ -36,6 +40,8 @@ match /treatments/{t} {
   allow update: if (perm(o, 'treatments') && tFree())
     || (perm(o, 'patients') && changed().hasOnly(['docAttached']))
     || ((perm(o, 'treatments') || perm(o, 'billing')) && changed().hasOnly(['date']))
+    // an edit of its (issued) bill changes the charge / discount, in the same write as the bill
+    || (moneyEditor() && changed().hasOnly(['cost', 'discount']) && billAfter(resource.data.billId).history.size() > billDoc(resource.data.billId).get('history', []).size())
     // issuing a bill puts the treatment on it (the bill must exist after the write and list this bill's id)
     || ((perm(o, 'billing') || perm(o, 'treatments')) && changed().hasOnly(['billId']) && tFree()
         && billAfter(request.resource.data.billId).status in ['pending', 'ack', 'partly', 'paid']);
@@ -69,6 +75,14 @@ match /bills/{b} {
           && ((nb().paid == ob().total && nb().status == 'paid') || (nb().paid < ob().total && nb().status == 'partly')))
       // reopen an issued bill with no payment back to draft
       || (ob().status in ['pending', 'ack'] && ob().paid == 0 && nb().status == 'draft' && changed().hasOnly(['status', 'history']))
+      // an edit with a reason: date / charges / discounts (status follows paid vs total), or a payment's new amount (editPay)
+      || (moneyEditor() && ob().status != 'draft' && reasonAdded() && nb().total == nb().subtotal - nb().discount && nb().total >= 0
+          && changed().hasOnly(['items', 'subtotal', 'discount', 'total', 'date', 'status', 'history']) && nb().paid == ob().paid
+          && ((nb().paid > 0 && nb().paid >= nb().total && nb().status == 'paid') || (nb().paid > 0 && nb().paid < nb().total && nb().status == 'partly') || (nb().paid == 0 && nb().status in ['ack', 'pending'])))
+      || (moneyEditor() && reasonAdded() && changed().hasOnly(['paid', 'status', 'editPay', 'history'])
+          && getAfter(/databases/$(database)/documents/orgs/$(o)/payments/$(nb().editPay)).data.billId == b
+          && nb().paid == ob().paid - get(/databases/$(database)/documents/orgs/$(o)/payments/$(nb().editPay)).data.amount + getAfter(/databases/$(database)/documents/orgs/$(o)/payments/$(nb().editPay)).data.amount
+          && nb().paid <= ob().total && ((nb().paid >= ob().total && nb().status == 'paid') || (nb().paid > 0 && nb().paid < ob().total && nb().status == 'partly') || (nb().paid == 0 && nb().status == 'ack')))
       // cancel, with a reason
       || (nb().status == 'cancelled' && changed().hasOnly(['status', 'cancel', 'replacedBy', 'history']) && nb().cancel.reason.size() > 0
           && (ob().paid == 0 || isOrgAdmin(o) || perm(o, 'cancelBills'))));
@@ -86,7 +100,12 @@ match /payments/{p} {
       && request.resource.data.amount == 0 - billDoc(request.resource.data.billId).paid)
     || (isOrgAdmin(o) && request.resource.data.get('imported', false) == true));
   // a repeated Dentee import may rewrite its own imported payments (never one on a bill)
-  allow update: if isOrgAdmin(o) && resource.data.get('imported', false) == true && request.resource.data.get('imported', false) == true && resource.data.get('billId', '') == '';
+  allow update: if (moneyEditor() && resource.data.get('kind', 'payment') == 'payment' && request.resource.data.amount > 0 && reasonAdded()
+      && changed().hasOnly(['date', 'amount', 'mode', 'txnRef', 'note', 'cash', 'history'])
+      && (request.resource.data.amount == resource.data.amount || resource.data.get('billId', '') == ''
+          || (billAfter(resource.data.billId).get('editPay', '') == p
+              && billAfter(resource.data.billId).history.size() > billDoc(resource.data.billId).get('history', []).size())))
+    || isOrgAdmin(o) && resource.data.get('imported', false) == true && request.resource.data.get('imported', false) == true && resource.data.get('billId', '') == '';
   allow delete: if false;
 }
 // Accounts ledger: income, expenses & bills, petty cash, consultant payments.

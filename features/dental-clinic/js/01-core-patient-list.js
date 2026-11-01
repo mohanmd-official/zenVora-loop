@@ -6,7 +6,7 @@ const CPERMS = [
   ['appointments', 'Appointments', 'book, check in, reschedule'],
   ['treatments', 'Treatments & photos', 'treatments, clinical notes, pre/post-op photos'],
   ['billing', 'Billing', 'generate bills, take payments, see balances, receipts'],
-  ['cancelBills', 'Cancel paid bills', 'cancel a bill that has payments (move or refund them)'],
+  ['cancelBills', 'Edit / cancel bills', 'edit issued bills and payments (with a reason), cancel bills that have payments'],
   ['accounts', 'Accounts', 'expenses, vendors, consultants, commitments, petty cash top-ups'],
   ['petty', 'Petty cash spends', 'record what petty cash was spent on'],
   ['tally', 'Daily cash tally', 'count the cash drawer each day'],

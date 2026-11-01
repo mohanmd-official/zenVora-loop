@@ -102,7 +102,7 @@ code in `js/`, hooks in `js/99-register.js`, rules in `rules.part` → `python3 
   doctorReports, setup; `isOwnerLike()` = Account Manager or Chief doctor.
 
 ## Accounting rules (keep these true)
-- Bills and payments are never deleted. `paid` on a bill moves only in the same batch as a new payment (`lastPay`); an issued bill's items never change: cancel + fresh bill (payments moved) or refund (negative payment). The patient balance stays treatments − payments.
+- Bills and payments are never deleted. Edits (`saveBillEdit`, `savePayEdit`; rules `moneyEditor` + `reasonAdded`) need a reason appended to `history`; a payment's new amount moves its bill's `paid` in the same batch (`editPay`), a bill edit updates its treatments' cost / discount. `paid` on a bill moves only in the same batch as a new payment (`lastPay`); an issued bill's items never change: cancel + fresh bill (payments moved) or refund (negative payment). The patient balance stays treatments − payments.
 - Each expense is recorded once, on its own page; Clinic expenses only adds them up. Petty cash counts as an expense when the box is topped up (`pettyTopups`, openings excluded); petty spends are NOT added to Clinic expenses. Consultant payouts are not expenses (the fees are).
 - A month's obligations are due on day `dueDayOf()` (default 15) of the next month; reminders come from `payReminders`.
 - Never delete money records without `auditDelete`; changes append to `history`.

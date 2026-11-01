@@ -179,6 +179,8 @@ $('#clBody').addEventListener('submit', async e => {
       info(`${inr(x.amount)} received on ${b.billNo} · ${x.receiptNo}`); printReceipt(x);
     }
     if (id === 'clNewBill') return newBillSubmit(false);
+    if (id === 'clBillEdit'){ const b = (cl.pB || []).find(x => x.id === e.target.dataset.bill); if (!b) return; const d = await saveBillEdit(b); cl.billEdit = null; info(`${b.billNo} changed: ${d}`); return renderClinic(); }
+    if (id === 'clPayEdit'){ const x = (cl.pP || []).find(y => y.id === e.target.dataset.pay); if (!x) return; const d = await savePayEdit(x); cl.payEdit = null; info(`${x.receiptNo} changed: ${d}`); return renderClinic(); }
     if (id === 'clPhForm') return clUploadPhotos();
     if (id === 'clRxForm') return saveRx();
     if (id === 'clAsForm') return asSubmit();
@@ -270,6 +272,8 @@ $('#clBody').addEventListener('click', async e => {
     if (t.closest('[data-tdel]')){ if (!confirm('Delete this treatment?')) return; await F.deleteDoc(cDoc('treatments', t.closest('[data-tid]').dataset.tid)); }
     if (t.closest('[data-nbdraft]')) return newBillSubmit(true);
     if (cl.ptab === 'billing' && await billAction(e)) return;
+    if (t.closest('[data-pedit]')){ cl.payEdit = t.closest('[data-pay]').dataset.pay; return renderClinic(); }
+    if (t.closest('[data-pedx]')){ cl.payEdit = null; return renderClinic(); }
     if (t.closest('[data-rcpt]')){ const x = (cl.pP || []).find(p => p.id === t.closest('[data-pay]').dataset.pay); if (x) printReceipt(x); }
     if (t.closest('[data-ldel]')){ if (!confirm('Delete this entry? A copy is kept in the audit log.')) return; const id = t.closest('[data-led]').dataset.led, d = cl.acc.d;
       let x = ((d.expAll || []).concat(d.led || [], d.pin || [], d.pout || [], d.cpay || [])).find(y => y.id === id); if (!x){ const sn = await F.getDoc(cDoc('ledger', id)); x = sn.exists() ? sn.data() : {}; }
