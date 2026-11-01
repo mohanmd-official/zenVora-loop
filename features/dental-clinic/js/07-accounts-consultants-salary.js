@@ -93,7 +93,7 @@ function consExport(kind){
 async function loadStaffPay(month){
   const {F, fs} = cloud, B = monthBounds(month), oc = orgCtx();
   const from = F.Timestamp.fromDate(parseDay(shiftDay(B.s, -1))), to = F.Timestamp.fromDate(parseDay(shiftDay(B.e, 2)));
-  const accs = docsOf(await F.getDocs(F.collection(fs, 'orgs', oc.orgId, 'members'))).map(a => Object.assign({uid:a.id}, a)).filter(a => !a.removed && a.role !== 'orgadmin')
+  const accs = docsOf(await F.getDocs(F.collection(fs, 'orgs', oc.orgId, 'members'))).map(a => Object.assign({uid:a.id}, a)).filter(a => !a.removed && (attRequired(a) || +(a.att || {}).salary))
     .sort((a, b) => fullName(a).localeCompare(fullName(b)));
   const [inc, evs, paid] = await Promise.all([loadIncentives(month),
     Promise.all(accs.map(a => F.getDocs(F.query(PAY().attCol(a.uid), F.where('at', '>=', from), F.where('at', '<', to))).then(qs => qs.docs.map(d => { const x = d.data({serverTimestamps:'estimate'}); return {id:d.id, type:x.type, src:x.src, at:tsMs(x.at)}; })))),

@@ -29,8 +29,11 @@ service cloud.firestore {
       return signedIn() && orgDoc(o).status == 'active'
         && mem(o).active == true && mem(o).get('removed', false) != true;
     }
-    function isOrgAdmin(o) { return isMember(o) && mem(o).role == 'orgadmin'; }
-    function isOrgManager(o) { return isMember(o) && mem(o).role in ['orgadmin', 'manager']; }
+    // Owner and Account Manager (orgadmin) are both organization admins; only an Owner may change another Owner
+    function isAdminRole(r) { return r in ['owner', 'orgadmin']; }
+    function isOrgAdmin(o) { return isMember(o) && isAdminRole(mem(o).role); }
+    function isOrgOwner(o) { return isMember(o) && mem(o).role == 'owner'; }
+    function isOrgManager(o) { return isMember(o) && mem(o).role in ['owner', 'orgadmin', 'manager']; }
     function hasFeature(o, f) { return orgDoc(o).features.get(f, false) == true; }
     function supportOpen(o) { return isSuper() && orgDoc(o).get('supportUntil', 0) > request.time.toMillis(); }
     function changed() { return request.resource.data.diff(resource.data).affectedKeys(); }
@@ -43,8 +46,8 @@ service cloud.firestore {
     function approverOf(o, uid) {
       return memberOf(o, uid).get('reportsTo', '') != '' ? memberOf(o, uid).reportsTo : orgDoc(o).get('adminUid', '');
     }
-    function isOwner(o) { return clinicMember(o) && (mem(o).role == 'orgadmin' || mem(o).get('isChief', false) == true); }
-    function perm(o, p) { return clinicMember(o) && (mem(o).role == 'orgadmin' || mem(o).get('perms', {}).get(p, false) == true); }
+    function isOwner(o) { return clinicMember(o) && (isAdminRole(mem(o).role) || mem(o).get('isChief', false) == true); }
+    function perm(o, p) { return clinicMember(o) && (isAdminRole(mem(o).role) || mem(o).get('perms', {}).get(p, false) == true); }
 
     // Login directory: which organization a user belongs to
     match /accounts/{uid} {
@@ -73,7 +76,8 @@ service cloud.firestore {
       // Super Admin manages plan/features/status but can't grant itself support access;
       // the Account Manager can only approve/revoke support access and keep the seat count.
       allow update: if (isSuper() && !changed().hasAny(['supportUntil', 'supportBy']))
-        || (isOrgAdmin(o) && changed().hasOnly(['supportUntil', 'supportBy', 'seats', 'logo', 'homeDefault', 'planner']));
+        || (isOrgAdmin(o) && changed().hasOnly(['supportUntil', 'supportBy', 'seats', 'logo', 'homeDefault', 'planner', 'hasOwner'])
+            && (!changed().hasAny(['hasOwner']) || request.resource.data.hasOwner == true));    // once an Owner exists, only Owners name Owners
 
       // Planning Board, shared tasks: a task given to a colleague. Only its reporter (createdBy), its assignee
       // and the Account Manager can see it. Who may give tasks is the Account Manager's switch: orgs/{o}.planner.assign
@@ -103,14 +107,23 @@ service cloud.firestore {
       match /members/{uid} {
         allow read: if (signedIn() && request.auth.uid == uid) || isOrgManager(o) || supportOpen(o) || isProxy(o);
         // Super Admin may only create the Account Manager it has just assigned on the org
-        allow create: if isOrgAdmin(o)
+        allow create: if (isOrgAdmin(o) && (request.resource.data.role != 'owner' || isOrgOwner(o) || !orgDoc(o).get('hasOwner', false)))
           || (isSuper() && request.resource.data.role == 'orgadmin' && orgDoc(o).get('adminUid', '') == uid);
-        allow update: if isOrgAdmin(o)
+        // only an Owner may change an Owner or make someone Owner (the first Owner may be named by the Account Manager)
+        allow update: if (isOrgAdmin(o) && (isOrgOwner(o) || (resource.data.role != 'owner'
+              && (request.resource.data.role != 'owner' || !orgDoc(o).get('hasOwner', false)))))
           || (isOrgManager(o) && changed().hasOnly(['att']))
           || (signedIn() && request.auth.uid == uid && changed().hasOnly(['mustChangePassword', 'lastLogin'])
               && request.resource.data.mustChangePassword == false);
       }
 
+
+      // Audit log: who changed roles, attendance requirements, assists, bills. Write-once, admins (and the Chief doctor) read it.
+      match /audit/{x} {
+        allow read: if isOrgAdmin(o) || (isMember(o) && mem(o).get('isChief', false) == true) || supportOpen(o);
+        allow create: if isMember(o) && request.resource.data.by == request.auth.token.email;
+        allow update, delete: if false;
+      }
 
       // Support access requests: Super Admin asks, Account Manager decides
       match /accessRequests/{r} {
@@ -208,14 +221,69 @@ service cloud.firestore {
         allow read: if perm(o, 'appointments') || perm(o, 'treatments') || perm(o, 'reports') || perm(o, 'doctorReports') || supportOpen(o);
         allow write: if perm(o, 'appointments') || perm(o, 'treatments');
       }
+      // Treatments: once on a live, issued bill (billId) they are locked until that bill is cancelled (only the visit date may move)
+      function billDoc(b) { return get(/databases/$(database)/documents/orgs/$(o)/bills/$(b)).data; }
+      function billAfter(b) { return getAfter(/databases/$(database)/documents/orgs/$(o)/bills/$(b)).data; }
+      function tFree() { return resource.data.get('billId', '') == '' || billDoc(resource.data.billId).status in ['cancelled', 'draft']; }
       match /treatments/{t} {
         allow read: if perm(o, 'treatments') || perm(o, 'billing') || perm(o, 'reports') || perm(o, 'doctorReports') || perm(o, 'accounts') || supportOpen(o);
-        allow create, delete: if perm(o, 'treatments');
-        allow update: if perm(o, 'treatments') || (perm(o, 'patients') && changed().hasOnly(['docAttached']));
+        allow create: if perm(o, 'treatments');
+        allow delete: if perm(o, 'treatments') && tFree();
+        allow update: if (perm(o, 'treatments') && tFree())
+          || (perm(o, 'patients') && changed().hasOnly(['docAttached']))
+          || ((perm(o, 'treatments') || perm(o, 'billing')) && changed().hasOnly(['date']))
+          // issuing a bill puts the treatment on it (the bill must exist after the write and list this bill's id)
+          || ((perm(o, 'billing') || perm(o, 'treatments')) && changed().hasOnly(['billId']) && tFree()
+              && billAfter(request.resource.data.billId).status in ['pending', 'ack', 'partly', 'paid']);
       }
+      // Bills: never deleted. A draft may change; an issued bill's items and total never change; `paid` moves only together with a new
+      // payment record (lastPay) and never above the total; cancelling needs a reason (with payments: an admin or "Cancel bills").
+      // One live bill per visit: the appointment points at it, and a new one is refused while the old one is not cancelled.
+      match /bills/{b} {
+        function nb() { return request.resource.data; }
+        function ob() { return resource.data; }
+        function apptAfter() { return getAfter(/databases/$(database)/documents/orgs/$(o)/appointments/$(nb().appointmentId)).data; }
+        function apptBefore() { return get(/databases/$(database)/documents/orgs/$(o)/appointments/$(nb().appointmentId)).data; }
+        function payAfter() { return getAfter(/databases/$(database)/documents/orgs/$(o)/payments/$(nb().lastPay)).data; }
+        allow read: if perm(o, 'billing') || perm(o, 'treatments') || perm(o, 'reports') || perm(o, 'accounts') || supportOpen(o);
+        allow create: if perm(o, 'billing') && nb().status in ['draft', 'pending'] && nb().total == nb().subtotal - nb().discount && nb().total >= 0 && nb().paid >= 0
+          && (nb().paid == 0 || (nb().get('replaces', '') != '' && billAfter(nb().replaces).status == 'cancelled'
+                && billAfter(nb().replaces).get('replacedBy', '') == b && billDoc(nb().replaces).paid == nb().paid))
+          && (nb().get('appointmentId', '') == '' || (apptAfter().get('billId', '') == b
+                && (apptBefore().get('billId', '') == '' || billAfter(apptBefore().billId).status == 'cancelled')));
+        allow update: if perm(o, 'billing') && ob().status != 'cancelled'
+          && !changed().hasAny(['billNo', 'patientId', 'appointmentId', 'createdAt', 'createdBy', 'replaces']) && (
+            // a draft is edited or issued
+            (ob().status == 'draft' && nb().paid == ob().paid && nb().total == nb().subtotal - nb().discount && nb().total >= nb().paid
+                && (nb().status in ['draft', 'pending'] || (nb().paid > 0 && ((nb().paid == nb().total && nb().status == 'paid') || (nb().paid < nb().total && nb().status == 'partly')))))
+            // acknowledged by the patient
+            || (ob().status == 'pending' && nb().status == 'ack' && changed().hasOnly(['status', 'ackBy', 'ackAt', 'history']))
+            // a payment: paid rises by exactly the new payment's amount, never above the total
+            || (ob().status in ['pending', 'ack', 'partly'] && changed().hasOnly(['paid', 'status', 'lastPay', 'ackBy', 'ackAt'])
+                && nb().lastPay != ob().get('lastPay', '') && !exists(/databases/$(database)/documents/orgs/$(o)/payments/$(nb().lastPay))
+                && payAfter().billId == b && nb().paid == ob().paid + payAfter().amount && nb().paid <= ob().total
+                && ((nb().paid == ob().total && nb().status == 'paid') || (nb().paid < ob().total && nb().status == 'partly')))
+            // reopen an issued bill with no payment back to draft
+            || (ob().status in ['pending', 'ack'] && ob().paid == 0 && nb().status == 'draft' && changed().hasOnly(['status', 'history']))
+            // cancel, with a reason
+            || (nb().status == 'cancelled' && changed().hasOnly(['status', 'cancel', 'replacedBy', 'history']) && nb().cancel.reason.size() > 0
+                && (ob().paid == 0 || isOrgAdmin(o) || perm(o, 'cancelBills'))));
+        allow delete: if false;
+      }
+      // Payments: never edited or deleted. A payment names its bill, which records it as lastPay in the same write.
+      // A refund (negative amount) only for a bill being cancelled. Imports (Dentee) and older payments have no bill.
       match /payments/{p} {
         allow read: if perm(o, 'billing') || perm(o, 'reports') || perm(o, 'accounts') || perm(o, 'tally') || supportOpen(o);
-        allow write: if perm(o, 'billing');
+        allow create: if perm(o, 'billing') && (
+          (request.resource.data.get('kind', 'payment') == 'payment' && request.resource.data.amount > 0 && request.resource.data.get('billId', '') != ''
+            && billAfter(request.resource.data.billId).get('lastPay', '') == p)
+          || (request.resource.data.get('kind', '') == 'refund' && request.resource.data.amount < 0
+            && billAfter(request.resource.data.billId).status == 'cancelled' && billAfter(request.resource.data.billId).cancel.payments == 'refunded'
+            && request.resource.data.amount == 0 - billDoc(request.resource.data.billId).paid)
+          || (isOrgAdmin(o) && request.resource.data.get('imported', false) == true));
+        // a repeated Dentee import may rewrite its own imported payments (never one on a bill)
+        allow update: if isOrgAdmin(o) && resource.data.get('imported', false) == true && request.resource.data.get('imported', false) == true && resource.data.get('billId', '') == '';
+        allow delete: if false;
       }
       // Accounts ledger: income, expenses & bills, petty cash, consultant payments.
       // Front desk may only record petty cash spends; only Accounts (the owner) tops petty cash up.
@@ -272,22 +340,36 @@ service cloud.firestore {
           || (d == 'reminders' && clinicMember(o)) || (d == 'orgTasks' && clinicMember(o))
           || (d == 'ownerTasks' && (isOwner(o) || perm(o, 'accounts')));
       }
-      // Patient assists: staff log who they assisted each day; the Chief doctor (perm assistApprove) approves.
-      // Staff see only their own entries and the approval status, never the incentive amount.
+      // Patient assists: one record per assistant per treatment. Created pending (by the assistant, or by whoever saves the visit's
+      // treatments, or by an admin for anyone, any date). The treating doctor (approverUid), the Chief doctor (perm assistApprove) or an
+      // admin decides once: pending → approved | rejected. Admins may correct any record; a correction of a decided record sends it back
+      // to pending (re-approval). Nothing is ever deleted: a record is voided. No incentive amounts are stored here.
       match /assists/{x} {
-        allow read: if (clinicMember(o) && resource.data.uid == request.auth.uid)
-          || isOrgAdmin(o) || perm(o, 'assistApprove') || supportOpen(o);
-        allow create: if clinicMember(o) && request.resource.data.uid == request.auth.uid
-          && request.resource.data.status == 'pending';
-        allow update: if (perm(o, 'assistApprove') && changed().hasOnly(['status', 'approvedBy', 'approvedAt', 'approverName']))
-          || (clinicMember(o) && resource.data.uid == request.auth.uid && resource.data.status == 'pending'
-              && request.resource.data.status == 'pending' && request.resource.data.uid == request.auth.uid);
-        allow delete: if isOrgAdmin(o)
-          || (clinicMember(o) && resource.data.uid == request.auth.uid && resource.data.status == 'pending');
+        function asFields() { return ['uid', 'name', 'date', 'patientName', 'patientId', 'appointmentId', 'treatmentId', 'typeId', 'typeName', 'doctorId',
+          'approverUid', 'note', 'status', 'addedBy', 'addedByName', 'at', 'history', 'approvedBy', 'approverName', 'approvedAt', 'rejectReason']; }
+        allow read: if (clinicMember(o) && (resource.data.uid == request.auth.uid || resource.data.get('approverUid', '') == request.auth.uid))
+          || isOrgAdmin(o) || perm(o, 'assistApprove') || perm(o, 'treatments') || supportOpen(o);
+        allow create: if clinicMember(o) && request.resource.data.status == 'pending' && request.resource.data.keys().hasOnly(asFields())
+          && request.resource.data.get('addedBy', request.auth.token.email) == request.auth.token.email
+          && (request.resource.data.uid == request.auth.uid || perm(o, 'treatments') || isOrgAdmin(o));
+        allow update: if request.resource.data.keys().hasOnly(asFields()) && (
+          // the doctor decides, once
+          ((perm(o, 'assistApprove') || isOrgAdmin(o) || (clinicMember(o) && resource.data.get('approverUid', '') == request.auth.uid))
+            && resource.data.status == 'pending' && request.resource.data.status in ['approved', 'rejected']
+            && changed().hasOnly(['status', 'approvedBy', 'approverName', 'approvedAt', 'rejectReason']))
+          // admins correct or void any record; a decided record that is corrected goes back to pending
+          || (isOrgAdmin(o) && !changed().hasAny(['addedBy', 'at'])
+            && (changed().hasOnly(['status', 'history']) || resource.data.status == 'pending' || request.resource.data.status == 'pending'))
+          // whoever added a pending record (or its assistant) may withdraw it, or the visit may re-sync it
+          || (clinicMember(o) && resource.data.status == 'pending' && request.resource.data.status in ['pending', 'void']
+            && (resource.data.uid == request.auth.uid || resource.data.get('addedBy', '') == request.auth.token.email || perm(o, 'treatments'))
+            && changed().hasOnly(['status', 'history'])));
+        allow delete: if false;
       }
-      // Incentive amounts and rates: Account Manager only
+      // Incentive amounts and rates: read by the Owner, Account Manager and Chief doctor; written by admins only
       match /assistPay/{x} {
-        allow read, write: if isOrgAdmin(o) && clinicOn(o);
+        allow read: if (isOrgAdmin(o) && clinicOn(o)) || (clinicMember(o) && mem(o).get('isChief', false) == true) || supportOpen(o);
+        allow write: if isOrgAdmin(o) && clinicOn(o);
       }
 
       // Subscription billing: Super Admin writes, Account Manager can view

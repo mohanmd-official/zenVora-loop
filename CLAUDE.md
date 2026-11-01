@@ -78,9 +78,10 @@ Each feature folder: `feature.json` (name, order, enabled) · `tab.html` · `vie
 | 14-visit-summary-docs | "What happened in this appointment?", patient documents |
 | 15-planning-board-sync | `clinicSync` → Planning Board reminders, `payReminders`, `otMerge`, `renderOrgRem`, `clOpenLink` |
 | 16-visit-billing | bill after a visit |
-| 17-patient-assists | Patient assists + incentives (`loadIncentives`, shared with Payroll via `api`) |
+| 17-patient-assists | Patient assists: one record per assistant per treatment (`syncTreatmentAssists` from the visit's 👥 picker), treating-doctor approvals with filters, admin add / edit / void with reason + `history` + audit, incentives (`loadIncentives`, `asMoneySee`) |
 | 18-dentee-import | importing the Dentee Excel export |
 | 19-home-widgets | Home: Reminders, Today's appointments, Clinic today, quick actions (`clHome`) |
+| 21-bills | Bills separate from payments (`createBill`, `issueBill`, `ackBill`, `payBill`, `cancelBill`, `printBill`), patient tabs Bills / Payments (`clBills`, `clPayments`), `tLocked`, `earlierDue`, `BILLS_SINCE` |
 | 20-cash-denominations | notes received / change given at billing (`cashPanel`, `cashCalc`, `cashRead`), `savePaymentDoc` / `deletePaymentDoc` (payment + petty `chg-<id>`), `cashLine` |
 | 99-register | flag clinic, view + left menu with pages, routes `#/clinic/...`, board panel, task links, Home, person fields |
 
@@ -90,16 +91,18 @@ code in `js/`, hooks in `js/99-register.js`, rules in `rules.part` → `python3 
 
 ## Data (Firestore) in one glance
 - `brand/{link name}` (public, read without sign-in): orgId, name, color, logo, active, for the organization's sign-in link `<app>/<link name>` (`public/404.html` → `#/o/<link name>` → `authBrand`, which restores the short address). Link name = `orgs/{id}.link` or the org ID (`linkName`, `orgLink`, `LINK_RE`); set by the Super Admin; kept in step by `brandSync` (old link doc set `active:false`). Rules: an Account Manager may only write the brand doc named after their org ID or their `link`.
+- Roles: `ADMIN_ROLES` = owner + orgadmin (`isAdminRole`, rules `isAdminRole` / `isOrgAdmin`); only an Owner changes an Owner (`hasOwner` on the org); `attRequired(m)` (members.attRequired, default off for admin roles). `orgs/{id}/audit` (write-once): role, attendance, assist and bill changes.
 - `orgs/{orgId}`: org settings & features, `planner` {board, rem, assign:'all'|'mgr'|'off'} (Account Manager); `tasks/{id}` (a task given to a colleague: `createdBy`, `assigneeUid`, `assignee`{uid,name}, `shared:true`); `dir/{uid}` (name, title only, for picking assignees); `members/{uid}` (role orgadmin/manager/employee, `perms`, `att` work timing & salary, `isChief`).
 - Payroll: `attendance/{uid}/events`, `attRegs`.
 - Clinic: `patients` (+ docs/photos), `appointments`, `treatments` (`kind:'medicine'` for medicines), `payments`, `doctors`,
-  `treatmentTypes`, `medicines`, `assists`, `assistPay`; Accounts: `ledger` (kind `expense` | `income` | `petty` (top-up) | `pettyspend` | `cpayout`; expenses carry
+  `treatmentTypes`, `medicines`, `assists` (id `t-<treatmentId>-<uid>`, approverUid, status pending/approved/rejected/void, history), `assistPay` (amounts: admins + Chief doctor only), `bills` (status draft/pending/ack/partly/paid/cancelled, items, paid, lastPay; never deleted); treatments.billId locks a treatment; payments.billId + kind payment/refund (never edited or deleted); appointments.billId (one live bill per visit), doctorLog / transferReason; Accounts: `ledger` (kind `expense` | `income` | `petty` (top-up) | `pettyspend` | `cpayout`; expenses carry
   `serviceMonth`, `dueDate`, `paid`, `paidDate`, `history`), `ledgerDocs`, `tallies/{date}`, `vendors`, `auditLog` (write-once);
   `clinicMeta`: `counter`, `settings`, `accounts`, `orgTasks` / `ownerTasks` (shared reminders).
 - Clinic permissions: `can(p)` / `canW(p)` with p in patients, appointments, treatments, billing, accounts, petty, tally, reports,
   doctorReports, setup; `isOwnerLike()` = Account Manager or Chief doctor.
 
 ## Accounting rules (keep these true)
+- Bills and payments are never deleted. `paid` on a bill moves only in the same batch as a new payment (`lastPay`); an issued bill's items never change: cancel + fresh bill (payments moved) or refund (negative payment). The patient balance stays treatments − payments.
 - Each expense is recorded once, on its own page; Clinic expenses only adds them up. Petty cash counts as an expense when the box is topped up (`pettyTopups`, openings excluded); petty spends are NOT added to Clinic expenses. Consultant payouts are not expenses (the fees are).
 - A month's obligations are due on day `dueDayOf()` (default 15) of the next month; reminders come from `payReminders`.
 - Never delete money records without `auditDelete`; changes append to `history`.

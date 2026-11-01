@@ -155,3 +155,11 @@ input.srchin.bad{border-color:var(--high)}
 .otby{color:var(--done);font-weight:600}.otown{font-size:11px;padding:1px 7px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
 .otr button{padding:4px 10px;font-size:12px;white-space:nowrap}
 td.pcodec{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;white-space:nowrap;color:var(--muted)}
+/* patient overview strip + doctor history */
+.pover{display:flex;gap:18px;flex-wrap:wrap;flex:1 1 360px}
+.pover div{display:flex;flex-direction:column;min-width:110px}
+.pover span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.pover b{font-size:13.5px}
+.pover small{font-weight:400;color:var(--muted);font-size:11.5px}
+tr.dhmove td{background:var(--mint-soft)}
+.pover small{display:block}

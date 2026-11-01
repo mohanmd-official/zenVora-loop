@@ -37,7 +37,7 @@ async function clinicSyncNow(){
     // ---- owner reminders: Account Manager and Chief doctor only ----
     const owner = isOwnerLike(), rem = remOn();          // the Account Manager can switch organization reminders off for everyone
     if (owner && rem){
-      if (oc.role === 'orgadmin') await ensureChiefFlag();
+      if (isAdminRole(oc.role)) await ensureChiefFlag();
       const pm = mShift(mk, -1), am = cl.ameta || await F.getDoc(cDoc('clinicMeta', 'accounts')).then(s => s.exists() ? s.data() : null).catch(() => null);
       if (am) cl.ameta = am;
       ocats.add('close');
@@ -97,7 +97,7 @@ async function payReminders(wpush, q, W){
     if (missing.length) wpush('commit', 'acct-' + mk, 'Payments due', `Enter & pay ${monthLabel(mk)} commitments (${whenTxt(due)}): ${missing.join(', ')}`, {priority:todayKey >= due ? 'high' : 'med', link:{sec:'accounts', tab:'expenses', month:mk}}); });
   // 3) staff salary for last month (people with a salary and no salary payment recorded)
   if (PAY() && feat('attendance') && PAY().payOn()){ const due = dueFor(pm);
-    if (due <= soon){ try { const mem = docsOf(await cloud.F.getDocs(cloud.F.collection(cloud.fs, 'orgs', orgCtx().orgId, 'members'))).filter(m => !m.removed && m.active !== false && m.role !== 'orgadmin' && +((m.att || {}).salary) > 0);
+    if (due <= soon){ try { const mem = docsOf(await cloud.F.getDocs(cloud.F.collection(cloud.fs, 'orgs', orgCtx().orgId, 'members'))).filter(m => !m.removed && m.active !== false && +((m.att || {}).salary) > 0);
       const paidS = (await q('ledger', W('kind', '==', 'expense'), W('category', '==', 'Staff salary'))).filter(x => x.salMonth === pm);
       const left = mem.filter(m => !paidS.some(x => x.staffUid === m.id));
       if (left.length) wpush('salpay', 'sal-' + pm, 'Payments due', `Pay ${monthLabel(pm)} salary (${whenTxt(due)}): ${left.map(m => fullName(m)).join(', ')}`, {priority:todayKey >= due ? 'high' : 'med', link:{sec:'accounts', tab:'salary', month:pm}}); } catch(e){} } }
@@ -140,7 +140,7 @@ async function otSet(docId, id, done){
     info(done ? 'Closed for everyone in the organization.' : 'Reopened.');
   } catch(e){ info('Could not save: ' + errText(e)); }
 }
-const isOwnerLike = () => { const oc = orgCtx(); return !!(oc && !oc.support && (oc.role === 'orgadmin' || (oc.me && oc.me.isChief) || cl.doctors.some(d => d.type === 'chief' && d.memberUid === cloud.uid))); };
+const isOwnerLike = () => { const oc = orgCtx(); return !!(oc && !oc.support && (isAdminRole(oc.role) || (oc.me && oc.me.isChief) || cl.doctors.some(d => d.type === 'chief' && d.memberUid === cloud.uid))); };
 let chiefChecked = false;
 async function ensureChiefFlag(){            // the Chief doctor's login is marked so the rules can show them owner reminders
   if (chiefChecked) return; chiefChecked = true;

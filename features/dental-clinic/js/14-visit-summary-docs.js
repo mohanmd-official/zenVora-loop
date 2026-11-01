@@ -17,6 +17,8 @@ async function clOpenSummary(appt, completing, back){
   $('#clOv').classList.add('on'); $('#clOvBody').innerHTML = '<div class="empty">Loading…</div>';
   try { cl.sum.T = (can('treatments') || can('billing')) ? docsOf(await cloud.F.getDocs(cloud.F.query(cCol('treatments'), cloud.F.where('appointmentId', '==', appt.id)))) : []; }
   catch(e){ if (cl.sum) cl.sum.T = []; }
+  if (cl.sum && appt.billId){ try { const bs = await cloud.F.getDoc(cDoc('bills', appt.billId)); const bb = bs.exists() ? Object.assign({id:bs.id}, bs.data()) : null; if (cl.sum && bb && billLive(bb) && bb.status !== 'draft') cl.sum.locked = bb; } catch(e){} }
+  if (cl.sum && canW('treatments')){ await asStaff(); try { cl.sum.AS = docsOf(await cloud.F.getDocs(cloud.F.query(cCol('assists'), cloud.F.where('appointmentId', '==', appt.id)))).filter(x => x.status !== 'void'); } catch(e){ cl.sum.AS = []; } }
   if (cl.sum && cl.sum.appt === appt){ $('#clOvBody').innerHTML = clSummaryForm(); sumTotals(); }
 }
 function sumRow(i, a, t){
@@ -26,12 +28,29 @@ function sumRow(i, a, t){
     <select data-sf="type" class="srch">${t ? '' : '<option value="">— Treatment * —</option>'}${types.map(x => `<option value="${esc(x.id)}" data-cost="${+x.cost || 0}"${t && x.id === t.typeId ? ' selected' : ''}>${esc(x.name)}</option>`).join('')}</select>
     <input data-sf="tooth" data-teeth placeholder="🦷 Tooth no." autocomplete="off" value="${t ? esc(t.tooth || '') : ''}">
     <select data-sf="doc">${docOpts(doc, '— Doctor —')}</select>
+    ${asPicker(t)}
     <input type="number" data-sf="cost" min="0" step="50" value="${t ? +t.cost || 0 : ''}" placeholder="Cost ₹ *">
     <input type="number" data-sf="disc" min="0" step="50" value="${t && +t.discount ? +t.discount : ''}" placeholder="Discount">
     <select data-sf="status">${[['completed', 'Completed'], ['progress', 'In progress'], ['planned', 'Planned (next visit)']].map(([k, l]) => `<option value="${k}"${t && t.status === k ? ' selected' : ''}>${l}</option>`).join('')}</select>
     <input type="number" data-sf="fee" min="0" step="50" placeholder="Consultant fee" value="${t && +t.consultantFee ? +t.consultantFee : ''}"${cons ? '' : ' hidden'}>
     <button type="button" class="danger" data-srdel title="Remove">✕</button></div>`;
 }
+/* "Assisted by" for one treatment: tick one or more people, or none */
+function asPicker(t){
+  const on = new Set(t ? ((cl.sum && cl.sum.AS) || []).filter(x => x.treatmentId === t.id).map(x => x.uid) : []), dir = cl.dir || [];
+  const lbl = dir.filter(p => on.has(p.uid)).map(p => p.name).join(', ') || 'None';
+  return `<details class="aspk" data-sf="asst"><summary title="Who assisted on this treatment (sent to the doctor for incentive approval)">👥 <span data-asl>${esc(lbl)}</span></summary><div class="aspl">
+    <label class="ckl"><input type="checkbox" data-asnone${on.size ? '' : ' checked'}> None</label>
+    ${dir.map(p => `<label class="ckl"><input type="checkbox" data-asu="${esc(p.uid)}"${on.has(p.uid) ? ' checked' : ''}> ${esc(p.name)}</label>`).join('') || '<span class="stat">No staff logins yet</span>'}</div></details>`;
+}
+document.addEventListener('change', e => {
+  const t = e.target, box = t.closest && t.closest('.aspk'); if (!box) return;
+  if (t.matches('[data-asnone]') && t.checked) box.querySelectorAll('[data-asu]').forEach(c => c.checked = false);
+  if (t.matches('[data-asu]') && t.checked) box.querySelector('[data-asnone]').checked = false;
+  const names = [...box.querySelectorAll('[data-asu]:checked')].map(c => c.parentElement.textContent.trim());
+  if (!names.length) box.querySelector('[data-asnone]').checked = true;
+  box.querySelector('[data-asl]').textContent = names.join(', ') || 'None';
+});
 function medRow(i, m){
   const meds = (cl.meds || []).filter(x => x.active !== false || (m && x.id === m.medId)), d = (m && m.dose) || {};
   return `<div class="mrow" data-mr="${i}"${m ? ` data-tid="${esc(m.id)}"` : ''}>
@@ -51,7 +70,7 @@ function medCalc(row){
 }
 const medTotal = () => [...document.querySelectorAll('#smMeds [data-mr]')].reduce((s, r) => { const o = r.querySelector('[data-mf="med"]').selectedOptions[0]; return s + (o && o.value ? (+r.querySelector('[data-mf="qty"]').value || 0) * (+o.dataset.price || 0) : 0); }, 0);
 function clSummaryForm(){
-  const {appt:a, completing, T, back} = cl.sum, w = canW('treatments');
+  const {appt:a, completing, T, back, locked} = cl.sum, w = canW('treatments') && !locked;
   const TT = (T || []).filter(t => !isMed(t)), MM = (T || []).filter(isMed), notes = (a.summary && a.summary.notes) || '';
   const noTr = !TT.length && !!(a.noTr || a.noCost), noMed = !MM.length && !!(a.noMed || a.noCost);
   return `<div class="ah"><button type="button" class="abk" data-smback style="margin:0" title="${back === 'bill' ? 'Back to the bill' : 'Back to the queue: the patient stays In chair'}">← Back</button><h2 style="font-size:16px;margin:0">What happened in this appointment?</h2><span class="sp"></span><button data-ovclose>Close</button></div>
@@ -63,7 +82,7 @@ function clSummaryForm(){
         <div class="fhead" style="margin:16px 0 4px">Medicines / tablets <span class="stat">tick when and for how many days: tablets and cost are worked out</span><span class="sp"></span><label class="ckl nox"><input type="checkbox" id="smNoMed"${noMed ? ' checked' : ''}> No medicine</label></div>
         <div id="smMedArea"${noMed ? ' hidden' : ''}><div id="smMeds">${MM.map((m, i) => medRow(i, m)).join('')}</div>
         <div class="btnrow"><button type="button" id="smMedAdd">+ Add medicine</button>${(cl.meds || []).filter(x => x.active !== false).length ? '' : '<span class="stat">Add your medicine price list in Clinic setup first.</span>'}<span class="sp"></span><span class="stat">Medicines total <b id="smMedTot">${inr(MM.reduce((s, m) => s + (+m.cost || 0), 0))}</b></span></div></div>`
-      : '<p class="stat">Treatments and medicines are added by a doctor (you don\'t have Treatments access).</p>'}
+      : locked ? `<p class="stat">🔒 The treatments are on bill <b>${esc(locked.billNo)}</b> (${BST[locked.status][0]}). To change them, cancel that bill in the patient's Bills tab, then issue a fresh one.</p>` : '<p class="stat">Treatments and medicines are added by a doctor (you don\'t have Treatments access).</p>'}
       ${w ? `<div class="smtot" id="smTotals"><div><span>Cost of treatment</span><b data-tt="tr">₹0</b></div><i>+</i><div><span>Cost of medicines</span><b data-tt="md">₹0</b></div><i>=</i><div class="all"><span>Total cost</span><b data-tt="all">₹0</b></div></div>` : ''}
       <label class="stat" style="display:block;margin-top:14px">Treatment plan description / clinical notes<textarea id="smNotes" rows="3" style="width:100%" placeholder="Complaint, findings, what was done, treatment plan, instructions given…">${esc(notes)}</textarea></label>
       <label class="ckl" id="smSkipWrap" style="margin-top:6px"${noTr && noMed ? ' hidden' : ''}><input type="checkbox" id="smSkipDesc"> Skip the description for now: everyone gets a reminder "Treatment plan description needs to be updated for ${esc(a.patientName)}"</label>
@@ -74,11 +93,11 @@ function clSummaryForm(){
 }
 async function clSaveSummary(){
   const {F} = cloud, S = cl.sum; if (!S) return;
-  const {appt:a, completing, back} = S, by = cloud.user.email || '', now = Date.now(), w = canW('treatments'), toBill = completing || back === 'bill';
+  const {appt:a, completing, back} = S, by = cloud.user.email || '', now = Date.now(), w = canW('treatments') && !S.locked, toBill = completing || back === 'bill';
   const noTr = !!($('#smNoTr') && $('#smNoTr').checked), noMed = !!($('#smNoMed') && $('#smNoMed').checked), noCost = noTr && noMed;
   const notes = ($('#smNotes') || {}).value.trim(), skipDesc = !noCost && !!($('#smSkipDesc') && $('#smSkipDesc').checked);
   if (noCost && !notes) return info('No treatment and no medicine: write the description of what was done.');
-  const rows = w && !noTr ? [...document.querySelectorAll('#smRows [data-sr]')].map(r => { const v = k => r.querySelector(`[data-sf="${k}"]`).value; return {tid:r.dataset.tid || '', typeId:v('type'), tooth:v('tooth').trim(), doctorId:v('doc'), costRaw:v('cost').trim(), cost:Math.max(0, +v('cost') || 0), discount:Math.max(0, +v('disc') || 0), status:v('status'), fee:Math.max(0, +v('fee') || 0)}; }) : [];
+  const rows = w && !noTr ? [...document.querySelectorAll('#smRows [data-sr]')].map(r => { const v = k => r.querySelector(`[data-sf="${k}"]`).value; return {tid:r.dataset.tid || '', uids:[...r.querySelectorAll('[data-asu]:checked')].map(c => c.dataset.asu), typeId:v('type'), tooth:v('tooth').trim(), doctorId:v('doc'), costRaw:v('cost').trim(), cost:Math.max(0, +v('cost') || 0), discount:Math.max(0, +v('disc') || 0), status:v('status'), fee:Math.max(0, +v('fee') || 0)}; }) : [];
   const filled = rows.filter(r => r.typeId);
   if (w && toBill && !noTr && !filled.length) return info('Add the treatment done with its cost, or tick "No treatment".');
   if (filled.some(r => r.costRaw === '')) return info('Enter the cost for each treatment.');
@@ -91,11 +110,13 @@ async function clSaveSummary(){
     if (w){
       const keep = new Set(filled.map(r => r.tid).concat(meds.map(m => m.tid)).filter(Boolean));   // ticking "No treatment" / "No medicine" removes this visit's entries of that kind
       for (const t of (S.T || [])) if (!keep.has(t.id)) await F.deleteDoc(cDoc('treatments', t.id));
+      var saved = [];
       const base = {patientId:a.patientId, patientName:a.patientName, appointmentId:a.id, date:a.date <= todayKey ? a.date : todayKey};
       for (const r of filled){
         const ty = cl.types.find(t => t.id === r.typeId) || {id:r.typeId, name:''}, dd = cl.doctors.find(x => x.id === r.doctorId) || {};
         const d = {typeId:ty.id, typeName:ty.name, tooth:r.tooth, doctorId:r.doctorId, doctorName:dd.name || '', cost:r.cost, discount:Math.min(r.cost, r.discount), consultantFee:dd.type === 'consultant' ? r.fee : 0, status:r.status};
-        if (r.tid) await F.updateDoc(cDoc('treatments', r.tid), d); else await F.addDoc(cCol('treatments'), Object.assign({}, base, d, {notes:'', createdAt:now, by}));
+        let tid = r.tid; if (tid) await F.updateDoc(cDoc('treatments', tid), d); else tid = (await F.addDoc(cCol('treatments'), Object.assign({}, base, d, {notes:'', createdAt:now, by}))).id;
+        saved.push({tid, t:Object.assign({}, base, d), uids:r.uids});
       }
       for (const m of meds){
         const md = (cl.meds || []).find(x => x.id === m.medId) || {name:''};
@@ -103,6 +124,7 @@ async function clSaveSummary(){
         if (m.tid) await F.updateDoc(cDoc('treatments', m.tid), d); else await F.addDoc(cCol('treatments'), Object.assign({}, base, d, {tooth:'', notes:'', createdAt:now, by}));
       }
     }
+    if (w && saved.length) try { await syncTreatmentAssists(a, saved); } catch(e){ info('Saved, but the assistants could not be recorded: ' + errText(e)); }
     const upd = notes ? {summaryPending:false, summary:{notes, by, at:now}} : {summaryPending:true, skippedBy:by};
     Object.assign(upd, {noTr, noMed, noCost});
     if (completing) Object.assign(upd, {status:'billing', summarizedAt:now});

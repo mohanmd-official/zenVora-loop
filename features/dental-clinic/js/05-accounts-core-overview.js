@@ -24,7 +24,7 @@ const withHist = (x, change) => ({history:(x.history || []).concat([{at:Date.now
 async function auditDelete(coll, id, data){
   try { await cloud.F.addDoc(cCol('auditLog'), {coll, docId:id, action:'delete', data:JSON.parse(JSON.stringify(data || {})), by:cloud.user.email || '', at:Date.now()}); } catch(e){ console.warn('audit', e); }
 }
-const isOwner = () => { const oc = orgCtx(); return !!(oc && !oc.support && oc.role === 'orgadmin'); };
+const isOwner = () => { const oc = orgCtx(); return !!(oc && !oc.support && isAdminRole(oc.role)); };
 function commitStatus(mk, led){
   const due = dueFor(mk);
   return ameta().commitments.map(c => {

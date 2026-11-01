@@ -11,7 +11,7 @@ function regLoad(force){
   const key = oc.orgId + '|' + cloud.uid; if (!force && regs.key === key && regs.list) return;
   regs.key = key; regs.busy = true;
   const {F} = cloud, W = F.where, q = (...w) => F.getDocs(F.query(regCol(), ...w)).then(docsOf).catch(() => []);
-  const jobs = oc.role === 'orgadmin' ? [F.getDocs(regCol()).then(docsOf).catch(() => [])] : [q(W('uid', '==', cloud.uid)), q(W('by', '==', cloud.uid)), q(W('approver', '==', cloud.uid))];
+  const jobs = isAdminRole(oc.role) ? [F.getDocs(regCol()).then(docsOf).catch(() => [])] : [q(W('uid', '==', cloud.uid)), q(W('by', '==', cloud.uid)), q(W('approver', '==', cloud.uid))];
   Promise.all(jobs).then(r => {
     const m = new Map(); r.flat().forEach(x => m.set(x.id, x)); regs.list = [...m.values()].sort((a, b) => (b.at || 0) - (a.at || 0)); regs.busy = false;
     const v = state.settings.view;
@@ -19,8 +19,8 @@ function regLoad(force){
     if (v === 'attendance') renderAttendance();
   });
 }
-const regPendingForMe = () => (regs.list || []).filter(r => r.status === 'pending' && r.uid !== cloud.uid && (r.approver === cloud.uid || (orgCtx() && orgCtx().role === 'orgadmin')));
-const regApprover = () => !!(orgCtx() && (orgCtx().role === 'orgadmin' || (regs.list || []).some(r => r.approver === cloud.uid)));
+const regPendingForMe = () => (regs.list || []).filter(r => r.status === 'pending' && r.uid !== cloud.uid && (r.approver === cloud.uid || (orgCtx() && isAdminRole(orgCtx().role))));
+const regApprover = () => !!(orgCtx() && (isAdminRole(orgCtx().role) || (regs.list || []).some(r => r.approver === cloud.uid)));
 function regForm(people){
   return `<div class="box"><h3>Regularize attendance <span class="sub">forgot to check in or out? Ask for the missing time: the reporting manager approves it</span></h3>
     <form class="aform" id="attRegForm" novalidate>
@@ -52,7 +52,7 @@ function regProxyBox(people){
 function attApprovals(){
   regLoad();
   if (!regs.list) return '<div class="empty">Loading…</div>';
-  const P = regPendingForMe(), D = regs.list.filter(r => r.status !== 'pending' && (r.approver === cloud.uid || orgCtx().role === 'orgadmin')).slice(0, 20);
+  const P = regPendingForMe(), D = regs.list.filter(r => r.status !== 'pending' && (r.approver === cloud.uid || isAdminRole(orgCtx().role))).slice(0, 20);
   return `<p class="stat" style="margin:0 0 8px">Regularization requests from the people who report to you. Approving adds the time to their attendance.</p>`
     + (P.length ? regTable(P, 'approve') : '<div class="empty">Nothing waiting for your approval. 👏</div>')
     + (D.length ? `<h3 style="font-size:13px;margin:16px 0 6px">Decided</h3>` + regTable(D, 'done') : '');

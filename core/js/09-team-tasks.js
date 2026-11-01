@@ -12,7 +12,7 @@ function teamReset(){ Object.assign(team, {dir:[], sets:{a:new Set(), c:new Set(
 const myUid = () => (mode === 'cloud' && cloud && cloud.uid) || '';
 const myName = () => { const oc = orgCtx(); return (oc && !oc.support && fullName(oc.me)) || (cloud && cloud.user && (cloud.user.displayName || (cloud.user.email || '').split('@')[0])) || 'You'; };
 const teamOrg = () => { const oc = orgCtx(); return !!(mode === 'cloud' && oc && !oc.support && feat('agenda')); };
-const canAssignOrg = () => { if (!teamOrg()) return false; const a = plannerCfg().assign; return a === 'all' || (a === 'mgr' && ['orgadmin', 'manager'].includes(orgCtx().role)); };
+const canAssignOrg = () => { if (!teamOrg()) return false; const a = plannerCfg().assign; return a === 'all' || (a === 'mgr' && [...ADMIN_ROLES, 'manager'].includes(orgCtx().role)); };
 const teamNames = () => Array.isArray(state.settings.team) ? state.settings.team : [];
 const sharedData = it => { const o = taskData(it); o.shared = true; o.createdBy = it.createdBy || myUid(); o.assigneeUid = (it.assignee && it.assignee.uid) || ''; return o; };
 const whoKey = it => it.assignee ? (it.assignee.uid ? 'u:' + it.assignee.uid : 'n:' + it.assignee.name) : '';

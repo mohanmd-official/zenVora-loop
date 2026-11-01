@@ -22,7 +22,7 @@ function wMark(){
 async function pxLoad(){
   const {F, fs} = cloud, oc = orgCtx(); attHome.pxBusy = true;
   try {
-    const accs = docsOf(await F.getDocs(F.collection(fs, 'orgs', oc.orgId, 'members'))).map(a => Object.assign(a, {uid:a.id})).filter(a => !a.removed && a.active !== false && a.role !== 'orgadmin').sort((a, b) => fullName(a).localeCompare(fullName(b)));
+    const accs = docsOf(await F.getDocs(F.collection(fs, 'orgs', oc.orgId, 'members'))).map(a => Object.assign(a, {uid:a.id})).filter(a => !a.removed && a.active !== false && attRequired(a)).sort((a, b) => fullName(a).localeCompare(fullName(b)));
     const from = F.Timestamp.fromDate(parseDay(todayKey)), ev = {};
     await Promise.all(accs.map(async a => { const qs = await F.getDocs(F.query(attCol(a.uid), F.where('at', '>=', from))); ev[a.uid] = qs.docs.map(d => { const x = d.data({serverTimestamps:'estimate'}); return {id:d.id, type:x.type, src:x.src, at:tsMs(x.at)}; }); }));
     attHome.px = {accts:accs, ev};

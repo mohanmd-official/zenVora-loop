@@ -19,11 +19,11 @@ function wtRead(pre, prev){
   return Object.assign({}, attCfg({att:prev || {}}), {shiftStart:S, shiftEnd:E, brkS:BS, brkE:BE, brk:BS ? toMin(BE) - toMin(BS) : 0});
 }
 const shiftMs = c => Math.max(1, toMin(c.shiftEnd) - toMin(c.shiftStart) - (+c.brk || 0)) * 60000;
-const canManageAtt = () => { const oc = orgCtx(); return !!(oc && (oc.support || oc.role === 'orgadmin' || oc.role === 'manager')); };
+const canManageAtt = () => { const oc = orgCtx(); return !!(oc && (oc.support || isAdminRole(oc.role) || oc.role === 'manager')); };
 const attRO = () => !!(orgCtx() && orgCtx().support);          // Zenvora support: look, don't touch
 const isProxyMe = () => { const oc = orgCtx(); return !!(oc && !oc.support && feat('attendance') && oc.me && oc.me.attProxy); };
 const canMarkAtt = () => !attRO() && (isProxyMe() || canManageAtt());
-const attSelf = () => { const oc = orgCtx(); return !!(oc && !oc.support && oc.role !== 'orgadmin'); };   // Account Managers don't check in
+const attSelf = () => { const oc = orgCtx(); return !!(oc && !oc.support && attRequired(oc.me)); };   // people with Attendance required (Owners / Account Managers: off unless turned on)
 const payOn = () => feat('payroll');
 const attCol = uid => cloud.F.collection(cloud.fs, 'orgs', orgCtx().orgId, 'attendance', uid, 'events');
 
@@ -65,13 +65,15 @@ function attSummary(events, mk, acc){
     H += worked; OT += ot; SH += short;
     rows.push({k, st, ss, worked, ot, short});
   }
+  if (acc && acc.role && !attRequired(acc)){ L = 0; SH = 0; OT = 0; }          // Attendance not required: never absent, full salary, no extras
+  const noAtt = !!(acc && acc.role && !attRequired(acc));
   const shortD = SH / sh, used = L + shortD, offsLeft = Math.max(0, OFFS_PER_MONTH - used);
-  const lop = Math.max(0, used - OFFS_PER_MONTH), otDays = Math.max(0, Math.max(0, P - (effMonth - OFFS_PER_MONTH)) - shortD);
+  const lop = Math.max(0, used - OFFS_PER_MONTH), otDays = noAtt ? 0 : Math.max(0, Math.max(0, P - (effMonth - OFFS_PER_MONTH)) - shortD);
   const perDay = (+c.salary || 0) / B.days, perHour = perDay / (sh / 3600000), mult = +c.otMult || 1;
   const base = perDay * effMonth, lopAmt = lop * perDay, otDayPay = otDays * perDay, otHrPay = (OT / 3600000) * perHour * mult;
   const inc = acc && acc._inc != null ? +acc._inc || 0 : acc && att.inc && att.incM === mk && att.inc[acc.uid] != null ? +att.inc[acc.uid] || 0 : 0;
   const pay0 = base - lopAmt + otDayPay + otHrPay;
-  return {rows, c, sh, B, P, L, H, OT, SH, shortD, offsLeft, lop, otDays, sun, offsUsed:Math.min(used, OFFS_PER_MONTH), perDay, perHour, mult, base, lopAmt, otDayPay, otHrPay, inc,
+  return {noAtt, rows, c, sh, B, P, L, H, OT, SH, shortD, offsLeft, lop, otDays, sun, offsUsed:Math.min(used, OFFS_PER_MONTH), perDay, perHour, mult, base, lopAmt, otDayPay, otHrPay, inc,
           salary:base - lopAmt, extra:otDayPay + otHrPay, pay:pay0 + inc, done:B.e < todayKey, effMonth};
 }
 
@@ -89,7 +91,7 @@ async function attLoad(){
   try {
     if (att.mode === 'me') return watch(cloud.uid);
     const accs = await F.getDocs(F.collection(fs, 'orgs', orgCtx().orgId, 'members'));
-    att.accts = accs.docs.map(d => Object.assign({uid:d.id}, d.data())).filter(a => !a.removed && a.role !== 'orgadmin')
+    att.accts = accs.docs.map(d => Object.assign({uid:d.id}, d.data())).filter(a => !a.removed && attRequired(a))
       .sort((a, b) => roleRank(a.role) - roleRank(b.role) || fullName(a).localeCompare(fullName(b)));
     if (payOn() && ZL.api('dental-clinic')){ const m0 = att.month; ZL.api('dental-clinic').loadIncentives(m0).then(m => { att.inc = m; att.incM = m0; if (att.key === key) renderAttendance(); }); }
     if (att.detail) return watch(att.detail);

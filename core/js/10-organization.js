@@ -1,7 +1,19 @@
 /* ================= Organization view: people, org chart, support access, billing ================= */
 const orgView = {sec:'people', members:null, reqs:[], invoices:null, pending:[], unsub:[], edit:null, msg:null, share:'', key:'', tmp:'',
   reset(){ this.unsub.forEach(u => { try { u(); } catch(e){} }); Object.assign(this, {members:null, invoices:null, pending:[], unsub:[], edit:null, msg:null, share:'', key:''}); }};
-const isOrgAdmin = () => { const oc = orgCtx(); return !!(oc && !oc.support && oc.role === 'orgadmin'); };
+/* the last active Owner can't be demoted, disabled or removed (an organization may start with none: the Account Manager names one) */
+const lastOwner = uid => !(orgView.members || []).some(m => m.uid !== uid && m.role === 'owner' && m.active !== false && !m.removed);
+/* audit log (orgs/{id}/audit, write-once): who changed a person's role or attendance requirement, from what to what */
+async function auditLog(type, target, before, after, reason){
+  try { const oc = orgCtx(); await cloud.F.addDoc(cloud.F.collection(cloud.fs, 'orgs', oc.orgId, 'audit'), {at:Date.now(), by:cloud.user.email || '', byName:(oc.me && fullName(oc.me)) || '', type, target, before:before ?? null, after:after ?? null, reason:reason || ''}); } catch(e){}
+}
+const markHasOwner = () => { const oc = orgCtx(); if (!oc.org.hasOwner) cloud.F.updateDoc(cloud.F.doc(cloud.fs, 'orgs', oc.orgId), {hasOwner:true}).then(() => { oc.org.hasOwner = true; }).catch(() => {}); };
+function auditMember(m0, upd){
+  const t = {uid:m0.uid || '', name:fullName(m0)};
+  if (upd.role && upd.role !== m0.role) auditLog('role', t, m0.role, upd.role);
+  if ('attRequired' in upd && upd.attRequired !== attRequired(m0)) auditLog('attendance', t, attRequired(m0), upd.attRequired);
+}
+const isOrgAdmin = () => { const oc = orgCtx(); return !!(oc && !oc.support && isAdminRole(oc.role)); };
 const orgDoc = (...p) => cloud.F.doc(cloud.fs, 'orgs', orgCtx().orgId, ...p);
 const orgCol = (...p) => cloud.F.collection(cloud.fs, 'orgs', orgCtx().orgId, ...p);
 
@@ -49,7 +61,7 @@ function orgPeople(){
   const list = L.filter(m => !m.removed).sort((a, b) => roleRank(a.role) - roleRank(b.role) || fullName(a).localeCompare(fullName(b)));
   const byUid = Object.fromEntries(list.map(m => [m.uid, m]));
   const toOpts = (sel, self) => `<option value="">— Nobody (top of the organization)</option>` + list.filter(m => m.uid !== self).map(m => `<option value="${esc(m.uid)}"${m.uid === sel ? ' selected' : ''}>${esc(fullName(m))}${m.title ? ' · ' + esc(m.title) : ''}</option>`).join('');
-  const roleOpts = sel => ['employee', 'manager', 'orgadmin'].map(r => `<option value="${r}"${r === sel ? ' selected' : ''}>${ROLE_LABEL[r]}</option>`).join('');
+  const roleOpts = sel => ['employee', 'manager', 'orgadmin', 'owner'].map(r => `<option value="${r}"${r === sel ? ' selected' : ''}>${ROLE_LABEL[r]}</option>`).join('');
   if (!orgView.tmp) orgView.tmp = genPass();
   let top = '';
   if (admin){
@@ -77,7 +89,7 @@ function orgPeople(){
         <label class="grow">Full name<input id="peName" value="${esc(m.name || '')}"></label>
         <label>Job title<input id="peTitle" value="${esc(m.title || '')}"></label>
         <label>Reports to<select id="peTo">${toOpts(m.reportsTo || '', m.uid)}</select></label>
-        <label>Role<select id="peRole"${me ? ' disabled title="You can\'t change your own role"' : ''}>${roleOpts(m.role)}</select></label>
+        <label>Role<select id="peRole"${me ? ' disabled title="You can\'t change your own role"' : m.role === 'owner' && orgCtx().role !== 'owner' ? ' disabled title="Only an Owner can change another Owner"' : ''}>${roleOpts(m.role)}</select></label>
         ${ZL.part('person', 'editHtml', m, me).join('')}
         <button class="primary" type="submit">Save</button><button type="button" data-pa="cancel">Cancel</button>
       </form></td></tr>`;
@@ -211,6 +223,7 @@ async function addPerson(){
       }
     }
     orgView.tmp = genPass();
+    if (role === 'owner') markHasOwner();
   } catch(err){ orgView.msg = {t:errText(err)}; return formErr('pAdd', orgView.msg, '#paSubmit'); }
   document.activeElement.blur(); renderOrg();
   if (orgView.msg && orgView.msg.ok){ ['#paName', '#paEmail', '#paTitle'].forEach(s => { const el = $(s); if (el) el.value = ''; }); }
@@ -234,7 +247,9 @@ $('#orgBody').addEventListener('submit', async e => {
     if (!upd.name) return info('Enter their name.');
     if (!noReportLoop(uid, upd.reportsTo)) return info("That would make a reporting loop: pick someone who doesn't report to this person.");
     { const mg = (orgView.members || []).find(m => m.uid === upd.reportsTo); upd.reportsToName = mg ? fullName(mg) : ''; upd.reportsToTitle = mg ? (mg.title || ROLE_LABEL[mg.role] || '') : ''; }
-    try { await cloud.F.updateDoc(orgDoc('members', uid), upd); orgView.edit = null; document.activeElement.blur(); renderOrg(); info('Saved.'); }
+    const m0 = (orgView.members || []).find(m => m.uid === uid) || {};
+    if (m0.role === 'owner' && upd.role && upd.role !== 'owner' && lastOwner(uid)) return info('This is the only Owner: make someone else Owner first.');
+    try { await cloud.F.updateDoc(orgDoc('members', uid), upd); auditMember(m0, upd); if (upd.role === 'owner') markHasOwner(); orgView.edit = null; document.activeElement.blur(); renderOrg(); info('Saved.'); }
     catch(err){ info('Could not save: ' + errText(err)); }
   }
 });
@@ -250,6 +265,7 @@ $('#orgBody').addEventListener('click', async e => {
     if (a === 'cancel'){ orgView.edit = null; document.activeElement.blur(); renderOrg(); return; }
     pa.disabled = true;
     try {
+      if ((a === 'toggle' && m.active || a === 'remove') && m.role === 'owner' && lastOwner(uid)){ pa.disabled = false; return info('This is the only Owner: make someone else Owner first.'); }
       if (a === 'toggle'){ await F.updateDoc(orgDoc('members', uid), {active:!m.active}); info(m.active ? `${m.email} can no longer sign in (signed out immediately).` : `${m.email} can sign in again.`); }
       if (a === 'reset'){ await F.sendPasswordResetEmail(cloud.auth, m.email); info(`Password-reset email sent to ${m.email}.`); }
       if (a === 'remove'){

@@ -5,14 +5,15 @@ const CPERMS = [
   ['patients', 'Patients', 'add and edit patient details'],
   ['appointments', 'Appointments', 'book, check in, reschedule'],
   ['treatments', 'Treatments & photos', 'treatments, clinical notes, pre/post-op photos'],
-  ['billing', 'Billing', 'take payments, see balances, receipts'],
+  ['billing', 'Billing', 'generate bills, take payments, see balances, receipts'],
+  ['cancelBills', 'Cancel paid bills', 'cancel a bill that has payments (move or refund them)'],
   ['accounts', 'Accounts', 'expenses, vendors, consultants, commitments, petty cash top-ups'],
   ['petty', 'Petty cash spends', 'record what petty cash was spent on'],
   ['tally', 'Daily cash tally', 'count the cash drawer each day'],
   ['reports', 'Collection & treatment reports', ''],
   ['doctorReports', 'Doctor & consultant reports', 'consultant statements and payouts'],
   ['setup', 'Clinic setup', 'doctors, treatment list and prices'],
-  ['assistApprove', 'Approve patient assists', "Chief doctor: approves the assists staff log each day"],
+  ['assistApprove', 'Approve all patient assists', "Chief doctor: approves any assist (treating doctors with a login approve their own patients' anyway)"],
 ];
 // the Payroll feature (attendance) when it is in this build, else null: Accounts → Staff salary works from attendance
 const PAY = () => ZL.api('payroll');
@@ -26,12 +27,12 @@ const CPRESETS = [
 ];
 const permsFromPreset = k => Object.fromEntries(CPERMS.map(([p]) => [p, ((CPRESETS.find(x => x[0] === k) || [0, 0, []])[2]).includes(p)]));
 const presetOf = perms => { const on = CPERMS.filter(([p]) => perms && perms[p]).map(p => p[0]).join(); const f = CPRESETS.find(x => x[2].join() === on); return f ? f[1] : on ? 'Custom' : 'No clinic access'; };
-const can = p => { const oc = orgCtx(); if (!oc || !feat('clinic')) return false; if (oc.support) return 'ro'; return oc.role === 'orgadmin' || !!((oc.me.perms || {})[p]); };
+const can = p => { const oc = orgCtx(); if (!oc || !feat('clinic')) return false; if (oc.support) return 'ro'; return isAdminRole(oc.role) || !!((oc.me.perms || {})[p]); };
 const canW = p => can(p) === true;                      // may change things (support view is look-only)
 const clinicAny = () => CPERMS.some(([p]) => can(p));
 const TSTATUS = {planned:['Planned', 'pend'], progress:['In progress', 'prog'], completed:['Completed', 'on']};
 const ASTATUS = {scheduled:'Scheduled', waiting:'Waiting', engaged:'In chair', billing:'At billing', completed:'Completed', missed:'Missed', cancelled:'Cancelled'};
-const PMODES = [['cash', 'Cash'], ['upi', 'UPI / GPay'], ['card', 'Card'], ['ccard', 'Credit card'], ['cheque', 'Cheque'], ['neft', 'NEFT'], ['rtgs', 'RTGS'], ['bank', 'Bank transfer']];
+const PMODES = [['cash', 'Cash'], ['upi', 'UPI / GPay'], ['card', 'Debit card'], ['ccard', 'Credit card'], ['cheque', 'Cheque'], ['neft', 'NEFT'], ['rtgs', 'RTGS'], ['bank', 'Bank transfer']];
 const MED_UNITS = ['Tablet', 'Capsule', 'Syrup (bottle)', 'Gel / tube', 'Mouthwash (bottle)', 'Injection', 'Other'];
 const DEFAULT_MEDS = [['Amoxicillin 500 mg', 8, 'Capsule'], ['Amoxicillin + Clavulanate 625 mg', 20, 'Tablet'], ['Metronidazole 400 mg', 2, 'Tablet'], ['Ibuprofen 400 mg', 2, 'Tablet'], ['Paracetamol 650 mg', 2, 'Tablet'], ['Aceclofenac + Paracetamol', 5, 'Tablet'], ['Ketorolac 10 mg', 4, 'Tablet'], ['Pantoprazole 40 mg', 8, 'Tablet'], ['Chlorhexidine mouthwash', 120, 'Mouthwash (bottle)'], ['Metrogyl DG gel', 90, 'Gel / tube']];
 const DEFAULT_TYPES = [['Consultation', 200], ['OPG X-ray', 400], ['IOPA X-ray', 150], ['Scaling & polishing', 1000], ['Filling', 1200], ['Root canal (RCT)', 4500], ['Extraction', 800], ['Crown', 6000], ['Implant', 30000], ['Braces / aligners', 35000], ['Dentures', 12000], ['Teeth whitening', 8000]];
@@ -156,15 +157,15 @@ function clPatients(){
   const exact = p => qn !== null && codeNo(p.code) === qn ? 0 : 1;            // the exact patient number comes first
   const list = all ? all.filter(p => pMatch(p, cl.q)).sort((a, b) => exact(a) - exact(b) || PSORT[sortK][1](a, b)) : null;
   const rows = (list || []).map(p => `<tr class="clk" data-pid="${esc(p.id)}"><td class="pcodec">${esc(p.code || '—')}</td><td><a class="plink" href="#/clinic/patients/${esc(p.id)}"><b>${esc(pName(p))}</b></a></td>
-    <td>${esc(p.gender || '—')}${ageOf(p) ? ' · ' + esc(ageOf(p)) : ''}</td><td>${esc(p.phone || '—')}</td><td>${esc(dName(p.primaryDoctorId) || '—')}</td><td class="stat">${p.createdAt > 1 ? esc(fmtShort(dayKey(p.createdAt))) : ''}</td></tr>`).join('');
+    <td>${esc(p.gender || '—')}${ageOf(p) ? ' · ' + esc(ageOf(p)) : ''}</td><td>${esc(p.phone || '—')}</td><td>${esc(dName(p.primaryDoctorId) || '—')}</td><td>${esc(((p.assistedBy || {}).names || []).join(', ') || '—')}</td><td class="stat">${p.createdAt > 1 ? esc(fmtShort(dayKey(p.createdAt))) : ''}</td></tr>`).join('');
   return `<div class="clhead"><h2>Patients</h2></div><div class="sect">
     <div class="vbar" style="padding:0"><input type="search" id="clQ" placeholder="Filter by patient code, name or phone…" value="${esc(cl.q)}" style="flex:1;min-width:220px;font-size:14px;padding:8px 12px">
       <select id="clPSort" title="Order">${Object.entries(PSORT).map(([k, [l]]) => `<option value="${k}"${k === sortK ? ' selected' : ''}>${l}</option>`).join('')}</select>
       <button id="clPRefresh" title="Reload the list">↻</button>
       ${canW('patients') ? '<button class="primary" id="clNewP">+ New patient</button>' : ''}</div>
     <div class="stat">${!all ? 'Loading all patients…' : cl.q ? `${list.length} of ${all.length} patients match "${esc(cl.q)}"` : `${all.length} patients`}</div>
-    <div class="awrap pscroll" style="margin-top:0"><table class="atbl otbl"><thead><tr><th>Patient No.</th><th>Patient</th><th>Gender · Age</th><th>Phone</th><th>Primary doctor</th><th>Registered</th></tr></thead>
-    <tbody>${list === null ? '<tr><td colspan="6">Loading…</td></tr>' : rows || `<tr><td colspan="6" class="stat">${cl.q ? 'No patient matches.' : 'No patients yet.'}</td></tr>`}</tbody></table></div></div>`;
+    <div class="awrap pscroll" style="margin-top:0"><table class="atbl otbl"><thead><tr><th>Patient No.</th><th>Patient</th><th>Gender · Age</th><th>Phone</th><th>Primary doctor</th><th>Assisted by</th><th>Registered</th></tr></thead>
+    <tbody>${list === null ? '<tr><td colspan="7">Loading…</td></tr>' : rows || `<tr><td colspan="7" class="stat">${cl.q ? 'No patient matches.' : 'No patients yet.'}</td></tr>`}</tbody></table></div></div>`;
 }
 let clQTimer = null;
 function clDoSearch(){

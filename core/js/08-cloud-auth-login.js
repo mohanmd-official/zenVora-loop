@@ -12,8 +12,14 @@ const feat = f => { const c = orgCtx(); return c ? !!((c.org.features || {})[f])
 // rem = organization reminders, assign = who may give tasks to colleagues ('all' | 'mgr' | 'off')
 const plannerCfg = () => Object.assign({board:true, rem:true, assign:'all'}, ((orgCtx() || {}).org || {}).planner || {});
 const remOn = () => plannerCfg().rem !== false;
-const agendaOn = () => mode !== 'cloud' || !!(cloud && cloud.isSuper) || (feat('agenda') && (plannerCfg().board !== false || orgCtx().role === 'orgadmin'));
-const ROLE_LABEL = {orgadmin:'Account Manager', manager:'Manager', employee:'Employee'};
+const agendaOn = () => mode !== 'cloud' || !!(cloud && cloud.isSuper) || (feat('agenda') && (plannerCfg().board !== false || isAdminRole(orgCtx().role)));
+/* Roles. Owner and Account Manager are both organization admins (ADMIN_ROLES): every admin check goes through isAdminRole,
+   so the Owner inherits everything an Account Manager may do. Owner adds: only an Owner can change another Owner, and
+   attendance is off by default. attRequired(m): does this person check in? (members/{uid}.attRequired, else by role) */
+const ADMIN_ROLES = ['owner', 'orgadmin'];
+const isAdminRole = r => ADMIN_ROLES.includes(r);
+const ROLE_LABEL = {owner:'Owner', orgadmin:'Account Manager', manager:'Manager', employee:'Employee'};
+const attRequired = m => !!m && (m.attRequired != null ? m.attRequired !== false : !isAdminRole(m.role));
 const synced = {tasks:new Map(), days:new Map(), otasks:new Map(), settings:''};
 const stable = v => JSON.stringify(v, (k, x) => (x && typeof x === 'object' && !Array.isArray(x)) ? Object.keys(x).sort().reduce((o, kk) => (o[kk] = x[kk], o), {}) : x);
 const plain = o => JSON.parse(JSON.stringify(o));
@@ -153,7 +159,7 @@ async function startUser(user){
       if (!d || d.status !== 'active'){ pendingAuthMsg = 'Your organization\'s Zenvora Loop access is currently paused. Please contact your Account Manager.'; return doSignOut(); }
       const hadAgenda = agendaOn();
       oc.org = d; applyTheme(d.color);
-      if (oc.role === 'orgadmin' && !oc.support) brandSync(oc.orgId, d);     // name / logo / colour changed → the sign-in link shows it
+      if (isAdminRole(oc.role) && !oc.support) brandSync(oc.orgId, d);     // name / logo / colour changed → the sign-in link shows it
       if (hadAgenda !== agendaOn()){ pushChanges(); setTimeout(() => location.reload(), 300); return; }   // the plan changed: reload to (un)load the planner
       refreshTabs(); if (appReady) render();
     }, () => {                                     // can't read the org any more: either they were turned off or the org was paused
@@ -181,7 +187,7 @@ function refreshTabs(){
   AGENDA_VIEWS.forEach(v => { const t = document.querySelector(`#tabs [data-view="${v}"]`); if (t) t.hidden = !agenda; });
   $('#homeTab').hidden = !!(oc && oc.support);
   ZL.views().forEach(([, d]) => { const t = $(d.tab); if (t) t.hidden = !(oc && d.on()); });   // the features' tabs
-  $('#orgTab').hidden = !(oc && (oc.support || role === 'orgadmin' || role === 'manager'));
+  $('#orgTab').hidden = !(oc && (oc.support || isAdminRole(role) || role === 'manager'));
   $('#orgsTab').hidden = !isSup;
   document.body.classList.toggle('sidenav', sideNavOn());
   $('#tabs').classList.toggle('many', [...document.querySelectorAll('#tabs [data-view]')].filter(b => !b.hidden).length > 6);
@@ -499,7 +505,7 @@ function formErr(formId, m, btn){                 // show an error under a form 
 const custom = t => Object.assign(new Error(t), {code:'custom'});
 const keepTyping = el => el.contains(document.activeElement) && /INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName);
 const initial = s => esc(String(s || '?').trim().charAt(0).toUpperCase());
-const roleRank = r => ({orgadmin:0, manager:1, employee:2})[r] ?? 3;
+const roleRank = r => ({owner:0, orgadmin:0, manager:1, employee:2})[r] ?? 3;
 const PALETTE = ['#3730A3', '#0F766E', '#0369A1', '#7C3AED', '#BE185D', '#B45309', '#15803D', '#B91C1C', '#334155'];
 const swatchesHtml = (id, cur) => `<div class="swatches" data-sw="${id}">${PALETTE.map(c => `<button type="button" data-c="${c}" style="background:${c}"${c.toLowerCase() === String(cur).toLowerCase() ? ' class="on"' : ''} title="${c}"></button>`).join('')}<input type="color" id="${id}" value="${esc(cur)}" title="Custom colour"></div>`;
 // switches the Super Admin turns on per organization: [key, label, about, needs another switch]; features add theirs (ZL.add flags)

@@ -77,6 +77,7 @@ function clBookForm(){
       <label>Time<input type="time" id="bkTime" step="300" value="${esc(w.time || b.time || '10:00')}"></label>
       <label>Minutes<select id="bkDur">${[15, 30, 45, 60, 90].map(n => `<option${n === +(w.duration || 15) ? ' selected' : ''}>${n}</option>`).join('')}</select></label>
       <label class="grow full">Reason<input id="bkReason" value="${esc(w.reason || '')}" placeholder="e.g. Toothache, RCT 2nd sitting, review"></label>
+      <label class="grow full">Transfer reason <span class="stat">(only if the patient is moving to a different doctor)</span><input id="bkWhy" value="${esc(w.transferReason || '')}" placeholder="e.g. extraction by the surgeon, suture removal back to the Chief doctor"></label>
       <div class="btnrow full"><button class="primary" type="submit">${b.id ? 'Save' : 'Book'}</button></div>
     </form>`;
 }
@@ -112,6 +113,10 @@ async function clSaveBook(){
     }
     const clash = (cl.appts || []).find(a => a.id !== b.id && a.doctorId === d.doctorId && a.date === d.date && a.status !== 'cancelled' && Math.abs(toMin(a.time) - toMin(d.time)) < Math.max(+a.duration || 15, d.duration));
     if (clash && !confirm(`${dName(d.doctorId)} already has ${clash.patientName} at ${hm12(clash.time)}. Book anyway?`)) return;
+    // doctor transfer history: a change of doctor on an existing appointment is logged, never overwritten
+    const why = (($('#bkWhy') || {}).value || '').trim(), old = b.id ? (cl.appts || []).concat(cl.pA || []).find(a => a.id === b.id) : null;
+    if (why) d.transferReason = why;
+    if (old && old.doctorId && old.doctorId !== d.doctorId) d.doctorLog = (old.doctorLog || []).concat([{from:old.doctorId, to:d.doctorId, at:Date.now(), by:cloud.user.email || '', reason:why}]);
     if (b.id) await F.updateDoc(cDoc('appointments', b.id), d);
     else await F.addDoc(cCol('appointments'), Object.assign(d, {patientId:b.patientId, patientName:b.patientName, status:'scheduled', createdAt:Date.now(), createdBy:cloud.user.email || ''}));
     $('#clOv').classList.remove('on'); cl.book = null;

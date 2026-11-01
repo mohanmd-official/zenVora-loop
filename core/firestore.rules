@@ -28,8 +28,11 @@ service cloud.firestore {
       return signedIn() && orgDoc(o).status == 'active'
         && mem(o).active == true && mem(o).get('removed', false) != true;
     }
-    function isOrgAdmin(o) { return isMember(o) && mem(o).role == 'orgadmin'; }
-    function isOrgManager(o) { return isMember(o) && mem(o).role in ['orgadmin', 'manager']; }
+    // Owner and Account Manager (orgadmin) are both organization admins; only an Owner may change another Owner
+    function isAdminRole(r) { return r in ['owner', 'orgadmin']; }
+    function isOrgAdmin(o) { return isMember(o) && isAdminRole(mem(o).role); }
+    function isOrgOwner(o) { return isMember(o) && mem(o).role == 'owner'; }
+    function isOrgManager(o) { return isMember(o) && mem(o).role in ['owner', 'orgadmin', 'manager']; }
     function hasFeature(o, f) { return orgDoc(o).features.get(f, false) == true; }
     function supportOpen(o) { return isSuper() && orgDoc(o).get('supportUntil', 0) > request.time.toMillis(); }
     function changed() { return request.resource.data.diff(resource.data).affectedKeys(); }
@@ -42,8 +45,8 @@ service cloud.firestore {
     function approverOf(o, uid) {
       return memberOf(o, uid).get('reportsTo', '') != '' ? memberOf(o, uid).reportsTo : orgDoc(o).get('adminUid', '');
     }
-    function isOwner(o) { return clinicMember(o) && (mem(o).role == 'orgadmin' || mem(o).get('isChief', false) == true); }
-    function perm(o, p) { return clinicMember(o) && (mem(o).role == 'orgadmin' || mem(o).get('perms', {}).get(p, false) == true); }
+    function isOwner(o) { return clinicMember(o) && (isAdminRole(mem(o).role) || mem(o).get('isChief', false) == true); }
+    function perm(o, p) { return clinicMember(o) && (isAdminRole(mem(o).role) || mem(o).get('perms', {}).get(p, false) == true); }
 
     // Login directory: which organization a user belongs to
     match /accounts/{uid} {
@@ -72,7 +75,8 @@ service cloud.firestore {
       // Super Admin manages plan/features/status but can't grant itself support access;
       // the Account Manager can only approve/revoke support access and keep the seat count.
       allow update: if (isSuper() && !changed().hasAny(['supportUntil', 'supportBy']))
-        || (isOrgAdmin(o) && changed().hasOnly(['supportUntil', 'supportBy', 'seats', 'logo', 'homeDefault', 'planner']));
+        || (isOrgAdmin(o) && changed().hasOnly(['supportUntil', 'supportBy', 'seats', 'logo', 'homeDefault', 'planner', 'hasOwner'])
+            && (!changed().hasAny(['hasOwner']) || request.resource.data.hasOwner == true));    // once an Owner exists, only Owners name Owners
 
       // Planning Board, shared tasks: a task given to a colleague. Only its reporter (createdBy), its assignee
       // and the Account Manager can see it. Who may give tasks is the Account Manager's switch: orgs/{o}.planner.assign
@@ -102,14 +106,23 @@ service cloud.firestore {
       match /members/{uid} {
         allow read: if (signedIn() && request.auth.uid == uid) || isOrgManager(o) || supportOpen(o) || isProxy(o);
         // Super Admin may only create the Account Manager it has just assigned on the org
-        allow create: if isOrgAdmin(o)
+        allow create: if (isOrgAdmin(o) && (request.resource.data.role != 'owner' || isOrgOwner(o) || !orgDoc(o).get('hasOwner', false)))
           || (isSuper() && request.resource.data.role == 'orgadmin' && orgDoc(o).get('adminUid', '') == uid);
-        allow update: if isOrgAdmin(o)
+        // only an Owner may change an Owner or make someone Owner (the first Owner may be named by the Account Manager)
+        allow update: if (isOrgAdmin(o) && (isOrgOwner(o) || (resource.data.role != 'owner'
+              && (request.resource.data.role != 'owner' || !orgDoc(o).get('hasOwner', false)))))
           || (isOrgManager(o) && changed().hasOnly(['att']))
           || (signedIn() && request.auth.uid == uid && changed().hasOnly(['mustChangePassword', 'lastLogin'])
               && request.resource.data.mustChangePassword == false);
       }
 
+
+      // Audit log: who changed roles, attendance requirements, assists, bills. Write-once, admins (and the Chief doctor) read it.
+      match /audit/{x} {
+        allow read: if isOrgAdmin(o) || (isMember(o) && mem(o).get('isChief', false) == true) || supportOpen(o);
+        allow create: if isMember(o) && request.resource.data.by == request.auth.token.email;
+        allow update, delete: if false;
+      }
 
       // Support access requests: Super Admin asks, Account Manager decides
       match /accessRequests/{r} {

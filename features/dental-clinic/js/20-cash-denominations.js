@@ -51,9 +51,10 @@ function cashRead(pre, amount){
   return {in:c.inC, out:c.outC, inTotal:c.inT, outTotal:c.outT, change:c.change, xs:c.xs, petty, other};
 }
 // save a payment (and the petty-cash entry for change taken from the petty box) in one go
-async function savePaymentDoc(x){
+async function savePaymentDoc(x, billId, billUpd){
   const {F, fs} = cloud, ref = F.doc(cCol('payments')), b = F.writeBatch(fs);
   b.set(ref, x);
+  if (billId) b.update(cDoc('bills', billId), Object.assign({}, billUpd, {lastPay:ref.id}));   // the bill's paid total moves with the payment, in one write
   if (x.cash && x.cash.petty > 0) b.set(cDoc('ledger', 'chg-' + ref.id), {kind:'pettyspend', change:true, paymentId:ref.id, date:x.date, mode:'cash', amount:x.cash.petty,
     note:`Change given to ${x.patientName} (${x.receiptNo})`, by:cloud.user.email || '', at:Date.now()});
   await b.commit();

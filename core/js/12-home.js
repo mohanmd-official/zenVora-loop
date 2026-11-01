@@ -13,7 +13,7 @@ function homeLoad(){
     return;
   }
   if (!oc || oc.support) return;
-  if (oc.role === 'orgadmin' || oc.role === 'manager') F.getDocs(F.collection(cloud.fs, 'orgs', oc.orgId, 'members')).then(qs => { home.team = docsOf(qs).map(m => Object.assign(m, {uid:m.id})).filter(m => !m.removed); again(); }).catch(() => { home.team = []; });
+  if (isAdminRole(oc.role) || oc.role === 'manager') F.getDocs(F.collection(cloud.fs, 'orgs', oc.orgId, 'members')).then(qs => { home.team = docsOf(qs).map(m => Object.assign(m, {uid:m.id})).filter(m => !m.removed); again(); }).catch(() => { home.team = []; });
   ZL.part('home', 'load', again);                       // each feature loads what its widgets need
 }
 function homeReset(){ Object.assign(home, {key:'', team:null, inv:null}); ZL.part('home', 'reset'); }
@@ -123,7 +123,7 @@ function drawCustomize(){
     <div class="cz">${home.cz.map((w, i) => { const W = WIDGETS[w.id]; return `<div class="czr ${w.off ? 'off' : ''}" data-cz="${i}"><input type="checkbox" data-czon${w.off ? '' : ' checked'}><div><b>${W.ic} ${esc(W.t)}</b><small>${esc(W.d)}</small></div>
       <select data-czsize><option value="half"${w.size !== 'full' ? ' selected' : ''}>Half</option><option value="full"${w.size === 'full' ? ' selected' : ''}>Full width</option></select><button data-czup title="Move up"${i ? '' : ' disabled'}>↑</button><button data-czdn title="Move down"${i < home.cz.length - 1 ? '' : ' disabled'}>↓</button></div>`; }).join('')}</div>
     <div class="btnrow"><button class="primary" id="czSave">Save</button><button id="czReset">Reset to default</button>
-      ${oc && !oc.support && oc.role === 'orgadmin' ? '<span class="sp"></span><button id="czOrg" title="Everyone in your organization who hasn\'t customized their Home gets this layout">Save as default for my organization</button>' : ''}</div>`;
+      ${oc && !oc.support && isAdminRole(oc.role) ? '<span class="sp"></span><button id="czOrg" title="Everyone in your organization who hasn\'t customized their Home gets this layout">Save as default for my organization</button>' : ''}</div>`;
 }
 $('#clOv').addEventListener('click', async e => {
   if (!home.cz || !e.target.closest('.cz, #czSave, #czReset, #czOrg')) return;

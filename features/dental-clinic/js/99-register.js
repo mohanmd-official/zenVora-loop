@@ -54,7 +54,7 @@ ZL.add({
       if (where === 'add') return $('#paCPre') ? {perms:permsFromPreset($('#paCPre').value)} : {};
       return document.querySelector('#pEdit [data-cp]') ? {perms:Object.fromEntries([...document.querySelectorAll('#pEdit [data-cp]')].map(c => [c.dataset.cp, c.checked]))} : {};
     },
-    roleTags:m => feat('clinic') ? `<span class="sub2">Clinic: ${esc(m.role === 'orgadmin' ? 'full access' : presetOf(m.perms))}</span>` : '',
+    roleTags:m => feat('clinic') ? `<span class="sub2">Clinic: ${esc(isAdminRole(m.role) ? 'full access' : presetOf(m.perms))}</span>` : '',
   },
 });
 // Organization → People → Edit: "Apply a preset…" ticks the clinic permissions

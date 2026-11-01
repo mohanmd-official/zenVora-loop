@@ -1,12 +1,14 @@
 /* ---------- visit billing: after the summary, take payment and print, then complete the visit ---------- */
 async function clOpenBill(appt){
   const {F} = cloud;
-  cl.bill = {appt, p:null, T:null, P:null, noPay:false};
+  cl.bill = {appt, p:null, T:null, P:null, bill:null, noPay:false};
   $('#clOv').classList.add('on'); $('#clOvBody').innerHTML = '<div class="empty">Loading the bill…</div>';
   try {
     const [ps, ts, pays] = await Promise.all([F.getDoc(cDoc('patients', appt.patientId)), F.getDocs(F.query(cCol('treatments'), F.where('patientId', '==', appt.patientId))),
       can('billing') ? F.getDocs(F.query(cCol('payments'), F.where('patientId', '==', appt.patientId))) : Promise.resolve({docs:[]})]);
     Object.assign(cl.bill, {p:Object.assign({id:appt.patientId}, ps.exists() ? ps.data() : {first:appt.patientName}), T:docsOf(ts), P:docsOf(pays)});
+    const ab = appt.billId ? await F.getDoc(cDoc('bills', appt.billId)).catch(() => null) : null;
+    if (ab && ab.exists()){ const b = Object.assign({id:ab.id}, ab.data()); if (billLive(b)) cl.bill.bill = b; }
     drawBill();
   } catch(e){ $('#clOvBody').innerHTML = `<div class="auth-err">${esc(errText(e))}</div><button data-ovclose>Close</button>`; }
 }
@@ -29,21 +31,23 @@ function drawBill(){
       <div class="payrow"><span>Earlier balance</span><span>${inr(due - visitNet + paidSum(visitPays))}</span></div>
       <div class="payrow"><span>Paid in this visit</span><span>${visitPays.length ? '− ' + inr(paidSum(visitPays)) : inr(0)}</span></div>
       <div class="payrow"><span>Balance due now</span><span class="${due > 0 ? 'neg' : ''}">${inr(due)}</span></div></div>
-    ${w ? `<form class="aform" id="clVBill" novalidate style="margin-top:10px">
-        <label>Bill date<input type="date" id="vbDate" value="${a.date <= todayKey ? a.date : todayKey}" max="${todayKey}" title="The day this payment is counted in collections and the daily tally"></label>
-        <label>Amount (₹)<input type="number" id="vbAmt" min="1" value="${due > 0 ? due : ''}"></label>
-        <label>Mode<select id="vbMode">${PMODES.map(([k, l]) => `<option value="${k}">${l}</option>`).join('')}</select></label>
-        <label class="grow">Note<input id="vbNote" placeholder="e.g. OPG + consultation"></label>
-        <button class="primary" type="submit">Save payment</button>${cashPanel('vb', true)}</form>` : '<p class="stat">You don\'t have Billing access: the front desk will take the payment from the queue (status "At billing").</p>'}
-    ${visitPays.length ? `<div class="hh">Receipts for this visit</div>${visitPays.map(x => `<div class="trow"><b>${esc(x.receiptNo)} · ${inr(x.amount)} · ${esc((PMODES.find(m => m[0] === x.mode) || [0, x.mode])[1])}</b>${x.cash ? `<span class="stat">${esc(cashLine(x))}</span>` : ''}<button data-vbrcpt="${esc(x.id)}">🖨 Print receipt</button></div>`).join('')}` : ''}
-    <div class="btnrow" style="margin-top:14px">
-      <button data-vbprint>🖨 Print bill</button><span class="sp"></span>
-      ${w ? `<label class="vbchk" title="Complete the visit without taking a payment"><input type="checkbox" id="vbNoPay"${B.noPay ? ' checked' : ''}> <b>No bill</b>&nbsp;${visitNet > 0 ? `(no payment now: ${inr(due)} stays due)` : '(nothing to charge for this visit)'}</label>
-        <button class="primary" id="vbDone"${done || B.noPay ? '' : ' disabled'}>Complete visit ✓</button>` : '<button id="vbLeave">Leave for billing</button>'}</div>`;
+    ${visitBillHtml(B, visitT, w)}`;
   numberTables($('#clOvBody'));
   if ($('#vbCash')) cashRefresh('vb');
 }
+function visitBillHtml(B, visitT, w){
+  const b = B.bill, done = !!b || B.noPay, bp = b ? B.P.filter(x => x.billId === b.id) : [], billable = visitT.filter(t => t.status !== 'planned');
+  const head = b ? `<div class="box billbox vbill"><div class="crow"><b>Bill ${esc(b.billNo)}</b> ${billBadge(b)}<span class="sp"></span><span>Total <b>${inr(b.total)}</b></span><span>Paid <b>${inr(b.paid)}</b></span><span>Outstanding <b class="${billDue(b) ? 'neg' : ''}">${inr(billDue(b))}</b></span></div>
+      <div class="btnrow" style="margin-top:8px">${w && b.status === 'draft' ? '<button class="primary" data-vbissue>Issue bill</button>' : ''}${w && b.status === 'pending' ? '<button class="primary" data-vback>Patient acknowledged</button><span class="stat">or take the payment below</span>' : ''}${w && ['pending', 'ack'].includes(b.status) && !+b.paid ? '<button data-vbreopen title="Back to a draft so the treatments can be corrected">Reopen to edit</button>' : ''}<button data-vbprint>🖨 Print bill</button></div>
+      ${w && billPayable(b) ? payForm('vb', b) : ''}</div>`
+    : w ? `<div class="box billbox vbill"><div class="crow"><b>No bill yet for this visit</b><span class="sp"></span>${billable.length ? '<button class="primary" data-vbgen>Generate bill</button><button data-vbdraft>Save as draft</button>' : '<span class="stat">no treatment to bill</span>'}</div><p class="stat" style="margin:6px 0 0">The bill can stay outstanding: payment can be taken now, later or in parts.</p></div>` : '';
+  return head + (bp.length ? `<div class="hh">Receipts for this bill</div>${bp.map(x => `<div class="trow"><b>${esc(x.receiptNo)} · ${inr(x.amount)} · ${esc((PMODES.find(m => m[0] === x.mode) || [0, x.mode])[1])}</b>${x.cash ? `<span class="stat">${esc(cashLine(x))}</span>` : ''}<button data-vbrcpt="${esc(x.id)}">🖨 Print receipt</button></div>`).join('')}` : '')
+    + `<div class="btnrow" style="margin-top:14px">${b ? '' : '<button data-vbprint>🖨 Print estimate</button>'}<span class="sp"></span>
+      ${w ? `${b ? '' : `<label class="vbchk" title="Complete the visit without a bill"><input type="checkbox" id="vbNoPay"${B.noPay ? ' checked' : ''}> <b>No bill</b>&nbsp;(nothing to charge)</label>`}
+        <button class="primary" id="vbDone"${done ? '' : ' disabled'}>${b && billDue(b) ? `Complete visit · ${inr(billDue(b))} outstanding ✓` : 'Complete visit ✓'}</button>` : '<button id="vbLeave">Leave for billing</button>'}</div>`;
+}
 function printVisitBill(){
+  if (cl.bill.bill) return printBill(cl.bill.bill, cl.bill.p, cl.bill.P);
   const B = cl.bill, a = B.appt, visitT = B.T.filter(t => t.appointmentId === a.id && t.status !== 'planned'), visitPays = B.P.filter(x => x.appointmentId === a.id), due = billed(B.T) - paidSum(B.P);
   printDoc('Bill', `<p><b>Patient:</b> ${esc(pName(B.p))} (${esc(B.p.code || '')}) · ${esc(B.p.phone || '')}<br><b>Visit:</b> ${esc(fmtLong(a.date))} · ${esc(dName(a.doctorId))}</p>
     <h2>Treatments</h2><table><tr><th>#</th><th>Treatment</th><th>Doctor</th><th class="n">Cost</th><th class="n">Discount</th><th class="n">Amount</th></tr>
@@ -55,17 +59,10 @@ function printVisitBill(){
     <p><b>Balance due: ${inr(due)}</b></p>`);
 }
 async function saveVisitPayment(){
-  const {F} = cloud, B = cl.bill, a = B.appt, amount = Math.round(+$('#vbAmt').value || 0);
-  if (amount <= 0) return info('Enter the amount received.');
-  if ((($('#vbDate') || {}).value || '') > todayKey) return info("The bill date can't be in the future.");
-  let cash = null;
-  try { cash = $('#vbMode').value === 'cash' ? cashRead('vb', amount) : null; } catch(e){ return info(errText(e)); }
+  const {F} = cloud, B = cl.bill, a = B.appt; if (!B.bill) return;
   try {
-    const receiptNo = await nextNumber('receipt', 'R-', 5);
-    const x = {patientId:a.patientId, patientName:a.patientName, appointmentId:a.id, date:($('#vbDate') || {}).value || todayKey, amount, mode:$('#vbMode').value, doctorId:a.doctorId, note:$('#vbNote').value.trim(), receiptNo, createdAt:Date.now(), by:cloud.user.email || ''};
-    if (cash) x.cash = cash;
-    const ref = await savePaymentDoc(x); CDX.vb = 0;
-    B.P.push(Object.assign({id:ref.id}, x)); drawBill(); info(`${inr(amount)} received · ${receiptNo}`);
+    const x = await payBill(B.bill, 'vb', ($('#vbDate') || {}).value || todayKey);
+    B.P.push(x); drawBill(); info(`${inr(x.amount)} received on ${B.bill.billNo} · ${x.receiptNo}`);
     // back-entry: the bill is dated earlier than the visit → offer to move the visit and its treatments to the bill date too,
     // so reports (collection, treatments, new patients, appointments) all show the same day
     if (x.date < a.date && confirm(`The bill is dated ${fmtLong(x.date)} but this visit is on ${fmtLong(a.date)}. Move the visit and its treatments to ${fmtLong(x.date)} as well?`)){
@@ -80,10 +77,17 @@ $('#clOv').addEventListener('click', async e => {
   if (!cl.bill || !e.target.closest('#clOvBody')) return;
   if (e.target.closest('[data-vbprint]')) return printVisitBill();
   const rc = e.target.closest('[data-vbrcpt]'); if (rc){ const x = cl.bill.P.find(p => p.id === rc.dataset.vbrcpt); return printReceipt(x, {p:cl.bill.p, T:cl.bill.T, P:cl.bill.P}); }
-  if (e.target.id === 'vbNoPay'){ cl.bill.noPay = e.target.checked; $('#vbDone').disabled = !(cl.bill.noPay || cl.bill.P.some(x => x.appointmentId === cl.bill.appt.id)); return; }
+  if (e.target.id === 'vbNoPay'){ cl.bill.noPay = e.target.checked; $('#vbDone').disabled = !(cl.bill.noPay || cl.bill.bill); return; }
+  const B = cl.bill, vt = () => B.T.filter(t => t.appointmentId === B.appt.id && t.status !== 'planned');
+  try {
+    if (e.target.closest('[data-vbgen],[data-vbdraft]')){ const dr = !!e.target.closest('[data-vbdraft]'); B.bill = await createBill({p:B.p, appt:B.appt, T:vt(), status:dr ? 'draft' : 'pending'}); B.appt.billId = B.bill.id; vt().forEach(t => { if (!dr) t.billId = B.bill.id; }); info(`${B.bill.billNo} ${dr ? 'saved as a draft' : 'generated'} · ${inr(B.bill.total)}`); return drawBill(); }
+    if (e.target.closest('[data-vbissue]')){ await issueBill(B.bill, vt()); info(`${B.bill.billNo} issued.`); return drawBill(); }
+    if (e.target.closest('[data-vbreopen]')){ await reopenBill(B.bill); info(`${B.bill.billNo} is a draft again: ← Back to change the treatments.`); return drawBill(); }
+    if (e.target.closest('[data-vback]')){ await ackBill(B.bill); info(`${B.bill.billNo} acknowledged.`); return drawBill(); }
+  } catch(err){ return info(errText(err)); }
   if (e.target.closest('#vbLeave')){ $('#clOv').classList.remove('on'); cl.bill = null; return; }
   if (e.target.closest('#vbDone')){
-    try { await cloud.F.updateDoc(cDoc('appointments', cl.bill.appt.id), {status:'completed', completedAt:Date.now(), billed:!cl.bill.noPay || cl.bill.P.some(x => x.appointmentId === cl.bill.appt.id)}); } catch(err){ return info(errText(err)); }
+    try { await cloud.F.updateDoc(cDoc('appointments', cl.bill.appt.id), {status:'completed', completedAt:Date.now(), billed:!!cl.bill.bill}); } catch(err){ return info(errText(err)); }
     $('#clOv').classList.remove('on'); info(`${cl.bill.appt.patientName}'s visit is completed.`); cl.bill = null; clinicSync(true); renderClinic();
   }
 });

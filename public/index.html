@@ -636,6 +636,14 @@ input.srchin.bad{border-color:var(--high)}
 .otby{color:var(--done);font-weight:600}.otown{font-size:11px;padding:1px 7px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
 .otr button{padding:4px 10px;font-size:12px;white-space:nowrap}
 td.pcodec{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;white-space:nowrap;color:var(--muted)}
+/* patient overview strip + doctor history */
+.pover{display:flex;gap:18px;flex-wrap:wrap;flex:1 1 360px}
+.pover div{display:flex;flex-direction:column;min-width:110px}
+.pover span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.pover b{font-size:13.5px}
+.pover small{font-weight:400;color:var(--muted);font-size:11.5px}
+tr.dhmove td{background:var(--mint-soft)}
+.pover small{display:block}
 /* visits, summaries, documents, tally */
 .visit{background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--todo);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
 .visit.completed{border-left-color:var(--done)} .visit.missed{border-left-color:var(--high)} .visit.cancelled{opacity:.55} .visit.engaged{border-left-color:#8b5cf6} .visit.waiting{border-left-color:var(--prog)}
@@ -748,6 +756,14 @@ a.srcl0{text-decoration:none}.extbl td{vertical-align:middle}.nowrap{white-space
 .tmore .topen{border-bottom:1px dashed var(--line);padding-bottom:12px}
 .tmh{font-size:13px;margin:0 0 8px}
 .tfirst{margin-bottom:12px;font-size:13.5px}
+/* "Assisted by" picker on each treatment row */
+.aspk{position:relative;font-size:12.5px}
+.aspk summary{list-style:none;cursor:pointer;border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:var(--panel);white-space:nowrap;max-width:200px;overflow:hidden;text-overflow:ellipsis}
+.aspk summary::-webkit-details-marker{display:none}
+.aspk[open] .aspl{position:absolute;z-index:40;top:calc(100% + 4px);left:0;min-width:200px;max-height:260px;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 10px;box-shadow:0 8px 24px rgba(0,0,0,.12);display:flex;flex-direction:column;gap:4px}
+.asadd summary{cursor:pointer}
+.asf{flex-wrap:wrap;gap:8px}
+.asedrow td{background:var(--paper2)}
 /* ---------- toasts ---------- */
 .toasts{position:fixed;top:12px;right:12px;display:flex;flex-direction:column;gap:8px;z-index:40;width:min(340px,calc(100% - 24px))}
 .toast{background:var(--paper);border-left:4px solid var(--prog);border-radius:10px;padding:10px 12px;box-shadow:0 8px 28px rgba(0,0,0,.25);animation:slide .25s ease-out}
@@ -2428,8 +2444,14 @@ const feat = f => { const c = orgCtx(); return c ? !!((c.org.features || {})[f])
 // rem = organization reminders, assign = who may give tasks to colleagues ('all' | 'mgr' | 'off')
 const plannerCfg = () => Object.assign({board:true, rem:true, assign:'all'}, ((orgCtx() || {}).org || {}).planner || {});
 const remOn = () => plannerCfg().rem !== false;
-const agendaOn = () => mode !== 'cloud' || !!(cloud && cloud.isSuper) || (feat('agenda') && (plannerCfg().board !== false || orgCtx().role === 'orgadmin'));
-const ROLE_LABEL = {orgadmin:'Account Manager', manager:'Manager', employee:'Employee'};
+const agendaOn = () => mode !== 'cloud' || !!(cloud && cloud.isSuper) || (feat('agenda') && (plannerCfg().board !== false || isAdminRole(orgCtx().role)));
+/* Roles. Owner and Account Manager are both organization admins (ADMIN_ROLES): every admin check goes through isAdminRole,
+   so the Owner inherits everything an Account Manager may do. Owner adds: only an Owner can change another Owner, and
+   attendance is off by default. attRequired(m): does this person check in? (members/{uid}.attRequired, else by role) */
+const ADMIN_ROLES = ['owner', 'orgadmin'];
+const isAdminRole = r => ADMIN_ROLES.includes(r);
+const ROLE_LABEL = {owner:'Owner', orgadmin:'Account Manager', manager:'Manager', employee:'Employee'};
+const attRequired = m => !!m && (m.attRequired != null ? m.attRequired !== false : !isAdminRole(m.role));
 const synced = {tasks:new Map(), days:new Map(), otasks:new Map(), settings:''};
 const stable = v => JSON.stringify(v, (k, x) => (x && typeof x === 'object' && !Array.isArray(x)) ? Object.keys(x).sort().reduce((o, kk) => (o[kk] = x[kk], o), {}) : x);
 const plain = o => JSON.parse(JSON.stringify(o));
@@ -2569,7 +2591,7 @@ async function startUser(user){
       if (!d || d.status !== 'active'){ pendingAuthMsg = 'Your organization\'s Zenvora Loop access is currently paused. Please contact your Account Manager.'; return doSignOut(); }
       const hadAgenda = agendaOn();
       oc.org = d; applyTheme(d.color);
-      if (oc.role === 'orgadmin' && !oc.support) brandSync(oc.orgId, d);     // name / logo / colour changed → the sign-in link shows it
+      if (isAdminRole(oc.role) && !oc.support) brandSync(oc.orgId, d);     // name / logo / colour changed → the sign-in link shows it
       if (hadAgenda !== agendaOn()){ pushChanges(); setTimeout(() => location.reload(), 300); return; }   // the plan changed: reload to (un)load the planner
       refreshTabs(); if (appReady) render();
     }, () => {                                     // can't read the org any more: either they were turned off or the org was paused
@@ -2597,7 +2619,7 @@ function refreshTabs(){
   AGENDA_VIEWS.forEach(v => { const t = document.querySelector(`#tabs [data-view="${v}"]`); if (t) t.hidden = !agenda; });
   $('#homeTab').hidden = !!(oc && oc.support);
   ZL.views().forEach(([, d]) => { const t = $(d.tab); if (t) t.hidden = !(oc && d.on()); });   // the features' tabs
-  $('#orgTab').hidden = !(oc && (oc.support || role === 'orgadmin' || role === 'manager'));
+  $('#orgTab').hidden = !(oc && (oc.support || isAdminRole(role) || role === 'manager'));
   $('#orgsTab').hidden = !isSup;
   document.body.classList.toggle('sidenav', sideNavOn());
   $('#tabs').classList.toggle('many', [...document.querySelectorAll('#tabs [data-view]')].filter(b => !b.hidden).length > 6);
@@ -2915,7 +2937,7 @@ function formErr(formId, m, btn){                 // show an error under a form 
 const custom = t => Object.assign(new Error(t), {code:'custom'});
 const keepTyping = el => el.contains(document.activeElement) && /INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName);
 const initial = s => esc(String(s || '?').trim().charAt(0).toUpperCase());
-const roleRank = r => ({orgadmin:0, manager:1, employee:2})[r] ?? 3;
+const roleRank = r => ({owner:0, orgadmin:0, manager:1, employee:2})[r] ?? 3;
 const PALETTE = ['#3730A3', '#0F766E', '#0369A1', '#7C3AED', '#BE185D', '#B45309', '#15803D', '#B91C1C', '#334155'];
 const swatchesHtml = (id, cur) => `<div class="swatches" data-sw="${id}">${PALETTE.map(c => `<button type="button" data-c="${c}" style="background:${c}"${c.toLowerCase() === String(cur).toLowerCase() ? ' class="on"' : ''} title="${c}"></button>`).join('')}<input type="color" id="${id}" value="${esc(cur)}" title="Custom colour"></div>`;
 // switches the Super Admin turns on per organization: [key, label, about, needs another switch]; features add theirs (ZL.add flags)
@@ -2944,7 +2966,7 @@ function teamReset(){ Object.assign(team, {dir:[], sets:{a:new Set(), c:new Set(
 const myUid = () => (mode === 'cloud' && cloud && cloud.uid) || '';
 const myName = () => { const oc = orgCtx(); return (oc && !oc.support && fullName(oc.me)) || (cloud && cloud.user && (cloud.user.displayName || (cloud.user.email || '').split('@')[0])) || 'You'; };
 const teamOrg = () => { const oc = orgCtx(); return !!(mode === 'cloud' && oc && !oc.support && feat('agenda')); };
-const canAssignOrg = () => { if (!teamOrg()) return false; const a = plannerCfg().assign; return a === 'all' || (a === 'mgr' && ['orgadmin', 'manager'].includes(orgCtx().role)); };
+const canAssignOrg = () => { if (!teamOrg()) return false; const a = plannerCfg().assign; return a === 'all' || (a === 'mgr' && [...ADMIN_ROLES, 'manager'].includes(orgCtx().role)); };
 const teamNames = () => Array.isArray(state.settings.team) ? state.settings.team : [];
 const sharedData = it => { const o = taskData(it); o.shared = true; o.createdBy = it.createdBy || myUid(); o.assigneeUid = (it.assignee && it.assignee.uid) || ''; return o; };
 const whoKey = it => it.assignee ? (it.assignee.uid ? 'u:' + it.assignee.uid : 'n:' + it.assignee.name) : '';
@@ -3135,7 +3157,19 @@ function openTeam(){
 /* ================= Organization view: people, org chart, support access, billing ================= */
 const orgView = {sec:'people', members:null, reqs:[], invoices:null, pending:[], unsub:[], edit:null, msg:null, share:'', key:'', tmp:'',
   reset(){ this.unsub.forEach(u => { try { u(); } catch(e){} }); Object.assign(this, {members:null, invoices:null, pending:[], unsub:[], edit:null, msg:null, share:'', key:''}); }};
-const isOrgAdmin = () => { const oc = orgCtx(); return !!(oc && !oc.support && oc.role === 'orgadmin'); };
+/* the last active Owner can't be demoted, disabled or removed (an organization may start with none: the Account Manager names one) */
+const lastOwner = uid => !(orgView.members || []).some(m => m.uid !== uid && m.role === 'owner' && m.active !== false && !m.removed);
+/* audit log (orgs/{id}/audit, write-once): who changed a person's role or attendance requirement, from what to what */
+async function auditLog(type, target, before, after, reason){
+  try { const oc = orgCtx(); await cloud.F.addDoc(cloud.F.collection(cloud.fs, 'orgs', oc.orgId, 'audit'), {at:Date.now(), by:cloud.user.email || '', byName:(oc.me && fullName(oc.me)) || '', type, target, before:before ?? null, after:after ?? null, reason:reason || ''}); } catch(e){}
+}
+const markHasOwner = () => { const oc = orgCtx(); if (!oc.org.hasOwner) cloud.F.updateDoc(cloud.F.doc(cloud.fs, 'orgs', oc.orgId), {hasOwner:true}).then(() => { oc.org.hasOwner = true; }).catch(() => {}); };
+function auditMember(m0, upd){
+  const t = {uid:m0.uid || '', name:fullName(m0)};
+  if (upd.role && upd.role !== m0.role) auditLog('role', t, m0.role, upd.role);
+  if ('attRequired' in upd && upd.attRequired !== attRequired(m0)) auditLog('attendance', t, attRequired(m0), upd.attRequired);
+}
+const isOrgAdmin = () => { const oc = orgCtx(); return !!(oc && !oc.support && isAdminRole(oc.role)); };
 const orgDoc = (...p) => cloud.F.doc(cloud.fs, 'orgs', orgCtx().orgId, ...p);
 const orgCol = (...p) => cloud.F.collection(cloud.fs, 'orgs', orgCtx().orgId, ...p);
 
@@ -3183,7 +3217,7 @@ function orgPeople(){
   const list = L.filter(m => !m.removed).sort((a, b) => roleRank(a.role) - roleRank(b.role) || fullName(a).localeCompare(fullName(b)));
   const byUid = Object.fromEntries(list.map(m => [m.uid, m]));
   const toOpts = (sel, self) => `<option value="">— Nobody (top of the organization)</option>` + list.filter(m => m.uid !== self).map(m => `<option value="${esc(m.uid)}"${m.uid === sel ? ' selected' : ''}>${esc(fullName(m))}${m.title ? ' · ' + esc(m.title) : ''}</option>`).join('');
-  const roleOpts = sel => ['employee', 'manager', 'orgadmin'].map(r => `<option value="${r}"${r === sel ? ' selected' : ''}>${ROLE_LABEL[r]}</option>`).join('');
+  const roleOpts = sel => ['employee', 'manager', 'orgadmin', 'owner'].map(r => `<option value="${r}"${r === sel ? ' selected' : ''}>${ROLE_LABEL[r]}</option>`).join('');
   if (!orgView.tmp) orgView.tmp = genPass();
   let top = '';
   if (admin){
@@ -3211,7 +3245,7 @@ function orgPeople(){
         <label class="grow">Full name<input id="peName" value="${esc(m.name || '')}"></label>
         <label>Job title<input id="peTitle" value="${esc(m.title || '')}"></label>
         <label>Reports to<select id="peTo">${toOpts(m.reportsTo || '', m.uid)}</select></label>
-        <label>Role<select id="peRole"${me ? ' disabled title="You can\'t change your own role"' : ''}>${roleOpts(m.role)}</select></label>
+        <label>Role<select id="peRole"${me ? ' disabled title="You can\'t change your own role"' : m.role === 'owner' && orgCtx().role !== 'owner' ? ' disabled title="Only an Owner can change another Owner"' : ''}>${roleOpts(m.role)}</select></label>
         ${ZL.part('person', 'editHtml', m, me).join('')}
         <button class="primary" type="submit">Save</button><button type="button" data-pa="cancel">Cancel</button>
       </form></td></tr>`;
@@ -3345,6 +3379,7 @@ async function addPerson(){
       }
     }
     orgView.tmp = genPass();
+    if (role === 'owner') markHasOwner();
   } catch(err){ orgView.msg = {t:errText(err)}; return formErr('pAdd', orgView.msg, '#paSubmit'); }
   document.activeElement.blur(); renderOrg();
   if (orgView.msg && orgView.msg.ok){ ['#paName', '#paEmail', '#paTitle'].forEach(s => { const el = $(s); if (el) el.value = ''; }); }
@@ -3368,7 +3403,9 @@ $('#orgBody').addEventListener('submit', async e => {
     if (!upd.name) return info('Enter their name.');
     if (!noReportLoop(uid, upd.reportsTo)) return info("That would make a reporting loop: pick someone who doesn't report to this person.");
     { const mg = (orgView.members || []).find(m => m.uid === upd.reportsTo); upd.reportsToName = mg ? fullName(mg) : ''; upd.reportsToTitle = mg ? (mg.title || ROLE_LABEL[mg.role] || '') : ''; }
-    try { await cloud.F.updateDoc(orgDoc('members', uid), upd); orgView.edit = null; document.activeElement.blur(); renderOrg(); info('Saved.'); }
+    const m0 = (orgView.members || []).find(m => m.uid === uid) || {};
+    if (m0.role === 'owner' && upd.role && upd.role !== 'owner' && lastOwner(uid)) return info('This is the only Owner: make someone else Owner first.');
+    try { await cloud.F.updateDoc(orgDoc('members', uid), upd); auditMember(m0, upd); if (upd.role === 'owner') markHasOwner(); orgView.edit = null; document.activeElement.blur(); renderOrg(); info('Saved.'); }
     catch(err){ info('Could not save: ' + errText(err)); }
   }
 });
@@ -3384,6 +3421,7 @@ $('#orgBody').addEventListener('click', async e => {
     if (a === 'cancel'){ orgView.edit = null; document.activeElement.blur(); renderOrg(); return; }
     pa.disabled = true;
     try {
+      if ((a === 'toggle' && m.active || a === 'remove') && m.role === 'owner' && lastOwner(uid)){ pa.disabled = false; return info('This is the only Owner: make someone else Owner first.'); }
       if (a === 'toggle'){ await F.updateDoc(orgDoc('members', uid), {active:!m.active}); info(m.active ? `${m.email} can no longer sign in (signed out immediately).` : `${m.email} can sign in again.`); }
       if (a === 'reset'){ await F.sendPasswordResetEmail(cloud.auth, m.email); info(`Password-reset email sent to ${m.email}.`); }
       if (a === 'remove'){
@@ -3773,7 +3811,7 @@ function homeLoad(){
     return;
   }
   if (!oc || oc.support) return;
-  if (oc.role === 'orgadmin' || oc.role === 'manager') F.getDocs(F.collection(cloud.fs, 'orgs', oc.orgId, 'members')).then(qs => { home.team = docsOf(qs).map(m => Object.assign(m, {uid:m.id})).filter(m => !m.removed); again(); }).catch(() => { home.team = []; });
+  if (isAdminRole(oc.role) || oc.role === 'manager') F.getDocs(F.collection(cloud.fs, 'orgs', oc.orgId, 'members')).then(qs => { home.team = docsOf(qs).map(m => Object.assign(m, {uid:m.id})).filter(m => !m.removed); again(); }).catch(() => { home.team = []; });
   ZL.part('home', 'load', again);                       // each feature loads what its widgets need
 }
 function homeReset(){ Object.assign(home, {key:'', team:null, inv:null}); ZL.part('home', 'reset'); }
@@ -3883,7 +3921,7 @@ function drawCustomize(){
     <div class="cz">${home.cz.map((w, i) => { const W = WIDGETS[w.id]; return `<div class="czr ${w.off ? 'off' : ''}" data-cz="${i}"><input type="checkbox" data-czon${w.off ? '' : ' checked'}><div><b>${W.ic} ${esc(W.t)}</b><small>${esc(W.d)}</small></div>
       <select data-czsize><option value="half"${w.size !== 'full' ? ' selected' : ''}>Half</option><option value="full"${w.size === 'full' ? ' selected' : ''}>Full width</option></select><button data-czup title="Move up"${i ? '' : ' disabled'}>↑</button><button data-czdn title="Move down"${i < home.cz.length - 1 ? '' : ' disabled'}>↓</button></div>`; }).join('')}</div>
     <div class="btnrow"><button class="primary" id="czSave">Save</button><button id="czReset">Reset to default</button>
-      ${oc && !oc.support && oc.role === 'orgadmin' ? '<span class="sp"></span><button id="czOrg" title="Everyone in your organization who hasn\'t customized their Home gets this layout">Save as default for my organization</button>' : ''}</div>`;
+      ${oc && !oc.support && isAdminRole(oc.role) ? '<span class="sp"></span><button id="czOrg" title="Everyone in your organization who hasn\'t customized their Home gets this layout">Save as default for my organization</button>' : ''}</div>`;
 }
 $('#clOv').addEventListener('click', async e => {
   if (!home.cz || !e.target.closest('.cz, #czSave, #czReset, #czOrg')) return;
@@ -3946,7 +3984,7 @@ function regLoad(force){
   const key = oc.orgId + '|' + cloud.uid; if (!force && regs.key === key && regs.list) return;
   regs.key = key; regs.busy = true;
   const {F} = cloud, W = F.where, q = (...w) => F.getDocs(F.query(regCol(), ...w)).then(docsOf).catch(() => []);
-  const jobs = oc.role === 'orgadmin' ? [F.getDocs(regCol()).then(docsOf).catch(() => [])] : [q(W('uid', '==', cloud.uid)), q(W('by', '==', cloud.uid)), q(W('approver', '==', cloud.uid))];
+  const jobs = isAdminRole(oc.role) ? [F.getDocs(regCol()).then(docsOf).catch(() => [])] : [q(W('uid', '==', cloud.uid)), q(W('by', '==', cloud.uid)), q(W('approver', '==', cloud.uid))];
   Promise.all(jobs).then(r => {
     const m = new Map(); r.flat().forEach(x => m.set(x.id, x)); regs.list = [...m.values()].sort((a, b) => (b.at || 0) - (a.at || 0)); regs.busy = false;
     const v = state.settings.view;
@@ -3954,8 +3992,8 @@ function regLoad(force){
     if (v === 'attendance') renderAttendance();
   });
 }
-const regPendingForMe = () => (regs.list || []).filter(r => r.status === 'pending' && r.uid !== cloud.uid && (r.approver === cloud.uid || (orgCtx() && orgCtx().role === 'orgadmin')));
-const regApprover = () => !!(orgCtx() && (orgCtx().role === 'orgadmin' || (regs.list || []).some(r => r.approver === cloud.uid)));
+const regPendingForMe = () => (regs.list || []).filter(r => r.status === 'pending' && r.uid !== cloud.uid && (r.approver === cloud.uid || (orgCtx() && isAdminRole(orgCtx().role))));
+const regApprover = () => !!(orgCtx() && (isAdminRole(orgCtx().role) || (regs.list || []).some(r => r.approver === cloud.uid)));
 function regForm(people){
   return `<div class="box"><h3>Regularize attendance <span class="sub">forgot to check in or out? Ask for the missing time: the reporting manager approves it</span></h3>
     <form class="aform" id="attRegForm" novalidate>
@@ -3987,7 +4025,7 @@ function regProxyBox(people){
 function attApprovals(){
   regLoad();
   if (!regs.list) return '<div class="empty">Loading…</div>';
-  const P = regPendingForMe(), D = regs.list.filter(r => r.status !== 'pending' && (r.approver === cloud.uid || orgCtx().role === 'orgadmin')).slice(0, 20);
+  const P = regPendingForMe(), D = regs.list.filter(r => r.status !== 'pending' && (r.approver === cloud.uid || isAdminRole(orgCtx().role))).slice(0, 20);
   return `<p class="stat" style="margin:0 0 8px">Regularization requests from the people who report to you. Approving adds the time to their attendance.</p>`
     + (P.length ? regTable(P, 'approve') : '<div class="empty">Nothing waiting for your approval. 👏</div>')
     + (D.length ? `<h3 style="font-size:13px;margin:16px 0 6px">Decided</h3>` + regTable(D, 'done') : '');
@@ -4050,11 +4088,11 @@ function wtRead(pre, prev){
   return Object.assign({}, attCfg({att:prev || {}}), {shiftStart:S, shiftEnd:E, brkS:BS, brkE:BE, brk:BS ? toMin(BE) - toMin(BS) : 0});
 }
 const shiftMs = c => Math.max(1, toMin(c.shiftEnd) - toMin(c.shiftStart) - (+c.brk || 0)) * 60000;
-const canManageAtt = () => { const oc = orgCtx(); return !!(oc && (oc.support || oc.role === 'orgadmin' || oc.role === 'manager')); };
+const canManageAtt = () => { const oc = orgCtx(); return !!(oc && (oc.support || isAdminRole(oc.role) || oc.role === 'manager')); };
 const attRO = () => !!(orgCtx() && orgCtx().support);          // Zenvora support: look, don't touch
 const isProxyMe = () => { const oc = orgCtx(); return !!(oc && !oc.support && feat('attendance') && oc.me && oc.me.attProxy); };
 const canMarkAtt = () => !attRO() && (isProxyMe() || canManageAtt());
-const attSelf = () => { const oc = orgCtx(); return !!(oc && !oc.support && oc.role !== 'orgadmin'); };   // Account Managers don't check in
+const attSelf = () => { const oc = orgCtx(); return !!(oc && !oc.support && attRequired(oc.me)); };   // people with Attendance required (Owners / Account Managers: off unless turned on)
 const payOn = () => feat('payroll');
 const attCol = uid => cloud.F.collection(cloud.fs, 'orgs', orgCtx().orgId, 'attendance', uid, 'events');
 
@@ -4096,13 +4134,15 @@ function attSummary(events, mk, acc){
     H += worked; OT += ot; SH += short;
     rows.push({k, st, ss, worked, ot, short});
   }
+  if (acc && acc.role && !attRequired(acc)){ L = 0; SH = 0; OT = 0; }          // Attendance not required: never absent, full salary, no extras
+  const noAtt = !!(acc && acc.role && !attRequired(acc));
   const shortD = SH / sh, used = L + shortD, offsLeft = Math.max(0, OFFS_PER_MONTH - used);
-  const lop = Math.max(0, used - OFFS_PER_MONTH), otDays = Math.max(0, Math.max(0, P - (effMonth - OFFS_PER_MONTH)) - shortD);
+  const lop = Math.max(0, used - OFFS_PER_MONTH), otDays = noAtt ? 0 : Math.max(0, Math.max(0, P - (effMonth - OFFS_PER_MONTH)) - shortD);
   const perDay = (+c.salary || 0) / B.days, perHour = perDay / (sh / 3600000), mult = +c.otMult || 1;
   const base = perDay * effMonth, lopAmt = lop * perDay, otDayPay = otDays * perDay, otHrPay = (OT / 3600000) * perHour * mult;
   const inc = acc && acc._inc != null ? +acc._inc || 0 : acc && att.inc && att.incM === mk && att.inc[acc.uid] != null ? +att.inc[acc.uid] || 0 : 0;
   const pay0 = base - lopAmt + otDayPay + otHrPay;
-  return {rows, c, sh, B, P, L, H, OT, SH, shortD, offsLeft, lop, otDays, sun, offsUsed:Math.min(used, OFFS_PER_MONTH), perDay, perHour, mult, base, lopAmt, otDayPay, otHrPay, inc,
+  return {noAtt, rows, c, sh, B, P, L, H, OT, SH, shortD, offsLeft, lop, otDays, sun, offsUsed:Math.min(used, OFFS_PER_MONTH), perDay, perHour, mult, base, lopAmt, otDayPay, otHrPay, inc,
           salary:base - lopAmt, extra:otDayPay + otHrPay, pay:pay0 + inc, done:B.e < todayKey, effMonth};
 }
 
@@ -4120,7 +4160,7 @@ async function attLoad(){
   try {
     if (att.mode === 'me') return watch(cloud.uid);
     const accs = await F.getDocs(F.collection(fs, 'orgs', orgCtx().orgId, 'members'));
-    att.accts = accs.docs.map(d => Object.assign({uid:d.id}, d.data())).filter(a => !a.removed && a.role !== 'orgadmin')
+    att.accts = accs.docs.map(d => Object.assign({uid:d.id}, d.data())).filter(a => !a.removed && attRequired(a))
       .sort((a, b) => roleRank(a.role) - roleRank(b.role) || fullName(a).localeCompare(fullName(b)));
     if (payOn() && ZL.api('dental-clinic')){ const m0 = att.month; ZL.api('dental-clinic').loadIncentives(m0).then(m => { att.inc = m; att.incM = m0; if (att.key === key) renderAttendance(); }); }
     if (att.detail) return watch(att.detail);
@@ -4440,7 +4480,7 @@ function wMark(){
 async function pxLoad(){
   const {F, fs} = cloud, oc = orgCtx(); attHome.pxBusy = true;
   try {
-    const accs = docsOf(await F.getDocs(F.collection(fs, 'orgs', oc.orgId, 'members'))).map(a => Object.assign(a, {uid:a.id})).filter(a => !a.removed && a.active !== false && a.role !== 'orgadmin').sort((a, b) => fullName(a).localeCompare(fullName(b)));
+    const accs = docsOf(await F.getDocs(F.collection(fs, 'orgs', oc.orgId, 'members'))).map(a => Object.assign(a, {uid:a.id})).filter(a => !a.removed && a.active !== false && attRequired(a)).sort((a, b) => fullName(a).localeCompare(fullName(b)));
     const from = F.Timestamp.fromDate(parseDay(todayKey)), ev = {};
     await Promise.all(accs.map(async a => { const qs = await F.getDocs(F.query(attCol(a.uid), F.where('at', '>=', from))); ev[a.uid] = qs.docs.map(d => { const x = d.data({serverTimestamps:'estimate'}); return {id:d.id, type:x.type, src:x.src, at:tsMs(x.at)}; }); }));
     attHome.px = {accts:accs, ev};
@@ -4472,12 +4512,12 @@ ZL.add({
   // Organization → People: work timing, Proxy attendance
   person:{
     addHtml:() => feat('attendance') ? `<div class="full wtrow"><span class="fhead" style="margin:0">Work timing</span>${wtFields('paW', attCfg(null))}<span class="stat">time worked beyond these hours counts as overtime / extra hours</span></div>` : '',
-    editHtml:m => feat('attendance') && m.role !== 'orgadmin' ? `<div class="full cperm"><div class="fhead" style="margin:4px 0">Attendance · work timing</div><div class="wtrow" style="margin-bottom:6px">${wtFields('peW', attCfg(m))}</div><label class="ckl" style="color:var(--ink)"><input type="checkbox" id="peProxy"${m.attProxy ? ' checked' : ''}> <b>Proxy attendance</b>&nbsp;<span class="stat">can check other staff in and out (e.g. reception)</span></label></div>` : '',
+    editHtml:m => feat('attendance') ? `<div class="full cperm"><div class="fhead" style="margin:4px 0">Attendance · work timing</div><label class="ckl" style="color:var(--ink);margin-bottom:6px"><input type="checkbox" id="peAttReq"${attRequired(m) ? ' checked' : ''}> <b>Attendance required</b>&nbsp;<span class="stat">untick for people who don't check in (e.g. the Owner): never marked absent, full salary</span></label><div class="wtrow" style="margin-bottom:6px">${wtFields('peW', attCfg(m))}</div><label class="ckl" style="color:var(--ink)"><input type="checkbox" id="peProxy"${m.attProxy ? ' checked' : ''}> <b>Proxy attendance</b>&nbsp;<span class="stat">can check other staff in and out (e.g. reception)</span></label></div>` : '',
     read(where, role, m){
-      if (where === 'add') return $('#paWS') && role !== 'orgadmin' ? {att:wtRead('paW')} : {};
-      const o = {}; if ($('#peProxy')) o.attProxy = $('#peProxy').checked; if ($('#peWS')) o.att = wtRead('peW', (m || {}).att); return o;
+      if (where === 'add') return $('#paWS') && !isAdminRole(role) ? {att:wtRead('paW')} : {};
+      const o = {}; if ($('#peAttReq')) o.attRequired = $('#peAttReq').checked; if ($('#peProxy')) o.attProxy = $('#peProxy').checked; if ($('#peWS')) o.att = wtRead('peW', (m || {}).att); return o;
     },
-    titleTags:m => (m.attProxy && feat('attendance') ? ' <em class="rtag">Proxy attendance</em>' : '') + (feat('attendance') && m.role !== 'orgadmin' ? `<span class="sub2">⏰ ${esc(shiftTxt(attCfg(m)))}</span>` : ''),
+    titleTags:m => (m.attProxy && feat('attendance') ? ' <em class="rtag">Proxy attendance</em>' : '') + (feat('attendance') ? attRequired(m) ? `<span class="sub2">⏰ ${esc(shiftTxt(attCfg(m)))}</span>` : '<span class="sub2">Attendance not required</span>' : ''),
     managerHint:() => feat('attendance') ? `sees and corrects everyone's attendance${feat('payroll') ? ' and pay' : ''}` : '',
     employeeHint:() => feat('attendance') ? 'check-in' : '',
   },
@@ -4489,14 +4529,15 @@ const CPERMS = [
   ['patients', 'Patients', 'add and edit patient details'],
   ['appointments', 'Appointments', 'book, check in, reschedule'],
   ['treatments', 'Treatments & photos', 'treatments, clinical notes, pre/post-op photos'],
-  ['billing', 'Billing', 'take payments, see balances, receipts'],
+  ['billing', 'Billing', 'generate bills, take payments, see balances, receipts'],
+  ['cancelBills', 'Cancel paid bills', 'cancel a bill that has payments (move or refund them)'],
   ['accounts', 'Accounts', 'expenses, vendors, consultants, commitments, petty cash top-ups'],
   ['petty', 'Petty cash spends', 'record what petty cash was spent on'],
   ['tally', 'Daily cash tally', 'count the cash drawer each day'],
   ['reports', 'Collection & treatment reports', ''],
   ['doctorReports', 'Doctor & consultant reports', 'consultant statements and payouts'],
   ['setup', 'Clinic setup', 'doctors, treatment list and prices'],
-  ['assistApprove', 'Approve patient assists', "Chief doctor: approves the assists staff log each day"],
+  ['assistApprove', 'Approve all patient assists', "Chief doctor: approves any assist (treating doctors with a login approve their own patients' anyway)"],
 ];
 // the Payroll feature (attendance) when it is in this build, else null: Accounts → Staff salary works from attendance
 const PAY = () => ZL.api('payroll');
@@ -4510,12 +4551,12 @@ const CPRESETS = [
 ];
 const permsFromPreset = k => Object.fromEntries(CPERMS.map(([p]) => [p, ((CPRESETS.find(x => x[0] === k) || [0, 0, []])[2]).includes(p)]));
 const presetOf = perms => { const on = CPERMS.filter(([p]) => perms && perms[p]).map(p => p[0]).join(); const f = CPRESETS.find(x => x[2].join() === on); return f ? f[1] : on ? 'Custom' : 'No clinic access'; };
-const can = p => { const oc = orgCtx(); if (!oc || !feat('clinic')) return false; if (oc.support) return 'ro'; return oc.role === 'orgadmin' || !!((oc.me.perms || {})[p]); };
+const can = p => { const oc = orgCtx(); if (!oc || !feat('clinic')) return false; if (oc.support) return 'ro'; return isAdminRole(oc.role) || !!((oc.me.perms || {})[p]); };
 const canW = p => can(p) === true;                      // may change things (support view is look-only)
 const clinicAny = () => CPERMS.some(([p]) => can(p));
 const TSTATUS = {planned:['Planned', 'pend'], progress:['In progress', 'prog'], completed:['Completed', 'on']};
 const ASTATUS = {scheduled:'Scheduled', waiting:'Waiting', engaged:'In chair', billing:'At billing', completed:'Completed', missed:'Missed', cancelled:'Cancelled'};
-const PMODES = [['cash', 'Cash'], ['upi', 'UPI / GPay'], ['card', 'Card'], ['ccard', 'Credit card'], ['cheque', 'Cheque'], ['neft', 'NEFT'], ['rtgs', 'RTGS'], ['bank', 'Bank transfer']];
+const PMODES = [['cash', 'Cash'], ['upi', 'UPI / GPay'], ['card', 'Debit card'], ['ccard', 'Credit card'], ['cheque', 'Cheque'], ['neft', 'NEFT'], ['rtgs', 'RTGS'], ['bank', 'Bank transfer']];
 const MED_UNITS = ['Tablet', 'Capsule', 'Syrup (bottle)', 'Gel / tube', 'Mouthwash (bottle)', 'Injection', 'Other'];
 const DEFAULT_MEDS = [['Amoxicillin 500 mg', 8, 'Capsule'], ['Amoxicillin + Clavulanate 625 mg', 20, 'Tablet'], ['Metronidazole 400 mg', 2, 'Tablet'], ['Ibuprofen 400 mg', 2, 'Tablet'], ['Paracetamol 650 mg', 2, 'Tablet'], ['Aceclofenac + Paracetamol', 5, 'Tablet'], ['Ketorolac 10 mg', 4, 'Tablet'], ['Pantoprazole 40 mg', 8, 'Tablet'], ['Chlorhexidine mouthwash', 120, 'Mouthwash (bottle)'], ['Metrogyl DG gel', 90, 'Gel / tube']];
 const DEFAULT_TYPES = [['Consultation', 200], ['OPG X-ray', 400], ['IOPA X-ray', 150], ['Scaling & polishing', 1000], ['Filling', 1200], ['Root canal (RCT)', 4500], ['Extraction', 800], ['Crown', 6000], ['Implant', 30000], ['Braces / aligners', 35000], ['Dentures', 12000], ['Teeth whitening', 8000]];
@@ -4640,15 +4681,15 @@ function clPatients(){
   const exact = p => qn !== null && codeNo(p.code) === qn ? 0 : 1;            // the exact patient number comes first
   const list = all ? all.filter(p => pMatch(p, cl.q)).sort((a, b) => exact(a) - exact(b) || PSORT[sortK][1](a, b)) : null;
   const rows = (list || []).map(p => `<tr class="clk" data-pid="${esc(p.id)}"><td class="pcodec">${esc(p.code || '—')}</td><td><a class="plink" href="#/clinic/patients/${esc(p.id)}"><b>${esc(pName(p))}</b></a></td>
-    <td>${esc(p.gender || '—')}${ageOf(p) ? ' · ' + esc(ageOf(p)) : ''}</td><td>${esc(p.phone || '—')}</td><td>${esc(dName(p.primaryDoctorId) || '—')}</td><td class="stat">${p.createdAt > 1 ? esc(fmtShort(dayKey(p.createdAt))) : ''}</td></tr>`).join('');
+    <td>${esc(p.gender || '—')}${ageOf(p) ? ' · ' + esc(ageOf(p)) : ''}</td><td>${esc(p.phone || '—')}</td><td>${esc(dName(p.primaryDoctorId) || '—')}</td><td>${esc(((p.assistedBy || {}).names || []).join(', ') || '—')}</td><td class="stat">${p.createdAt > 1 ? esc(fmtShort(dayKey(p.createdAt))) : ''}</td></tr>`).join('');
   return `<div class="clhead"><h2>Patients</h2></div><div class="sect">
     <div class="vbar" style="padding:0"><input type="search" id="clQ" placeholder="Filter by patient code, name or phone…" value="${esc(cl.q)}" style="flex:1;min-width:220px;font-size:14px;padding:8px 12px">
       <select id="clPSort" title="Order">${Object.entries(PSORT).map(([k, [l]]) => `<option value="${k}"${k === sortK ? ' selected' : ''}>${l}</option>`).join('')}</select>
       <button id="clPRefresh" title="Reload the list">↻</button>
       ${canW('patients') ? '<button class="primary" id="clNewP">+ New patient</button>' : ''}</div>
     <div class="stat">${!all ? 'Loading all patients…' : cl.q ? `${list.length} of ${all.length} patients match "${esc(cl.q)}"` : `${all.length} patients`}</div>
-    <div class="awrap pscroll" style="margin-top:0"><table class="atbl otbl"><thead><tr><th>Patient No.</th><th>Patient</th><th>Gender · Age</th><th>Phone</th><th>Primary doctor</th><th>Registered</th></tr></thead>
-    <tbody>${list === null ? '<tr><td colspan="6">Loading…</td></tr>' : rows || `<tr><td colspan="6" class="stat">${cl.q ? 'No patient matches.' : 'No patients yet.'}</td></tr>`}</tbody></table></div></div>`;
+    <div class="awrap pscroll" style="margin-top:0"><table class="atbl otbl"><thead><tr><th>Patient No.</th><th>Patient</th><th>Gender · Age</th><th>Phone</th><th>Primary doctor</th><th>Assisted by</th><th>Registered</th></tr></thead>
+    <tbody>${list === null ? '<tr><td colspan="7">Loading…</td></tr>' : rows || `<tr><td colspan="7" class="stat">${cl.q ? 'No patient matches.' : 'No patients yet.'}</td></tr>`}</tbody></table></div></div>`;
 }
 let clQTimer = null;
 function clDoSearch(){
@@ -4660,15 +4701,17 @@ function clDoSearch(){
 function clOpenPatient(pid){
   cl.pUnsub.forEach(u => { try { u(); } catch(e){} }); cl.pUnsub = [];
   Object.assign(cl, {pid, newP:!pid, p:null, pT:null, pP:null, pA:null, pPh:null, edit:{}});
-  if (pid && !['profile', 'treatments', 'rx', 'billing', 'appointments', 'docs', 'photos', 'history'].includes(cl.ptab)) cl.ptab = 'profile';
-  cl.pD = null;
+  if (pid && !['profile', 'treatments', 'rx', 'billing', 'payments', 'appointments', 'doctors', 'assists', 'docs', 'photos', 'history'].includes(cl.ptab)) cl.ptab = 'profile';
+  cl.pD = null; cl.pAs = null; cl.pB = null; cl.dhF = {from:'', to:''};
   if (!pid){ cl.ptab = 'profile'; return renderClinic(); }
   const {F} = cloud, again = () => { if (state.settings.view === 'clinic' && cl.pid === pid) renderClinic(); };
   cl.pUnsub.push(F.onSnapshot(cDoc('patients', pid), s => { cl.p = s.exists() ? Object.assign({id:pid}, s.data()) : {missing:true}; again(); }, e => info(errText(e))));
   if (can('treatments') || can('billing')) cl.pUnsub.push(F.onSnapshot(F.query(cCol('treatments'), F.where('patientId', '==', pid)), qs => { cl.pT = docsOf(qs); again(); }, () => { cl.pT = []; }));
   if (can('billing')) cl.pUnsub.push(F.onSnapshot(F.query(cCol('payments'), F.where('patientId', '==', pid)), qs => { cl.pP = docsOf(qs); again(); }, () => { cl.pP = []; }));
+  if (can('billing') || can('treatments')) cl.pUnsub.push(F.onSnapshot(F.query(cCol('bills'), F.where('patientId', '==', pid)), qs => { cl.pB = docsOf(qs); again(); }, () => { cl.pB = []; }));
   if (can('appointments') || can('treatments')) cl.pUnsub.push(F.onSnapshot(F.query(cCol('appointments'), F.where('patientId', '==', pid)), qs => { cl.pA = docsOf(qs); again(); }, () => { cl.pA = []; }));
   if (can('patients') || can('treatments')) cl.pUnsub.push(F.onSnapshot(cCol('patients', pid, 'docs'), qs => { cl.pD = docsOf(qs); again(); }, () => { cl.pD = []; }));
+  if (asSeePatient()) cl.pUnsub.push(F.onSnapshot(F.query(cCol('assists'), F.where('patientId', '==', pid)), qs => { cl.pAs = docsOf(qs).filter(x => x.status !== 'void'); again(); }, () => { cl.pAs = []; }));
   if (can('treatments')) cl.pUnsub.push(F.onSnapshot(cCol('patients', pid, 'photos'), qs => { cl.pPh = docsOf(qs); again(); }, () => { cl.pPh = []; }));
   renderClinic();
 }
@@ -4680,10 +4723,10 @@ function clPatient(){
   if (p.missing) return '<button class="abk" id="clBack">← Patients</button><div class="empty">This patient no longer exists.</div>';
   const T = cl.pT || [], P = cl.pP || [], bill = billed(T), paid = paidSum(P);
   const docs = [...new Set([p.primaryDoctorId].concat(T.map(t => t.doctorId), (cl.pA || []).filter(a => a.status !== 'cancelled').map(a => a.doctorId)).filter(Boolean))];
-  const tabs = [['profile', 'Profile', true], ['treatments', 'Treatments', can('treatments') || can('billing')], ['rx', 'Tablets / prescriptions', can('treatments') || can('billing')], ['billing', 'Billing', can('billing')], ['appointments', 'Visits & summaries', can('appointments') || can('treatments')], ['docs', 'Documents', can('patients') || can('treatments')],
+  const tabs = [['profile', 'Profile', true], ['doctors', 'Doctor history', can('appointments') || can('treatments')], ['assists', 'Assists', asSeePatient()], ['treatments', 'Treatments', can('treatments') || can('billing')], ['rx', 'Tablets / prescriptions', can('treatments') || can('billing')], ['billing', 'Bills', can('billing')], ['payments', 'Payments', can('billing')], ['appointments', 'Visits & summaries', can('appointments') || can('treatments')], ['docs', 'Documents', can('patients') || can('treatments')],
     ['photos', 'Pre / post-op photos', can('treatments')], ['history', 'History', true]].filter(t => t[2]);
   if (!tabs.some(t => t[0] === cl.ptab)) cl.ptab = 'profile';
-  const body = ({profile:() => clProfileForm(p), treatments:clTreatments, rx:clRx, billing:clBilling, appointments:clPAppts, docs:clDocs, photos:clPhotos, history:clHistory})[cl.ptab]();
+  const body = ({profile:() => clProfileForm(p), doctors:clDoctorHistory, assists:clPAssists, treatments:clTreatments, rx:clRx, billing:clBills, payments:clPayments, appointments:clPAppts, docs:clDocs, photos:clPhotos, history:clHistory})[cl.ptab]();
   return `<button class="abk" id="clBack">← Patients</button>
     <div class="phead">
       <div class="uav" style="width:46px;height:46px;font-size:19px">${initial(p.first)}</div>
@@ -4691,10 +4734,44 @@ function clPatient(){
         <div class="stat">${esc([p.gender, ageOf(p), p.phone, p.bloodGroup && 'Blood ' + p.bloodGroup].filter(Boolean).join(' · '))}</div>
         <div class="stat">Doctors: ${docs.length ? docs.map(id => `<span class="fchip on">${esc(dName(id) || 'Unknown')}${id === p.primaryDoctorId ? ' · primary' : ''}</span>`).join(' ') : '—'}</div>
         ${p.allergies ? `<div class="alert">⚠ Allergies / alerts: ${esc(p.allergies)}</div>` : ''}</div>
-      ${can('billing') ? `<div class="pmoney"><div><span>Treatment cost</span><b>${inr(bill)}</b></div><div><span>Paid</span><b>${inr(paid)}</b></div><div><span>Balance</span><b class="${bill - paid > 0 ? 'neg' : ''}">${inr(bill - paid)}</b></div></div>` : ''}
+      ${pOverview(p)}
+      ${can('billing') ? `<div class="pmoney"><div><span>Treatment cost</span><b>${inr(bill)}</b></div><div><span>Billed</span><b>${inr((cl.pB || []).filter(billLive).reduce((s2, b) => s2 + (+b.total || 0), 0))}</b></div><div><span>Paid</span><b>${inr(paid)}</b></div><div><span>Outstanding</span><b class="${bill - paid > 0 ? 'neg' : ''}">${inr(bill - paid)}</b></div></div>` : ''}
     </div>
     <div class="htabs" data-ord="ptab" data-ordattr="pt" title="Drag a tab to put it where you like">${ordered('ptab', tabs).map(([k, l]) => `<a draggable="true" data-pt="${k}" href="#/clinic/patients/${esc(cl.pid)}/${k}" class="${k === cl.ptab ? 'on' : ''}">${l}</a>`).join('')}</div>
     <div style="margin-top:10px">${body}</div>`;
+}
+/* ---------- patient overview: last visit, assigned doctor, last treatment, assisted by ---------- */
+const asSeePatient = () => can('treatments') || asOwner() || asApprover() || asTreating();
+function pOverview(p){
+  const A = (cl.pA || []).filter(a => a.status !== 'cancelled' && a.date <= todayKey).sort((a, b) => String(b.date + b.time).localeCompare(String(a.date + a.time))), last = A[0];
+  const T = (cl.pT || []).filter(t => !isMed(t) && t.status !== 'planned').sort((a, b) => String(b.date).localeCompare(String(a.date)) || (b.createdAt || 0) - (a.createdAt || 0)), lt = T[0];
+  const asd = (cl.pAs || []).filter(x => x.status !== 'void').sort((a, b) => String(b.date).localeCompare(String(a.date))), names = asd.length ? [...new Set(asd.filter(x => x.date === asd[0].date).map(x => x.name))] : ((p.assistedBy || {}).names || []);
+  const it = (l, v) => `<div><span>${l}</span><b>${v}</b></div>`;
+  return `<div class="pover">${it('Last visit', last ? esc(fmtShort(last.date)) + `<small>${esc(dName(last.doctorId) || '')}</small>` : '—')}${it('Assigned doctor', esc(dName(p.primaryDoctorId) || '—'))}${it('Last treatment', lt ? esc(lt.typeName) + `<small>${esc(fmtShort(lt.date))}</small>` : '—')}${it('Assisted by', names.length ? esc(names.join(', ')) : '—')}</div>`;
+}
+/* ---------- doctor assignment / transfer history: every appointment's doctor, the previous one, and each reassignment ---------- */
+function clDoctorHistory(){
+  if (cl.pA === null) return '<div class="empty">Loading…</div>';
+  const f = cl.dhF, A = (cl.pA || []).slice().sort((a, b) => String(a.date + a.time).localeCompare(String(b.date + b.time)));
+  const tr = id => (cl.pT || []).filter(t => t.appointmentId === id && !isMed(t)).map(t => t.typeName + (t.tooth ? ` (${t.tooth})` : '')).join(', ');
+  let prev = '';
+  const rows = A.map(a => { const r = {a, prev:prev, moved:!!prev && prev !== a.doctorId}; if (a.status !== 'cancelled') prev = a.doctorId; return r; })
+    .filter(r => (!f.from || r.a.date >= f.from) && (!f.to || r.a.date <= f.to)).reverse();
+  const who = e => esc(String(e || '').split('@')[0]);
+  return `<div class="sect"><div class="vbar" style="padding:0"><b>Doctor assignment history</b><span class="sp"></span><label class="stat">From <input type="date" data-dhf="from" value="${esc(f.from)}"></label><label class="stat">To <input type="date" data-dhf="to" value="${esc(f.to)}"></label></div>
+    <div class="awrap" style="margin-top:6px"><table class="atbl"><thead><tr><th>Date</th><th>Appointment</th><th>Previous doctor</th><th>Doctor</th><th>Treatment</th><th>Transfer reason</th><th>Status</th><th>Assigned by</th></tr></thead><tbody>
+    ${rows.map(({a, prev, moved}) => `<tr${moved ? ' class="dhmove"' : ''}><td>${esc(fmtShort(a.date))} <span class="stat">${esc(hm12(a.time))}</span></td><td>${esc(a.reason || '—')}</td><td>${prev ? esc(dName(prev)) : '<span class="stat">first visit</span>'}</td>
+      <td><b>${esc(dName(a.doctorId) || '—')}</b>${moved ? ' <span class="fchip on">transferred</span>' : ''}${(a.doctorLog || []).map(l => `<span class="sub2">reassigned ${esc(dName(l.from))} → ${esc(dName(l.to))} · ${esc(fmt(l.at))} · ${who(l.by)}${l.reason ? ' · ' + esc(l.reason) : ''}</span>`).join('')}</td>
+      <td>${esc(tr(a.id) || '—')}</td><td>${esc(a.transferReason || ((a.doctorLog || []).slice(-1)[0] || {}).reason || '')}</td><td><span class="ast ${a.status}">${ASTATUS[a.status] || a.status}</span></td><td class="stat">${who(a.createdBy)}</td></tr>`).join('') || '<tr><td colspan="8" class="stat">No appointments in this period.</td></tr>'}
+    </tbody></table></div></div>`;
+}
+/* ---------- this patient's assists: per treatment, who assisted, approval and incentive eligibility (amounts only for Owner / Admin / Chief) ---------- */
+function clPAssists(){
+  if (cl.pAs === null) return '<div class="empty">Loading…</div>';
+  const X = (cl.pAs || []).slice().sort((a, b) => String(b.date).localeCompare(String(a.date)));
+  return `<div class="sect"><div class="awrap" style="margin-top:0"><table class="atbl"><thead><tr><th>Appointment date</th><th>Treatment</th><th>Doctor</th><th>Assistant</th><th>Approval</th><th>Incentive</th><th>Added by</th></tr></thead><tbody>
+    ${X.map(x => `<tr><td>${esc(fmtShort(x.date))}</td><td>${esc(x.typeName || '—')}</td><td>${esc(dName(x.doctorId) || '—')}</td><td><b>${esc(x.name || '')}</b></td><td>${asBadge(x)}</td><td>${AS_ELIG[x.status || 'pending']}</td><td class="stat">${esc(x.addedByName || String(x.addedBy || '').split('@')[0] || (x.uid === undefined ? '' : x.name))}</td></tr>`).join('') || '<tr><td colspan="7" class="stat">No assists recorded for this patient.</td></tr>'}
+    </tbody></table></div>${asOwner() ? '<p class="stat">Add a missed assist or correct one in Patient assists → All assists.</p>' : ''}</div>`;
 }
 function clProfileForm(p){
   const ro = !canW('patients');
@@ -4730,6 +4807,7 @@ async function clDeletePatient(){
     sub = (await Promise.all(['docs', 'docData', 'photos', 'photoData'].map(c => F.getDocs(cCol('patients', pid, c)).then(qs => qs.docs.map(d => ['patients', pid, c, d.id]))))).flat(); }
   catch(e){ return info('Could not check: ' + errText(e)); }
   const tot = billed(cl.pT || []), paid = paidSum(cl.pP || []);
+  if (P.length || (cl.pB || []).length) return info(`${pName(p)} has ${plural(P.length, 'payment')} and ${plural((cl.pB || []).length, 'bill')}: money records are never deleted, so this patient can't be deleted.`);
   if (!confirm(`Delete ${pName(p)} (${p.code || ''}) permanently?\n\nThis also deletes ${plural(T.length, 'treatment')} (${inr(tot)}), ${plural(P.length, 'payment')} (${inr(paid)}), ${plural(A.length, 'appointment')} and ${plural(sub.length / 2 || 0, 'document / photo')}. Reports, collections and balances will no longer include them.\n\nThis cannot be undone.`)) return;
   if (!confirm(`Last check: delete ${pName(p)} and all their records?`)) return;
   info(`Deleting ${pName(p)} and ${plural(T.length + P.length + A.length, 'record')}…`);
@@ -4763,6 +4841,8 @@ async function clSavePatient(){
 }
 
 /* treatments (each one records the doctor who did it) */
+// "Assisted by" under a treatment (names + approval), from this patient's assist records
+const asNamesFor = tid => { const xs = (cl.pAs || []).filter(x => x.treatmentId === tid && x.status !== 'void'); return xs.length ? `<span class="sub2">👥 ${xs.map(x => `${esc(x.name)} <i class="upill ${AS_ST[x.status || 'pending'][1]}" style="font-style:normal;font-size:10.5px">${AS_ELIG[x.status || 'pending']}</i>`).join(', ')}</span>` : ''; };
 function clTreatments(){
   const T = (cl.pT || []).filter(t => !isMed(t)).sort((a, b) => String(b.date).localeCompare(String(a.date)) || (b.createdAt || 0) - (a.createdAt || 0));
   const w = canW('treatments'), money = can('billing') || can('treatments');
@@ -4784,12 +4864,13 @@ function clTreatments(){
     </form>${types.length ? '' : '<p class="stat">Add your treatment list first in Clinic setup.</p>'}</div>` : '';
   let html = '', day = null;
   T.forEach(t => {
+    const lk = tLocked(t, cl.pB), wl = w && !lk, bn = lk ? ((cl.pB || []).find(b => b.id === t.billId) || {}).billNo : '';
     if (t.date !== day){ day = t.date; html += `<tr class="wk"><td colspan="${w ? 7 : 6}">${esc(fmtShort(t.date))} · ${esc([...new Set(T.filter(x => x.date === day).map(x => dName(x.doctorId) || x.doctorName))].join(', '))}</td></tr>`; }
-    html += `<tr data-tid="${esc(t.id)}"><td><b>${esc(t.typeName)}</b>${t.tooth ? `<span class="sub2">Tooth / area: ${esc(t.tooth)}</span>` : ''}${t.notes ? `<span class="sub2">${esc(t.notes)}</span>` : ''}</td>
+    html += `<tr data-tid="${esc(t.id)}"><td><b>${esc(t.typeName)}</b>${t.tooth ? `<span class="sub2">Tooth / area: ${esc(t.tooth)}</span>` : ''}${t.notes ? `<span class="sub2">${esc(t.notes)}</span>` : ''}${bn ? `<span class="sub2">🔒 on bill ${esc(bn)}</span>` : ''}${asNamesFor(t.id)}</td>
       <td>${esc(dName(t.doctorId) || t.doctorName || '—')}${+t.consultantFee && money ? `<span class="sub2">consultant fee ${inr(t.consultantFee)}</span>` : ''}</td>
       ${money ? `<td class="num">${inr(t.cost)}</td><td class="num">${+t.discount ? inr(t.discount) : '—'}</td><td class="num"><b>${inr(net(t))}</b></td>` : '<td></td><td></td><td></td>'}
-      <td>${w ? `<select data-tst class="tst ${t.status}">${Object.entries(TSTATUS).map(([k, [l]]) => `<option value="${k}"${k === t.status ? ' selected' : ''}>${l}</option>`).join('')}</select>` : `<span class="upill ${TSTATUS[t.status][1]}">${TSTATUS[t.status][0]}</span>`}</td>
-      ${w ? '<td><button class="danger" data-tdel title="Delete">✕</button></td>' : ''}</tr>`;
+      <td>${wl ? `<select data-tst class="tst ${t.status}">${Object.entries(TSTATUS).map(([k, [l]]) => `<option value="${k}"${k === t.status ? ' selected' : ''}>${l}</option>`).join('')}</select>` : `<span class="upill ${TSTATUS[t.status][1]}">${TSTATUS[t.status][0]}</span>`}</td>
+      ${w ? `<td>${wl ? '<button class="danger" data-tdel title="Delete">✕</button>' : ''}</td>` : ''}</tr>`;
   });
   return `<div class="sect">${add}
     <div class="awrap" style="margin-top:0"><table class="atbl"><thead><tr><th>Treatment</th><th>Doctor</th><th class="num">Cost</th><th class="num">Discount</th><th class="num">Net</th><th>Status</th>${w ? '<th></th>' : ''}</tr></thead>
@@ -4832,25 +4913,6 @@ async function saveRx(){
       await F.addDoc(cCol('treatments'), {kind:'medicine', patientId:cl.pid, patientName:pName(cl.p), appointmentId:'', date, medId:m.medId, typeId:'', typeName:md.name, unit:m.unit, dose:m.dose, days:m.days, qty:m.qty, unitPrice:m.price, cost:Math.round(m.qty * m.price), discount:0, status:'completed', doctorId, doctorName:dName(doctorId), consultantFee:0, tooth:'', notes:'', createdAt:now, by}); }
     info(`${plural(rows.length, 'medicine')} added to the bill.`); cl.clear = true; document.activeElement.blur(); renderClinic();
   } catch(e){ info('Could not save: ' + errText(e)); }
-}
-/* billing */
-function clBilling(){
-  const P = (cl.pP || []).slice().sort((a, b) => String(b.date).localeCompare(String(a.date)) || (b.createdAt || 0) - (a.createdAt || 0));
-  const bal = billed(cl.pT) - paidSum(cl.pP), w = canW('billing');
-  return `<div class="sect">${w ? `<div class="box"><h3>Take a payment</h3>
-    <form class="aform" id="clPayForm" novalidate>
-      <label>Bill date<input type="date" id="pyDate" value="${todayKey}" max="${todayKey}" title="The day this payment is counted in collections and the daily tally"></label>
-      <label>Amount (₹)<input type="number" id="pyAmt" min="1" step="1" value="${bal > 0 ? bal : ''}"></label>
-      <label>Mode<select id="pyMode">${PMODES.map(([k, l]) => `<option value="${k}">${l}</option>`).join('')}</select></label>
-      <label>Towards doctor<select id="pyDoc">${docOpts(cl.p.primaryDoctorId, '— Clinic —')}</select></label>
-      <label class="grow">Note<input id="pyNote" placeholder="e.g. RCT first sitting"></label>
-      <button class="primary" type="submit">Save &amp; receipt</button>
-      ${cashPanel('py', true)}
-    </form></div>` : ''}
-    <div class="awrap" style="margin-top:0"><table class="atbl"><thead><tr><th>Receipt</th><th>Date</th><th>Mode</th><th>Note</th><th class="num">Amount</th><th></th></tr></thead><tbody>
-      ${cl.pP === null ? '<tr><td colspan="6">Loading…</td></tr>' : P.map(x => `<tr data-pay="${esc(x.id)}"><td>${esc(x.receiptNo || '')}</td><td>${esc(fmtShort(x.date))}</td><td>${esc((PMODES.find(m => m[0] === x.mode) || [0, x.mode])[1])}</td><td>${esc(x.note || '')}</td><td class="num"><b>${inr(x.amount)}</b></td>
-        <td><div class="uact"><button data-rcpt>🖨 Receipt</button>${w ? '<button class="danger" data-pdel>✕</button>' : ''}</div></td></tr>`).join('') || '<tr><td colspan="6" class="stat">No payments yet.</td></tr>'}
-    </tbody></table></div></div>`;
 }
 function printDoc(title, inner){
   const w = window.open('', '_blank', 'width=820,height=900'); if (!w) return info('Allow pop-ups to print.');
@@ -5042,6 +5104,7 @@ function clBookForm(){
       <label>Time<input type="time" id="bkTime" step="300" value="${esc(w.time || b.time || '10:00')}"></label>
       <label>Minutes<select id="bkDur">${[15, 30, 45, 60, 90].map(n => `<option${n === +(w.duration || 15) ? ' selected' : ''}>${n}</option>`).join('')}</select></label>
       <label class="grow full">Reason<input id="bkReason" value="${esc(w.reason || '')}" placeholder="e.g. Toothache, RCT 2nd sitting, review"></label>
+      <label class="grow full">Transfer reason <span class="stat">(only if the patient is moving to a different doctor)</span><input id="bkWhy" value="${esc(w.transferReason || '')}" placeholder="e.g. extraction by the surgeon, suture removal back to the Chief doctor"></label>
       <div class="btnrow full"><button class="primary" type="submit">${b.id ? 'Save' : 'Book'}</button></div>
     </form>`;
 }
@@ -5077,6 +5140,10 @@ async function clSaveBook(){
     }
     const clash = (cl.appts || []).find(a => a.id !== b.id && a.doctorId === d.doctorId && a.date === d.date && a.status !== 'cancelled' && Math.abs(toMin(a.time) - toMin(d.time)) < Math.max(+a.duration || 15, d.duration));
     if (clash && !confirm(`${dName(d.doctorId)} already has ${clash.patientName} at ${hm12(clash.time)}. Book anyway?`)) return;
+    // doctor transfer history: a change of doctor on an existing appointment is logged, never overwritten
+    const why = (($('#bkWhy') || {}).value || '').trim(), old = b.id ? (cl.appts || []).concat(cl.pA || []).find(a => a.id === b.id) : null;
+    if (why) d.transferReason = why;
+    if (old && old.doctorId && old.doctorId !== d.doctorId) d.doctorLog = (old.doctorLog || []).concat([{from:old.doctorId, to:d.doctorId, at:Date.now(), by:cloud.user.email || '', reason:why}]);
     if (b.id) await F.updateDoc(cDoc('appointments', b.id), d);
     else await F.addDoc(cCol('appointments'), Object.assign(d, {patientId:b.patientId, patientName:b.patientName, status:'scheduled', createdAt:Date.now(), createdBy:cloud.user.email || ''}));
     $('#clOv').classList.remove('on'); cl.book = null;
@@ -5157,7 +5224,7 @@ const withHist = (x, change) => ({history:(x.history || []).concat([{at:Date.now
 async function auditDelete(coll, id, data){
   try { await cloud.F.addDoc(cCol('auditLog'), {coll, docId:id, action:'delete', data:JSON.parse(JSON.stringify(data || {})), by:cloud.user.email || '', at:Date.now()}); } catch(e){ console.warn('audit', e); }
 }
-const isOwner = () => { const oc = orgCtx(); return !!(oc && !oc.support && oc.role === 'orgadmin'); };
+const isOwner = () => { const oc = orgCtx(); return !!(oc && !oc.support && isAdminRole(oc.role)); };
 function commitStatus(mk, led){
   const due = dueFor(mk);
   return ameta().commitments.map(c => {
@@ -5501,7 +5568,7 @@ function consExport(kind){
 async function loadStaffPay(month){
   const {F, fs} = cloud, B = monthBounds(month), oc = orgCtx();
   const from = F.Timestamp.fromDate(parseDay(shiftDay(B.s, -1))), to = F.Timestamp.fromDate(parseDay(shiftDay(B.e, 2)));
-  const accs = docsOf(await F.getDocs(F.collection(fs, 'orgs', oc.orgId, 'members'))).map(a => Object.assign({uid:a.id}, a)).filter(a => !a.removed && a.role !== 'orgadmin')
+  const accs = docsOf(await F.getDocs(F.collection(fs, 'orgs', oc.orgId, 'members'))).map(a => Object.assign({uid:a.id}, a)).filter(a => !a.removed && (attRequired(a) || +(a.att || {}).salary))
     .sort((a, b) => fullName(a).localeCompare(fullName(b)));
   const [inc, evs, paid] = await Promise.all([loadIncentives(month),
     Promise.all(accs.map(a => F.getDocs(F.query(PAY().attCol(a.uid), F.where('at', '>=', from), F.where('at', '<', to))).then(qs => qs.docs.map(d => { const x = d.data({serverTimestamps:'estimate'}); return {id:d.id, type:x.type, src:x.src, at:tsMs(x.at)}; })))),
@@ -6145,6 +6212,8 @@ $('#clBody').addEventListener('input', e => {
 $('#clBody').addEventListener('change', async e => {
   const {F} = cloud, t = e.target;
   if (t.id === 'tfType'){ const o = t.selectedOptions[0]; if (o) $('#tfCost').value = o.dataset.cost; }
+  if (t.matches('[data-dhf]')){ cl.dhF[t.dataset.dhf] = t.value; return renderClinic(); }
+  if (t.matches('[data-asf]')){ const f = cl.asst.f, k = t.dataset.asf; f[k] = t.value; if (k === 'from') cl.asKey = ''; return renderClinic(); }
   if (t.id === 'aPick' && t.value){ cl.aDate = t.value; renderClinic(); }
   if (t.id === 'clPSort'){ cl.psort = t.value; return renderClinic(); }
   if (t.id === 'aDocF'){ cl.aDoc = t.value; renderClinic(); }
@@ -6196,17 +6265,16 @@ $('#clBody').addEventListener('submit', async e => {
       info(`${ty.name} added for ${dName(doctorId)}.`);
     }
     if (id === 'clPayForm'){
-      const amount = Math.round(+$('#pyAmt').value || 0); if (amount <= 0) return info('Enter the amount.');
-      const cash = $('#pyMode').value === 'cash' ? cashRead('py', amount) : null;            // notes received + change given (daily tally, petty cash)
-      const receiptNo = await nextNumber('receipt', 'R-', 5);
-      const x = {patientId:cl.pid, patientName:pName(cl.p), date:$('#pyDate').value || todayKey, amount, mode:$('#pyMode').value, doctorId:$('#pyDoc').value, note:$('#pyNote').value.trim(), receiptNo, createdAt:Date.now(), by};
-      if (cash) x.cash = cash;
-      await savePaymentDoc(x); CDX.py = 0; cl.clear = true;
-      info(`${inr(amount)} received · ${receiptNo}`); printReceipt(x);
+      const b = (cl.pB || []).find(x => x.id === e.target.dataset.bill); if (!b) return;
+      const x = await payBill(b, 'py', $('#pyDate').value || todayKey); cl.clear = true;
+      info(`${inr(x.amount)} received on ${b.billNo} · ${x.receiptNo}`); printReceipt(x);
     }
+    if (id === 'clNewBill') return newBillSubmit(false);
     if (id === 'clPhForm') return clUploadPhotos();
     if (id === 'clRxForm') return saveRx();
     if (id === 'clAsForm') return asSubmit();
+    if (id === 'clAsAdmin') return asAdminAdd();
+    if (id === 'clAsEdit') return asAdminEdit(e.target.dataset.as);
     if (id.startsWith('acc')) return accSubmit(id, e.target);
     if (id === 'clDocForm2') return clUploadDocs();
     if (id === 'clDocForm'){
@@ -6285,10 +6353,14 @@ $('#clBody').addEventListener('click', async e => {
     const asp = t.closest('[data-asperson]'); if (asp){ cl.asst.person = asp.dataset.asperson; return renderClinic(); }
     if (t.closest('[data-asok]')) return asDecide([t.closest('[data-as]').dataset.as], 'approved');
     if (t.closest('[data-asno]')) return asDecide([t.closest('[data-as]').dataset.as], 'rejected');
-    const asd = t.closest('[data-asday]'); if (asd) return asDecide(cl.asst.d.all.filter(x => x.status === 'pending' && x.date === asd.dataset.asday).map(x => x.id), 'approved');
-    if (t.closest('[data-asdel]')){ if (!confirm('Delete this entry?')) return; await F.deleteDoc(cDoc('assists', t.closest('[data-as]').dataset.as)); cl.asKey = ''; info('Deleted.'); return renderClinic(); }
+    if (t.closest('[data-asall]')){ const ids = [...document.querySelectorAll('#clBody [data-as] [data-asok]')].map(b => b.closest('[data-as]').dataset.as); if (!confirm(`Approve ${plural(ids.length, 'assist')} for incentive?`)) return; return asDecide(ids, 'approved'); }
+    if (t.closest('[data-asvoid]')) return asVoid(t.closest('[data-as]').dataset.as);
+    if (t.closest('[data-asedit]')){ cl.asst.edit = t.closest('[data-as]').dataset.as; return renderClinic(); }
+    if (t.closest('[data-asedx]')){ cl.asst.edit = null; return renderClinic(); }
+    if (t.closest('.asadd summary')){ cl.asst.addOpen = !cl.asst.addOpen; return; }
     if (t.closest('[data-tdel]')){ if (!confirm('Delete this treatment?')) return; await F.deleteDoc(cDoc('treatments', t.closest('[data-tid]').dataset.tid)); }
-    if (t.closest('[data-pdel]')){ if (!confirm('Delete this payment? Its receipt number will not be reused.')) return; const pid = t.closest('[data-pay]').dataset.pay; await deletePaymentDoc(pid, (cl.pP || []).find(p => p.id === pid)); }
+    if (t.closest('[data-nbdraft]')) return newBillSubmit(true);
+    if (cl.ptab === 'billing' && await billAction(e)) return;
     if (t.closest('[data-rcpt]')){ const x = (cl.pP || []).find(p => p.id === t.closest('[data-pay]').dataset.pay); if (x) printReceipt(x); }
     if (t.closest('[data-ldel]')){ if (!confirm('Delete this entry? A copy is kept in the audit log.')) return; const id = t.closest('[data-led]').dataset.led, d = cl.acc.d;
       let x = ((d.expAll || []).concat(d.led || [], d.pin || [], d.pout || [], d.cpay || [])).find(y => y.id === id); if (!x){ const sn = await F.getDoc(cDoc('ledger', id)); x = sn.exists() ? sn.data() : {}; }
@@ -6409,9 +6481,9 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('#clOv')
 function clinicAccessHtml(m){
   if (!feat('clinic')) return '';
   const perms = m.perms || {};
-  return `<div class="full cperm"><div class="fhead" style="margin:4px 0">Clinic access${m.role === 'orgadmin' ? ' <span class="stat">(Account Managers have full access)</span>' : ''}</div>
+  return `<div class="full cperm"><div class="fhead" style="margin:4px 0">Clinic access${isAdminRole(m.role) ? ' <span class="stat">(Account Managers have full access)</span>' : ''}</div>
     <div class="btnrow"><select id="peCPre"><option value="">Apply a preset…</option>${CPRESETS.map(([k, l]) => `<option value="${k}">${l}</option>`).join('')}</select></div>
-    <div class="feats" style="margin-top:6px">${CPERMS.map(([k, l, d]) => `<label title="${esc(d)}"><input type="checkbox" data-cp="${k}"${perms[k] ? ' checked' : ''}${m.role === 'orgadmin' ? ' disabled' : ''}> ${l}</label>`).join('')}</div></div>`;
+    <div class="feats" style="margin-top:6px">${CPERMS.map(([k, l, d]) => `<label title="${esc(d)}"><input type="checkbox" data-cp="${k}"${perms[k] ? ' checked' : ''}${isAdminRole(m.role) ? ' disabled' : ''}> ${l}</label>`).join('')}</div></div>`;
 }
 
 /* ================= Clinic ↔ Planning Board, visit summaries, patient documents ================= */
@@ -6433,6 +6505,8 @@ async function clOpenSummary(appt, completing, back){
   $('#clOv').classList.add('on'); $('#clOvBody').innerHTML = '<div class="empty">Loading…</div>';
   try { cl.sum.T = (can('treatments') || can('billing')) ? docsOf(await cloud.F.getDocs(cloud.F.query(cCol('treatments'), cloud.F.where('appointmentId', '==', appt.id)))) : []; }
   catch(e){ if (cl.sum) cl.sum.T = []; }
+  if (cl.sum && appt.billId){ try { const bs = await cloud.F.getDoc(cDoc('bills', appt.billId)); const bb = bs.exists() ? Object.assign({id:bs.id}, bs.data()) : null; if (cl.sum && bb && billLive(bb) && bb.status !== 'draft') cl.sum.locked = bb; } catch(e){} }
+  if (cl.sum && canW('treatments')){ await asStaff(); try { cl.sum.AS = docsOf(await cloud.F.getDocs(cloud.F.query(cCol('assists'), cloud.F.where('appointmentId', '==', appt.id)))).filter(x => x.status !== 'void'); } catch(e){ cl.sum.AS = []; } }
   if (cl.sum && cl.sum.appt === appt){ $('#clOvBody').innerHTML = clSummaryForm(); sumTotals(); }
 }
 function sumRow(i, a, t){
@@ -6442,12 +6516,29 @@ function sumRow(i, a, t){
     <select data-sf="type" class="srch">${t ? '' : '<option value="">— Treatment * —</option>'}${types.map(x => `<option value="${esc(x.id)}" data-cost="${+x.cost || 0}"${t && x.id === t.typeId ? ' selected' : ''}>${esc(x.name)}</option>`).join('')}</select>
     <input data-sf="tooth" data-teeth placeholder="🦷 Tooth no." autocomplete="off" value="${t ? esc(t.tooth || '') : ''}">
     <select data-sf="doc">${docOpts(doc, '— Doctor —')}</select>
+    ${asPicker(t)}
     <input type="number" data-sf="cost" min="0" step="50" value="${t ? +t.cost || 0 : ''}" placeholder="Cost ₹ *">
     <input type="number" data-sf="disc" min="0" step="50" value="${t && +t.discount ? +t.discount : ''}" placeholder="Discount">
     <select data-sf="status">${[['completed', 'Completed'], ['progress', 'In progress'], ['planned', 'Planned (next visit)']].map(([k, l]) => `<option value="${k}"${t && t.status === k ? ' selected' : ''}>${l}</option>`).join('')}</select>
     <input type="number" data-sf="fee" min="0" step="50" placeholder="Consultant fee" value="${t && +t.consultantFee ? +t.consultantFee : ''}"${cons ? '' : ' hidden'}>
     <button type="button" class="danger" data-srdel title="Remove">✕</button></div>`;
 }
+/* "Assisted by" for one treatment: tick one or more people, or none */
+function asPicker(t){
+  const on = new Set(t ? ((cl.sum && cl.sum.AS) || []).filter(x => x.treatmentId === t.id).map(x => x.uid) : []), dir = cl.dir || [];
+  const lbl = dir.filter(p => on.has(p.uid)).map(p => p.name).join(', ') || 'None';
+  return `<details class="aspk" data-sf="asst"><summary title="Who assisted on this treatment (sent to the doctor for incentive approval)">👥 <span data-asl>${esc(lbl)}</span></summary><div class="aspl">
+    <label class="ckl"><input type="checkbox" data-asnone${on.size ? '' : ' checked'}> None</label>
+    ${dir.map(p => `<label class="ckl"><input type="checkbox" data-asu="${esc(p.uid)}"${on.has(p.uid) ? ' checked' : ''}> ${esc(p.name)}</label>`).join('') || '<span class="stat">No staff logins yet</span>'}</div></details>`;
+}
+document.addEventListener('change', e => {
+  const t = e.target, box = t.closest && t.closest('.aspk'); if (!box) return;
+  if (t.matches('[data-asnone]') && t.checked) box.querySelectorAll('[data-asu]').forEach(c => c.checked = false);
+  if (t.matches('[data-asu]') && t.checked) box.querySelector('[data-asnone]').checked = false;
+  const names = [...box.querySelectorAll('[data-asu]:checked')].map(c => c.parentElement.textContent.trim());
+  if (!names.length) box.querySelector('[data-asnone]').checked = true;
+  box.querySelector('[data-asl]').textContent = names.join(', ') || 'None';
+});
 function medRow(i, m){
   const meds = (cl.meds || []).filter(x => x.active !== false || (m && x.id === m.medId)), d = (m && m.dose) || {};
   return `<div class="mrow" data-mr="${i}"${m ? ` data-tid="${esc(m.id)}"` : ''}>
@@ -6467,7 +6558,7 @@ function medCalc(row){
 }
 const medTotal = () => [...document.querySelectorAll('#smMeds [data-mr]')].reduce((s, r) => { const o = r.querySelector('[data-mf="med"]').selectedOptions[0]; return s + (o && o.value ? (+r.querySelector('[data-mf="qty"]').value || 0) * (+o.dataset.price || 0) : 0); }, 0);
 function clSummaryForm(){
-  const {appt:a, completing, T, back} = cl.sum, w = canW('treatments');
+  const {appt:a, completing, T, back, locked} = cl.sum, w = canW('treatments') && !locked;
   const TT = (T || []).filter(t => !isMed(t)), MM = (T || []).filter(isMed), notes = (a.summary && a.summary.notes) || '';
   const noTr = !TT.length && !!(a.noTr || a.noCost), noMed = !MM.length && !!(a.noMed || a.noCost);
   return `<div class="ah"><button type="button" class="abk" data-smback style="margin:0" title="${back === 'bill' ? 'Back to the bill' : 'Back to the queue: the patient stays In chair'}">← Back</button><h2 style="font-size:16px;margin:0">What happened in this appointment?</h2><span class="sp"></span><button data-ovclose>Close</button></div>
@@ -6479,7 +6570,7 @@ function clSummaryForm(){
         <div class="fhead" style="margin:16px 0 4px">Medicines / tablets <span class="stat">tick when and for how many days: tablets and cost are worked out</span><span class="sp"></span><label class="ckl nox"><input type="checkbox" id="smNoMed"${noMed ? ' checked' : ''}> No medicine</label></div>
         <div id="smMedArea"${noMed ? ' hidden' : ''}><div id="smMeds">${MM.map((m, i) => medRow(i, m)).join('')}</div>
         <div class="btnrow"><button type="button" id="smMedAdd">+ Add medicine</button>${(cl.meds || []).filter(x => x.active !== false).length ? '' : '<span class="stat">Add your medicine price list in Clinic setup first.</span>'}<span class="sp"></span><span class="stat">Medicines total <b id="smMedTot">${inr(MM.reduce((s, m) => s + (+m.cost || 0), 0))}</b></span></div></div>`
-      : '<p class="stat">Treatments and medicines are added by a doctor (you don\'t have Treatments access).</p>'}
+      : locked ? `<p class="stat">🔒 The treatments are on bill <b>${esc(locked.billNo)}</b> (${BST[locked.status][0]}). To change them, cancel that bill in the patient's Bills tab, then issue a fresh one.</p>` : '<p class="stat">Treatments and medicines are added by a doctor (you don\'t have Treatments access).</p>'}
       ${w ? `<div class="smtot" id="smTotals"><div><span>Cost of treatment</span><b data-tt="tr">₹0</b></div><i>+</i><div><span>Cost of medicines</span><b data-tt="md">₹0</b></div><i>=</i><div class="all"><span>Total cost</span><b data-tt="all">₹0</b></div></div>` : ''}
       <label class="stat" style="display:block;margin-top:14px">Treatment plan description / clinical notes<textarea id="smNotes" rows="3" style="width:100%" placeholder="Complaint, findings, what was done, treatment plan, instructions given…">${esc(notes)}</textarea></label>
       <label class="ckl" id="smSkipWrap" style="margin-top:6px"${noTr && noMed ? ' hidden' : ''}><input type="checkbox" id="smSkipDesc"> Skip the description for now: everyone gets a reminder "Treatment plan description needs to be updated for ${esc(a.patientName)}"</label>
@@ -6490,11 +6581,11 @@ function clSummaryForm(){
 }
 async function clSaveSummary(){
   const {F} = cloud, S = cl.sum; if (!S) return;
-  const {appt:a, completing, back} = S, by = cloud.user.email || '', now = Date.now(), w = canW('treatments'), toBill = completing || back === 'bill';
+  const {appt:a, completing, back} = S, by = cloud.user.email || '', now = Date.now(), w = canW('treatments') && !S.locked, toBill = completing || back === 'bill';
   const noTr = !!($('#smNoTr') && $('#smNoTr').checked), noMed = !!($('#smNoMed') && $('#smNoMed').checked), noCost = noTr && noMed;
   const notes = ($('#smNotes') || {}).value.trim(), skipDesc = !noCost && !!($('#smSkipDesc') && $('#smSkipDesc').checked);
   if (noCost && !notes) return info('No treatment and no medicine: write the description of what was done.');
-  const rows = w && !noTr ? [...document.querySelectorAll('#smRows [data-sr]')].map(r => { const v = k => r.querySelector(`[data-sf="${k}"]`).value; return {tid:r.dataset.tid || '', typeId:v('type'), tooth:v('tooth').trim(), doctorId:v('doc'), costRaw:v('cost').trim(), cost:Math.max(0, +v('cost') || 0), discount:Math.max(0, +v('disc') || 0), status:v('status'), fee:Math.max(0, +v('fee') || 0)}; }) : [];
+  const rows = w && !noTr ? [...document.querySelectorAll('#smRows [data-sr]')].map(r => { const v = k => r.querySelector(`[data-sf="${k}"]`).value; return {tid:r.dataset.tid || '', uids:[...r.querySelectorAll('[data-asu]:checked')].map(c => c.dataset.asu), typeId:v('type'), tooth:v('tooth').trim(), doctorId:v('doc'), costRaw:v('cost').trim(), cost:Math.max(0, +v('cost') || 0), discount:Math.max(0, +v('disc') || 0), status:v('status'), fee:Math.max(0, +v('fee') || 0)}; }) : [];
   const filled = rows.filter(r => r.typeId);
   if (w && toBill && !noTr && !filled.length) return info('Add the treatment done with its cost, or tick "No treatment".');
   if (filled.some(r => r.costRaw === '')) return info('Enter the cost for each treatment.');
@@ -6507,11 +6598,13 @@ async function clSaveSummary(){
     if (w){
       const keep = new Set(filled.map(r => r.tid).concat(meds.map(m => m.tid)).filter(Boolean));   // ticking "No treatment" / "No medicine" removes this visit's entries of that kind
       for (const t of (S.T || [])) if (!keep.has(t.id)) await F.deleteDoc(cDoc('treatments', t.id));
+      var saved = [];
       const base = {patientId:a.patientId, patientName:a.patientName, appointmentId:a.id, date:a.date <= todayKey ? a.date : todayKey};
       for (const r of filled){
         const ty = cl.types.find(t => t.id === r.typeId) || {id:r.typeId, name:''}, dd = cl.doctors.find(x => x.id === r.doctorId) || {};
         const d = {typeId:ty.id, typeName:ty.name, tooth:r.tooth, doctorId:r.doctorId, doctorName:dd.name || '', cost:r.cost, discount:Math.min(r.cost, r.discount), consultantFee:dd.type === 'consultant' ? r.fee : 0, status:r.status};
-        if (r.tid) await F.updateDoc(cDoc('treatments', r.tid), d); else await F.addDoc(cCol('treatments'), Object.assign({}, base, d, {notes:'', createdAt:now, by}));
+        let tid = r.tid; if (tid) await F.updateDoc(cDoc('treatments', tid), d); else tid = (await F.addDoc(cCol('treatments'), Object.assign({}, base, d, {notes:'', createdAt:now, by}))).id;
+        saved.push({tid, t:Object.assign({}, base, d), uids:r.uids});
       }
       for (const m of meds){
         const md = (cl.meds || []).find(x => x.id === m.medId) || {name:''};
@@ -6519,6 +6612,7 @@ async function clSaveSummary(){
         if (m.tid) await F.updateDoc(cDoc('treatments', m.tid), d); else await F.addDoc(cCol('treatments'), Object.assign({}, base, d, {tooth:'', notes:'', createdAt:now, by}));
       }
     }
+    if (w && saved.length) try { await syncTreatmentAssists(a, saved); } catch(e){ info('Saved, but the assistants could not be recorded: ' + errText(e)); }
     const upd = notes ? {summaryPending:false, summary:{notes, by, at:now}} : {summaryPending:true, skippedBy:by};
     Object.assign(upd, {noTr, noMed, noCost});
     if (completing) Object.assign(upd, {status:'billing', summarizedAt:now});
@@ -6621,7 +6715,7 @@ async function clinicSyncNow(){
     // ---- owner reminders: Account Manager and Chief doctor only ----
     const owner = isOwnerLike(), rem = remOn();          // the Account Manager can switch organization reminders off for everyone
     if (owner && rem){
-      if (oc.role === 'orgadmin') await ensureChiefFlag();
+      if (isAdminRole(oc.role)) await ensureChiefFlag();
       const pm = mShift(mk, -1), am = cl.ameta || await F.getDoc(cDoc('clinicMeta', 'accounts')).then(s => s.exists() ? s.data() : null).catch(() => null);
       if (am) cl.ameta = am;
       ocats.add('close');
@@ -6681,7 +6775,7 @@ async function payReminders(wpush, q, W){
     if (missing.length) wpush('commit', 'acct-' + mk, 'Payments due', `Enter & pay ${monthLabel(mk)} commitments (${whenTxt(due)}): ${missing.join(', ')}`, {priority:todayKey >= due ? 'high' : 'med', link:{sec:'accounts', tab:'expenses', month:mk}}); });
   // 3) staff salary for last month (people with a salary and no salary payment recorded)
   if (PAY() && feat('attendance') && PAY().payOn()){ const due = dueFor(pm);
-    if (due <= soon){ try { const mem = docsOf(await cloud.F.getDocs(cloud.F.collection(cloud.fs, 'orgs', orgCtx().orgId, 'members'))).filter(m => !m.removed && m.active !== false && m.role !== 'orgadmin' && +((m.att || {}).salary) > 0);
+    if (due <= soon){ try { const mem = docsOf(await cloud.F.getDocs(cloud.F.collection(cloud.fs, 'orgs', orgCtx().orgId, 'members'))).filter(m => !m.removed && m.active !== false && +((m.att || {}).salary) > 0);
       const paidS = (await q('ledger', W('kind', '==', 'expense'), W('category', '==', 'Staff salary'))).filter(x => x.salMonth === pm);
       const left = mem.filter(m => !paidS.some(x => x.staffUid === m.id));
       if (left.length) wpush('salpay', 'sal-' + pm, 'Payments due', `Pay ${monthLabel(pm)} salary (${whenTxt(due)}): ${left.map(m => fullName(m)).join(', ')}`, {priority:todayKey >= due ? 'high' : 'med', link:{sec:'accounts', tab:'salary', month:pm}}); } catch(e){} } }
@@ -6724,7 +6818,7 @@ async function otSet(docId, id, done){
     info(done ? 'Closed for everyone in the organization.' : 'Reopened.');
   } catch(e){ info('Could not save: ' + errText(e)); }
 }
-const isOwnerLike = () => { const oc = orgCtx(); return !!(oc && !oc.support && (oc.role === 'orgadmin' || (oc.me && oc.me.isChief) || cl.doctors.some(d => d.type === 'chief' && d.memberUid === cloud.uid))); };
+const isOwnerLike = () => { const oc = orgCtx(); return !!(oc && !oc.support && (isAdminRole(oc.role) || (oc.me && oc.me.isChief) || cl.doctors.some(d => d.type === 'chief' && d.memberUid === cloud.uid))); };
 let chiefChecked = false;
 async function ensureChiefFlag(){            // the Chief doctor's login is marked so the rules can show them owner reminders
   if (chiefChecked) return; chiefChecked = true;
@@ -6789,12 +6883,14 @@ function clOpenLink(link){             // core's openLink() comes here for clini
 /* ---------- visit billing: after the summary, take payment and print, then complete the visit ---------- */
 async function clOpenBill(appt){
   const {F} = cloud;
-  cl.bill = {appt, p:null, T:null, P:null, noPay:false};
+  cl.bill = {appt, p:null, T:null, P:null, bill:null, noPay:false};
   $('#clOv').classList.add('on'); $('#clOvBody').innerHTML = '<div class="empty">Loading the bill…</div>';
   try {
     const [ps, ts, pays] = await Promise.all([F.getDoc(cDoc('patients', appt.patientId)), F.getDocs(F.query(cCol('treatments'), F.where('patientId', '==', appt.patientId))),
       can('billing') ? F.getDocs(F.query(cCol('payments'), F.where('patientId', '==', appt.patientId))) : Promise.resolve({docs:[]})]);
     Object.assign(cl.bill, {p:Object.assign({id:appt.patientId}, ps.exists() ? ps.data() : {first:appt.patientName}), T:docsOf(ts), P:docsOf(pays)});
+    const ab = appt.billId ? await F.getDoc(cDoc('bills', appt.billId)).catch(() => null) : null;
+    if (ab && ab.exists()){ const b = Object.assign({id:ab.id}, ab.data()); if (billLive(b)) cl.bill.bill = b; }
     drawBill();
   } catch(e){ $('#clOvBody').innerHTML = `<div class="auth-err">${esc(errText(e))}</div><button data-ovclose>Close</button>`; }
 }
@@ -6817,21 +6913,23 @@ function drawBill(){
       <div class="payrow"><span>Earlier balance</span><span>${inr(due - visitNet + paidSum(visitPays))}</span></div>
       <div class="payrow"><span>Paid in this visit</span><span>${visitPays.length ? '− ' + inr(paidSum(visitPays)) : inr(0)}</span></div>
       <div class="payrow"><span>Balance due now</span><span class="${due > 0 ? 'neg' : ''}">${inr(due)}</span></div></div>
-    ${w ? `<form class="aform" id="clVBill" novalidate style="margin-top:10px">
-        <label>Bill date<input type="date" id="vbDate" value="${a.date <= todayKey ? a.date : todayKey}" max="${todayKey}" title="The day this payment is counted in collections and the daily tally"></label>
-        <label>Amount (₹)<input type="number" id="vbAmt" min="1" value="${due > 0 ? due : ''}"></label>
-        <label>Mode<select id="vbMode">${PMODES.map(([k, l]) => `<option value="${k}">${l}</option>`).join('')}</select></label>
-        <label class="grow">Note<input id="vbNote" placeholder="e.g. OPG + consultation"></label>
-        <button class="primary" type="submit">Save payment</button>${cashPanel('vb', true)}</form>` : '<p class="stat">You don\'t have Billing access: the front desk will take the payment from the queue (status "At billing").</p>'}
-    ${visitPays.length ? `<div class="hh">Receipts for this visit</div>${visitPays.map(x => `<div class="trow"><b>${esc(x.receiptNo)} · ${inr(x.amount)} · ${esc((PMODES.find(m => m[0] === x.mode) || [0, x.mode])[1])}</b>${x.cash ? `<span class="stat">${esc(cashLine(x))}</span>` : ''}<button data-vbrcpt="${esc(x.id)}">🖨 Print receipt</button></div>`).join('')}` : ''}
-    <div class="btnrow" style="margin-top:14px">
-      <button data-vbprint>🖨 Print bill</button><span class="sp"></span>
-      ${w ? `<label class="vbchk" title="Complete the visit without taking a payment"><input type="checkbox" id="vbNoPay"${B.noPay ? ' checked' : ''}> <b>No bill</b>&nbsp;${visitNet > 0 ? `(no payment now: ${inr(due)} stays due)` : '(nothing to charge for this visit)'}</label>
-        <button class="primary" id="vbDone"${done || B.noPay ? '' : ' disabled'}>Complete visit ✓</button>` : '<button id="vbLeave">Leave for billing</button>'}</div>`;
+    ${visitBillHtml(B, visitT, w)}`;
   numberTables($('#clOvBody'));
   if ($('#vbCash')) cashRefresh('vb');
 }
+function visitBillHtml(B, visitT, w){
+  const b = B.bill, done = !!b || B.noPay, bp = b ? B.P.filter(x => x.billId === b.id) : [], billable = visitT.filter(t => t.status !== 'planned');
+  const head = b ? `<div class="box billbox vbill"><div class="crow"><b>Bill ${esc(b.billNo)}</b> ${billBadge(b)}<span class="sp"></span><span>Total <b>${inr(b.total)}</b></span><span>Paid <b>${inr(b.paid)}</b></span><span>Outstanding <b class="${billDue(b) ? 'neg' : ''}">${inr(billDue(b))}</b></span></div>
+      <div class="btnrow" style="margin-top:8px">${w && b.status === 'draft' ? '<button class="primary" data-vbissue>Issue bill</button>' : ''}${w && b.status === 'pending' ? '<button class="primary" data-vback>Patient acknowledged</button><span class="stat">or take the payment below</span>' : ''}${w && ['pending', 'ack'].includes(b.status) && !+b.paid ? '<button data-vbreopen title="Back to a draft so the treatments can be corrected">Reopen to edit</button>' : ''}<button data-vbprint>🖨 Print bill</button></div>
+      ${w && billPayable(b) ? payForm('vb', b) : ''}</div>`
+    : w ? `<div class="box billbox vbill"><div class="crow"><b>No bill yet for this visit</b><span class="sp"></span>${billable.length ? '<button class="primary" data-vbgen>Generate bill</button><button data-vbdraft>Save as draft</button>' : '<span class="stat">no treatment to bill</span>'}</div><p class="stat" style="margin:6px 0 0">The bill can stay outstanding: payment can be taken now, later or in parts.</p></div>` : '';
+  return head + (bp.length ? `<div class="hh">Receipts for this bill</div>${bp.map(x => `<div class="trow"><b>${esc(x.receiptNo)} · ${inr(x.amount)} · ${esc((PMODES.find(m => m[0] === x.mode) || [0, x.mode])[1])}</b>${x.cash ? `<span class="stat">${esc(cashLine(x))}</span>` : ''}<button data-vbrcpt="${esc(x.id)}">🖨 Print receipt</button></div>`).join('')}` : '')
+    + `<div class="btnrow" style="margin-top:14px">${b ? '' : '<button data-vbprint>🖨 Print estimate</button>'}<span class="sp"></span>
+      ${w ? `${b ? '' : `<label class="vbchk" title="Complete the visit without a bill"><input type="checkbox" id="vbNoPay"${B.noPay ? ' checked' : ''}> <b>No bill</b>&nbsp;(nothing to charge)</label>`}
+        <button class="primary" id="vbDone"${done ? '' : ' disabled'}>${b && billDue(b) ? `Complete visit · ${inr(billDue(b))} outstanding ✓` : 'Complete visit ✓'}</button>` : '<button id="vbLeave">Leave for billing</button>'}</div>`;
+}
 function printVisitBill(){
+  if (cl.bill.bill) return printBill(cl.bill.bill, cl.bill.p, cl.bill.P);
   const B = cl.bill, a = B.appt, visitT = B.T.filter(t => t.appointmentId === a.id && t.status !== 'planned'), visitPays = B.P.filter(x => x.appointmentId === a.id), due = billed(B.T) - paidSum(B.P);
   printDoc('Bill', `<p><b>Patient:</b> ${esc(pName(B.p))} (${esc(B.p.code || '')}) · ${esc(B.p.phone || '')}<br><b>Visit:</b> ${esc(fmtLong(a.date))} · ${esc(dName(a.doctorId))}</p>
     <h2>Treatments</h2><table><tr><th>#</th><th>Treatment</th><th>Doctor</th><th class="n">Cost</th><th class="n">Discount</th><th class="n">Amount</th></tr>
@@ -6843,17 +6941,10 @@ function printVisitBill(){
     <p><b>Balance due: ${inr(due)}</b></p>`);
 }
 async function saveVisitPayment(){
-  const {F} = cloud, B = cl.bill, a = B.appt, amount = Math.round(+$('#vbAmt').value || 0);
-  if (amount <= 0) return info('Enter the amount received.');
-  if ((($('#vbDate') || {}).value || '') > todayKey) return info("The bill date can't be in the future.");
-  let cash = null;
-  try { cash = $('#vbMode').value === 'cash' ? cashRead('vb', amount) : null; } catch(e){ return info(errText(e)); }
+  const {F} = cloud, B = cl.bill, a = B.appt; if (!B.bill) return;
   try {
-    const receiptNo = await nextNumber('receipt', 'R-', 5);
-    const x = {patientId:a.patientId, patientName:a.patientName, appointmentId:a.id, date:($('#vbDate') || {}).value || todayKey, amount, mode:$('#vbMode').value, doctorId:a.doctorId, note:$('#vbNote').value.trim(), receiptNo, createdAt:Date.now(), by:cloud.user.email || ''};
-    if (cash) x.cash = cash;
-    const ref = await savePaymentDoc(x); CDX.vb = 0;
-    B.P.push(Object.assign({id:ref.id}, x)); drawBill(); info(`${inr(amount)} received · ${receiptNo}`);
+    const x = await payBill(B.bill, 'vb', ($('#vbDate') || {}).value || todayKey);
+    B.P.push(x); drawBill(); info(`${inr(x.amount)} received on ${B.bill.billNo} · ${x.receiptNo}`);
     // back-entry: the bill is dated earlier than the visit → offer to move the visit and its treatments to the bill date too,
     // so reports (collection, treatments, new patients, appointments) all show the same day
     if (x.date < a.date && confirm(`The bill is dated ${fmtLong(x.date)} but this visit is on ${fmtLong(a.date)}. Move the visit and its treatments to ${fmtLong(x.date)} as well?`)){
@@ -6868,35 +6959,80 @@ $('#clOv').addEventListener('click', async e => {
   if (!cl.bill || !e.target.closest('#clOvBody')) return;
   if (e.target.closest('[data-vbprint]')) return printVisitBill();
   const rc = e.target.closest('[data-vbrcpt]'); if (rc){ const x = cl.bill.P.find(p => p.id === rc.dataset.vbrcpt); return printReceipt(x, {p:cl.bill.p, T:cl.bill.T, P:cl.bill.P}); }
-  if (e.target.id === 'vbNoPay'){ cl.bill.noPay = e.target.checked; $('#vbDone').disabled = !(cl.bill.noPay || cl.bill.P.some(x => x.appointmentId === cl.bill.appt.id)); return; }
+  if (e.target.id === 'vbNoPay'){ cl.bill.noPay = e.target.checked; $('#vbDone').disabled = !(cl.bill.noPay || cl.bill.bill); return; }
+  const B = cl.bill, vt = () => B.T.filter(t => t.appointmentId === B.appt.id && t.status !== 'planned');
+  try {
+    if (e.target.closest('[data-vbgen],[data-vbdraft]')){ const dr = !!e.target.closest('[data-vbdraft]'); B.bill = await createBill({p:B.p, appt:B.appt, T:vt(), status:dr ? 'draft' : 'pending'}); B.appt.billId = B.bill.id; vt().forEach(t => { if (!dr) t.billId = B.bill.id; }); info(`${B.bill.billNo} ${dr ? 'saved as a draft' : 'generated'} · ${inr(B.bill.total)}`); return drawBill(); }
+    if (e.target.closest('[data-vbissue]')){ await issueBill(B.bill, vt()); info(`${B.bill.billNo} issued.`); return drawBill(); }
+    if (e.target.closest('[data-vbreopen]')){ await reopenBill(B.bill); info(`${B.bill.billNo} is a draft again: ← Back to change the treatments.`); return drawBill(); }
+    if (e.target.closest('[data-vback]')){ await ackBill(B.bill); info(`${B.bill.billNo} acknowledged.`); return drawBill(); }
+  } catch(err){ return info(errText(err)); }
   if (e.target.closest('#vbLeave')){ $('#clOv').classList.remove('on'); cl.bill = null; return; }
   if (e.target.closest('#vbDone')){
-    try { await cloud.F.updateDoc(cDoc('appointments', cl.bill.appt.id), {status:'completed', completedAt:Date.now(), billed:!cl.bill.noPay || cl.bill.P.some(x => x.appointmentId === cl.bill.appt.id)}); } catch(err){ return info(errText(err)); }
+    try { await cloud.F.updateDoc(cDoc('appointments', cl.bill.appt.id), {status:'completed', completedAt:Date.now(), billed:!!cl.bill.bill}); } catch(err){ return info(errText(err)); }
     $('#clOv').classList.remove('on'); info(`${cl.bill.appt.patientName}'s visit is completed.`); cl.bill = null; clinicSync(true); renderClinic();
   }
 });
 $('#clOv').addEventListener('submit', e => { if (e.target.id === 'clVBill'){ e.preventDefault(); saveVisitPayment(); } });
 
-/* ---------- Patient assists: staff log who they assisted; the Chief doctor approves; the Account Manager sets incentives ----------
-   Staff only ever see their own entries and whether they were approved, never the incentive amount. */
-const AS_ST = {pending:['Pending', 'pend'], approved:['Approved', 'on'], rejected:['Not approved', 'gone']};
+/* ---------- Patient assists: who assisted on each treatment; the treating doctor (or the Chief doctor) approves for incentive ----------
+   One record per assistant per treatment (id t-<treatmentId>-<uid>), so the same contribution can never be counted twice.
+   Records are created when the treatments are saved at the visit ("Assisted by" per treatment), or logged by staff themselves.
+   Status: pending → approved | rejected; an Owner / Account Manager may add or correct any record for any date (reason required,
+   kept in `history`; an approved record goes back to pending for re-approval) and void one (never deleted).
+   Incentive amounts live only in assistPay (Owner, Account Manager, Chief doctor): staff see status and eligibility, never amounts. */
+const AS_ST = {pending:['Pending approval', 'pend'], approved:['Approved for incentive', 'on'], rejected:['Rejected for incentive', 'gone'], void:['Voided', 'gone']};
+const AS_ELIG = {pending:'Pending', approved:'Eligible', rejected:'Not eligible', void:'—'};
 const asApprover = () => canW('assistApprove');
-const asOwner = () => { const oc = orgCtx(); return !!(oc && !oc.support && oc.role === 'orgadmin'); };
-function asTabs(){ return [['mine', 'My assists', !!(orgCtx() && !orgCtx().support)], ['approve', 'Approve', asApprover()], ['incentives', 'Incentives', asOwner()]].filter(t => t[2]); }
+const asOwner = () => { const oc = orgCtx(); return !!(oc && !oc.support && isAdminRole(oc.role)); };
+const asMoneySee = () => { const oc = orgCtx(); return !!(oc && (asOwner() || isOwnerLike() || oc.support)); };   // incentive amounts: Owner, Account Manager, Chief doctor
+const asTreating = () => cl.doctors.some(d => d.memberUid && d.memberUid === cloud.uid);                                      // a doctor linked to this login
+const approverOf = doctorId => (cl.doctors.find(d => d.id === doctorId) || {}).memberUid || '';
+function asTabs(){ return [['mine', 'My assists', !!(orgCtx() && !orgCtx().support)], ['approve', asOwner() ? 'All assists' : 'Approvals', asApprover() || asOwner() || asTreating()], ['incentives', 'Incentives', asMoneySee()]].filter(t => t[2]); }
+// people who can be picked as assistants: the organization directory (names only)
+async function asStaff(){
+  if (cl.dir) return cl.dir;
+  if (typeof team !== 'undefined' && team.dir && team.dir.length) return (cl.dir = team.dir);
+  try { cl.dir = docsOf(await cloud.F.getDocs(cloud.F.collection(cloud.fs, 'orgs', orgCtx().orgId, 'dir'))).map(p => Object.assign({uid:p.id}, p)).filter(p => p.active !== false); } catch(e){ cl.dir = []; }
+  return cl.dir;
+}
+const asHist = (x, change, reason) => (x.history || []).concat([{at:Date.now(), by:cloud.user.email || '', change, reason:reason || '', before:{uid:x.uid || '', name:x.name || '', typeName:x.typeName || '', date:x.date || '', doctorId:x.doctorId || '', status:x.status || ''}}]).slice(-30);
+const asAudit = (x, change, reason, after) => cloud.F.addDoc(cloud.F.collection(cloud.fs, 'orgs', orgCtx().orgId, 'audit'), {at:Date.now(), by:cloud.user.email || '', byName:fullName(orgCtx().me) || '', type:'assist', target:{id:x.id || '', patientId:x.patientId || '', treatmentId:x.treatmentId || '', appointmentId:x.appointmentId || '', patientName:x.patientName || ''}, before:{uid:x.uid || '', name:x.name || '', typeName:x.typeName || '', date:x.date || '', status:x.status || ''}, after:after || null, change, reason:reason || ''}).catch(() => {});
+// keep the patient list's "Assisted by" column up to date (names only)
+const asPatientNames = (pid, names, date) => pid && names.length ? cloud.F.updateDoc(cDoc('patients', pid), {assistedBy:{names, date}}).catch(() => {}) : null;
+/* at the visit: the assistants picked for each saved treatment. Adds missing records, voids pending ones that were unticked
+   (an approved / rejected one stays: only an Owner or Account Manager may change it) */
+async function syncTreatmentAssists(a, saved){
+  const {F} = cloud, by = cloud.user.email || '', byName = fullName(orgCtx().me) || by, dir = await asStaff(), names = new Set();
+  for (const {tid, t, uids} of saved){
+    let have = [];
+    try { have = docsOf(await F.getDocs(F.query(cCol('assists'), F.where('treatmentId', '==', tid)))); } catch(e){}
+    for (const uid of uids){
+      const p = dir.find(x => x.uid === uid) || {name:''}; names.add(p.name);
+      if (have.some(x => x.uid === uid && x.status !== 'void')) continue;
+      const vd = have.some(x => x.uid === uid && x.status === 'void');                       // a voided record keeps its id; a re-pick gets a new one
+      await F.setDoc(cDoc('assists', `t-${tid}-${uid}` + (vd ? '-r' + Date.now().toString(36) : '')), {uid, name:p.name || '', date:t.date || a.date, patientId:a.patientId, patientName:a.patientName, appointmentId:a.id, treatmentId:tid, typeId:t.typeId || 'other', typeName:t.typeName || '', doctorId:t.doctorId || '', approverUid:approverOf(t.doctorId), note:'', status:'pending', addedBy:by, addedByName:byName, at:Date.now(), history:[]});
+    }
+    for (const x of have.filter(x => x.status === 'pending' && !uids.includes(x.uid)))
+      await F.updateDoc(cDoc('assists', x.id), {status:'void', history:asHist(x, 'removed at the visit', '')}).catch(() => {});
+  }
+  await asPatientNames(a.patientId, [...names].filter(Boolean), a.date);
+}
+const asState = () => cl.asst || (cl.asst = {tab:'', month:todayKey.slice(0, 7), person:'', f:{st:'pending', from:shiftDay(todayKey, -60), to:todayKey, who:'', ty:'', q:''}});
 function asLoad(){
-  const {F} = cloud, A = cl.asst || (cl.asst = {tab:'', month:todayKey.slice(0, 7), person:''});
-  const key = orgCtx().orgId + '|' + A.tab + '|' + A.month;
+  const {F} = cloud, A = asState();
+  const key = orgCtx().orgId + '|' + A.tab + '|' + A.month + '|' + A.f.from;
   if (cl.asKey === key) return; cl.asKey = key; A.d = null;
   const W = F.where, q = (c, ...w) => F.getDocs(F.query(cCol(c), ...w)).then(docsOf), jobs = {};
   if (A.tab === 'mine'){ jobs.mine = q('assists', W('uid', '==', cloud.uid)); if (can('appointments') || can('treatments')) jobs.appts = q('appointments', W('date', '>=', shiftDay(todayKey, -7)), W('date', '<=', todayKey)).catch(() => []); }
-  if (A.tab === 'approve') jobs.all = q('assists', W('date', '>=', shiftDay(todayKey, -60)));
+  if (A.tab === 'approve'){ jobs.all = asApprover() || asOwner() ? q('assists', W('date', '>=', A.f.from)) : q('assists', W('approverUid', '==', cloud.uid)); jobs.dir = asStaff(); if (asOwner()) jobs.pats = can('patients') ? Promise.resolve(cl.allP || []) : Promise.resolve([]); }
   if (A.tab === 'incentives'){ jobs.all = q('assists', W('status', '==', 'approved')); jobs.pay = q('assistPay'); }
   const ks = Object.keys(jobs);
   Promise.all(ks.map(k => jobs[k])).then(v => { if (cl.asKey !== key) return; const d = {}; ks.forEach((k, i) => d[k] = v[i]); A.d = d; if (cl.sec === 'assists') renderClinic(); })
     .catch(e => { if (cl.asKey === key){ A.d = {err:errText(e)}; if (cl.sec === 'assists') renderClinic(); } });
 }
 function clAssists(){
-  const A = cl.asst || (cl.asst = {tab:'', month:todayKey.slice(0, 7), person:''}), tabs = asTabs();
+  const A = asState(), tabs = asTabs();
   if (!tabs.some(t => t[0] === A.tab)) A.tab = tabs.length ? tabs[0][0] : '';
   asLoad();
   const head = `<div class="clhead"><h2>Patient assists</h2>${A.tab === 'incentives' ? `<div class="mnav"><button data-asm="-1">‹</button><b>${esc(monthLabel(A.month))}</b><button data-asm="1"${A.month >= todayKey.slice(0, 7) ? ' disabled' : ''}>›</button></div>` : ''}</div>
@@ -6905,12 +7041,13 @@ function clAssists(){
   return head + ({mine:asMine, approve:asApprove, incentives:asIncentives})[A.tab](d);
 }
 const asRow = (x, extra) => `<td>${esc(fmtShort(x.date))}</td><td><b>${esc(x.patientName)}</b></td><td>${esc(x.typeName || '—')}</td><td>${esc(dName(x.doctorId) || '—')}</td><td class="stat">${esc(x.note || '')}</td>${extra}`;
+const asBadge = x => `<span class="upill ${AS_ST[x.status || 'pending'][1]}">${AS_ST[x.status || 'pending'][0]}</span>${x.status === 'rejected' && x.rejectReason ? `<span class="sub2">${esc(x.rejectReason)}</span>` : ''}`;
 function asMine(d){
   const M = d.mine.slice().sort((a, b) => String(b.date).localeCompare(String(a.date)) || (b.at || 0) - (a.at || 0)), mk = todayKey.slice(0, 7);
   const pats = [...new Set((d.appts || []).filter(a => a.status !== 'cancelled').map(a => a.patientName))].sort();
   const types = cl.types.filter(t => t.active !== false);
-  return `<div class="kpis">${kpi('Approved this month', M.filter(x => x.status === 'approved' && x.date.slice(0, 7) === mk).length, 'patients assisted')}${kpi('Waiting for approval', M.filter(x => x.status === 'pending').length, 'the Chief doctor approves')}${kpi('Logged in total', M.length, 'all time')}</div>
-    <div class="box"><h3>Add a patient you assisted <span class="sub">add each one the same day; the Chief doctor approves them</span></h3>
+  return `<div class="kpis">${kpi('Approved this month', M.filter(x => x.status === 'approved' && x.date.slice(0, 7) === mk).length, 'patients assisted')}${kpi('Waiting for approval', M.filter(x => x.status === 'pending').length, 'the treating doctor approves')}${kpi('Logged in total', M.length, 'all time')}</div>
+    <div class="box"><h3>Add a patient you assisted <span class="sub">add each one the same day (within 7 days); the treating doctor approves them</span></h3>
     <form class="aform" id="clAsForm" novalidate>
       <label>Date<input type="date" id="asDate" value="${todayKey}" max="${todayKey}" min="${shiftDay(todayKey, -7)}"></label>
       <label class="grow">Patient *<input id="asPat" list="asPats" placeholder="Patient name"><datalist id="asPats">${pats.map(n => `<option value="${esc(n)}">`).join('')}</datalist></label>
@@ -6918,20 +7055,46 @@ function asMine(d){
       <label>Doctor<select id="asDoc">${docOpts('', '— Select —')}</select></label>
       <label class="grow">What you did<input id="asNote" placeholder="e.g. chairside assistance, suction, X-ray"></label>
       <button class="primary" type="submit">Add</button></form></div>
-    <div class="awrap"><table class="atbl"><thead><tr><th>Date</th><th>Patient</th><th>Treatment</th><th>Doctor</th><th>Note</th><th>Status</th><th></th></tr></thead><tbody>
-      ${M.map(x => `<tr data-as="${esc(x.id)}">${asRow(x, `<td><span class="upill ${AS_ST[x.status][1]}">${AS_ST[x.status][0]}</span></td><td>${x.status === 'pending' ? '<button class="danger" data-asdel title="Delete">✕</button>' : ''}</td>`)}</tr>`).join('') || '<tr><td colspan="7" class="stat">Nothing logged yet.</td></tr>'}
+    <div class="awrap"><table class="atbl"><thead><tr><th>Date</th><th>Patient</th><th>Treatment</th><th>Doctor</th><th>Note</th><th>Approval</th><th></th></tr></thead><tbody>
+      ${M.filter(x => x.status !== 'void').map(x => `<tr data-as="${esc(x.id)}">${asRow(x, `<td>${asBadge(x)}</td><td>${x.status === 'pending' && x.addedBy !== undefined && x.addedBy === (cloud.user.email || '') ? '<button class="danger" data-asvoid title="Withdraw">✕</button>' : ''}</td>`)}</tr>`).join('') || '<tr><td colspan="7" class="stat">Nothing logged yet.</td></tr>'}
     </tbody></table></div>`;
 }
 function asApprove(d){
-  const P = d.all.filter(x => x.status === 'pending').sort((a, b) => String(b.date).localeCompare(String(a.date)) || String(a.name).localeCompare(String(b.name)));
-  const done = d.all.filter(x => x.status !== 'pending' && (x.date || '').slice(0, 7) === todayKey.slice(0, 7)).sort((a, b) => (b.approvedAt || 0) - (a.approvedAt || 0));
-  let rows = '', day = null;
-  P.forEach(x => { if (x.date !== day){ day = x.date; rows += `<tr class="wk"><td colspan="7">${esc(fmtShort(day))} · ${plural(P.filter(y => y.date === day).length, 'entry')}<button class="primary" data-asday="${esc(day)}" style="float:right;padding:3px 10px">Approve all for this day</button></td></tr>`; }
-    rows += `<tr data-as="${esc(x.id)}"><td><b>${esc(x.name || '')}</b></td>${asRow(x, `<td style="white-space:nowrap"><button class="primary" data-asok>Approve</button> <button data-asno>Reject</button></td>`)}</tr>`; });
-  return `<div class="kpis">${kpi('Waiting for approval', P.length, 'from the last 60 days')}${kpi('Decided this month', done.length, done.filter(x => x.status === 'approved').length + ' approved')}</div>
-    <div class="awrap"><table class="atbl"><thead><tr><th>Staff</th><th>Date</th><th>Patient</th><th>Treatment</th><th>Doctor</th><th>Note</th><th></th></tr></thead><tbody>${rows || '<tr><td colspan="7" class="stat">Nothing waiting. 👏</td></tr>'}</tbody></table></div>
-    ${done.length ? `<h3 style="font-size:13px;margin:16px 0 6px">Decided this month</h3><div class="awrap"><table class="atbl"><thead><tr><th>Staff</th><th>Date</th><th>Patient</th><th>Treatment</th><th>Doctor</th><th>Note</th><th>Status</th></tr></thead><tbody>
-      ${done.map(x => `<tr><td>${esc(x.name || '')}</td>${asRow(x, `<td><span class="upill ${AS_ST[x.status][1]}">${AS_ST[x.status][0]}</span></td>`)}</tr>`).join('')}</tbody></table></div>` : ''}`;
+  const A = cl.asst, f = A.f, own = asOwner(), dir = d.dir || [], all = (d.all || []).filter(x => x.status !== 'void' || f.st === 'void');
+  const L = all.filter(x => (f.st === 'all' || (x.status || 'pending') === f.st) && (!f.from || x.date >= f.from) && (!f.to || x.date <= f.to) && (!f.who || x.uid === f.who)
+    && (!f.ty || x.typeId === f.ty) && (!f.q || String(x.patientName || '').toLowerCase().includes(f.q.toLowerCase())))
+    .sort((a, b) => String(b.date).localeCompare(String(a.date)) || String(a.patientName).localeCompare(String(b.patientName)));
+  const mayDecide = x => (x.status || 'pending') === 'pending' && (asApprover() || own || x.approverUid === cloud.uid);
+  const earlier = x => { const xs = all.filter(y => y.id !== x.id && x.patientId && y.patientId === x.patientId); return xs.length ? `<span class="sub2">${plural(xs.length, 'other assist')} for this patient · ${xs.filter(y => y.status === 'approved').length} approved${xs.some(y => y.treatmentId && y.treatmentId === x.treatmentId && y.status === 'approved') ? ' · <b>already approved on this treatment</b>' : ''}</span>` : ''; };
+  const opt = (v, l, cur) => `<option value="${esc(v)}"${v === cur ? ' selected' : ''}>${esc(l)}</option>`;
+  const pend = all.filter(mayDecide);
+  return `<div class="kpis">${kpi('Waiting for approval', pend.length, own || asApprover() ? 'since ' + fmtShort(f.from) : 'your patients')}${kpi('Approved', all.filter(x => x.status === 'approved').length, 'eligible for incentive')}${kpi('Rejected', all.filter(x => x.status === 'rejected').length, 'not eligible')}</div>
+    ${own ? `<details class="box asadd"${A.addOpen ? ' open' : ''}><summary><b>+ Add an assist for someone</b> <span class="stat">any date: for entries staff forgot</span></summary>
+      <form class="aform" id="clAsAdmin" novalidate style="margin-top:8px">
+        <label>Staff *<select id="aaWho"><option value="">— Select —</option>${dir.map(p => opt(p.uid, p.name)).join('')}</select></label>
+        <label>Date *<input type="date" id="aaDate" value="${todayKey}" max="${todayKey}"></label>
+        <label class="grow">Patient *<input id="aaPat" list="aaPats" placeholder="Patient name or number"><datalist id="aaPats">${(cl.allP || []).slice(0, 3000).map(p => `<option value="${esc(pName(p))} · ${esc(p.code || '')}">`).join('')}</datalist></label>
+        <label>Treatment *<select id="aaType"><option value="">— Select —</option>${cl.types.filter(t => t.active !== false).map(t => opt(t.id, t.name)).join('')}<option value="other">Other</option></select></label>
+        <label>Doctor<select id="aaDoc">${docOpts('', '— Select —')}</select></label>
+        <label class="grow">Reason *<input id="aaWhy" placeholder="e.g. Riya forgot to log it"></label>
+        <button class="primary" type="submit">Add</button></form></details>` : ''}
+    <div class="vbar asf" style="padding:0;margin:8px 0">
+      <select data-asf="st">${[['pending', 'Pending approval'], ['approved', 'Approved'], ['rejected', 'Rejected'], ['all', 'All statuses']].concat(own ? [['void', 'Voided']] : []).map(([v, l]) => opt(v, l, f.st)).join('')}</select>
+      <label class="stat">From <input type="date" data-asf="from" value="${esc(f.from)}"></label><label class="stat">To <input type="date" data-asf="to" value="${esc(f.to)}"></label>
+      <select data-asf="who"><option value="">All assistants</option>${dir.map(p => opt(p.uid, p.name, f.who)).join('')}</select>
+      <select data-asf="ty"><option value="">All treatments</option>${cl.types.map(t => opt(t.id, t.name, f.ty)).join('')}</select>
+      <input type="search" data-asf="q" placeholder="Patient name" value="${esc(f.q)}">
+      ${f.st === 'pending' && L.some(mayDecide) ? `<span class="sp"></span><button class="primary" data-asall>Approve all shown (${L.filter(mayDecide).length})</button>` : ''}</div>
+    <div class="awrap"><table class="atbl"><thead><tr><th>Patient</th><th>Date</th><th>Treatment</th><th>Assistant</th><th>Doctor</th><th>Approval</th><th>Incentive</th><th></th></tr></thead><tbody>
+    ${L.map(x => `<tr data-as="${esc(x.id)}"><td><b>${esc(x.patientName || '')}</b>${earlier(x)}</td><td>${esc(fmtShort(x.date))}</td><td>${esc(x.typeName || '—')}</td><td>${esc(x.name || '')}${x.addedBy && x.addedByName && x.addedByName !== x.name ? `<span class="sub2">added by ${esc(x.addedByName)}</span>` : ''}</td><td>${esc(dName(x.doctorId) || '—')}</td>
+      <td>${asBadge(x)}${(x.history || []).length ? `<span class="sub2" title="${esc((x.history || []).map(h => `${fmt(h.at)} ${h.by}: ${h.change}${h.reason ? ' (' + h.reason + ')' : ''}`).join('\n'))}">✎ changed ${(x.history || []).length}×</span>` : ''}</td><td>${AS_ELIG[x.status || 'pending']}</td>
+      <td style="white-space:nowrap">${mayDecide(x) ? '<button class="primary" data-asok>Approve</button> <button data-asno>Reject</button>' : ''}${own && x.status !== 'void' ? ' <button data-asedit title="Change the assistant, treatment or date">Edit</button> <button class="danger" data-asvoid title="Void (kept in history)">Void</button>' : ''}</td></tr>
+      ${A.edit === x.id ? `<tr class="asedrow"><td colspan="8"><form class="aform" id="clAsEdit" data-as="${esc(x.id)}" novalidate>
+        <label>Staff<select id="aeWho">${dir.map(p => opt(p.uid, p.name, x.uid)).join('')}</select></label><label>Date<input type="date" id="aeDate" value="${esc(x.date)}" max="${todayKey}"></label>
+        <label>Treatment<select id="aeType">${cl.types.map(t => opt(t.id, t.name, x.typeId)).join('')}<option value="other"${x.typeId === 'other' ? ' selected' : ''}>Other</option></select></label><label>Doctor<select id="aeDoc">${docOpts(x.doctorId, '— Select —')}</select></label>
+        <label class="grow">Reason for the change *<input id="aeWhy" placeholder="e.g. wrong assistant picked"></label><button class="primary" type="submit">Save</button><button type="button" data-asedx>Cancel</button>
+        ${x.status === 'approved' ? '<span class="stat">Approved: saving sends it back to the doctor for re-approval.</span>' : ''}</form></td></tr>` : ''}`).join('') || '<tr><td colspan="8" class="stat">Nothing matches these filters.</td></tr>'}
+    </tbody></table></div>`;
 }
 /* incentive earned per staff member in a month: approved patient assists × the rate for that treatment (or the amount set on the entry) */
 function incentivesByUid(all, payDocs, month){
@@ -6954,34 +7117,60 @@ function asIncentives(d){
     const p = people[A.person] || {name:'', m:[], all:[]}, M = p.m.slice().sort((a, b) => String(a.date).localeCompare(String(b.date)));
     return `<button class="abk" data-asperson="">← Everyone</button><div class="kpis">${kpi(esc(p.name) + ' · ' + esc(monthLabel(A.month)), inr(sum(M)), plural(M.length, 'approved assist'))}${kpi('Earned so far', inr(sum(p.all)), plural(p.all.length, 'approved assist') + ' in total')}</div>
       <div class="awrap"><table class="atbl"><thead><tr><th>Date</th><th>Patient</th><th>Treatment</th><th>Doctor</th><th>Note</th><th class="num">Incentive (₹)</th></tr></thead><tbody>
-      ${M.map(x => `<tr data-as="${esc(x.id)}">${asRow(x, `<td class="num"><input type="number" data-aspay min="0" step="10" value="${amt(x)}" style="width:90px"></td>`)}</tr>`).join('') || '<tr><td colspan="6" class="stat">No approved assists this month.</td></tr>'}
+      ${M.map(x => `<tr data-as="${esc(x.id)}">${asRow(x, `<td class="num"><input type="number" data-aspay min="0" step="10" value="${amt(x)}" style="width:90px"${asOwner() ? '' : ' disabled'}></td>`)}</tr>`).join('') || '<tr><td colspan="6" class="stat">No approved assists this month.</td></tr>'}
       </tbody></table></div><p class="stat">Each amount starts from the rate for that treatment; change it here for this one entry.</p>`;
   }
   return `<div class="kpis">${kpi('Incentives ' + esc(monthLabel(A.month)), inr(P.reduce((s, p) => s + sum(p.m), 0)), plural(P.reduce((s, p) => s + p.m.length, 0), 'approved assist'))}${kpi('Earned so far', inr(P.reduce((s, p) => s + sum(p.all), 0)), 'all approved assists')}</div>
     <div class="awrap"><table class="atbl"><thead><tr><th>Staff</th><th class="num">Approved (month)</th><th class="num">Incentive (month)</th><th class="num">Approved so far</th><th class="num">Earned so far</th></tr></thead><tbody>
       ${P.map(p => `<tr class="clk" data-asperson="${esc(p.uid)}"><td><b>${esc(p.name)}</b></td><td class="num">${p.m.length}</td><td class="num"><b>${inr(sum(p.m))}</b></td><td class="num">${p.all.length}</td><td class="num">${inr(sum(p.all))}</td></tr>`).join('') || '<tr><td colspan="5" class="stat">No approved assists yet.</td></tr>'}
     </tbody></table></div>
-    <div class="box" style="margin-top:12px"><h3>Incentive per assist <span class="sub">by treatment: applied to every approved assist (only you see these)</span></h3>
+    <div class="box" style="margin-top:12px"><h3>Incentive per assist <span class="sub">by treatment: applied to every approved assist (only the Owner, Account Manager and Chief doctor see amounts)</span></h3>
       <div class="awrap"><table class="atbl"><thead><tr><th>Treatment</th><th class="num">₹ per assist</th></tr></thead><tbody>
-      ${cl.types.filter(t => t.active !== false).concat([{id:'other', name:'Other'}]).map(t => `<tr data-asr="${esc(t.id)}"><td>${esc(t.name)}</td><td class="num"><input type="number" data-asrate min="0" step="10" value="${+rates[t.id] || 0}" style="width:90px"></td></tr>`).join('')}
+      ${cl.types.filter(t => t.active !== false).concat([{id:'other', name:'Other'}]).map(t => `<tr data-asr="${esc(t.id)}"><td>${esc(t.name)}</td><td class="num"><input type="number" data-asrate min="0" step="10" value="${+rates[t.id] || 0}" style="width:90px"${asOwner() ? '' : ' disabled'}></td></tr>`).join('')}
       </tbody></table></div></div>`;
 }
 async function asSubmit(){
   const {F} = cloud, oc = orgCtx(), ty = $('#asType').value, pat = $('#asPat').value.trim();
   if (!pat) return info('Enter the patient\'s name.'); if (!ty) return info('Choose the treatment you assisted with.');
-  const t = cl.types.find(x => x.id === ty), ap = ((cl.asst.d && cl.asst.d.appts) || []).find(a => a.patientName === pat);
+  const t = cl.types.find(x => x.id === ty), ap = ((cl.asst.d && cl.asst.d.appts) || []).find(a => a.patientName === pat), doc = $('#asDoc').value || (ap ? ap.doctorId : '');
   try {
-    await F.addDoc(cCol('assists'), {uid:cloud.uid, name:fullName(oc.me) || cloud.user.email || '', date:$('#asDate').value || todayKey, patientName:pat, patientId:ap ? ap.patientId : '', typeId:t ? t.id : 'other', typeName:t ? t.name : 'Other', doctorId:$('#asDoc').value || (ap ? ap.doctorId : ''), note:$('#asNote').value.trim(), status:'pending', at:Date.now()});
-    info('Added: waiting for the Chief doctor\'s approval.'); cl.asKey = ''; cl.clear = true; document.activeElement.blur(); renderClinic();
+    await F.addDoc(cCol('assists'), {uid:cloud.uid, name:fullName(oc.me) || cloud.user.email || '', date:$('#asDate').value || todayKey, patientName:pat, patientId:ap ? ap.patientId : '', appointmentId:ap ? ap.id : '', treatmentId:'', typeId:t ? t.id : 'other', typeName:t ? t.name : 'Other', doctorId:doc, approverUid:approverOf(doc), note:$('#asNote').value.trim(), status:'pending', addedBy:cloud.user.email || '', addedByName:fullName(oc.me) || '', at:Date.now(), history:[]});
+    info('Added: waiting for the doctor\'s approval.'); cl.asKey = ''; cl.clear = true; document.activeElement.blur(); renderClinic();
   } catch(e){ info('Could not save: ' + errText(e)); }
+}
+// Owner / Account Manager: add for someone, any date
+async function asAdminAdd(){
+  const {F} = cloud, who = $('#aaWho').value, date = $('#aaDate').value, ty = $('#aaType').value, why = $('#aaWhy').value.trim(), pv = $('#aaPat').value.trim();
+  if (!who || !date || !ty || !pv) return info('Choose the staff member, date, patient and treatment.'); if (!why) return info('Enter the reason (kept in the audit log).');
+  const code = (pv.split('·')[1] || '').trim(), p = (cl.allP || []).find(x => code ? x.code === code : pName(x).toLowerCase() === pv.toLowerCase());
+  const st = (cl.asst.d.dir || []).find(x => x.uid === who) || {name:''}, t = cl.types.find(x => x.id === ty), doc = $('#aaDoc').value;
+  const x = {uid:who, name:st.name, date, patientName:p ? pName(p) : pv, patientId:p ? p.id : '', appointmentId:'', treatmentId:'', typeId:t ? t.id : 'other', typeName:t ? t.name : 'Other', doctorId:doc, approverUid:approverOf(doc), note:'', status:'pending', addedBy:cloud.user.email || '', addedByName:fullName(orgCtx().me) || '', at:Date.now(), history:[{at:Date.now(), by:cloud.user.email || '', change:'added for ' + st.name, reason:why}]};
+  try { const r = await F.addDoc(cCol('assists'), x); asAudit(Object.assign({id:r.id}, x, {status:''}), 'added on behalf', why, {uid:who, name:st.name, typeName:x.typeName, date}); if (p) asPatientNames(p.id, [st.name], date);
+    info(`Added for ${st.name}: waiting for approval.`); cl.asst.addOpen = false; cl.asKey = ''; renderClinic(); } catch(e){ info('Could not save: ' + errText(e)); }
+}
+async function asAdminEdit(id){
+  const x = cl.asst.d.all.find(y => y.id === id), why = $('#aeWhy').value.trim(); if (!x) return; if (!why) return info('Enter the reason for the change.');
+  const st = (cl.asst.d.dir || []).find(p => p.uid === $('#aeWho').value) || {uid:x.uid, name:x.name}, ty = $('#aeType').value, t = cl.types.find(y => y.id === ty), doc = $('#aeDoc').value;
+  const upd = {uid:st.uid, name:st.name, date:$('#aeDate').value || x.date, typeId:t ? t.id : 'other', typeName:t ? t.name : 'Other', doctorId:doc, approverUid:approverOf(doc), history:asHist(x, 'corrected', why)};
+  if (x.status !== 'pending') Object.assign(upd, {status:'pending', approvedBy:'', approverName:'', approvedAt:0, rejectReason:''});   // re-approval
+  try { await cloud.F.updateDoc(cDoc('assists', id), upd); asAudit(x, 'corrected', why, {uid:upd.uid, name:upd.name, typeName:upd.typeName, date:upd.date, status:upd.status || x.status});
+    info(x.status === 'approved' ? 'Saved: sent back to the doctor for re-approval.' : 'Saved.'); cl.asst.edit = null; cl.asKey = ''; renderClinic(); } catch(e){ info('Could not save: ' + errText(e)); }
+}
+async function asVoid(id){
+  const A = cl.asst, x = ((A.d && (A.d.all || A.d.mine)) || []).find(y => y.id === id); if (!x) return;
+  const why = asOwner() ? prompt('Reason for voiding this assist (kept in the history):') : 'withdrawn by ' + (fullName(orgCtx().me) || 'staff');
+  if (why === null || (asOwner() && !why.trim())) return;
+  try { await cloud.F.updateDoc(cDoc('assists', id), {status:'void', history:asHist(x, 'voided', why)}); if (asOwner()) asAudit(x, 'voided', why, {status:'void'}); info('Voided: it no longer counts.'); cl.asKey = ''; renderClinic(); }
+  catch(e){ info('Could not save: ' + errText(e)); }
 }
 async function asDecide(ids, status){
   const {F} = cloud, by = cloud.user.email || '', nm = fullName(orgCtx().me);
-  try { for (const id of ids) await F.updateDoc(cDoc('assists', id), {status, approvedBy:by, approverName:nm, approvedAt:Date.now()});
-    info(`${plural(ids.length, 'entry')} ${status === 'approved' ? 'approved' : 'not approved'}.`); cl.asKey = ''; renderClinic(); }
+  let why = '';
+  if (status === 'rejected'){ why = prompt('Reason for rejecting (optional, the assistant sees it):', ''); if (why === null) return; }
+  try { for (const id of ids) await F.updateDoc(cDoc('assists', id), {status, approvedBy:by, approverName:nm, approvedAt:Date.now(), rejectReason:status === 'rejected' ? why.trim() : ''});
+    info(`${plural(ids.length, 'entry')} ${status === 'approved' ? 'approved for incentive' : 'rejected'}.`); cl.asKey = ''; renderClinic(); }
   catch(e){ info('Could not save: ' + errText(e)); }
 }
-
 /* ---------- Import from Dentee (Account Manager): patients, appointments, treatments, medicines, payments, doctors, price lists ----------
    Read in the browser from Dentee's Excel export and written with the Account Manager's own sign-in, so the security rules apply.
    Every record gets a fixed id ("dt-…"), so running the import again updates instead of duplicating. */
@@ -7259,9 +7448,10 @@ function cashRead(pre, amount){
   return {in:c.inC, out:c.outC, inTotal:c.inT, outTotal:c.outT, change:c.change, xs:c.xs, petty, other};
 }
 // save a payment (and the petty-cash entry for change taken from the petty box) in one go
-async function savePaymentDoc(x){
+async function savePaymentDoc(x, billId, billUpd){
   const {F, fs} = cloud, ref = F.doc(cCol('payments')), b = F.writeBatch(fs);
   b.set(ref, x);
+  if (billId) b.update(cDoc('bills', billId), Object.assign({}, billUpd, {lastPay:ref.id}));   // the bill's paid total moves with the payment, in one write
   if (x.cash && x.cash.petty > 0) b.set(cDoc('ledger', 'chg-' + ref.id), {kind:'pettyspend', change:true, paymentId:ref.id, date:x.date, mode:'cash', amount:x.cash.petty,
     note:`Change given to ${x.patientName} (${x.receiptNo})`, by:cloud.user.email || '', at:Date.now()});
   await b.commit();
@@ -7291,6 +7481,191 @@ document.addEventListener('click', e => {
   if (ad){ const s = $('#' + pre + 'X' + n + 'Amt'); const c = cashCalc(pre, Math.round(+($(CD_FORMS[pre][0]) || {}).value || 0)); if (s && c && c.left > 0) s.value = c.left; s && s.focus(); }
   cashRefresh(pre);
 });
+/* ---------- Bills: a bill is its own record, separate from payments ----------
+   bills/{id} {billNo B-00001, patientId, patientName, appointmentId, date, doctorId, items[{treatmentId, name, tooth, doctorId, cost, discount, net, legacy}],
+   subtotal, discount, total, paid, status, ackBy, ackAt, lastPay, cancel{reason, by, at, payments}, replaces, replacedBy, createdBy, createdAt, history}
+   Status: draft → pending (Pending acknowledgement) → ack → partly → paid; any → cancelled (never deleted).
+   - A draft may be edited. Issuing it puts its treatments on the bill (treatments.billId): they are then locked until the bill is cancelled.
+   - Each payment is its own record (payments, with billId) written in the same batch as the bill's new `paid` total and `lastPay`;
+     the rules check paid = old paid + this payment and paid ≤ total, so a double click or a second screen can't record it twice.
+   - A bill with payments is never edited: cancel it with a reason, and either move its payments to a fresh bill (same treatments,
+     new number) or refund them (a refund is a payment record with a negative amount: it shows in collections and the daily tally).
+   - One live bill per visit: the appointment holds billId; another bill for it is refused unless that one is cancelled.
+   - The patient's balance is still treatments − payments (unchanged for old records); bills formalize visits from BILLS_SINCE on.
+     Older unpaid treatments can be billed as one "Earlier balance" item. */
+const BILLS_SINCE = '2026-11-02';
+const BST = {draft:['Draft', 'pend'], pending:['Pending acknowledgement', 'pend'], ack:['Acknowledged', 'prog'], partly:['Partly paid', 'pend'], paid:['Paid', 'on'], cancelled:['Cancelled', 'gone']};
+const billBadge = b => `<span class="upill ${BST[b.status][1]}">${BST[b.status][0]}</span>`;
+const billLive = b => !!b && b.status !== 'cancelled';
+const billDue = b => Math.max(0, (+b.total || 0) - (+b.paid || 0));
+const billPayable = b => ['pending', 'ack', 'partly'].includes(b.status) && billDue(b) > 0;
+const canCancelBill = b => canW('billing') && (!(+b.paid) || isAdminRole(orgCtx().role) || can('cancelBills') === true);
+const liveBillIds = B => new Set((B || []).filter(billLive).map(b => b.id));
+// a treatment is locked while it is on a live, issued bill
+const tLocked = (t, B) => !!t.billId && (B || []).some(b => b.id === t.billId && billLive(b) && b.status !== 'draft');
+const billItem = t => ({treatmentId:t.id, name:t.typeName || '', tooth:t.tooth || '', doctorId:t.doctorId || '', cost:+t.cost || 0, discount:+t.discount || 0, net:net(t), med:isMed(t)});
+const billSums = items => { const subtotal = items.reduce((s, i) => s + (+i.cost || 0), 0), discount = items.reduce((s, i) => s + (+i.discount || 0), 0); return {subtotal, discount, total:Math.max(0, subtotal - discount)}; };
+// treatments that can go on a new bill: done, not on a live issued bill, from BILLS_SINCE (older ones are covered by "Earlier balance")
+const unbilledOf = (T, B) => (T || []).filter(t => t.status !== 'planned' && t.date >= BILLS_SINCE && !(t.billId && liveBillIds(B).has(t.billId)));
+// what is still owed from before bills: old treatments − payments without a bill − earlier-balance items already billed
+function earlierDue(T, P, B){
+  const old = (T || []).filter(t => t.status !== 'planned' && t.date < BILLS_SINCE && !(t.billId && liveBillIds(B).has(t.billId))).reduce((s, t) => s + net(t), 0);
+  const paid = paidSum((P || []).filter(x => !x.billId)), used = (B || []).filter(billLive).reduce((s, b) => s + (b.items || []).filter(i => i.legacy).reduce((a, i) => a + (+i.net || 0), 0), 0);
+  return Math.max(0, old - paid - used);
+}
+// create a bill (draft or issued). appt optional. items from treatments (+ an optional earlier-balance item)
+async function createBill({p, appt, T, status, legacy, carry}){
+  const {F, fs} = cloud, by = cloud.user.email || '', items = T.map(billItem).concat(legacy ? [{treatmentId:'', name:'Earlier balance (before bills)', tooth:'', doctorId:'', cost:legacy, discount:0, net:legacy, legacy:true}] : []);
+  if (!items.length) throw custom('Choose the treatments to bill.');
+  const billNo = await nextNumber('bill', 'B-', 5), ref = F.doc(cCol('bills')), b = F.writeBatch(fs);
+  const x = Object.assign({billNo, patientId:p.id, patientName:pName(p), appointmentId:appt ? appt.id : '', date:appt ? (appt.date <= todayKey ? appt.date : todayKey) : todayKey, doctorId:appt ? appt.doctorId || '' : (T[0] || {}).doctorId || '',
+    items, paid:carry ? carry.paid : 0, status, ackBy:'', ackAt:0, lastPay:'', replaces:carry ? carry.id : '', replacedBy:'', createdBy:by, createdAt:Date.now(), history:[]}, billSums(items));
+  b.set(ref, x);
+  if (status !== 'draft') T.forEach(t => b.update(cDoc('treatments', t.id), {billId:ref.id}));
+  if (appt) b.update(cDoc('appointments', appt.id), {billId:ref.id});
+  await b.commit();
+  return Object.assign({id:ref.id}, x);
+}
+// issue a draft: refresh its items from the treatments now, lock them
+async function issueBill(bill, T){
+  const {F, fs} = cloud, items = T.map(billItem).concat((bill.items || []).filter(i => i.legacy)), b = F.writeBatch(fs);
+  if (!items.length) throw custom('There is nothing on this bill.');
+  const sums = billSums(items), pd = +bill.paid || 0;
+  const upd = Object.assign({items, status:pd && pd >= sums.total ? 'paid' : pd ? 'partly' : 'pending', history:(bill.history || []).concat([{at:Date.now(), by:cloud.user.email || '', change:'issued'}])}, billSums(items));
+  if (upd.total < (+bill.paid || 0)) throw custom(`The total ${inr(upd.total)} is less than the ${inr(bill.paid)} already paid on it.`);
+  b.update(cDoc('bills', bill.id), upd); T.forEach(t => b.update(cDoc('treatments', t.id), {billId:bill.id}));
+  await b.commit(); return Object.assign(bill, upd);
+}
+// a bill with no payment yet may be reopened to a draft to correct its treatments (logged in its history)
+async function reopenBill(bill){
+  if (+bill.paid) throw custom('This bill has payments: cancel it instead.');
+  const upd = {status:'draft', history:(bill.history || []).concat([{at:Date.now(), by:cloud.user.email || '', change:'reopened to edit'}])};
+  await cloud.F.updateDoc(cDoc('bills', bill.id), upd); return Object.assign(bill, upd);
+}
+async function ackBill(bill){
+  const upd = {status:'ack', ackBy:cloud.user.email || '', ackAt:Date.now(), history:(bill.history || []).concat([{at:Date.now(), by:cloud.user.email || '', change:'acknowledged'}])};
+  await cloud.F.updateDoc(cDoc('bills', bill.id), upd); return Object.assign(bill, upd);
+}
+// a payment against a bill (pending bills are acknowledged by taking the payment)
+async function payBill(bill, pre, date){
+  const amount = Math.round(+$('#' + pre + 'Amt').value || 0), mode = $('#' + pre + 'Mode').value, due = billDue(bill);
+  if (amount <= 0) throw custom('Enter the amount received.');
+  if (amount > due) throw custom(`That's more than the ${inr(due)} outstanding on ${bill.billNo}.`);
+  if ((date || todayKey) > todayKey) throw custom("The payment date can't be in the future.");
+  const cash = mode === 'cash' ? cashRead(pre, amount) : null, receiptNo = await nextNumber('receipt', 'R-', 5);
+  const x = {patientId:bill.patientId, patientName:bill.patientName, appointmentId:bill.appointmentId || '', billId:bill.id, billNo:bill.billNo, kind:'payment', date:date || todayKey, amount, mode,
+    txnRef:(($('#' + pre + 'Ref') || {}).value || '').trim(), doctorId:bill.doctorId || '', note:(($('#' + pre + 'Note') || {}).value || '').trim(), receiptNo, createdAt:Date.now(), by:cloud.user.email || ''};
+  if (cash) x.cash = cash;
+  const paid = (+bill.paid || 0) + amount, upd = {paid, status:paid >= bill.total ? 'paid' : 'partly'};
+  if (bill.status === 'pending') Object.assign(upd, {ackBy:cloud.user.email || '', ackAt:Date.now()});
+  const ref = await savePaymentDoc(x, bill.id, upd); CDX[pre] = 0;
+  Object.assign(bill, upd, {lastPay:ref.id});
+  return Object.assign({id:ref.id}, x);
+}
+// cancel: reason required; payments moved to a fresh draft bill, or refunded (negative payment)
+async function cancelBill(bill, T){
+  if (!canCancelBill(bill)) throw custom('Only the Owner, Account Manager or someone with "Cancel bills" may cancel a bill that has payments.');
+  const reason = prompt(`Cancel ${bill.billNo} (${inr(bill.total)})?\n\nThe bill is kept, marked Cancelled. Reason (required):`, ''); if (reason === null) return null;
+  if (!reason.trim()) throw custom('Enter the reason for cancelling.');
+  let how = 'none';
+  if (+bill.paid > 0){
+    const a = prompt(`${inr(bill.paid)} has been paid on ${bill.billNo}.\n\nType 1 to MOVE it to a fresh bill (same treatments, new number; no money changes hands)\nType 2 to REFUND it to the patient`, '1');
+    if (a === null) return null; how = a.trim() === '2' ? 'refunded' : 'moved';
+  }
+  const {F, fs} = cloud, by = cloud.user.email || '', now = Date.now(), b = F.writeBatch(fs), upd = {status:'cancelled', cancel:{reason:reason.trim(), by, at:now, payments:how}, history:(bill.history || []).concat([{at:now, by, change:'cancelled', reason:reason.trim()}])};
+  let fresh = null, refund = null;
+  if (how === 'moved'){
+    const ref = F.doc(cCol('bills')), billNo = await nextNumber('bill', 'B-', 5);
+    fresh = {billNo, patientId:bill.patientId, patientName:bill.patientName, appointmentId:bill.appointmentId || '', date:todayKey, doctorId:bill.doctorId || '', items:bill.items, subtotal:bill.subtotal, discount:bill.discount, total:bill.total,
+      paid:bill.paid, status:'draft', ackBy:'', ackAt:0, lastPay:'', replaces:bill.id, replacedBy:'', createdBy:by, createdAt:now, history:[{at:now, by, change:`replaces ${bill.billNo} (payments of ${inr(bill.paid)} moved)`, reason:reason.trim()}]};
+    b.set(ref, fresh); upd.replacedBy = ref.id; fresh.id = ref.id;
+    if (bill.appointmentId) b.update(cDoc('appointments', bill.appointmentId), {billId:ref.id});
+  }
+  if (how === 'refunded'){
+    const mode = (prompt('Refund how? cash, upi, card, ccard, bank', 'cash') || 'cash').trim().toLowerCase(), receiptNo = await nextNumber('receipt', 'R-', 5);
+    refund = {patientId:bill.patientId, patientName:bill.patientName, appointmentId:bill.appointmentId || '', billId:bill.id, billNo:bill.billNo, kind:'refund', date:todayKey, amount:-(+bill.paid), mode:PMODES.some(m => m[0] === mode) ? mode : 'cash', txnRef:'', doctorId:bill.doctorId || '', note:'Refund: ' + reason.trim(), receiptNo, createdAt:now, by};
+    b.set(F.doc(cCol('payments')), refund);
+  }
+  b.update(cDoc('bills', bill.id), upd);
+  F.addDoc(cloud.F.collection(cloud.fs, 'orgs', orgCtx().orgId, 'audit'), {at:now, by, byName:fullName(orgCtx().me) || '', type:'bill', target:{id:bill.id, billNo:bill.billNo, patientId:bill.patientId}, before:{status:bill.status, total:bill.total, paid:bill.paid}, after:{status:'cancelled', payments:how, fresh:fresh ? fresh.billNo : ''}, change:'cancelled', reason:reason.trim()}).catch(() => {});
+  await b.commit(); Object.assign(bill, upd);
+  return {fresh, refund, how};
+}
+function printBill(bill, p, P){
+  const pays = (P || []).filter(x => x.billId === bill.id);
+  printDoc('Bill ' + bill.billNo, `<p><b>Patient:</b> ${esc(pName(p))} (${esc(p.code || '')}) · ${esc(p.phone || '')}<br><b>Bill date:</b> ${esc(fmtLong(bill.date))}${bill.appointmentId ? ' · visit' : ''}${bill.doctorId ? ` · <b>Doctor:</b> ${esc(dName(bill.doctorId))}` : ''}<br><b>Status:</b> ${BST[bill.status][0]}</p>
+    <table><tr><th>#</th><th>Treatment</th><th>Doctor</th><th class="n">Charge</th><th class="n">Discount</th><th class="n">Amount</th></tr>
+    ${(bill.items || []).map((i, n) => `<tr><td>${n + 1}</td><td>${esc(i.name)}${i.tooth ? ' (' + esc(i.tooth) + ')' : ''}</td><td>${esc(dName(i.doctorId) || '')}</td><td class="n">${inr(i.cost)}</td><td class="n">${inr(i.discount)}</td><td class="n">${inr(i.net)}</td></tr>`).join('')}
+    <tr class="tot"><td colspan="5">Total</td><td class="n">${inr(bill.total)}</td></tr></table>
+    ${pays.length ? `<h2>Payments</h2><table>${pays.map(x => `<tr><td>${esc(x.receiptNo)}</td><td>${esc(fmtShort(x.date))}</td><td>${esc((PMODES.find(m => m[0] === x.mode) || [0, x.mode])[1])}${x.txnRef ? ' · ' + esc(x.txnRef) : ''}</td><td class="n">${inr(x.amount)}</td></tr>`).join('')}</table>` : ''}
+    <p><b>Paid ${inr(bill.paid)} · Outstanding ${inr(billDue(bill))}</b></p>`);
+}
+// payment form for a bill (prefix vb: visit, py: patient's Bills tab)
+const payForm = (pre, b) => `<form class="aform payf" id="${pre === 'vb' ? 'clVBill' : 'clPayForm'}" data-bill="${esc(b.id)}" novalidate style="margin-top:8px">
+  <label>Payment date<input type="date" id="${pre}Date" value="${todayKey}" max="${todayKey}" title="The day this payment counts in collections and the daily tally"></label>
+  <label>Amount (₹)<input type="number" id="${pre}Amt" min="1" max="${billDue(b)}" value="${billDue(b)}"></label>
+  <label>Method<select id="${pre}Mode">${PMODES.map(([k, l]) => `<option value="${k}">${l}</option>`).join('')}</select></label>
+  <label>Transaction ref.<input id="${pre}Ref" placeholder="UPI / card ref (optional)"></label>
+  <label class="grow">Note<input id="${pre}Note" placeholder="e.g. first instalment"></label>
+  <button class="primary" type="submit">Save payment &amp; receipt</button>${cashPanel(pre, true)}</form>`;
+/* ---------- patient card: Bills and Payments tabs ---------- */
+function clBills(){
+  if (cl.pB === null || cl.pT === null) return '<div class="empty">Loading…</div>';
+  const B = (cl.pB || []).slice().sort((a, b) => String(b.date).localeCompare(String(a.date)) || (b.createdAt || 0) - (a.createdAt || 0)), w = canW('billing');
+  const U = unbilledOf(cl.pT, cl.pB), ed = earlierDue(cl.pT, cl.pP, cl.pB), live = B.filter(billLive), open = cl.billOpen;
+  const tot = live.reduce((s, b) => s + (+b.total || 0), 0), paid = live.reduce((s, b) => s + (+b.paid || 0), 0);
+  return `<div class="sect"><div class="kpis">${kpi('Total billed', inr(tot), plural(live.length, 'bill'))}${kpi('Paid on bills', inr(paid), '')}${kpi('Outstanding on bills', inr(tot - paid), live.filter(b => billDue(b) > 0).length + ' open', tot - paid > 0 ? 'neg' : '')}</div>
+    ${w && (U.length || ed > 0) ? `<div class="box"><h3>New bill <span class="sub">done treatments not on a bill yet</span></h3><form id="clNewBill" novalidate>
+      ${U.map(t => `<label class="ckl"><input type="checkbox" data-nbt="${esc(t.id)}" checked> ${esc(fmtShort(t.date))} · <b>${esc(t.typeName)}</b>${t.tooth ? ' (' + esc(t.tooth) + ')' : ''} · ${esc(dName(t.doctorId) || '')} · ${inr(net(t))}</label>`).join('')}
+      ${ed > 0 ? `<label class="ckl"><input type="checkbox" id="nbLegacy"${U.length ? '' : ' checked'}> <b>Earlier balance (before bills)</b> · ${inr(ed)}</label>` : ''}
+      <div class="btnrow"><button class="primary" type="submit">Generate bill</button><button type="button" data-nbdraft>Save as draft</button></div></form></div>` : ''}
+    <div class="awrap" style="margin-top:0"><table class="atbl"><thead><tr><th>Bill</th><th>Date</th><th>Visit</th><th>Treatments</th><th class="num">Total</th><th class="num">Paid</th><th class="num">Outstanding</th><th>Status</th><th></th></tr></thead><tbody>
+    ${B.map(b => `<tr data-bill="${esc(b.id)}" class="clk${b.status === 'cancelled' ? ' gone' : ''}"><td><b>${esc(b.billNo)}</b>${b.replaces ? `<span class="sub2">replaces ${esc((B.find(x => x.id === b.replaces) || {}).billNo || '')}</span>` : ''}</td><td>${esc(fmtShort(b.date))}</td><td>${b.appointmentId ? esc(fmtShort(((cl.pA || []).find(a => a.id === b.appointmentId) || {}).date || b.date)) : '—'}</td>
+      <td>${esc((b.items || []).map(i => i.name).join(', '))}</td><td class="num">${inr(b.total)}</td><td class="num">${inr(b.paid)}</td><td class="num ${billDue(b) && billLive(b) ? 'neg' : ''}">${billLive(b) ? inr(billDue(b)) : '—'}</td><td>${billBadge(b)}${b.cancel ? `<span class="sub2">${esc(b.cancel.reason)}${b.cancel.payments === 'moved' ? ' · payments moved' : b.cancel.payments === 'refunded' ? ' · refunded' : ''}</span>` : ''}</td><td>${open === b.id ? '▾' : '▸'}</td></tr>
+      ${open === b.id ? `<tr class="billx" data-bill="${esc(b.id)}"><td colspan="9">${billDetail(b)}</td></tr>` : ''}`).join('') || '<tr><td colspan="9" class="stat">No bills yet.</td></tr>'}
+    </tbody></table></div></div>`;
+}
+function billDetail(b){
+  const w = canW('billing'), pays = (cl.pP || []).filter(x => x.billId === b.id);
+  return `<div class="awrap" style="margin:4px 0"><table class="atbl"><thead><tr><th>Treatment</th><th>Doctor</th><th class="num">Charge</th><th class="num">Discount</th><th class="num">Amount</th></tr></thead><tbody>
+    ${(b.items || []).map(i => `<tr><td>${esc(i.name)}${i.tooth ? ' (' + esc(i.tooth) + ')' : ''}</td><td>${esc(dName(i.doctorId) || '')}</td><td class="num">${inr(i.cost)}</td><td class="num">${+i.discount ? inr(i.discount) : '—'}</td><td class="num">${inr(i.net)}</td></tr>`).join('')}
+    <tr class="tot"><td colspan="4">Total</td><td class="num">${inr(b.total)}</td></tr></tbody></table></div>
+    ${pays.length ? `<div class="stat">Payments: ${pays.map(x => `${esc(x.receiptNo)} ${esc(fmtShort(x.date))} ${inr(x.amount)} ${esc((PMODES.find(m => m[0] === x.mode) || [0, x.mode])[1])}`).join(' · ')}</div>` : ''}
+    ${b.ackBy ? `<div class="stat">Acknowledged ${esc(fmt(b.ackAt))} · ${esc(String(b.ackBy).split('@')[0])}</div>` : ''}
+    <div class="btnrow" style="margin-top:6px"><button data-bprint>🖨 Print bill</button>
+      ${w && b.status === 'draft' ? '<button class="primary" data-bissue>Issue bill</button>' : ''}${w && b.status === 'pending' ? '<button class="primary" data-back>Patient acknowledged</button>' : ''}${w && ['pending', 'ack'].includes(b.status) && !+b.paid ? '<button data-breopen title="Back to a draft to correct the treatments (no payment yet)">Reopen to edit</button>' : ''}
+      ${billLive(b) && canCancelBill(b) ? '<span class="sp"></span><button class="danger" data-bcancel>Cancel bill…</button>' : ''}</div>
+    ${w && billPayable(b) ? payForm('py', b) : billLive(b) && b.status !== 'draft' && !billDue(b) ? '<p class="stat">Fully paid: this bill can no longer be changed. To correct it, cancel it and issue a fresh one.</p>' : ''}`;
+}
+function clPayments(){
+  const P = (cl.pP || []).slice().sort((a, b) => String(b.date).localeCompare(String(a.date)) || (b.createdAt || 0) - (a.createdAt || 0)), B = cl.pB || [];
+  const bal = billed(cl.pT) - paidSum(cl.pP);
+  return `<div class="sect"><div class="kpis">${kpi('Total paid', inr(paidSum(P)), plural(P.filter(x => x.amount > 0).length, 'payment'))}${kpi('Outstanding balance', inr(bal), 'all treatments − payments', bal > 0 ? 'neg' : '')}</div>
+    <div class="awrap" style="margin-top:0"><table class="atbl"><thead><tr><th>Receipt</th><th>Bill</th><th>Date</th><th>Method</th><th>Transaction ref.</th><th>Note</th><th class="num">Amount</th><th></th></tr></thead><tbody>
+      ${cl.pP === null ? '<tr><td colspan="8">Loading…</td></tr>' : P.map(x => `<tr data-pay="${esc(x.id)}"><td>${esc(x.receiptNo || '')}${x.kind === 'refund' ? ' <span class="upill gone">Refund</span>' : ''}</td><td>${esc(x.billNo || (B.find(b => b.id === x.billId) || {}).billNo || '—')}</td><td>${esc(fmtShort(x.date))}</td><td>${esc((PMODES.find(m => m[0] === x.mode) || [0, x.mode])[1])}</td><td>${esc(x.txnRef || '')}</td><td>${esc(x.note || '')}${x.cash ? `<span class="sub2">${esc(cashLine(x))}</span>` : ''}</td><td class="num"><b class="${x.amount < 0 ? 'neg' : ''}">${inr(x.amount)}</b></td>
+        <td><button data-rcpt>🖨 Receipt</button></td></tr>`).join('') || '<tr><td colspan="8" class="stat">No payments yet.</td></tr>'}
+    </tbody></table></div><p class="stat">Payments are never deleted or edited. A wrong payment is corrected by cancelling its bill (move or refund).</p></div>`;
+}
+async function billAction(e){
+  const t = e.target, row = t.closest('[data-bill]'); if (!row) return false;
+  const b = (cl.pB || []).find(x => x.id === row.dataset.bill); if (!b) return false;
+  const T = id => (cl.pT || []).filter(x => (b.items || []).some(i => i.treatmentId === x.id));
+  try {
+    if (t.closest('[data-bprint]')){ printBill(b, cl.p, cl.pP); return true; }
+    if (t.closest('[data-bissue]')){ await issueBill(b, T()); info(`${b.billNo} issued: waiting for the patient's acknowledgement.`); renderClinic(); return true; }
+    if (t.closest('[data-breopen]')){ await reopenBill(b); info(`${b.billNo} is a draft again: change the treatments, then Issue.`); renderClinic(); return true; }
+    if (t.closest('[data-back]')){ await ackBill(b); info(`${b.billNo} acknowledged.`); renderClinic(); return true; }
+    if (t.closest('[data-bcancel]')){ const r = await cancelBill(b, T()); if (r){ info(r.fresh ? `${b.billNo} cancelled: payments moved to ${r.fresh.billNo} (draft: correct the treatments, then Issue).` : r.refund ? `${b.billNo} cancelled and ${inr(-r.refund.amount)} refunded (${r.refund.receiptNo}).` : `${b.billNo} cancelled.`); if (r.fresh) cl.billOpen = r.fresh.id; renderClinic(); } return true; }
+    if (row.matches('tr.clk[data-bill]') && !t.closest('form,button,input,select')){ cl.billOpen = cl.billOpen === b.id ? null : b.id; renderClinic(); return true; }
+  } catch(err){ info(errText(err)); return true; }
+  return false;
+}
+async function newBillSubmit(draft){
+  const ids = [...document.querySelectorAll('[data-nbt]:checked')].map(c => c.dataset.nbt), T = (cl.pT || []).filter(t => ids.includes(t.id));
+  const legacy = $('#nbLegacy') && $('#nbLegacy').checked ? earlierDue(cl.pT, cl.pP, cl.pB) : 0;
+  try { const b = await createBill({p:cl.p, appt:null, T, status:draft ? 'draft' : 'pending', legacy}); cl.billOpen = b.id; info(`${b.billNo} ${draft ? 'saved as a draft' : 'generated'} · ${inr(b.total)}`); renderClinic(); }
+  catch(e){ info(errText(e)); }
+}
 /* ================= Dental Clinic: how this feature plugs into core (see core/js/03-feature-registry.js) ================= */
 ZL.add({
   id:'dental-clinic',
@@ -7347,7 +7722,7 @@ ZL.add({
       if (where === 'add') return $('#paCPre') ? {perms:permsFromPreset($('#paCPre').value)} : {};
       return document.querySelector('#pEdit [data-cp]') ? {perms:Object.fromEntries([...document.querySelectorAll('#pEdit [data-cp]')].map(c => [c.dataset.cp, c.checked]))} : {};
     },
-    roleTags:m => feat('clinic') ? `<span class="sub2">Clinic: ${esc(m.role === 'orgadmin' ? 'full access' : presetOf(m.perms))}</span>` : '',
+    roleTags:m => feat('clinic') ? `<span class="sub2">Clinic: ${esc(isAdminRole(m.role) ? 'full access' : presetOf(m.perms))}</span>` : '',
   },
 });
 // Organization → People → Edit: "Apply a preset…" ticks the clinic permissions

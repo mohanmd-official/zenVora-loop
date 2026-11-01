@@ -121,6 +121,8 @@ $('#clBody').addEventListener('input', e => {
 $('#clBody').addEventListener('change', async e => {
   const {F} = cloud, t = e.target;
   if (t.id === 'tfType'){ const o = t.selectedOptions[0]; if (o) $('#tfCost').value = o.dataset.cost; }
+  if (t.matches('[data-dhf]')){ cl.dhF[t.dataset.dhf] = t.value; return renderClinic(); }
+  if (t.matches('[data-asf]')){ const f = cl.asst.f, k = t.dataset.asf; f[k] = t.value; if (k === 'from') cl.asKey = ''; return renderClinic(); }
   if (t.id === 'aPick' && t.value){ cl.aDate = t.value; renderClinic(); }
   if (t.id === 'clPSort'){ cl.psort = t.value; return renderClinic(); }
   if (t.id === 'aDocF'){ cl.aDoc = t.value; renderClinic(); }
@@ -172,17 +174,16 @@ $('#clBody').addEventListener('submit', async e => {
       info(`${ty.name} added for ${dName(doctorId)}.`);
     }
     if (id === 'clPayForm'){
-      const amount = Math.round(+$('#pyAmt').value || 0); if (amount <= 0) return info('Enter the amount.');
-      const cash = $('#pyMode').value === 'cash' ? cashRead('py', amount) : null;            // notes received + change given (daily tally, petty cash)
-      const receiptNo = await nextNumber('receipt', 'R-', 5);
-      const x = {patientId:cl.pid, patientName:pName(cl.p), date:$('#pyDate').value || todayKey, amount, mode:$('#pyMode').value, doctorId:$('#pyDoc').value, note:$('#pyNote').value.trim(), receiptNo, createdAt:Date.now(), by};
-      if (cash) x.cash = cash;
-      await savePaymentDoc(x); CDX.py = 0; cl.clear = true;
-      info(`${inr(amount)} received · ${receiptNo}`); printReceipt(x);
+      const b = (cl.pB || []).find(x => x.id === e.target.dataset.bill); if (!b) return;
+      const x = await payBill(b, 'py', $('#pyDate').value || todayKey); cl.clear = true;
+      info(`${inr(x.amount)} received on ${b.billNo} · ${x.receiptNo}`); printReceipt(x);
     }
+    if (id === 'clNewBill') return newBillSubmit(false);
     if (id === 'clPhForm') return clUploadPhotos();
     if (id === 'clRxForm') return saveRx();
     if (id === 'clAsForm') return asSubmit();
+    if (id === 'clAsAdmin') return asAdminAdd();
+    if (id === 'clAsEdit') return asAdminEdit(e.target.dataset.as);
     if (id.startsWith('acc')) return accSubmit(id, e.target);
     if (id === 'clDocForm2') return clUploadDocs();
     if (id === 'clDocForm'){
@@ -261,10 +262,14 @@ $('#clBody').addEventListener('click', async e => {
     const asp = t.closest('[data-asperson]'); if (asp){ cl.asst.person = asp.dataset.asperson; return renderClinic(); }
     if (t.closest('[data-asok]')) return asDecide([t.closest('[data-as]').dataset.as], 'approved');
     if (t.closest('[data-asno]')) return asDecide([t.closest('[data-as]').dataset.as], 'rejected');
-    const asd = t.closest('[data-asday]'); if (asd) return asDecide(cl.asst.d.all.filter(x => x.status === 'pending' && x.date === asd.dataset.asday).map(x => x.id), 'approved');
-    if (t.closest('[data-asdel]')){ if (!confirm('Delete this entry?')) return; await F.deleteDoc(cDoc('assists', t.closest('[data-as]').dataset.as)); cl.asKey = ''; info('Deleted.'); return renderClinic(); }
+    if (t.closest('[data-asall]')){ const ids = [...document.querySelectorAll('#clBody [data-as] [data-asok]')].map(b => b.closest('[data-as]').dataset.as); if (!confirm(`Approve ${plural(ids.length, 'assist')} for incentive?`)) return; return asDecide(ids, 'approved'); }
+    if (t.closest('[data-asvoid]')) return asVoid(t.closest('[data-as]').dataset.as);
+    if (t.closest('[data-asedit]')){ cl.asst.edit = t.closest('[data-as]').dataset.as; return renderClinic(); }
+    if (t.closest('[data-asedx]')){ cl.asst.edit = null; return renderClinic(); }
+    if (t.closest('.asadd summary')){ cl.asst.addOpen = !cl.asst.addOpen; return; }
     if (t.closest('[data-tdel]')){ if (!confirm('Delete this treatment?')) return; await F.deleteDoc(cDoc('treatments', t.closest('[data-tid]').dataset.tid)); }
-    if (t.closest('[data-pdel]')){ if (!confirm('Delete this payment? Its receipt number will not be reused.')) return; const pid = t.closest('[data-pay]').dataset.pay; await deletePaymentDoc(pid, (cl.pP || []).find(p => p.id === pid)); }
+    if (t.closest('[data-nbdraft]')) return newBillSubmit(true);
+    if (cl.ptab === 'billing' && await billAction(e)) return;
     if (t.closest('[data-rcpt]')){ const x = (cl.pP || []).find(p => p.id === t.closest('[data-pay]').dataset.pay); if (x) printReceipt(x); }
     if (t.closest('[data-ldel]')){ if (!confirm('Delete this entry? A copy is kept in the audit log.')) return; const id = t.closest('[data-led]').dataset.led, d = cl.acc.d;
       let x = ((d.expAll || []).concat(d.led || [], d.pin || [], d.pout || [], d.cpay || [])).find(y => y.id === id); if (!x){ const sn = await F.getDoc(cDoc('ledger', id)); x = sn.exists() ? sn.data() : {}; }
@@ -385,8 +390,8 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('#clOv')
 function clinicAccessHtml(m){
   if (!feat('clinic')) return '';
   const perms = m.perms || {};
-  return `<div class="full cperm"><div class="fhead" style="margin:4px 0">Clinic access${m.role === 'orgadmin' ? ' <span class="stat">(Account Managers have full access)</span>' : ''}</div>
+  return `<div class="full cperm"><div class="fhead" style="margin:4px 0">Clinic access${isAdminRole(m.role) ? ' <span class="stat">(Account Managers have full access)</span>' : ''}</div>
     <div class="btnrow"><select id="peCPre"><option value="">Apply a preset…</option>${CPRESETS.map(([k, l]) => `<option value="${k}">${l}</option>`).join('')}</select></div>
-    <div class="feats" style="margin-top:6px">${CPERMS.map(([k, l, d]) => `<label title="${esc(d)}"><input type="checkbox" data-cp="${k}"${perms[k] ? ' checked' : ''}${m.role === 'orgadmin' ? ' disabled' : ''}> ${l}</label>`).join('')}</div></div>`;
+    <div class="feats" style="margin-top:6px">${CPERMS.map(([k, l, d]) => `<label title="${esc(d)}"><input type="checkbox" data-cp="${k}"${perms[k] ? ' checked' : ''}${isAdminRole(m.role) ? ' disabled' : ''}> ${l}</label>`).join('')}</div></div>`;
 }
 
