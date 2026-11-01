@@ -756,11 +756,12 @@ a.srcl0{text-decoration:none}.extbl td{vertical-align:middle}.nowrap{white-space
 .tmore .topen{border-bottom:1px dashed var(--line);padding-bottom:12px}
 .tmh{font-size:13px;margin:0 0 8px}
 .tfirst{margin-bottom:12px;font-size:13.5px}
-/* "Assisted by" picker on each treatment row */
-.aspk{position:relative;font-size:12.5px}
-.aspk summary{list-style:none;cursor:pointer;border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:var(--panel);white-space:nowrap;max-width:200px;overflow:hidden;text-overflow:ellipsis}
-.aspk summary::-webkit-details-marker{display:none}
-.aspk[open] .aspl{position:absolute;z-index:40;top:calc(100% + 4px);left:0;min-width:200px;max-height:260px;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 10px;box-shadow:0 8px 24px rgba(0,0,0,.12);display:flex;flex-direction:column;gap:4px}
+/* "Assisted by" chips under each treatment row */
+.aschips{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:2px 0 4px}
+.ascl{font-size:11.5px;color:var(--muted);margin-right:2px}
+.aschip{font-size:12px;padding:3px 10px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer;line-height:1.5}
+.aschip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.aschip.none.on{background:var(--paper2);color:var(--muted);border-color:var(--line)}
 .asadd summary{cursor:pointer}
 .asf{flex-wrap:wrap;gap:8px}
 .asedrow td{background:var(--paper2)}
@@ -3235,7 +3236,7 @@ function orgPeople(){
       <p class="stat" style="margin:8px 0 0"><b>Account Manager</b>: full admin of ${esc(oc.org.name)} · <b>Manager</b>: ${ZL.part('person', 'managerHint').join(', ') || 'helps run the team'} · <b>Employee</b>: their own ${ZL.part('person', 'employeeHint').concat(feat('agenda') ? ['planner'] : []).join(' and ') || 'account'}.</p>
       ${msgHtml(orgView.msg)}${shareHtml('pShare', orgView.share)}
     </div>`;
-    if (orgView.pending.length) top += `<div class="box legacy"><h3>Waiting to join <span class="sub">existing Zenvora Loop logins moved to your organization by Zenvora support</span></h3>
+    if (orgView.pending.length) top += `<div class="box legacy"><h3>Waiting to join</h3>
       ${orgView.pending.map(p => `<div class="req"><div class="rq"><b>${esc(p.name || p.email)}</b><span>${esc(p.email)}</span></div><button class="primary" data-pend="${esc(p.uid)}">Add to team</button></div>`).join('')}</div>`;
   }
   const rows = list.map(m => {
@@ -3293,7 +3294,7 @@ const durLabel = h => (DUR.find(d => d[0] === +h) || [0, `${h} hours`])[1];
 function orgPlanner(){
   const oc = orgCtx(), c = plannerCfg(), agenda = feat('agenda'), rem = ZL.list.filter(f => f.remHint && f.flags && f.flags.some(x => feat(x[0])));
   const sw = (k, on, title, sub, dis) => `<label class="psw${dis ? ' dis' : ''}"><input type="checkbox" data-pl="${k}"${on ? ' checked' : ''}${dis ? ' disabled' : ''}><span class="tg"></span><span class="pst"><b>${title}</b><small>${sub}</small></span></label>`;
-  return `<div class="sect"><div class="box"><h3>Planning Board for ${esc(oc.org.name)} <span class="sub">applies to everyone straight away</span></h3>
+  return `<div class="sect"><div class="box"><h3>Planning Board for ${esc(oc.org.name)}</h3>
     ${agenda ? '' : '<p class="stat" style="margin-top:0">The Planning Board is not part of your plan. Ask Zenvora Loop to add it.</p>'}
     <div class="psws">
       ${sw('board', c.board !== false, 'Planning Board for everyone', 'Off: only Account Managers keep the Planning Board. Everyone\'s tasks are kept and come back when you turn it on again.', !agenda)}
@@ -3405,6 +3406,7 @@ $('#orgBody').addEventListener('submit', async e => {
     { const mg = (orgView.members || []).find(m => m.uid === upd.reportsTo); upd.reportsToName = mg ? fullName(mg) : ''; upd.reportsToTitle = mg ? (mg.title || ROLE_LABEL[mg.role] || '') : ''; }
     const m0 = (orgView.members || []).find(m => m.uid === uid) || {};
     if (m0.role === 'owner' && upd.role && upd.role !== 'owner' && lastOwner(uid)) return info('This is the only Owner: make someone else Owner first.');
+    if (m0.role === 'owner' && uid !== cloud.uid && orgCtx().role !== 'owner') return info(`${fullName(m0)} is an Owner: only an Owner can change their details.`);
     try { await cloud.F.updateDoc(orgDoc('members', uid), upd); auditMember(m0, upd); if (upd.role === 'owner') markHasOwner(); orgView.edit = null; document.activeElement.blur(); renderOrg(); info('Saved.'); }
     catch(err){ info('Could not save: ' + errText(err)); }
   }
@@ -3549,7 +3551,7 @@ function orgsList(){
       <label>Temporary password<span class="pwgen"><input id="obPass" value="${esc(supers.tmp)}" autocomplete="off"><button type="button" id="obGen" title="Generate a new password">↻</button></span></label>
       <button class="primary" type="submit" id="obSubmit">Onboard</button><button type="button" id="obCancel">Cancel</button>
     </form>
-    <p class="stat" style="margin:8px 0 0">The Account Manager becomes the admin of this organization only: they add their own people and decide whether Zenvora Loop support may look inside.</p>
+    
     ${msgHtml(supers.msg)}</div>` : (supers.msg || supers.share ? `<div class="box">${msgHtml(supers.msg)}${shareHtml('obShare', supers.share)}</div>` : '');
   const rows = L.slice().sort((a, b) => (a.status !== 'active') - (b.status !== 'active') || String(a.name).localeCompare(String(b.name))).map(o => {
     const st = OST[o.status] || [o.status, 'off'], f = o.features || {};
@@ -3563,7 +3565,7 @@ function orgsList(){
       <td>${isSupportOpen(o) ? `<span class="upill on">Open until ${esc(fmt(o.supportUntil))}</span>` : '<span class="stat">Closed</span>'}</td></tr>`;
   }).join('');
   const lg = supers.legacy || [];
-  const legacy = lg.length && act.length ? `<div class="box legacy"><h3>Logins from before organizations <span class="sub">move each person into their organization; its Account Manager then clicks "Add to team"</span></h3>
+  const legacy = lg.length && act.length ? `<div class="box legacy"><h3>Logins from before organizations</h3>
     ${lg.map(a => `<div class="req" data-legacy="${esc(a.uid)}"><div class="rq"><b>${esc(a.name || a.email)}</b><span>${esc(a.email)}</span></div><select>${act.map(o => `<option value="${esc(o.id)}">${esc(o.name)}</option>`).join('')}</select><button data-mv>Move</button></div>`).join('')}</div>` : '';
   return `<div class="sect">
     <div class="kpis">
@@ -3620,7 +3622,7 @@ function orgsDetail(){
           <button type="submit">Assign</button>
         </form>
       </div>
-      <div class="box"><h3>Support access <span class="sub">read-only, only with the Account Manager's approval</span></h3>
+      <div class="box"><h3>Support access</h3>
         ${open ? `<div class="grant" style="margin-bottom:8px">✅ <span style="flex:1">Open until <b>${esc(fmt(o.supportUntil))}</b></span><button class="primary" data-enter="${esc(o.id)}">Open support view</button></div>`
           : pending ? `<p class="stat" style="margin:0 0 8px">Waiting for ${esc(o.adminEmail || 'the Account Manager')} to approve. They've been notified in the app.</p>`
           : `<form class="aform" id="rqForm" novalidate>
@@ -3917,7 +3919,7 @@ function openCustomize(){
 function drawCustomize(){
   const oc = orgCtx();
   $('#clOvBody').innerHTML = `<div class="ah"><h2 style="font-size:16px;margin:0">Customize your Home</h2><span class="sp"></span><button data-ovclose>Close</button></div>
-    <p class="stat" style="margin:4px 0 0">Tick the widgets you want, put them in order, and choose half or full width.</p>
+    
     <div class="cz">${home.cz.map((w, i) => { const W = WIDGETS[w.id]; return `<div class="czr ${w.off ? 'off' : ''}" data-cz="${i}"><input type="checkbox" data-czon${w.off ? '' : ' checked'}><div><b>${W.ic} ${esc(W.t)}</b><small>${esc(W.d)}</small></div>
       <select data-czsize><option value="half"${w.size !== 'full' ? ' selected' : ''}>Half</option><option value="full"${w.size === 'full' ? ' selected' : ''}>Full width</option></select><button data-czup title="Move up"${i ? '' : ' disabled'}>↑</button><button data-czdn title="Move down"${i < home.cz.length - 1 ? '' : ' disabled'}>↓</button></div>`; }).join('')}</div>
     <div class="btnrow"><button class="primary" id="czSave">Save</button><button id="czReset">Reset to default</button>
@@ -3995,14 +3997,14 @@ function regLoad(force){
 const regPendingForMe = () => (regs.list || []).filter(r => r.status === 'pending' && r.uid !== cloud.uid && (r.approver === cloud.uid || (orgCtx() && isAdminRole(orgCtx().role))));
 const regApprover = () => !!(orgCtx() && (isAdminRole(orgCtx().role) || (regs.list || []).some(r => r.approver === cloud.uid)));
 function regForm(people){
-  return `<div class="box"><h3>Regularize attendance <span class="sub">forgot to check in or out? Ask for the missing time: the reporting manager approves it</span></h3>
+  return `<div class="box"><h3>Regularize attendance</h3>
     <form class="aform" id="attRegForm" novalidate>
       ${people ? `<label class="grow">Person<select id="rgWho">${people.map(a => `<option value="${esc(a.uid)}"${a.uid === cloud.uid ? ' selected' : ''}>${esc(fullName(a))}${a.uid === cloud.uid ? ' (you)' : ''}</option>`).join('')}</select></label>` : ''}
       <label>Date<input type="date" id="rgDate" value="${shiftDay(todayKey, -1)}" min="${shiftDay(todayKey, -31)}" max="${todayKey}"></label>
       <label>Check-in<input type="time" id="rgIn"></label><label>Check-out<input type="time" id="rgOut"></label>
       <label class="grow">Reason *<input id="rgWhy" placeholder="e.g. Forgot to check out, left at 6 PM"></label>
       <button class="primary" type="submit">Send for approval</button></form>
-    <p class="stat" style="margin:6px 0 0">Fill only what was missed: just Check-out if they forgot to check out, just Check-in if they forgot to check in, or both.</p></div>`;
+    </div>`;
 }
 function regTable(L, mode){
   if (!L.length) return '';
@@ -4026,7 +4028,7 @@ function attApprovals(){
   regLoad();
   if (!regs.list) return '<div class="empty">Loading…</div>';
   const P = regPendingForMe(), D = regs.list.filter(r => r.status !== 'pending' && (r.approver === cloud.uid || isAdminRole(orgCtx().role))).slice(0, 20);
-  return `<p class="stat" style="margin:0 0 8px">Regularization requests from the people who report to you. Approving adds the time to their attendance.</p>`
+  return ``
     + (P.length ? regTable(P, 'approve') : '<div class="empty">Nothing waiting for your approval. 👏</div>')
     + (D.length ? `<h3 style="font-size:13px;margin:16px 0 6px">Decided</h3>` + regTable(D, 'done') : '');
 }
@@ -4226,7 +4228,7 @@ function markList(accts, ev){
 }
 function attMark(){
   if (!att.accts.length) return att.key ? '<div class="empty">No staff yet.</div>' : '<div class="empty">Loading team…</div>';
-  return `<p class="stat" style="margin:0 0 8px">Check staff in or out when they can't do it themselves. The time is taken from the server clock and the entry is marked as done by you.</p>` + markList(att.accts, att.ev)
+  return `` + markList(att.accts, att.ev)
     + '<div style="height:14px"></div>' + regProxyBox(att.accts.filter(a => a.active !== false));
 }
 async function proxyPunch(uid, type, btn){
@@ -4326,7 +4328,7 @@ function attDetail(){
           <label>Overtime rate<select id="cfOT">${[1, 1.5, 2].map(m => `<option value="${m}"${+c.otMult === m ? ' selected' : ''}>${m}× hourly</option>`).join('')}</select></label>` : ''}
           <button class="primary" type="submit">Save</button>
         </form>
-        <p class="stat" style="margin:8px 0 0">${OFFS_PER_MONTH} paid offs per month, shared by days off and short hours (a day more than ${SHORT_GRACE_MIN} min under the shift counts its shortfall; ${hm(S.sh)} short = 1 day). Beyond ${OFFS_PER_MONTH}: loss of pay. Offs left over and worked (e.g. Sundays) are paid as extra days. Every minute beyond the shift is overtime.</p>
+        
       </div>`}
       ${pay ? `<div class="box"><h3>Pay for ${esc(parseDay(att.month + '-01').toLocaleDateString([], {month:'long'}))}${S.done ? '' : ' (so far)'}</h3>
         ${pr(`Base: ${S.effMonth} days × ${inr(S.perDay)}/day`, inr(S.base))}
@@ -4357,7 +4359,7 @@ function attMonthEditor(S, a){
       <td class="num">${ss.length ? hm(r.worked || 0) + (r.ot ? `<div class="ot" style="font-size:11.5px">+${hm(r.ot)} OT</div>` : r.short ? `<div class="neg" style="font-size:11.5px">−${hm(r.short)} short</div>` : '') : '—'}</td>
       <td style="white-space:nowrap">${ss.length ? '' : `<button type="button" data-edshift title="Fill with the work timing: ${esc(shiftTxt(S.c))}">Fill shift</button> `}<button type="button" class="primary" data-edsave disabled>Save</button></td></tr>`;
   }
-  return `<div class="box" id="attEditor"><h3>Edit attendance for ${esc(parseDay(att.month + '-01').toLocaleDateString([], {month:'long', year:'numeric'}))} <span class="sub">add, change or remove check-ins and check-outs for any day; several sessions a day are fine (e.g. lunch break)</span></h3>
+  return `<div class="box" id="attEditor"><h3>Edit attendance for ${esc(parseDay(att.month + '-01').toLocaleDateString([], {month:'long', year:'numeric'}))}</h3>
     <div class="btnrow" style="margin:0 0 8px"><span class="stat">Change the times, then <b>Save</b> that day, or</span><button class="primary" id="edSaveAll" disabled>Save all changed days</button></div>
     <div class="awrap" style="margin-top:0"><table class="atbl edtbl"><thead><tr><th>Date</th><th>Status</th><th>Check-in → Check-out</th><th class="num">Worked</th><th></th></tr></thead><tbody>${html}</tbody></table></div></div>`;
 }
@@ -4511,8 +4513,8 @@ ZL.add({
   },
   // Organization → People: work timing, Proxy attendance
   person:{
-    addHtml:() => feat('attendance') ? `<div class="full wtrow"><span class="fhead" style="margin:0">Work timing</span>${wtFields('paW', attCfg(null))}<span class="stat">time worked beyond these hours counts as overtime / extra hours</span></div>` : '',
-    editHtml:m => feat('attendance') ? `<div class="full cperm"><div class="fhead" style="margin:4px 0">Attendance · work timing</div><label class="ckl" style="color:var(--ink);margin-bottom:6px"><input type="checkbox" id="peAttReq"${attRequired(m) ? ' checked' : ''}> <b>Attendance required</b>&nbsp;<span class="stat">untick for people who don't check in (e.g. the Owner): never marked absent, full salary</span></label><div class="wtrow" style="margin-bottom:6px">${wtFields('peW', attCfg(m))}</div><label class="ckl" style="color:var(--ink)"><input type="checkbox" id="peProxy"${m.attProxy ? ' checked' : ''}> <b>Proxy attendance</b>&nbsp;<span class="stat">can check other staff in and out (e.g. reception)</span></label></div>` : '',
+    addHtml:() => feat('attendance') ? `<div class="full wtrow"><span class="fhead" style="margin:0">Work timing</span>${wtFields('paW', attCfg(null))}</div>` : '',
+    editHtml:m => feat('attendance') ? `<div class="full cperm"><div class="fhead" style="margin:4px 0">Attendance · work timing</div><label class="ckl" style="color:var(--ink);margin-bottom:6px"><input type="checkbox" id="peAttReq"${attRequired(m) ? ' checked' : ''}> <b>Attendance required</b>&nbsp;</label><div class="wtrow" style="margin-bottom:6px">${wtFields('peW', attCfg(m))}</div><label class="ckl" style="color:var(--ink)"><input type="checkbox" id="peProxy"${m.attProxy ? ' checked' : ''}> <b>Proxy attendance</b>&nbsp;</label></div>` : '',
     read(where, role, m){
       if (where === 'add') return $('#paWS') && !isAdminRole(role) ? {att:wtRead('paW')} : {};
       const o = {}; if ($('#peAttReq')) o.attRequired = $('#peAttReq').checked; if ($('#peProxy')) o.attProxy = $('#peProxy').checked; if ($('#peWS')) o.att = wtRead('peW', (m || {}).att); return o;
@@ -4771,7 +4773,7 @@ function clPAssists(){
   const X = (cl.pAs || []).slice().sort((a, b) => String(b.date).localeCompare(String(a.date)));
   return `<div class="sect"><div class="awrap" style="margin-top:0"><table class="atbl"><thead><tr><th>Appointment date</th><th>Treatment</th><th>Doctor</th><th>Assistant</th><th>Approval</th><th>Incentive</th><th>Added by</th></tr></thead><tbody>
     ${X.map(x => `<tr><td>${esc(fmtShort(x.date))}</td><td>${esc(x.typeName || '—')}</td><td>${esc(dName(x.doctorId) || '—')}</td><td><b>${esc(x.name || '')}</b></td><td>${asBadge(x)}</td><td>${AS_ELIG[x.status || 'pending']}</td><td class="stat">${esc(x.addedByName || String(x.addedBy || '').split('@')[0] || (x.uid === undefined ? '' : x.name))}</td></tr>`).join('') || '<tr><td colspan="7" class="stat">No assists recorded for this patient.</td></tr>'}
-    </tbody></table></div>${asOwner() ? '<p class="stat">Add a missed assist or correct one in Patient assists → All assists.</p>' : ''}</div>`;
+    </tbody></table></div>${asOwner() ? '' : ''}</div>`;
 }
 function clProfileForm(p){
   const ro = !canW('patients');
@@ -4849,7 +4851,7 @@ function clTreatments(){
   const types = cl.types.filter(t => t.active !== false);
   const lastAppt = (cl.pA || []).filter(a => a.date <= todayKey && a.status !== 'cancelled').sort((a, b) => String(b.date + b.time).localeCompare(String(a.date + a.time)))[0];
   const defDoc = (lastAppt && lastAppt.doctorId) || cl.p.primaryDoctorId || '';
-  const add = w ? `<div class="box"><h3>Add treatment <span class="sub">the doctor chosen here is credited in reports</span></h3>
+  const add = w ? `<div class="box"><h3>Add treatment</h3>
     <form class="aform" id="clTForm" novalidate>
       <label>Date<input type="date" id="tfDate" value="${todayKey}"></label>
       <label class="grow">Treatment<select id="tfType" class="srch">${types.map(t => `<option value="${esc(t.id)}" data-cost="${+t.cost || 0}">${esc(t.name)}</option>`).join('')}</select></label>
@@ -4875,7 +4877,7 @@ function clTreatments(){
   return `<div class="sect">${add}
     <div class="awrap" style="margin-top:0"><table class="atbl"><thead><tr><th>Treatment</th><th>Doctor</th><th class="num">Cost</th><th class="num">Discount</th><th class="num">Net</th><th>Status</th>${w ? '<th></th>' : ''}</tr></thead>
     <tbody>${cl.pT === null ? '<tr><td colspan="7">Loading…</td></tr>' : html || '<tr><td colspan="7" class="stat">No treatments yet.</td></tr>'}</tbody></table></div>
-    <p class="stat">Planned treatments aren't billed. In-progress and completed treatments count towards the patient's balance; completed ones count as earnings in reports.</p></div>`;
+    </div>`;
 }
 /* tablets / prescriptions */
 function clRx(){
@@ -4883,7 +4885,7 @@ function clRx(){
   const groups = []; M.forEach(m => { const k = m.date + '|' + (m.appointmentId || ''); let g = groups.find(x => x.k === k); if (!g) groups.push(g = {k, date:m.date, appt:m.appointmentId, doc:m.doctorId, items:[]}); g.items.push(m); });
   const lastAppt = (cl.pA || []).filter(a => a.date <= todayKey && a.status !== 'cancelled').sort((a, b) => String(b.date + b.time).localeCompare(String(a.date + a.time)))[0];
   return `<div class="sect">
-    ${w ? `<div class="box"><h3>Add tablets / medicines <span class="sub">tick Morning / Afternoon / Evening / Night and the days: tablets and cost are worked out and billed</span></h3>
+    ${w ? `<div class="box"><h3>Add tablets / medicines</h3>
       <form id="clRxForm" novalidate>
         <div class="aform" style="margin-bottom:8px"><label>Date<input type="date" id="rxDate" value="${todayKey}" max="${todayKey}"></label><label>Doctor<select id="rxDoc">${docOpts((lastAppt && lastAppt.doctorId) || cl.p.primaryDoctorId || '', '— Select —')}</select></label></div>
         <div id="rxMeds">${medRow(0)}</div>
@@ -4959,7 +4961,7 @@ function clPhotos(){
     return `<div class="box"><h3>${t ? `${esc(t.typeName)}${t.tooth ? ' · ' + esc(t.tooth) : ''} <span class="sub">${esc(fmtShort(t.date))} · ${esc(dName(t.doctorId))}</span>` : 'General'}</h3>
       <div class="phrow">${PSTAGES.map(([k, l]) => xs.some(x => x.stage === k) ? `<div class="phcol"><div class="stat">${l}</div><div class="phgrid">${xs.filter(x => x.stage === k).map(card).join('')}</div></div>` : '').join('')}</div></div>`;
   }).join('');
-  return `<div class="sect">${w ? `<div class="box"><h3>Add photos <span class="sub">compressed in your browser before upload</span></h3>
+  return `<div class="sect">${w ? `<div class="box"><h3>Add photos</h3>
     <form class="aform" id="clPhForm" novalidate>
       <label>Stage<select id="phStage">${PSTAGES.map(([k, l]) => `<option value="${k}">${l}</option>`).join('')}</select></label>
       <label class="grow">For treatment<select id="phT"><option value="">— General —</option>${tOpts}</select></label>
@@ -5104,7 +5106,7 @@ function clBookForm(){
       <label>Time<input type="time" id="bkTime" step="300" value="${esc(w.time || b.time || '10:00')}"></label>
       <label>Minutes<select id="bkDur">${[15, 30, 45, 60, 90].map(n => `<option${n === +(w.duration || 15) ? ' selected' : ''}>${n}</option>`).join('')}</select></label>
       <label class="grow full">Reason<input id="bkReason" value="${esc(w.reason || '')}" placeholder="e.g. Toothache, RCT 2nd sitting, review"></label>
-      <label class="grow full">Transfer reason <span class="stat">(only if the patient is moving to a different doctor)</span><input id="bkWhy" value="${esc(w.transferReason || '')}" placeholder="e.g. extraction by the surgeon, suture removal back to the Chief doctor"></label>
+      <label class="grow full">Transfer reason<input id="bkWhy" value="${esc(w.transferReason || '')}" placeholder="e.g. extraction by the surgeon, suture removal back to the Chief doctor"></label>
       <div class="btnrow full"><button class="primary" type="submit">${b.id ? 'Save' : 'Book'}</button></div>
     </form>`;
 }
@@ -5406,7 +5408,7 @@ function accExpenses(d){
       ${w ? `<button class="primary" id="exAddBtn">${a.exAdd ? '✕ Close' : '+ Add expense'}</button>` : ''}</div>
     <div class="exbar">${bySrc.filter(([, v]) => v).map(([k, v]) => `<i style="flex:${v};background:${EXP_COL[k]}" title="${EXP_SRC[k][0]} ${inr(v)}"></i>`).join('') || '<i style="flex:1;background:var(--line)"></i>'}</div>
     <div class="exchips">${bySrc.map(([k, v]) => `<button class="exchip${f.src === k ? ' on' : ''}${v ? '' : ' zero'}" data-exsrc="${k}" style="--c:${EXP_COL[k]}" title="Show only ${EXP_SRC[k][0]}"><i></i>${EXP_SRC[k][0]}<b>${inr(v)}</b></button>`).join('')}</div>
-    ${w && a.exAdd ? `<div class="box exadd"><h3>Add an expense <span class="sub">rent, EB, clinic loan, internet, maintenance, miscellaneous … (lab, materials, consultants, salary and petty cash have their own pages)</span></h3>${expForm(a.pre)}</div>` : ''}
+    ${w && a.exAdd ? `<div class="box exadd"><h3>Add an expense</h3>${expForm(a.pre)}</div>` : ''}
     ${nOut ? `<details class="box exoutl"${overdue.length || a.exOutOpen ? ' open' : ''}><summary><b>Payments to make</b> <span class="stat">${plural(nOut, 'item')} · ${inr(outTot)}</span></summary>
       ${unpaid.map(x => `<div class="orow" data-led="${esc(x.id)}"><span class="cdot${payState(x) === 'overdue' ? ' late' : ''}"></span><div><b>${esc(x.category)}</b><span class="sub2">${esc([party(x), x.note].filter(Boolean).join(' · ').slice(0, 60))} · ${esc(monthLabel(svcMonth(x)))}</span></div><div class="opill">${payPill(x)}</div><b class="oamt">${inr(x.amount)}</b>${w ? '<button class="primary sm" data-billpay>Mark paid</button>' : '<span></span>'}</div>`).join('')}
       ${cons.map(x => outRow('', 'Consultant fees', esc(x.c.name) + ': not yet paid', `<a class="srcl" data-at="consultants" href="#/clinic/accounts/consultants">Pay in Consultants</a>`, inr(x.bal))).join('')}
@@ -5422,7 +5424,7 @@ function accExpenses(d){
         <td>${esc((PMODES.find(m => m[0] === x.mode) || [0, ''])[1])}</td><td>${x.src === 'fee' ? '<span class="stat">see Consultants</span>' : payPill(x)}</td><td class="num"><b>${inr(x.amount)}</b></td>
         <td class="nowrap">${x.src === 'ledger' ? billCell(x) : ''}${w && x.src === 'ledger' && x.paid === false ? ' <button class="primary sm" data-billpay>Mark paid</button>' : ''}${w && own ? ' <button class="ghost xdel" data-ldel title="Delete (a copy is kept in the audit log)">✕</button>' : ''}</td></tr>`; }).join('') || '<tr><td colspan="7" class="stat">No expenses for this selection.</td></tr>'}
     </tbody></table></div>
-    <p class="stat">Each expense is recorded once, on its own page; this page adds them up. Petty cash counts when the box is topped up (the spends are listed on the Petty cash page). Consultant payouts settle fees already counted; the Daily tally is a cash check, not an expense.</p>`;
+    `;
 }
 function accPetty(d){
   const a = cl.acc, owner = canW('accounts'), spend = canW('petty') || owner, inM = x => (x.date || '').slice(0, 7) === a.month;
@@ -5434,9 +5436,9 @@ function accPetty(d){
       ${kpi('Topped up this month', inr(tin), esc(monthLabel(a.month)))}${kpi('Spent this month', inr(tout), plural(L.filter(x => x.kind === 'pettyspend' && !x.change).length, 'spend') + (L.some(x => x.change) ? ` · ${inr(paidSum(L.filter(x => x.change)))} given as change` : ''))}</div>
     ${bal < 0 || !everIn ? `<div class="nag${bal < 0 ? ' late' : ''}">${bal < 0 ? `⚠ ${inr(-bal)} more has been recorded as spent than was ever topped up, so the balance can't be right.` : 'No top-up or opening balance has been recorded yet.'} ${owner ? 'Count the cash in the petty box and enter it below: that sets the correct balance.' : 'Ask the clinic owner to count the box and set the opening balance.'}</div>` : ''}
     <div class="acards">
-      ${owner ? `<div class="box"><h3>Count the box / opening balance <span class="sub">enter the cash in the petty box right now</span></h3><form class="aform" id="accPcountForm" novalidate>
+      ${owner ? `<div class="box"><h3>Count the box / opening balance</h3><form class="aform" id="accPcountForm" novalidate>
         <label>Cash in the box now (₹) *<input type="number" id="pcAmt" min="0" placeholder="e.g. 2000"></label><button class="primary" type="submit">Set balance</button></form>
-        <p class="stat" style="margin:6px 0 0">The difference is recorded as an opening balance (or a correction), so the balance shown always equals the cash you have.</p></div>` : ''}
+        </div>` : ''}
       ${owner ? `<div class="box"><h3>Top up petty cash <span class="sub">clinic owner / accounts</span></h3><form class="aform" id="accPinForm" novalidate>
         <label>Date<input type="date" id="piDate" value="${dflt}" max="${todayKey}"></label><label>Amount (₹) *<input type="number" id="piAmt" min="1"></label>
         <label>Taken from<select id="piSrc"><option value="drawer">Main cash drawer</option><option value="bank">Bank</option><option value="owner">Owner / other</option></select></label>
@@ -5491,7 +5493,7 @@ function accConsultants(d){
     ${sel ? consVisits(d, sel) : ''}
     ${sel ? `<details class="box" style="margin-top:12px"><summary><b>All fees &amp; payments · ${esc(dName(sel))} · ${esc(monthLabel(a.month))}</b></summary>
       ${tbl(['Date', 'Patient', 'For', 'Type', '₹Amount'], list.map(x => ({c:[esc(fmtShort(x.date)), esc(x.patient || '—'), esc(x.what), x.kind === 'Paid' ? '<span class="upill on">Paid</span>' : 'Fee', x.amt < 0 ? '− ' + inr(-x.amt) : inr(x.amt)]})))}</details>` : ''}
-    <p class="stat">A consultant's fee is entered on each treatment they do (or with + Fee) and counts as a clinic expense. "Pay" records money handed over, which reduces what you owe them.</p>`;
+    `;
 }
 /* consultant visits: the days a consultant came (from their appointments), each patient seen and what the clinic pays for that patient */
 function consRows(d, sel){
@@ -5524,7 +5526,7 @@ function consVisits(d, sel){
       <div class="kpi"><div class="kl">Month total</div><div class="kv" id="cvTot">${inr(tot)}</div></div><div class="kpi"><div class="kl">Cost not entered</div><div class="kv${open ? ' neg' : ''}" id="cvOpen">${open}</div></div></div>
     ${fd ? `<div class="stat">Showing ${esc(fmtLong(fd))} · <button class="linkb" data-cday="">show the whole month</button></div>` : ''}
     ${body}
-    <p class="stat">Visits come from the appointments booked with ${esc(dName(sel))} (cancelled ones are left out). ${w ? 'Enter what the clinic pays for each patient; it saves as you type and counts as a consultant fee.' : ''}</p></div>`;
+    </div>`;
 }
 function consTable(rows, w){
   let html = '', last = '';
@@ -5595,15 +5597,15 @@ function accSalary(d){
 function accSetup(){
   const m = ameta(), w = canW('accounts');
   return `<div class="acards">
-    <div class="box"><h3>Payment due date <span class="sub">for every month's bills, salaries and commitments</span></h3>
+    <div class="box"><h3>Payment due date</h3>
       <label class="stat">A month's payments are due by day <input type="number" id="stDueDay" min="1" max="28" value="${dueDayOf()}" style="width:70px"${w ? '' : ' disabled'}> of the next month
-        <span class="stat">(e.g. October's by ${esc(fmtLong(dueFor(todayKey.slice(0, 4) + '-10')))}). Reminders: 3 days before, on the day and when overdue.</span></label></div>
-    <div class="box"><h3>Monthly commitments <span class="sub">enter each month's amount by the due date, or a reminder goes to the Planning Board</span></h3>
+       </label></div>
+    <div class="box"><h3>Monthly commitments</h3>
       ${m.commitments.map(c => `<div class="crow" data-cm="${esc(c.id)}"><b>${esc(c.name)}</b><span class="sp"></span><label class="stat">Expected ₹ <input type="number" data-cmamt value="${+c.amount || ''}" min="0" style="width:100px"${w ? '' : ' disabled'}></label>${w ? '<button class="danger" data-cmdel>✕</button>' : ''}</div>`).join('') || '<div class="stat">None yet.</div>'}
       ${w ? `<form class="aform" id="accCmForm" novalidate style="margin-top:8px"><label class="grow">Add a commitment<input id="cmName" placeholder="e.g. Electricity, Internet, Salary"></label><label>Expected ₹<input type="number" id="cmAmt" min="0"></label><button class="primary" type="submit">Add</button></form>` : ''}</div>
-    <div class="box"><h3>Expense categories <span class="sub">your own list, used in Clinic expenses</span></h3>
+    <div class="box"><h3>Expense categories</h3>
       <div class="chips">${m.cats.map(c => `<span class="chip" data-cat="${esc(c)}">${esc(c)}${w ? ' <button data-catdel title="Remove">✕</button>' : ''}</span>`).join('') || '<span class="stat">No categories yet.</span>'}</div>
-      <p class="stat">Commitments, Lab, Materials and Consultant fees are always available. Petty cash is handled in its own tab.</p>
+      
       ${w ? `<form class="aform" id="accCatForm" novalidate><label class="grow">New category<input id="catName" placeholder="e.g. Equipment repairs, Marketing"></label><button class="primary" type="submit">Add</button></form>` : ''}</div>
   </div>`;
 }
@@ -5612,18 +5614,18 @@ const fyOf = k => { const y = +k.slice(0, 4), m = +k.slice(5, 7); return m >= 4 
 function accImport(){
   const fy0 = fyOf(todayKey), fys = [fy0, fy0 - 1, fy0 - 2];
   return `<div class="acards">
-    <div class="box"><h3>Add past income <span class="sub">e.g. collections before you started using Zenvora Loop</span></h3>
+    <div class="box"><h3>Add past income</h3>
       <form class="aform" id="accIncForm" novalidate><label>Month<input type="month" id="inMonth" max="${todayKey.slice(0, 7)}" value="${mShift(todayKey.slice(0, 7), -1)}"></label><label>Amount (₹) *<input type="number" id="inAmt" min="1"></label>
         <label class="grow">Note<input id="inNote" placeholder="e.g. Total collections (from old register)"></label><button class="primary" type="submit">Add income</button></form>
-      <p class="stat">Past expenses: use Clinic expenses with an old date, or paste many rows below.</p></div>
-    <div class="box"><h3>Paste many rows <span class="sub">from Excel / Google Sheets</span></h3>
+      </div>
+    <div class="box"><h3>Paste many rows</h3>
       <form id="accBulkForm" novalidate><textarea id="bkRows" rows="6" placeholder="date, income|expense, category, amount, note&#10;2026-08-05, expense, Rent, 25000, August rent&#10;2026-08-31, income, Past collections, 182000, August total"></textarea>
-        <div class="btnrow" style="margin-top:6px"><button class="primary" type="submit">Import rows</button><span class="stat">Dates as YYYY-MM-DD or DD/MM/YYYY. One row per line.</span></div></form></div>
+        <div class="btnrow" style="margin-top:6px"><button class="primary" type="submit">Import rows</button></div></form></div>
     <div class="box"><h3>Year-end audit pack <span class="sub">for your auditor</span></h3>
-      <p class="stat" style="margin:0 0 8px">Downloads one ZIP with income, expenses (with bill numbers and GST), vendor bills, consultant payments, petty cash, daily tallies, a month-by-month summary, and every attached bill copy.</p>
+      
       <div class="btnrow"><select id="fySel">${fys.map(y => `<option value="${y}">FY ${y}-${String(y + 1).slice(2)} (Apr ${y} – Mar ${y + 1})</option>`).join('')}</select><button class="primary" id="auditBtn">⬇ Download audit pack</button></div></div>
   </div>
-  ${(cl.acc.d && cl.acc.d.audit) ? `<div class="box" style="margin-top:12px"><h3>Audit log <span class="sub">every deleted money record is kept here, with who deleted it and when</span></h3>
+  ${(cl.acc.d && cl.acc.d.audit) ? `<div class="box" style="margin-top:12px"><h3>Audit log</h3>
     ${tbl(['When', 'By', 'What', 'Details', '₹Amount'], cl.acc.d.audit.slice().sort((x, y) => (y.at || 0) - (x.at || 0)).slice(0, 100).map(x => { const d0 = x.data || {};
       return {c:[esc(fmt(x.at)), esc((x.by || '').split('@')[0]), esc(x.coll === 'tallies' ? 'Daily tally ' + (d0.date || '') : (d0.kind === 'pettyspend' ? 'Petty spend' : d0.kind === 'petty' ? 'Petty top-up' : d0.kind || 'Entry') + (d0.category ? ' · ' + d0.category : '')), esc([d0.date, d0.note].filter(Boolean).join(' · ').slice(0, 80)), inr(d0.amount != null ? d0.amount : d0.counted || 0)]}; }))}</div>` : ''}`;
 }
@@ -5712,7 +5714,7 @@ function accTally(){
     ${first ? `<div class="nag soft tfirst">🆕 <b>First tally.</b> Count <b>all the cash in the purse now</b>, today's collections included, and save. That is your starting point: from the next tally on, every day is checked against it.</div>` : ''}
     ${gap ? `<div class="nag">The last tally was on ${esc(fmtLong(prev.date))}; the days in between weren't tallied, so their cash isn't checked. The opening here is that day's closing count.</div>` : ''}
     <div class="tally tmain">
-      <div class="box tpurse"><h3>💵 Cash in the purse now <span class="sub">count every note and coin</span></h3>
+      <div class="box tpurse"><h3>💵 Cash in the purse now</h3>
         ${prefill ? `<div class="nag soft">Filled in from the opening cash${B.withDen.length ? ` and ${plural(B.withDen.length, 'cash bill')}'s notes` : ''}. Count the purse and change only what differs.${B.noDen ? ` ${plural(B.noDen, 'cash payment')} had no notes counted, so ${B.noDen === 1 ? "it isn't" : "they aren't"} included.` : ''}${B.cashExp || B.toPetty ? " Cash paid out for expenses / petty cash isn't taken off note by note: take those notes out too." : ''}</div>` : ''}
         ${denGrid(DENOMS, 'den', done ? done.counts : prefill, w)}
         <div class="ttot"><span>Cash in the purse</span><b id="tlCounted">₹0</b></div>
@@ -5723,21 +5725,21 @@ function accTally(){
         ${row(`+ Cash received <span class="stat">Collection report · ${plural(pays.length, 'payment')}</span>`, inr(B.cashIn))}
         ${B.chPetty || (done && +done.chPetty) ? row("+ Patients' change paid from petty cash <span class=\"stat\">their notes stayed in the purse</span>", inr(B.chPetty)) : ''}
         ${B.chOther || (done && +done.chOther) ? row(`+ Patients' change paid from elsewhere <span class="stat">${esc([...new Set(B.withDen.flatMap(x => (x.cash.xs || []).filter(s => s.src === 'other').map(s => s.name)))].join(', '))}</span>`, inr(B.chOther)) : ''}
-        ${row('± Other cash in / out <span class="stat">change brought in, bank, expenses, petty cash (below)</span>', '₹0', 'tlOtherR')}
+        ${row('± Other cash in / out', '₹0', 'tlOtherR')}
         <div class="payrow tsum"><span>Expected in the purse</span><b id="tlExpV">—</b></div>
         <div class="payrow"><span>Counted</span><b id="tlCountR">—</b></div>
         <div class="tdiff" id="tlDiff"></div>
         <div class="payrow stat"><span>Cash received as per the count <span class="stat">vs ${inr(B.cashIn)} in the report</span></span><span id="tlColl">—</span></div>
         ${pays.length ? `<details class="stat"><summary>Cash payments</summary>${pays.map(x => `<div>${esc(x.patientName)} · ${esc(x.receiptNo || '')} · ${inr(x.amount)}${x.cash ? ` · <span class="cdmini">${esc(cashLine(x))}</span>` : ' · <i>notes not counted</i>'}</div>`).join('')}</details>` : ''}</div>
     </div>
-    <details class="box tmore"${more ? ' open' : ''}><summary><b>More</b> <span class="stat">opening cash · change brought in · bank withdrawals &amp; deposits · expenses &amp; petty cash</span></summary>
+    <details class="box tmore"${more ? ' open' : ''}><summary><b>More</b></summary>
       ${first ? '' : `<div class="topen"><div class="tob"><span>Opening cash</span><b class="big" id="tlOpenV">${inr(opening)}</b>
         <span class="stat">${fix ? 'correcting the opening: count again and give the reason' : prev && !done ? 'closing count of the last tally, ' + esc(fmtDM(prev.date)) : 'as tallied' + (done && done.openingFix ? ` · corrected by ${esc((done.openingFix.by || '').split('@')[0])}: ${esc(done.openingFix.reason || '')}` : '')}</span>
         ${!fix && canW('accounts') ? `<button class="linkb" data-tlopen="${esc(day)}" title="Correct the opening cash (recorded with your name and reason)">✎ Correct opening</button>` : ''}${fix ? '<button class="linkb" data-tlopen="">Cancel</button>' : ''}</div>
         ${fix ? denGrid(DENOMS, 'op', openCounts || {}, w) : `<div class="dchips">${openCounts ? chip(openCounts) : ''}</div>`}
         ${fix ? '<input id="tlOpenWhy" placeholder="Reason for the correction *" style="flex-basis:100%">' : ''}</div>`}
       <div class="tally">
-        <div><h3 class="tmh">Change brought in <span class="sub">coins &amp; notes added to the purse (e.g. from the bank)</span></h3>${denGrid(CHG, 'ch', done && done.changeCounts, w)}
+        <div><h3 class="tmh">Change brought in</h3>${denGrid(CHG, 'ch', done && done.changeCounts, w)}
           <div class="payrow tsum"><span>Change brought in</span><b id="tlChangeV">₹0</b></div></div>
         <div><h3 class="tmh">Bank, expenses &amp; petty cash</h3>
           <div class="payrow"><span>+ Cash withdrawn from the bank / added</span><span>${w ? `<input type="number" class="tin" id="tlAdd" min="0" value="${done && +done.added || ''}" placeholder="0">` : inr(done && done.added)}</span></div>
@@ -5999,7 +6001,7 @@ function clReportHtml(){
     const val = (pk, id) => d.t.filter(t => t.doctorId === id && t.status === 'completed' && perOf(G, t.date) === pk).reduce((a, t) => a + net(t), 0), used = rows.filter(x => x.tot > 0).map(x => x.id);
     if (chart) return bar('Doctors & consultants') + `<h3 style="font-size:13px;margin:4px 0 6px">Treatment value by doctor</h3>` + hbarChart(rows.map(x => ({label:x.raw[0], v:x.tot})), true)
       + `<h3 style="font-size:13px;margin:16px 0 6px">By ${G === 'month' ? 'month' : G === 'year' ? 'year' : 'day'}</h3>` + stackChart(periodsIn(G, r.from, r.to).map(pk => ({label:perLabel(G, pk), short:short(pk), parts:Object.fromEntries(used.map(id => [id, val(pk, id)]))})), used, names, true);
-    html = bar('Doctors & consultants') + '<p class="stat">Each treatment is credited to the doctor recorded on it. Click a doctor for their statement.</p>'
+    html = bar('Doctors & consultants') + ''
       + (G !== 'day' && used.length ? perTable('Treatment value by ' + (G === 'month' ? 'month' : 'year'), used, names, val, true) : '')
       + tbl(['Doctor', '#Visits done', '#Patients', '#Treatments', '₹Treatment value', '₹Consultant fees'], rows, null, 'otbl');
   }
@@ -6048,7 +6050,7 @@ function clSetup(){
   const s = cl.settings;
   if (isOwner() && !cl.members && !cl.mLoading){ cl.mLoading = true; cloud.F.getDocs(cloud.F.collection(cloud.fs, 'orgs', orgCtx().orgId, 'members')).then(qs => { cl.members = docsOf(qs).filter(m => !m.removed && m.active); cl.mLoading = false; if (cl.sec === 'setup') renderClinic(); }).catch(() => { cl.mLoading = false; }); }
   return `<div class="clhead"><h2>Clinic setup</h2></div><div class="acards">
-    <div class="box"><h3>Doctors <span class="sub">assigned to cases, appointments and treatments</span></h3>
+    <div class="box"><h3>Doctors</h3>
       <form class="aform" id="clDocForm" novalidate>
         <label class="grow">Name<input id="dcName" placeholder="Dr. …"></label>
         <label>Type<select id="dcType">${Object.entries(DTYPE).map(([k, l]) => `<option value="${k}"${k === 'primary' ? ' selected' : ''}>${l}</option>`).join('')}</select></label>
@@ -6061,15 +6063,15 @@ function clSetup(){
           ${cl.members ? `<td><select data-doclogin title="Link to this doctor's Zenvora Loop login (the Chief doctor gets daily-tally reminders)"><option value="">— none —</option>${cl.members.map(m => `<option value="${esc(m.id)}"${m.id === d.memberUid ? ' selected' : ''}>${esc(fullName(m))}</option>`).join('')}</select></td>` : ''}
           <td><button data-docact>${d.active === false ? 'Activate' : 'Deactivate'}</button></td></tr>`).join('') || '<tr><td colspan="4" class="stat">No doctors yet.</td></tr>'}
       </tbody></table></div>
-      <p class="stat">Consultants get a "Consultant fee" box on each treatment they do; it goes into Accounts automatically. Link the Chief doctor to their login so they get the daily-tally reminders.</p></div>
-    <div class="box"><h3>Treatment list &amp; prices <span class="sub">each one is a reporting vertical</span></h3>
+      </div>
+    <div class="box"><h3>Treatment list &amp; prices</h3>
       <form class="aform" id="clTypeForm" novalidate><label class="grow">Treatment<input id="tyName" placeholder="e.g. Root canal (RCT)"></label><label>Default price (₹)<input type="number" id="tyCost" min="0" step="50"></label><button class="primary" type="submit">Add</button>
         ${cl.types.length ? '' : '<button type="button" id="tySeed">Add common dental treatments</button>'}</form>
       <div class="awrap"><table class="atbl"><thead><tr><th>Treatment</th><th class="num">Price (₹)</th><th title="Billing this treatment puts a document upload on the Planning Board backlog until it's attached">Needs document</th><th></th></tr></thead><tbody>
         ${cl.types.map(t => `<tr data-ty="${esc(t.id)}"${t.active === false ? ' style="opacity:.55"' : ''}><td>${esc(t.name)}</td><td class="num"><input type="number" data-tycost value="${+t.cost || 0}" min="0" step="50" style="width:100px"></td>
           <td><select data-tyneed><option value="">—</option>${DOC_KINDS.map(k => `<option${k === needsDocOf(t) ? ' selected' : ''}>${k}</option>`).join('')}</select></td><td><button data-tyact>${t.active === false ? 'Activate' : 'Hide'}</button></td></tr>`).join('') || '<tr><td colspan="4" class="stat">No treatments yet.</td></tr>'}
       </tbody></table></div></div>
-    <div class="box"><h3>Medicine price list <span class="sub">price per tablet / unit: used for prescriptions and added to the bill</span></h3>
+    <div class="box"><h3>Medicine price list</h3>
       <form class="aform" id="clMedForm" novalidate><label class="grow">Medicine<input id="mdName" placeholder="e.g. Amoxicillin 500 mg"></label><label>Price (₹) per unit<input type="number" id="mdPrice" min="0" step="0.5"></label>
         <label>Unit<select id="mdUnit">${MED_UNITS.map(u => `<option>${u}</option>`).join('')}</select></label><button class="primary" type="submit">Add</button>
         ${(cl.meds || []).length ? '' : '<button type="button" id="medSeed">Add common dental medicines</button>'}</form>
@@ -6077,7 +6079,7 @@ function clSetup(){
         ${(cl.meds || []).map(m => `<tr data-med="${esc(m.id)}"${m.active === false ? ' style="opacity:.55"' : ''}><td>${esc(m.name)}</td><td><select data-medunit>${MED_UNITS.map(u => `<option${u === (m.unit || 'Tablet') ? ' selected' : ''}>${u}</option>`).join('')}</select></td>
           <td class="num"><input type="number" data-medprice value="${+m.price || 0}" min="0" step="0.5" style="width:90px"></td><td><button data-medact>${m.active === false ? 'Activate' : 'Hide'}</button></td></tr>`).join('') || '<tr><td colspan="4" class="stat">No medicines yet.</td></tr>'}
       </tbody></table></div></div>
-    <div class="box"><h3>Clinic details <span class="sub">printed on receipts and statements</span></h3>
+    <div class="box"><h3>Clinic details</h3>
       <form class="aform" id="clSetForm" novalidate>
         <label class="grow">Clinic name<input id="stName" value="${esc(s.clinicName || orgCtx().org.name)}"></label>
         <label class="grow full">Address<input id="stAddr" value="${esc(s.address || '')}"></label>
@@ -6516,28 +6518,22 @@ function sumRow(i, a, t){
     <select data-sf="type" class="srch">${t ? '' : '<option value="">— Treatment * —</option>'}${types.map(x => `<option value="${esc(x.id)}" data-cost="${+x.cost || 0}"${t && x.id === t.typeId ? ' selected' : ''}>${esc(x.name)}</option>`).join('')}</select>
     <input data-sf="tooth" data-teeth placeholder="🦷 Tooth no." autocomplete="off" value="${t ? esc(t.tooth || '') : ''}">
     <select data-sf="doc">${docOpts(doc, '— Doctor —')}</select>
-    ${asPicker(t)}
     <input type="number" data-sf="cost" min="0" step="50" value="${t ? +t.cost || 0 : ''}" placeholder="Cost ₹ *">
     <input type="number" data-sf="disc" min="0" step="50" value="${t && +t.discount ? +t.discount : ''}" placeholder="Discount">
     <select data-sf="status">${[['completed', 'Completed'], ['progress', 'In progress'], ['planned', 'Planned (next visit)']].map(([k, l]) => `<option value="${k}"${t && t.status === k ? ' selected' : ''}>${l}</option>`).join('')}</select>
     <input type="number" data-sf="fee" min="0" step="50" placeholder="Consultant fee" value="${t && +t.consultantFee ? +t.consultantFee : ''}"${cons ? '' : ' hidden'}>
-    <button type="button" class="danger" data-srdel title="Remove">✕</button></div>`;
+    <button type="button" class="danger" data-srdel title="Remove">✕</button>${asPicker(t)}</div>`;
 }
-/* "Assisted by" for one treatment: tick one or more people, or none */
+/* "Assisted by" for one treatment: tap names to select one or more; none selected = None */
 function asPicker(t){
   const on = new Set(t ? ((cl.sum && cl.sum.AS) || []).filter(x => x.treatmentId === t.id).map(x => x.uid) : []), dir = cl.dir || [];
-  const lbl = dir.filter(p => on.has(p.uid)).map(p => p.name).join(', ') || 'None';
-  return `<details class="aspk" data-sf="asst"><summary title="Who assisted on this treatment (sent to the doctor for incentive approval)">👥 <span data-asl>${esc(lbl)}</span></summary><div class="aspl">
-    <label class="ckl"><input type="checkbox" data-asnone${on.size ? '' : ' checked'}> None</label>
-    ${dir.map(p => `<label class="ckl"><input type="checkbox" data-asu="${esc(p.uid)}"${on.has(p.uid) ? ' checked' : ''}> ${esc(p.name)}</label>`).join('') || '<span class="stat">No staff logins yet</span>'}</div></details>`;
+  return `<div class="aschips"><span class="ascl">👥 Assisted by</span><button type="button" class="aschip none${on.size ? '' : ' on'}" data-asnone>None</button>${dir.map(p => `<button type="button" class="aschip${on.has(p.uid) ? ' on' : ''}" data-asu="${esc(p.uid)}">${esc(p.name)}</button>`).join('')}</div>`;
 }
-document.addEventListener('change', e => {
-  const t = e.target, box = t.closest && t.closest('.aspk'); if (!box) return;
-  if (t.matches('[data-asnone]') && t.checked) box.querySelectorAll('[data-asu]').forEach(c => c.checked = false);
-  if (t.matches('[data-asu]') && t.checked) box.querySelector('[data-asnone]').checked = false;
-  const names = [...box.querySelectorAll('[data-asu]:checked')].map(c => c.parentElement.textContent.trim());
-  if (!names.length) box.querySelector('[data-asnone]').checked = true;
-  box.querySelector('[data-asl]').textContent = names.join(', ') || 'None';
+document.addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('.aschip'); if (!b) return;
+  const box = b.closest('.aschips');
+  if (b.matches('[data-asnone]')) box.querySelectorAll('[data-asu]').forEach(c => c.classList.remove('on')); else b.classList.toggle('on');
+  box.querySelector('[data-asnone]').classList.toggle('on', !box.querySelector('[data-asu].on'));
 });
 function medRow(i, m){
   const meds = (cl.meds || []).filter(x => x.active !== false || (m && x.id === m.medId)), d = (m && m.dose) || {};
@@ -6564,12 +6560,12 @@ function clSummaryForm(){
   return `<div class="ah"><button type="button" class="abk" data-smback style="margin:0" title="${back === 'bill' ? 'Back to the bill' : 'Back to the queue: the patient stays In chair'}">← Back</button><h2 style="font-size:16px;margin:0">What happened in this appointment?</h2><span class="sp"></span><button data-ovclose>Close</button></div>
     <p class="stat" style="margin:4px 0 10px"><b>${esc(a.patientName)}</b> · ${esc(fmtShort(a.date))} ${esc(hm12(a.time))} · ${esc(dName(a.doctorId))}${a.reason ? ' · ' + esc(a.reason) : ''}</p>
     <form id="clSumForm" novalidate>
-      ${w ? `<div class="fhead" style="margin:0 0 4px">Treatment done * <span class="stat">with its cost · billed to the patient · the doctor here is credited</span><span class="sp"></span><label class="ckl nox"><input type="checkbox" id="smNoTr"${noTr ? ' checked' : ''}> No treatment</label></div>
+      ${w ? `<div class="fhead" style="margin:0 0 4px">Treatment done *<span class="sp"></span><label class="ckl nox"><input type="checkbox" id="smNoTr"${noTr ? ' checked' : ''}> No treatment</label></div>
         <div id="smTrArea"${noTr ? ' hidden' : ''}><div id="smRows">${(TT.length ? TT : [null]).map((t, i) => sumRow(i, a, t)).join('')}</div>
         <button type="button" id="smAdd" style="margin-top:4px">+ Add treatment</button></div>
-        <div class="fhead" style="margin:16px 0 4px">Medicines / tablets <span class="stat">tick when and for how many days: tablets and cost are worked out</span><span class="sp"></span><label class="ckl nox"><input type="checkbox" id="smNoMed"${noMed ? ' checked' : ''}> No medicine</label></div>
+        <div class="fhead" style="margin:16px 0 4px">Medicines / tablets<span class="sp"></span><label class="ckl nox"><input type="checkbox" id="smNoMed"${noMed ? ' checked' : ''}> No medicine</label></div>
         <div id="smMedArea"${noMed ? ' hidden' : ''}><div id="smMeds">${MM.map((m, i) => medRow(i, m)).join('')}</div>
-        <div class="btnrow"><button type="button" id="smMedAdd">+ Add medicine</button>${(cl.meds || []).filter(x => x.active !== false).length ? '' : '<span class="stat">Add your medicine price list in Clinic setup first.</span>'}<span class="sp"></span><span class="stat">Medicines total <b id="smMedTot">${inr(MM.reduce((s, m) => s + (+m.cost || 0), 0))}</b></span></div></div>`
+        <div class="btnrow"><button type="button" id="smMedAdd">+ Add medicine</button>${(cl.meds || []).filter(x => x.active !== false).length ? '' : ''}<span class="sp"></span><span class="stat">Medicines total <b id="smMedTot">${inr(MM.reduce((s, m) => s + (+m.cost || 0), 0))}</b></span></div></div>`
       : locked ? `<p class="stat">🔒 The treatments are on bill <b>${esc(locked.billNo)}</b> (${BST[locked.status][0]}). To change them, cancel that bill in the patient's Bills tab, then issue a fresh one.</p>` : '<p class="stat">Treatments and medicines are added by a doctor (you don\'t have Treatments access).</p>'}
       ${w ? `<div class="smtot" id="smTotals"><div><span>Cost of treatment</span><b data-tt="tr">₹0</b></div><i>+</i><div><span>Cost of medicines</span><b data-tt="md">₹0</b></div><i>=</i><div class="all"><span>Total cost</span><b data-tt="all">₹0</b></div></div>` : ''}
       <label class="stat" style="display:block;margin-top:14px">Treatment plan description / clinical notes<textarea id="smNotes" rows="3" style="width:100%" placeholder="Complaint, findings, what was done, treatment plan, instructions given…">${esc(notes)}</textarea></label>
@@ -6585,7 +6581,7 @@ async function clSaveSummary(){
   const noTr = !!($('#smNoTr') && $('#smNoTr').checked), noMed = !!($('#smNoMed') && $('#smNoMed').checked), noCost = noTr && noMed;
   const notes = ($('#smNotes') || {}).value.trim(), skipDesc = !noCost && !!($('#smSkipDesc') && $('#smSkipDesc').checked);
   if (noCost && !notes) return info('No treatment and no medicine: write the description of what was done.');
-  const rows = w && !noTr ? [...document.querySelectorAll('#smRows [data-sr]')].map(r => { const v = k => r.querySelector(`[data-sf="${k}"]`).value; return {tid:r.dataset.tid || '', uids:[...r.querySelectorAll('[data-asu]:checked')].map(c => c.dataset.asu), typeId:v('type'), tooth:v('tooth').trim(), doctorId:v('doc'), costRaw:v('cost').trim(), cost:Math.max(0, +v('cost') || 0), discount:Math.max(0, +v('disc') || 0), status:v('status'), fee:Math.max(0, +v('fee') || 0)}; }) : [];
+  const rows = w && !noTr ? [...document.querySelectorAll('#smRows [data-sr]')].map(r => { const v = k => r.querySelector(`[data-sf="${k}"]`).value; return {tid:r.dataset.tid || '', uids:[...r.querySelectorAll('[data-asu].on')].map(c => c.dataset.asu), typeId:v('type'), tooth:v('tooth').trim(), doctorId:v('doc'), costRaw:v('cost').trim(), cost:Math.max(0, +v('cost') || 0), discount:Math.max(0, +v('disc') || 0), status:v('status'), fee:Math.max(0, +v('fee') || 0)}; }) : [];
   const filled = rows.filter(r => r.typeId);
   if (w && toBill && !noTr && !filled.length) return info('Add the treatment done with its cost, or tick "No treatment".');
   if (filled.some(r => r.costRaw === '')) return info('Enter the cost for each treatment.');
@@ -6635,7 +6631,7 @@ function clDocs(){
   const tOpts = T.slice().sort((a, b) => String(b.date).localeCompare(String(a.date))).map(t => `<option value="${esc(t.id)}" data-need="${esc(typeNeeds(t))}">${esc(fmtDM(t.date))} · ${esc(t.typeName)}${t.tooth ? ' (' + esc(t.tooth) + ')' : ''}</option>`).join('');
   return `<div class="sect">
     ${missing.length ? `<div class="nag late">⚠ Missing documents: ${missing.map(t => `${esc(typeNeeds(t))} for ${esc(t.typeName)} (${esc(fmtDM(t.date))})`).join(' · ')}. Upload them below; until then they stay on the Planning Board backlog.</div>` : ''}
-    ${w ? `<div class="box"><h3>Upload a document <span class="sub">photos are compressed; PDFs up to 700 KB</span></h3>
+    ${w ? `<div class="box"><h3>Upload a document</h3>
     <form class="aform" id="clDocForm2" novalidate>
       <label>Type<select id="dkKind">${DOC_KINDS.map(k => `<option>${k}</option>`).join('')}</select></label>
       <label class="grow">For treatment<select id="dkT"><option value="">— Not linked —</option>${tOpts}</select></label>
@@ -6858,7 +6854,7 @@ function renderOrgRem(){
   const L = otList(), open = otOpen(), done = L.filter(t => t.status === 'done').sort((a, b) => (b.doneAt || 0) - (a.doneAt || 0)).slice(0, 30);
   host.innerHTML = `<div class="orgrem${orgRemOpen ? ' open' : ''}">
     <button class="orh" data-ortoggle><span class="chev">${orgRemOpen ? '▾' : '▸'}</span><b>Organization reminders</b><span class="orn${open.length ? ' on' : ''}">${open.length} open</span>
-      <span class="stat">shared by everyone in ${esc(oc.org.name)}: when one person closes it, it closes for all</span><span class="sp"></span>${done.length ? `<span class="stat">${done.length} closed recently</span>` : ''}</button>
+     <span class="sp"></span>${done.length ? `<span class="stat">${done.length} closed recently</span>` : ''}</button>
     ${orgRemOpen ? `<div class="orb"><div class="orcol"><div class="orct"><i class="dot s-todo"></i>Open · ${open.length}</div>${open.map(otRow).join('') || '<div class="empty">Nothing open. 🎉</div>'}</div>
       <div class="orcol"><div class="orct"><i class="dot s-done"></i>Closed · last 14 days</div>${done.map(otRow).join('') || '<div class="empty">Nothing closed yet.</div>'}</div></div>` : ''}</div>`;
 }
@@ -6920,9 +6916,9 @@ function drawBill(){
 function visitBillHtml(B, visitT, w){
   const b = B.bill, done = !!b || B.noPay, bp = b ? B.P.filter(x => x.billId === b.id) : [], billable = visitT.filter(t => t.status !== 'planned');
   const head = b ? `<div class="box billbox vbill"><div class="crow"><b>Bill ${esc(b.billNo)}</b> ${billBadge(b)}<span class="sp"></span><span>Total <b>${inr(b.total)}</b></span><span>Paid <b>${inr(b.paid)}</b></span><span>Outstanding <b class="${billDue(b) ? 'neg' : ''}">${inr(billDue(b))}</b></span></div>
-      <div class="btnrow" style="margin-top:8px">${w && b.status === 'draft' ? '<button class="primary" data-vbissue>Issue bill</button>' : ''}${w && b.status === 'pending' ? '<button class="primary" data-vback>Patient acknowledged</button><span class="stat">or take the payment below</span>' : ''}${w && ['pending', 'ack'].includes(b.status) && !+b.paid ? '<button data-vbreopen title="Back to a draft so the treatments can be corrected">Reopen to edit</button>' : ''}<button data-vbprint>🖨 Print bill</button></div>
+      <div class="btnrow" style="margin-top:8px">${w && b.status === 'draft' ? '<button class="primary" data-vbissue>Issue bill</button>' : ''}${w && ['pending', 'ack'].includes(b.status) && !+b.paid ? '<button data-vbreopen title="Back to a draft so the treatments can be corrected">Reopen to edit</button>' : ''}<button data-vbprint>🖨 Print bill</button></div>
       ${w && billPayable(b) ? payForm('vb', b) : ''}</div>`
-    : w ? `<div class="box billbox vbill"><div class="crow"><b>No bill yet for this visit</b><span class="sp"></span>${billable.length ? '<button class="primary" data-vbgen>Generate bill</button><button data-vbdraft>Save as draft</button>' : '<span class="stat">no treatment to bill</span>'}</div><p class="stat" style="margin:6px 0 0">The bill can stay outstanding: payment can be taken now, later or in parts.</p></div>` : '';
+    : w ? `<div class="box billbox vbill"><div class="crow"><b>No bill yet for this visit</b><span class="sp"></span>${billable.length ? '<button class="primary" data-vbgen>Generate bill</button><button data-vbdraft>Save as draft</button>' : '<span class="stat">no treatment to bill</span>'}</div></div>` : '';
   return head + (bp.length ? `<div class="hh">Receipts for this bill</div>${bp.map(x => `<div class="trow"><b>${esc(x.receiptNo)} · ${inr(x.amount)} · ${esc((PMODES.find(m => m[0] === x.mode) || [0, x.mode])[1])}</b>${x.cash ? `<span class="stat">${esc(cashLine(x))}</span>` : ''}<button data-vbrcpt="${esc(x.id)}">🖨 Print receipt</button></div>`).join('')}` : '')
     + `<div class="btnrow" style="margin-top:14px">${b ? '' : '<button data-vbprint>🖨 Print estimate</button>'}<span class="sp"></span>
       ${w ? `${b ? '' : `<label class="vbchk" title="Complete the visit without a bill"><input type="checkbox" id="vbNoPay"${B.noPay ? ' checked' : ''}> <b>No bill</b>&nbsp;(nothing to charge)</label>`}
@@ -6962,7 +6958,7 @@ $('#clOv').addEventListener('click', async e => {
   if (e.target.id === 'vbNoPay'){ cl.bill.noPay = e.target.checked; $('#vbDone').disabled = !(cl.bill.noPay || cl.bill.bill); return; }
   const B = cl.bill, vt = () => B.T.filter(t => t.appointmentId === B.appt.id && t.status !== 'planned');
   try {
-    if (e.target.closest('[data-vbgen],[data-vbdraft]')){ const dr = !!e.target.closest('[data-vbdraft]'); B.bill = await createBill({p:B.p, appt:B.appt, T:vt(), status:dr ? 'draft' : 'pending'}); B.appt.billId = B.bill.id; vt().forEach(t => { if (!dr) t.billId = B.bill.id; }); info(`${B.bill.billNo} ${dr ? 'saved as a draft' : 'generated'} · ${inr(B.bill.total)}`); return drawBill(); }
+    if (e.target.closest('[data-vbgen],[data-vbdraft]')){ const dr = !!e.target.closest('[data-vbdraft]'); B.bill = await createBill({p:B.p, appt:B.appt, T:vt(), status:dr ? 'draft' : 'ack'}); B.appt.billId = B.bill.id; vt().forEach(t => { if (!dr) t.billId = B.bill.id; }); info(`${B.bill.billNo} ${dr ? 'saved as a draft' : 'generated'} · ${inr(B.bill.total)}`); return drawBill(); }
     if (e.target.closest('[data-vbissue]')){ await issueBill(B.bill, vt()); info(`${B.bill.billNo} issued.`); return drawBill(); }
     if (e.target.closest('[data-vbreopen]')){ await reopenBill(B.bill); info(`${B.bill.billNo} is a draft again: ← Back to change the treatments.`); return drawBill(); }
     if (e.target.closest('[data-vback]')){ await ackBill(B.bill); info(`${B.bill.billNo} acknowledged.`); return drawBill(); }
@@ -7047,7 +7043,7 @@ function asMine(d){
   const pats = [...new Set((d.appts || []).filter(a => a.status !== 'cancelled').map(a => a.patientName))].sort();
   const types = cl.types.filter(t => t.active !== false);
   return `<div class="kpis">${kpi('Approved this month', M.filter(x => x.status === 'approved' && x.date.slice(0, 7) === mk).length, 'patients assisted')}${kpi('Waiting for approval', M.filter(x => x.status === 'pending').length, 'the treating doctor approves')}${kpi('Logged in total', M.length, 'all time')}</div>
-    <div class="box"><h3>Add a patient you assisted <span class="sub">add each one the same day (within 7 days); the treating doctor approves them</span></h3>
+    <div class="box"><h3>Add a patient you assisted</h3>
     <form class="aform" id="clAsForm" novalidate>
       <label>Date<input type="date" id="asDate" value="${todayKey}" max="${todayKey}" min="${shiftDay(todayKey, -7)}"></label>
       <label class="grow">Patient *<input id="asPat" list="asPats" placeholder="Patient name"><datalist id="asPats">${pats.map(n => `<option value="${esc(n)}">`).join('')}</datalist></label>
@@ -7086,7 +7082,7 @@ function asApprove(d){
       <input type="search" data-asf="q" placeholder="Patient name" value="${esc(f.q)}">
       ${f.st === 'pending' && L.some(mayDecide) ? `<span class="sp"></span><button class="primary" data-asall>Approve all shown (${L.filter(mayDecide).length})</button>` : ''}</div>
     <div class="awrap"><table class="atbl"><thead><tr><th>Patient</th><th>Date</th><th>Treatment</th><th>Assistant</th><th>Doctor</th><th>Approval</th><th>Incentive</th><th></th></tr></thead><tbody>
-    ${L.map(x => `<tr data-as="${esc(x.id)}"><td><b>${esc(x.patientName || '')}</b>${earlier(x)}</td><td>${esc(fmtShort(x.date))}</td><td>${esc(x.typeName || '—')}</td><td>${esc(x.name || '')}${x.addedBy && x.addedByName && x.addedByName !== x.name ? `<span class="sub2">added by ${esc(x.addedByName)}</span>` : ''}</td><td>${esc(dName(x.doctorId) || '—')}</td>
+    ${L.map(x => `<tr data-as="${esc(x.id)}"><td>${x.patientId ? `<a class="plink" href="#/clinic/patients/${esc(x.patientId)}/assists" target="_blank" title="Open the patient (new tab)"><b>${esc(x.patientName || '')}</b> ↗</a>` : `<b>${esc(x.patientName || '')}</b>`}${earlier(x)}</td><td>${esc(fmtShort(x.date))}</td><td>${esc(x.typeName || '—')}</td><td>${esc(x.name || '')}${x.addedBy && x.addedByName && x.addedByName !== x.name ? `<span class="sub2">added by ${esc(x.addedByName)}</span>` : ''}</td><td>${esc(dName(x.doctorId) || '—')}</td>
       <td>${asBadge(x)}${(x.history || []).length ? `<span class="sub2" title="${esc((x.history || []).map(h => `${fmt(h.at)} ${h.by}: ${h.change}${h.reason ? ' (' + h.reason + ')' : ''}`).join('\n'))}">✎ changed ${(x.history || []).length}×</span>` : ''}</td><td>${AS_ELIG[x.status || 'pending']}</td>
       <td style="white-space:nowrap">${mayDecide(x) ? '<button class="primary" data-asok>Approve</button> <button data-asno>Reject</button>' : ''}${own && x.status !== 'void' ? ' <button data-asedit title="Change the assistant, treatment or date">Edit</button> <button class="danger" data-asvoid title="Void (kept in history)">Void</button>' : ''}</td></tr>
       ${A.edit === x.id ? `<tr class="asedrow"><td colspan="8"><form class="aform" id="clAsEdit" data-as="${esc(x.id)}" novalidate>
@@ -7118,13 +7114,13 @@ function asIncentives(d){
     return `<button class="abk" data-asperson="">← Everyone</button><div class="kpis">${kpi(esc(p.name) + ' · ' + esc(monthLabel(A.month)), inr(sum(M)), plural(M.length, 'approved assist'))}${kpi('Earned so far', inr(sum(p.all)), plural(p.all.length, 'approved assist') + ' in total')}</div>
       <div class="awrap"><table class="atbl"><thead><tr><th>Date</th><th>Patient</th><th>Treatment</th><th>Doctor</th><th>Note</th><th class="num">Incentive (₹)</th></tr></thead><tbody>
       ${M.map(x => `<tr data-as="${esc(x.id)}">${asRow(x, `<td class="num"><input type="number" data-aspay min="0" step="10" value="${amt(x)}" style="width:90px"${asOwner() ? '' : ' disabled'}></td>`)}</tr>`).join('') || '<tr><td colspan="6" class="stat">No approved assists this month.</td></tr>'}
-      </tbody></table></div><p class="stat">Each amount starts from the rate for that treatment; change it here for this one entry.</p>`;
+      </tbody></table></div>`;
   }
   return `<div class="kpis">${kpi('Incentives ' + esc(monthLabel(A.month)), inr(P.reduce((s, p) => s + sum(p.m), 0)), plural(P.reduce((s, p) => s + p.m.length, 0), 'approved assist'))}${kpi('Earned so far', inr(P.reduce((s, p) => s + sum(p.all), 0)), 'all approved assists')}</div>
     <div class="awrap"><table class="atbl"><thead><tr><th>Staff</th><th class="num">Approved (month)</th><th class="num">Incentive (month)</th><th class="num">Approved so far</th><th class="num">Earned so far</th></tr></thead><tbody>
       ${P.map(p => `<tr class="clk" data-asperson="${esc(p.uid)}"><td><b>${esc(p.name)}</b></td><td class="num">${p.m.length}</td><td class="num"><b>${inr(sum(p.m))}</b></td><td class="num">${p.all.length}</td><td class="num">${inr(sum(p.all))}</td></tr>`).join('') || '<tr><td colspan="5" class="stat">No approved assists yet.</td></tr>'}
     </tbody></table></div>
-    <div class="box" style="margin-top:12px"><h3>Incentive per assist <span class="sub">by treatment: applied to every approved assist (only the Owner, Account Manager and Chief doctor see amounts)</span></h3>
+    <div class="box" style="margin-top:12px"><h3>Incentive per assist</h3>
       <div class="awrap"><table class="atbl"><thead><tr><th>Treatment</th><th class="num">₹ per assist</th></tr></thead><tbody>
       ${cl.types.filter(t => t.active !== false).concat([{id:'other', name:'Other'}]).map(t => `<tr data-asr="${esc(t.id)}"><td>${esc(t.name)}</td><td class="num"><input type="number" data-asrate min="0" step="10" value="${+rates[t.id] || 0}" style="width:90px"${asOwner() ? '' : ' disabled'}></td></tr>`).join('')}
       </tbody></table></div></div>`;
@@ -7299,7 +7295,7 @@ async function dtPlan(S){
 function dtBox(){
   if (!isOwner()) return '';
   const p = DT.plan, k = (l, v, s) => `<div class="kpi"><div class="kl">${l}</div><div class="kv">${v}</div><div class="ks">${s || ''}</div></div>`;
-  return `<div class="box" id="dtBox" style="margin-top:12px"><h3>Import from Dentee <span class="sub">bring in patients, appointments, treatments, medicines and payments from Dentee's Excel export</span></h3>
+  return `<div class="box" id="dtBox" style="margin-top:12px"><h3>Import from Dentee</h3>
     ${DT.busy ? `<div class="dtprog"><i style="width:${DT.busy.pct || 0}%"></i></div><p class="stat">${esc(DT.busy.msg || 'Working…')}</p>`
     : DT.done ? `<div class="nag" style="border-color:var(--done)">✓ Import finished: ${esc(DT.done)}</div><button id="dtAgain">Import another file</button>`
     : !p ? `<form class="aform" id="dtForm" novalidate><label class="grow">Dentee export (.xlsx)<input type="file" id="dtFile" accept=".xlsx,.xls"></label><button class="primary" type="submit">Check the file</button></form>
@@ -7408,15 +7404,15 @@ const cdChips = c => DENOMS.filter(v => +(c || {})[v]).map(v => `<span class="dc
 function cashPanel(pre, show){
   const n = CDX[pre] || 0;
   return `<div class="cashd" id="${pre}Cash"${show ? '' : ' hidden'}>
-    <div class="cdh"><b>💵 Cash denominations</b><span class="stat">count the notes: they go into the daily tally by themselves</span></div>
+    <div class="cdh"><b>💵 Cash denominations</b></div>
     <div class="cdsec"><div class="cdl">Received from the patient <b id="${pre}InT">₹0</b></div>${cdGrid(pre, 'In')}</div>
     <div class="cdchg" id="${pre}ChgL">Change to give back: <b id="${pre}ChgV">₹0</b></div>
-    <div class="cdsec" id="${pre}OutBox"><div class="cdl">Change from the purse <small>(cash drawer)</small> <b id="${pre}OutT">₹0</b></div>${cdGrid(pre, 'Out')}</div>
+    <div class="cdsec" id="${pre}OutBox"><div class="cdl">Change from the purse <b id="${pre}OutT">₹0</b></div>${cdGrid(pre, 'Out')}</div>
     <div class="cdxs">${[...Array(n)].map((_, i) => `<div class="cdx" data-cdx="${i}">
       <span class="cdl">Change from</span><select id="${pre}X${i}Src" data-cd="${pre}"><option value="petty">Petty cash</option><option value="other">Somewhere else…</option></select>
       <input id="${pre}X${i}Name" data-cd="${pre}" placeholder="Where? (e.g. Doctor's wallet)" hidden><input type="number" min="0" step="1" id="${pre}X${i}Amt" data-cd="${pre}" placeholder="₹ amount">
       <button type="button" class="ghost" data-cdrm="${pre}" title="Remove">✕</button></div>`).join('')}</div>
-    <button type="button" class="linkb" data-cdadd="${pre}">+ Take part of the change from another place (e.g. petty cash)</button>
+    <button type="button" class="linkb" data-cdadd="${pre}">+ Change from elsewhere (e.g. petty cash)</button>
     <div class="cdst" id="${pre}St"></div></div>`;
 }
 // read the panel; amount = the payment amount. Returns the figures (and fills in the totals on screen)
@@ -7484,7 +7480,7 @@ document.addEventListener('click', e => {
 /* ---------- Bills: a bill is its own record, separate from payments ----------
    bills/{id} {billNo B-00001, patientId, patientName, appointmentId, date, doctorId, items[{treatmentId, name, tooth, doctorId, cost, discount, net, legacy}],
    subtotal, discount, total, paid, status, ackBy, ackAt, lastPay, cancel{reason, by, at, payments}, replaces, replacedBy, createdBy, createdAt, history}
-   Status: draft → pending (Pending acknowledgement) → ack → partly → paid; any → cancelled (never deleted).
+   Status: draft → ack (Unpaid) → partly → paid; any → cancelled (never deleted). ('pending' = older bills awaiting acknowledgement: treated as Unpaid.)
    - A draft may be edited. Issuing it puts its treatments on the bill (treatments.billId): they are then locked until the bill is cancelled.
    - Each payment is its own record (payments, with billId) written in the same batch as the bill's new `paid` total and `lastPay`;
      the rules check paid = old paid + this payment and paid ≤ total, so a double click or a second screen can't record it twice.
@@ -7494,7 +7490,7 @@ document.addEventListener('click', e => {
    - The patient's balance is still treatments − payments (unchanged for old records); bills formalize visits from BILLS_SINCE on.
      Older unpaid treatments can be billed as one "Earlier balance" item. */
 const BILLS_SINCE = '2026-11-02';
-const BST = {draft:['Draft', 'pend'], pending:['Pending acknowledgement', 'pend'], ack:['Acknowledged', 'prog'], partly:['Partly paid', 'pend'], paid:['Paid', 'on'], cancelled:['Cancelled', 'gone']};
+const BST = {draft:['Draft', 'pend'], pending:['Unpaid', 'prog'], ack:['Unpaid', 'prog'], partly:['Partly paid', 'pend'], paid:['Paid', 'on'], cancelled:['Cancelled', 'gone']};
 const billBadge = b => `<span class="upill ${BST[b.status][1]}">${BST[b.status][0]}</span>`;
 const billLive = b => !!b && b.status !== 'cancelled';
 const billDue = b => Math.max(0, (+b.total || 0) - (+b.paid || 0));
@@ -7503,7 +7499,7 @@ const canCancelBill = b => canW('billing') && (!(+b.paid) || isAdminRole(orgCtx(
 const liveBillIds = B => new Set((B || []).filter(billLive).map(b => b.id));
 // a treatment is locked while it is on a live, issued bill
 const tLocked = (t, B) => !!t.billId && (B || []).some(b => b.id === t.billId && billLive(b) && b.status !== 'draft');
-const billItem = t => ({treatmentId:t.id, name:t.typeName || '', tooth:t.tooth || '', doctorId:t.doctorId || '', cost:+t.cost || 0, discount:+t.discount || 0, net:net(t), med:isMed(t)});
+const billItem = t => Object.assign({treatmentId:t.id, name:t.typeName || '', tooth:t.tooth || '', doctorId:t.doctorId || '', cost:+t.cost || 0, discount:+t.discount || 0, net:net(t), med:isMed(t)}, isMed(t) ? {qty:+t.qty || 0, unitPrice:+t.unitPrice || 0} : {});
 const billSums = items => { const subtotal = items.reduce((s, i) => s + (+i.cost || 0), 0), discount = items.reduce((s, i) => s + (+i.discount || 0), 0); return {subtotal, discount, total:Math.max(0, subtotal - discount)}; };
 // treatments that can go on a new bill: done, not on a live issued bill, from BILLS_SINCE (older ones are covered by "Earlier balance")
 const unbilledOf = (T, B) => (T || []).filter(t => t.status !== 'planned' && t.date >= BILLS_SINCE && !(t.billId && liveBillIds(B).has(t.billId)));
@@ -7531,7 +7527,7 @@ async function issueBill(bill, T){
   const {F, fs} = cloud, items = T.map(billItem).concat((bill.items || []).filter(i => i.legacy)), b = F.writeBatch(fs);
   if (!items.length) throw custom('There is nothing on this bill.');
   const sums = billSums(items), pd = +bill.paid || 0;
-  const upd = Object.assign({items, status:pd && pd >= sums.total ? 'paid' : pd ? 'partly' : 'pending', history:(bill.history || []).concat([{at:Date.now(), by:cloud.user.email || '', change:'issued'}])}, billSums(items));
+  const upd = Object.assign({items, status:pd && pd >= sums.total ? 'paid' : pd ? 'partly' : 'ack', history:(bill.history || []).concat([{at:Date.now(), by:cloud.user.email || '', change:'issued'}])}, billSums(items));
   if (upd.total < (+bill.paid || 0)) throw custom(`The total ${inr(upd.total)} is less than the ${inr(bill.paid)} already paid on it.`);
   b.update(cDoc('bills', bill.id), upd); T.forEach(t => b.update(cDoc('treatments', t.id), {billId:bill.id}));
   await b.commit(); return Object.assign(bill, upd);
@@ -7592,13 +7588,18 @@ async function cancelBill(bill, T){
   return {fresh, refund, how};
 }
 function printBill(bill, p, P){
-  const pays = (P || []).filter(x => x.billId === bill.id);
-  printDoc('Bill ' + bill.billNo, `<p><b>Patient:</b> ${esc(pName(p))} (${esc(p.code || '')}) · ${esc(p.phone || '')}<br><b>Bill date:</b> ${esc(fmtLong(bill.date))}${bill.appointmentId ? ' · visit' : ''}${bill.doctorId ? ` · <b>Doctor:</b> ${esc(dName(bill.doctorId))}` : ''}<br><b>Status:</b> ${BST[bill.status][0]}</p>
-    <table><tr><th>#</th><th>Treatment</th><th>Doctor</th><th class="n">Charge</th><th class="n">Discount</th><th class="n">Amount</th></tr>
-    ${(bill.items || []).map((i, n) => `<tr><td>${n + 1}</td><td>${esc(i.name)}${i.tooth ? ' (' + esc(i.tooth) + ')' : ''}</td><td>${esc(dName(i.doctorId) || '')}</td><td class="n">${inr(i.cost)}</td><td class="n">${inr(i.discount)}</td><td class="n">${inr(i.net)}</td></tr>`).join('')}
-    <tr class="tot"><td colspan="5">Total</td><td class="n">${inr(bill.total)}</td></tr></table>
-    ${pays.length ? `<h2>Payments</h2><table>${pays.map(x => `<tr><td>${esc(x.receiptNo)}</td><td>${esc(fmtShort(x.date))}</td><td>${esc((PMODES.find(m => m[0] === x.mode) || [0, x.mode])[1])}${x.txnRef ? ' · ' + esc(x.txnRef) : ''}</td><td class="n">${inr(x.amount)}</td></tr>`).join('')}</table>` : ''}
-    <p><b>Paid ${inr(bill.paid)} · Outstanding ${inr(billDue(bill))}</b></p>`);
+  const pays = (P || []).filter(x => x.billId === bill.id), I = bill.items || [], TR = I.filter(i => !i.med), MD = I.filter(i => i.med);
+  const sum = xs => xs.reduce((a, i) => a + (+i.net || 0), 0), trT = sum(TR), mdT = sum(MD);
+  printDoc('Bill ' + bill.billNo, `<p><b>Patient:</b> ${esc(pName(p))} (${esc(p.code || '')}) · ${esc(p.phone || '')}<br><b>Bill date:</b> ${esc(fmtLong(bill.date))}${bill.doctorId ? ` · <b>Doctor:</b> ${esc(dName(bill.doctorId))}` : ''}</p>
+    ${TR.length ? `<h2>Treatments</h2><table><tr><th>#</th><th>Treatment</th><th>Doctor</th><th class="n">Charge</th><th class="n">Discount</th><th class="n">Amount</th></tr>
+      ${TR.map((i, n) => `<tr><td>${n + 1}</td><td>${esc(i.name)}${i.tooth ? ' (' + esc(i.tooth) + ')' : ''}</td><td>${esc(dName(i.doctorId) || '')}</td><td class="n">${inr(i.cost)}</td><td class="n">${+i.discount ? inr(i.discount) : '—'}</td><td class="n">${inr(i.net)}</td></tr>`).join('')}
+      <tr class="tot"><td colspan="5">Treatments total</td><td class="n">${inr(trT)}</td></tr></table>` : ''}
+    ${MD.length ? `<h2>Medicines</h2><table><tr><th>#</th><th>Medicine</th><th class="n">Qty</th><th class="n">Price</th><th class="n">Amount</th></tr>
+      ${MD.map((i, n) => `<tr><td>${n + 1}</td><td>${esc(i.name)}</td><td class="n">${+i.qty || '—'}</td><td class="n">${i.unitPrice ? inr(i.unitPrice) : '—'}</td><td class="n">${inr(i.net)}</td></tr>`).join('')}
+      <tr class="tot"><td colspan="4">Medicines total</td><td class="n">${inr(mdT)}</td></tr></table>` : ''}
+    <h2>Summary</h2><table>${TR.length ? `<tr><td>Treatments</td><td class="n">${inr(trT)}</td></tr>` : ''}${MD.length ? `<tr><td>Medicines</td><td class="n">${inr(mdT)}</td></tr>` : ''}
+      <tr class="tot"><td>Total</td><td class="n">${inr(bill.total)}</td></tr><tr><td>Paid</td><td class="n">${inr(bill.paid)}</td></tr><tr class="tot"><td>Balance due</td><td class="n">${inr(billDue(bill))}</td></tr></table>
+    ${pays.length ? `<h2>Payments</h2><table>${pays.map(x => `<tr><td>${esc(x.receiptNo)}</td><td>${esc(fmtShort(x.date))}</td><td>${esc((PMODES.find(m => m[0] === x.mode) || [0, x.mode])[1])}${x.txnRef ? ' · ' + esc(x.txnRef) : ''}</td><td class="n">${inr(x.amount)}</td></tr>`).join('')}</table>` : ''}`);
 }
 // payment form for a bill (prefix vb: visit, py: patient's Bills tab)
 const payForm = (pre, b) => `<form class="aform payf" id="${pre === 'vb' ? 'clVBill' : 'clPayForm'}" data-bill="${esc(b.id)}" novalidate style="margin-top:8px">
@@ -7615,7 +7616,7 @@ function clBills(){
   const U = unbilledOf(cl.pT, cl.pB), ed = earlierDue(cl.pT, cl.pP, cl.pB), live = B.filter(billLive), open = cl.billOpen;
   const tot = live.reduce((s, b) => s + (+b.total || 0), 0), paid = live.reduce((s, b) => s + (+b.paid || 0), 0);
   return `<div class="sect"><div class="kpis">${kpi('Total billed', inr(tot), plural(live.length, 'bill'))}${kpi('Paid on bills', inr(paid), '')}${kpi('Outstanding on bills', inr(tot - paid), live.filter(b => billDue(b) > 0).length + ' open', tot - paid > 0 ? 'neg' : '')}</div>
-    ${w && (U.length || ed > 0) ? `<div class="box"><h3>New bill <span class="sub">done treatments not on a bill yet</span></h3><form id="clNewBill" novalidate>
+    ${w && (U.length || ed > 0) ? `<div class="box"><h3>New bill</h3><form id="clNewBill" novalidate>
       ${U.map(t => `<label class="ckl"><input type="checkbox" data-nbt="${esc(t.id)}" checked> ${esc(fmtShort(t.date))} · <b>${esc(t.typeName)}</b>${t.tooth ? ' (' + esc(t.tooth) + ')' : ''} · ${esc(dName(t.doctorId) || '')} · ${inr(net(t))}</label>`).join('')}
       ${ed > 0 ? `<label class="ckl"><input type="checkbox" id="nbLegacy"${U.length ? '' : ' checked'}> <b>Earlier balance (before bills)</b> · ${inr(ed)}</label>` : ''}
       <div class="btnrow"><button class="primary" type="submit">Generate bill</button><button type="button" data-nbdraft>Save as draft</button></div></form></div>` : ''}
@@ -7631,11 +7632,10 @@ function billDetail(b){
     ${(b.items || []).map(i => `<tr><td>${esc(i.name)}${i.tooth ? ' (' + esc(i.tooth) + ')' : ''}</td><td>${esc(dName(i.doctorId) || '')}</td><td class="num">${inr(i.cost)}</td><td class="num">${+i.discount ? inr(i.discount) : '—'}</td><td class="num">${inr(i.net)}</td></tr>`).join('')}
     <tr class="tot"><td colspan="4">Total</td><td class="num">${inr(b.total)}</td></tr></tbody></table></div>
     ${pays.length ? `<div class="stat">Payments: ${pays.map(x => `${esc(x.receiptNo)} ${esc(fmtShort(x.date))} ${inr(x.amount)} ${esc((PMODES.find(m => m[0] === x.mode) || [0, x.mode])[1])}`).join(' · ')}</div>` : ''}
-    ${b.ackBy ? `<div class="stat">Acknowledged ${esc(fmt(b.ackAt))} · ${esc(String(b.ackBy).split('@')[0])}</div>` : ''}
     <div class="btnrow" style="margin-top:6px"><button data-bprint>🖨 Print bill</button>
-      ${w && b.status === 'draft' ? '<button class="primary" data-bissue>Issue bill</button>' : ''}${w && b.status === 'pending' ? '<button class="primary" data-back>Patient acknowledged</button>' : ''}${w && ['pending', 'ack'].includes(b.status) && !+b.paid ? '<button data-breopen title="Back to a draft to correct the treatments (no payment yet)">Reopen to edit</button>' : ''}
+      ${w && b.status === 'draft' ? '<button class="primary" data-bissue>Issue bill</button>' : ''}${w && ['pending', 'ack'].includes(b.status) && !+b.paid ? '<button data-breopen title="Back to a draft to correct the treatments (no payment yet)">Reopen to edit</button>' : ''}
       ${billLive(b) && canCancelBill(b) ? '<span class="sp"></span><button class="danger" data-bcancel>Cancel bill…</button>' : ''}</div>
-    ${w && billPayable(b) ? payForm('py', b) : billLive(b) && b.status !== 'draft' && !billDue(b) ? '<p class="stat">Fully paid: this bill can no longer be changed. To correct it, cancel it and issue a fresh one.</p>' : ''}`;
+    ${w && billPayable(b) ? payForm('py', b) : billLive(b) && b.status !== 'draft' && !billDue(b) ? '' : ''}`;
 }
 function clPayments(){
   const P = (cl.pP || []).slice().sort((a, b) => String(b.date).localeCompare(String(a.date)) || (b.createdAt || 0) - (a.createdAt || 0)), B = cl.pB || [];
@@ -7644,7 +7644,7 @@ function clPayments(){
     <div class="awrap" style="margin-top:0"><table class="atbl"><thead><tr><th>Receipt</th><th>Bill</th><th>Date</th><th>Method</th><th>Transaction ref.</th><th>Note</th><th class="num">Amount</th><th></th></tr></thead><tbody>
       ${cl.pP === null ? '<tr><td colspan="8">Loading…</td></tr>' : P.map(x => `<tr data-pay="${esc(x.id)}"><td>${esc(x.receiptNo || '')}${x.kind === 'refund' ? ' <span class="upill gone">Refund</span>' : ''}</td><td>${esc(x.billNo || (B.find(b => b.id === x.billId) || {}).billNo || '—')}</td><td>${esc(fmtShort(x.date))}</td><td>${esc((PMODES.find(m => m[0] === x.mode) || [0, x.mode])[1])}</td><td>${esc(x.txnRef || '')}</td><td>${esc(x.note || '')}${x.cash ? `<span class="sub2">${esc(cashLine(x))}</span>` : ''}</td><td class="num"><b class="${x.amount < 0 ? 'neg' : ''}">${inr(x.amount)}</b></td>
         <td><button data-rcpt>🖨 Receipt</button></td></tr>`).join('') || '<tr><td colspan="8" class="stat">No payments yet.</td></tr>'}
-    </tbody></table></div><p class="stat">Payments are never deleted or edited. A wrong payment is corrected by cancelling its bill (move or refund).</p></div>`;
+    </tbody></table></div></div>`;
 }
 async function billAction(e){
   const t = e.target, row = t.closest('[data-bill]'); if (!row) return false;
@@ -7652,7 +7652,7 @@ async function billAction(e){
   const T = id => (cl.pT || []).filter(x => (b.items || []).some(i => i.treatmentId === x.id));
   try {
     if (t.closest('[data-bprint]')){ printBill(b, cl.p, cl.pP); return true; }
-    if (t.closest('[data-bissue]')){ await issueBill(b, T()); info(`${b.billNo} issued: waiting for the patient's acknowledgement.`); renderClinic(); return true; }
+    if (t.closest('[data-bissue]')){ await issueBill(b, T()); info(`${b.billNo} issued.`); renderClinic(); return true; }
     if (t.closest('[data-breopen]')){ await reopenBill(b); info(`${b.billNo} is a draft again: change the treatments, then Issue.`); renderClinic(); return true; }
     if (t.closest('[data-back]')){ await ackBill(b); info(`${b.billNo} acknowledged.`); renderClinic(); return true; }
     if (t.closest('[data-bcancel]')){ const r = await cancelBill(b, T()); if (r){ info(r.fresh ? `${b.billNo} cancelled: payments moved to ${r.fresh.billNo} (draft: correct the treatments, then Issue).` : r.refund ? `${b.billNo} cancelled and ${inr(-r.refund.amount)} refunded (${r.refund.receiptNo}).` : `${b.billNo} cancelled.`); if (r.fresh) cl.billOpen = r.fresh.id; renderClinic(); } return true; }
@@ -7663,7 +7663,7 @@ async function billAction(e){
 async function newBillSubmit(draft){
   const ids = [...document.querySelectorAll('[data-nbt]:checked')].map(c => c.dataset.nbt), T = (cl.pT || []).filter(t => ids.includes(t.id));
   const legacy = $('#nbLegacy') && $('#nbLegacy').checked ? earlierDue(cl.pT, cl.pP, cl.pB) : 0;
-  try { const b = await createBill({p:cl.p, appt:null, T, status:draft ? 'draft' : 'pending', legacy}); cl.billOpen = b.id; info(`${b.billNo} ${draft ? 'saved as a draft' : 'generated'} · ${inr(b.total)}`); renderClinic(); }
+  try { const b = await createBill({p:cl.p, appt:null, T, status:draft ? 'draft' : 'ack', legacy}); cl.billOpen = b.id; info(`${b.billNo} ${draft ? 'saved as a draft' : 'generated'} · ${inr(b.total)}`); renderClinic(); }
   catch(e){ info(errText(e)); }
 }
 /* ================= Dental Clinic: how this feature plugs into core (see core/js/03-feature-registry.js) ================= */

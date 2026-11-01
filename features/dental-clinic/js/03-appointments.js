@@ -77,7 +77,7 @@ function clBookForm(){
       <label>Time<input type="time" id="bkTime" step="300" value="${esc(w.time || b.time || '10:00')}"></label>
       <label>Minutes<select id="bkDur">${[15, 30, 45, 60, 90].map(n => `<option${n === +(w.duration || 15) ? ' selected' : ''}>${n}</option>`).join('')}</select></label>
       <label class="grow full">Reason<input id="bkReason" value="${esc(w.reason || '')}" placeholder="e.g. Toothache, RCT 2nd sitting, review"></label>
-      <label class="grow full">Transfer reason <span class="stat">(only if the patient is moving to a different doctor)</span><input id="bkWhy" value="${esc(w.transferReason || '')}" placeholder="e.g. extraction by the surgeon, suture removal back to the Chief doctor"></label>
+      <label class="grow full">Transfer reason<input id="bkWhy" value="${esc(w.transferReason || '')}" placeholder="e.g. extraction by the surgeon, suture removal back to the Chief doctor"></label>
       <div class="btnrow full"><button class="primary" type="submit">${b.id ? 'Save' : 'Book'}</button></div>
     </form>`;
 }

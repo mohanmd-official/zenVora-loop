@@ -119,7 +119,7 @@ function openCustomize(){
 function drawCustomize(){
   const oc = orgCtx();
   $('#clOvBody').innerHTML = `<div class="ah"><h2 style="font-size:16px;margin:0">Customize your Home</h2><span class="sp"></span><button data-ovclose>Close</button></div>
-    <p class="stat" style="margin:4px 0 0">Tick the widgets you want, put them in order, and choose half or full width.</p>
+    
     <div class="cz">${home.cz.map((w, i) => { const W = WIDGETS[w.id]; return `<div class="czr ${w.off ? 'off' : ''}" data-cz="${i}"><input type="checkbox" data-czon${w.off ? '' : ' checked'}><div><b>${W.ic} ${esc(W.t)}</b><small>${esc(W.d)}</small></div>
       <select data-czsize><option value="half"${w.size !== 'full' ? ' selected' : ''}>Half</option><option value="full"${w.size === 'full' ? ' selected' : ''}>Full width</option></select><button data-czup title="Move up"${i ? '' : ' disabled'}>↑</button><button data-czdn title="Move down"${i < home.cz.length - 1 ? '' : ' disabled'}>↓</button></div>`; }).join('')}</div>
     <div class="btnrow"><button class="primary" id="czSave">Save</button><button id="czReset">Reset to default</button>

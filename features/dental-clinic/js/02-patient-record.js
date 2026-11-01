@@ -72,7 +72,7 @@ function clPAssists(){
   const X = (cl.pAs || []).slice().sort((a, b) => String(b.date).localeCompare(String(a.date)));
   return `<div class="sect"><div class="awrap" style="margin-top:0"><table class="atbl"><thead><tr><th>Appointment date</th><th>Treatment</th><th>Doctor</th><th>Assistant</th><th>Approval</th><th>Incentive</th><th>Added by</th></tr></thead><tbody>
     ${X.map(x => `<tr><td>${esc(fmtShort(x.date))}</td><td>${esc(x.typeName || '—')}</td><td>${esc(dName(x.doctorId) || '—')}</td><td><b>${esc(x.name || '')}</b></td><td>${asBadge(x)}</td><td>${AS_ELIG[x.status || 'pending']}</td><td class="stat">${esc(x.addedByName || String(x.addedBy || '').split('@')[0] || (x.uid === undefined ? '' : x.name))}</td></tr>`).join('') || '<tr><td colspan="7" class="stat">No assists recorded for this patient.</td></tr>'}
-    </tbody></table></div>${asOwner() ? '<p class="stat">Add a missed assist or correct one in Patient assists → All assists.</p>' : ''}</div>`;
+    </tbody></table></div>${asOwner() ? '' : ''}</div>`;
 }
 function clProfileForm(p){
   const ro = !canW('patients');
@@ -150,7 +150,7 @@ function clTreatments(){
   const types = cl.types.filter(t => t.active !== false);
   const lastAppt = (cl.pA || []).filter(a => a.date <= todayKey && a.status !== 'cancelled').sort((a, b) => String(b.date + b.time).localeCompare(String(a.date + a.time)))[0];
   const defDoc = (lastAppt && lastAppt.doctorId) || cl.p.primaryDoctorId || '';
-  const add = w ? `<div class="box"><h3>Add treatment <span class="sub">the doctor chosen here is credited in reports</span></h3>
+  const add = w ? `<div class="box"><h3>Add treatment</h3>
     <form class="aform" id="clTForm" novalidate>
       <label>Date<input type="date" id="tfDate" value="${todayKey}"></label>
       <label class="grow">Treatment<select id="tfType" class="srch">${types.map(t => `<option value="${esc(t.id)}" data-cost="${+t.cost || 0}">${esc(t.name)}</option>`).join('')}</select></label>
@@ -176,7 +176,7 @@ function clTreatments(){
   return `<div class="sect">${add}
     <div class="awrap" style="margin-top:0"><table class="atbl"><thead><tr><th>Treatment</th><th>Doctor</th><th class="num">Cost</th><th class="num">Discount</th><th class="num">Net</th><th>Status</th>${w ? '<th></th>' : ''}</tr></thead>
     <tbody>${cl.pT === null ? '<tr><td colspan="7">Loading…</td></tr>' : html || '<tr><td colspan="7" class="stat">No treatments yet.</td></tr>'}</tbody></table></div>
-    <p class="stat">Planned treatments aren't billed. In-progress and completed treatments count towards the patient's balance; completed ones count as earnings in reports.</p></div>`;
+    </div>`;
 }
 /* tablets / prescriptions */
 function clRx(){
@@ -184,7 +184,7 @@ function clRx(){
   const groups = []; M.forEach(m => { const k = m.date + '|' + (m.appointmentId || ''); let g = groups.find(x => x.k === k); if (!g) groups.push(g = {k, date:m.date, appt:m.appointmentId, doc:m.doctorId, items:[]}); g.items.push(m); });
   const lastAppt = (cl.pA || []).filter(a => a.date <= todayKey && a.status !== 'cancelled').sort((a, b) => String(b.date + b.time).localeCompare(String(a.date + a.time)))[0];
   return `<div class="sect">
-    ${w ? `<div class="box"><h3>Add tablets / medicines <span class="sub">tick Morning / Afternoon / Evening / Night and the days: tablets and cost are worked out and billed</span></h3>
+    ${w ? `<div class="box"><h3>Add tablets / medicines</h3>
       <form id="clRxForm" novalidate>
         <div class="aform" style="margin-bottom:8px"><label>Date<input type="date" id="rxDate" value="${todayKey}" max="${todayKey}"></label><label>Doctor<select id="rxDoc">${docOpts((lastAppt && lastAppt.doctorId) || cl.p.primaryDoctorId || '', '— Select —')}</select></label></div>
         <div id="rxMeds">${medRow(0)}</div>
@@ -260,7 +260,7 @@ function clPhotos(){
     return `<div class="box"><h3>${t ? `${esc(t.typeName)}${t.tooth ? ' · ' + esc(t.tooth) : ''} <span class="sub">${esc(fmtShort(t.date))} · ${esc(dName(t.doctorId))}</span>` : 'General'}</h3>
       <div class="phrow">${PSTAGES.map(([k, l]) => xs.some(x => x.stage === k) ? `<div class="phcol"><div class="stat">${l}</div><div class="phgrid">${xs.filter(x => x.stage === k).map(card).join('')}</div></div>` : '').join('')}</div></div>`;
   }).join('');
-  return `<div class="sect">${w ? `<div class="box"><h3>Add photos <span class="sub">compressed in your browser before upload</span></h3>
+  return `<div class="sect">${w ? `<div class="box"><h3>Add photos</h3>
     <form class="aform" id="clPhForm" novalidate>
       <label>Stage<select id="phStage">${PSTAGES.map(([k, l]) => `<option value="${k}">${l}</option>`).join('')}</select></label>
       <label class="grow">For treatment<select id="phT"><option value="">— General —</option>${tOpts}</select></label>

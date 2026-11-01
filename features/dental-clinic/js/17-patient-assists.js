@@ -70,7 +70,7 @@ function asMine(d){
   const pats = [...new Set((d.appts || []).filter(a => a.status !== 'cancelled').map(a => a.patientName))].sort();
   const types = cl.types.filter(t => t.active !== false);
   return `<div class="kpis">${kpi('Approved this month', M.filter(x => x.status === 'approved' && x.date.slice(0, 7) === mk).length, 'patients assisted')}${kpi('Waiting for approval', M.filter(x => x.status === 'pending').length, 'the treating doctor approves')}${kpi('Logged in total', M.length, 'all time')}</div>
-    <div class="box"><h3>Add a patient you assisted <span class="sub">add each one the same day (within 7 days); the treating doctor approves them</span></h3>
+    <div class="box"><h3>Add a patient you assisted</h3>
     <form class="aform" id="clAsForm" novalidate>
       <label>Date<input type="date" id="asDate" value="${todayKey}" max="${todayKey}" min="${shiftDay(todayKey, -7)}"></label>
       <label class="grow">Patient *<input id="asPat" list="asPats" placeholder="Patient name"><datalist id="asPats">${pats.map(n => `<option value="${esc(n)}">`).join('')}</datalist></label>
@@ -109,7 +109,7 @@ function asApprove(d){
       <input type="search" data-asf="q" placeholder="Patient name" value="${esc(f.q)}">
       ${f.st === 'pending' && L.some(mayDecide) ? `<span class="sp"></span><button class="primary" data-asall>Approve all shown (${L.filter(mayDecide).length})</button>` : ''}</div>
     <div class="awrap"><table class="atbl"><thead><tr><th>Patient</th><th>Date</th><th>Treatment</th><th>Assistant</th><th>Doctor</th><th>Approval</th><th>Incentive</th><th></th></tr></thead><tbody>
-    ${L.map(x => `<tr data-as="${esc(x.id)}"><td><b>${esc(x.patientName || '')}</b>${earlier(x)}</td><td>${esc(fmtShort(x.date))}</td><td>${esc(x.typeName || '—')}</td><td>${esc(x.name || '')}${x.addedBy && x.addedByName && x.addedByName !== x.name ? `<span class="sub2">added by ${esc(x.addedByName)}</span>` : ''}</td><td>${esc(dName(x.doctorId) || '—')}</td>
+    ${L.map(x => `<tr data-as="${esc(x.id)}"><td>${x.patientId ? `<a class="plink" href="#/clinic/patients/${esc(x.patientId)}/assists" target="_blank" title="Open the patient (new tab)"><b>${esc(x.patientName || '')}</b> ↗</a>` : `<b>${esc(x.patientName || '')}</b>`}${earlier(x)}</td><td>${esc(fmtShort(x.date))}</td><td>${esc(x.typeName || '—')}</td><td>${esc(x.name || '')}${x.addedBy && x.addedByName && x.addedByName !== x.name ? `<span class="sub2">added by ${esc(x.addedByName)}</span>` : ''}</td><td>${esc(dName(x.doctorId) || '—')}</td>
       <td>${asBadge(x)}${(x.history || []).length ? `<span class="sub2" title="${esc((x.history || []).map(h => `${fmt(h.at)} ${h.by}: ${h.change}${h.reason ? ' (' + h.reason + ')' : ''}`).join('\n'))}">✎ changed ${(x.history || []).length}×</span>` : ''}</td><td>${AS_ELIG[x.status || 'pending']}</td>
       <td style="white-space:nowrap">${mayDecide(x) ? '<button class="primary" data-asok>Approve</button> <button data-asno>Reject</button>' : ''}${own && x.status !== 'void' ? ' <button data-asedit title="Change the assistant, treatment or date">Edit</button> <button class="danger" data-asvoid title="Void (kept in history)">Void</button>' : ''}</td></tr>
       ${A.edit === x.id ? `<tr class="asedrow"><td colspan="8"><form class="aform" id="clAsEdit" data-as="${esc(x.id)}" novalidate>
@@ -141,13 +141,13 @@ function asIncentives(d){
     return `<button class="abk" data-asperson="">← Everyone</button><div class="kpis">${kpi(esc(p.name) + ' · ' + esc(monthLabel(A.month)), inr(sum(M)), plural(M.length, 'approved assist'))}${kpi('Earned so far', inr(sum(p.all)), plural(p.all.length, 'approved assist') + ' in total')}</div>
       <div class="awrap"><table class="atbl"><thead><tr><th>Date</th><th>Patient</th><th>Treatment</th><th>Doctor</th><th>Note</th><th class="num">Incentive (₹)</th></tr></thead><tbody>
       ${M.map(x => `<tr data-as="${esc(x.id)}">${asRow(x, `<td class="num"><input type="number" data-aspay min="0" step="10" value="${amt(x)}" style="width:90px"${asOwner() ? '' : ' disabled'}></td>`)}</tr>`).join('') || '<tr><td colspan="6" class="stat">No approved assists this month.</td></tr>'}
-      </tbody></table></div><p class="stat">Each amount starts from the rate for that treatment; change it here for this one entry.</p>`;
+      </tbody></table></div>`;
   }
   return `<div class="kpis">${kpi('Incentives ' + esc(monthLabel(A.month)), inr(P.reduce((s, p) => s + sum(p.m), 0)), plural(P.reduce((s, p) => s + p.m.length, 0), 'approved assist'))}${kpi('Earned so far', inr(P.reduce((s, p) => s + sum(p.all), 0)), 'all approved assists')}</div>
     <div class="awrap"><table class="atbl"><thead><tr><th>Staff</th><th class="num">Approved (month)</th><th class="num">Incentive (month)</th><th class="num">Approved so far</th><th class="num">Earned so far</th></tr></thead><tbody>
       ${P.map(p => `<tr class="clk" data-asperson="${esc(p.uid)}"><td><b>${esc(p.name)}</b></td><td class="num">${p.m.length}</td><td class="num"><b>${inr(sum(p.m))}</b></td><td class="num">${p.all.length}</td><td class="num">${inr(sum(p.all))}</td></tr>`).join('') || '<tr><td colspan="5" class="stat">No approved assists yet.</td></tr>'}
     </tbody></table></div>
-    <div class="box" style="margin-top:12px"><h3>Incentive per assist <span class="sub">by treatment: applied to every approved assist (only the Owner, Account Manager and Chief doctor see amounts)</span></h3>
+    <div class="box" style="margin-top:12px"><h3>Incentive per assist</h3>
       <div class="awrap"><table class="atbl"><thead><tr><th>Treatment</th><th class="num">₹ per assist</th></tr></thead><tbody>
       ${cl.types.filter(t => t.active !== false).concat([{id:'other', name:'Other'}]).map(t => `<tr data-asr="${esc(t.id)}"><td>${esc(t.name)}</td><td class="num"><input type="number" data-asrate min="0" step="10" value="${+rates[t.id] || 0}" style="width:90px"${asOwner() ? '' : ' disabled'}></td></tr>`).join('')}
       </tbody></table></div></div>`;

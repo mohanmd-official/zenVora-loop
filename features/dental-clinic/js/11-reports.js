@@ -103,7 +103,7 @@ function clReportHtml(){
     const val = (pk, id) => d.t.filter(t => t.doctorId === id && t.status === 'completed' && perOf(G, t.date) === pk).reduce((a, t) => a + net(t), 0), used = rows.filter(x => x.tot > 0).map(x => x.id);
     if (chart) return bar('Doctors & consultants') + `<h3 style="font-size:13px;margin:4px 0 6px">Treatment value by doctor</h3>` + hbarChart(rows.map(x => ({label:x.raw[0], v:x.tot})), true)
       + `<h3 style="font-size:13px;margin:16px 0 6px">By ${G === 'month' ? 'month' : G === 'year' ? 'year' : 'day'}</h3>` + stackChart(periodsIn(G, r.from, r.to).map(pk => ({label:perLabel(G, pk), short:short(pk), parts:Object.fromEntries(used.map(id => [id, val(pk, id)]))})), used, names, true);
-    html = bar('Doctors & consultants') + '<p class="stat">Each treatment is credited to the doctor recorded on it. Click a doctor for their statement.</p>'
+    html = bar('Doctors & consultants') + ''
       + (G !== 'day' && used.length ? perTable('Treatment value by ' + (G === 'month' ? 'month' : 'year'), used, names, val, true) : '')
       + tbl(['Doctor', '#Visits done', '#Patients', '#Treatments', '₹Treatment value', '₹Consultant fees'], rows, null, 'otbl');
   }

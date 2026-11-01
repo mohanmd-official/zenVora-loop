@@ -46,7 +46,7 @@ function accTally(){
     ${first ? `<div class="nag soft tfirst">🆕 <b>First tally.</b> Count <b>all the cash in the purse now</b>, today's collections included, and save. That is your starting point: from the next tally on, every day is checked against it.</div>` : ''}
     ${gap ? `<div class="nag">The last tally was on ${esc(fmtLong(prev.date))}; the days in between weren't tallied, so their cash isn't checked. The opening here is that day's closing count.</div>` : ''}
     <div class="tally tmain">
-      <div class="box tpurse"><h3>💵 Cash in the purse now <span class="sub">count every note and coin</span></h3>
+      <div class="box tpurse"><h3>💵 Cash in the purse now</h3>
         ${prefill ? `<div class="nag soft">Filled in from the opening cash${B.withDen.length ? ` and ${plural(B.withDen.length, 'cash bill')}'s notes` : ''}. Count the purse and change only what differs.${B.noDen ? ` ${plural(B.noDen, 'cash payment')} had no notes counted, so ${B.noDen === 1 ? "it isn't" : "they aren't"} included.` : ''}${B.cashExp || B.toPetty ? " Cash paid out for expenses / petty cash isn't taken off note by note: take those notes out too." : ''}</div>` : ''}
         ${denGrid(DENOMS, 'den', done ? done.counts : prefill, w)}
         <div class="ttot"><span>Cash in the purse</span><b id="tlCounted">₹0</b></div>
@@ -57,21 +57,21 @@ function accTally(){
         ${row(`+ Cash received <span class="stat">Collection report · ${plural(pays.length, 'payment')}</span>`, inr(B.cashIn))}
         ${B.chPetty || (done && +done.chPetty) ? row("+ Patients' change paid from petty cash <span class=\"stat\">their notes stayed in the purse</span>", inr(B.chPetty)) : ''}
         ${B.chOther || (done && +done.chOther) ? row(`+ Patients' change paid from elsewhere <span class="stat">${esc([...new Set(B.withDen.flatMap(x => (x.cash.xs || []).filter(s => s.src === 'other').map(s => s.name)))].join(', '))}</span>`, inr(B.chOther)) : ''}
-        ${row('± Other cash in / out <span class="stat">change brought in, bank, expenses, petty cash (below)</span>', '₹0', 'tlOtherR')}
+        ${row('± Other cash in / out', '₹0', 'tlOtherR')}
         <div class="payrow tsum"><span>Expected in the purse</span><b id="tlExpV">—</b></div>
         <div class="payrow"><span>Counted</span><b id="tlCountR">—</b></div>
         <div class="tdiff" id="tlDiff"></div>
         <div class="payrow stat"><span>Cash received as per the count <span class="stat">vs ${inr(B.cashIn)} in the report</span></span><span id="tlColl">—</span></div>
         ${pays.length ? `<details class="stat"><summary>Cash payments</summary>${pays.map(x => `<div>${esc(x.patientName)} · ${esc(x.receiptNo || '')} · ${inr(x.amount)}${x.cash ? ` · <span class="cdmini">${esc(cashLine(x))}</span>` : ' · <i>notes not counted</i>'}</div>`).join('')}</details>` : ''}</div>
     </div>
-    <details class="box tmore"${more ? ' open' : ''}><summary><b>More</b> <span class="stat">opening cash · change brought in · bank withdrawals &amp; deposits · expenses &amp; petty cash</span></summary>
+    <details class="box tmore"${more ? ' open' : ''}><summary><b>More</b></summary>
       ${first ? '' : `<div class="topen"><div class="tob"><span>Opening cash</span><b class="big" id="tlOpenV">${inr(opening)}</b>
         <span class="stat">${fix ? 'correcting the opening: count again and give the reason' : prev && !done ? 'closing count of the last tally, ' + esc(fmtDM(prev.date)) : 'as tallied' + (done && done.openingFix ? ` · corrected by ${esc((done.openingFix.by || '').split('@')[0])}: ${esc(done.openingFix.reason || '')}` : '')}</span>
         ${!fix && canW('accounts') ? `<button class="linkb" data-tlopen="${esc(day)}" title="Correct the opening cash (recorded with your name and reason)">✎ Correct opening</button>` : ''}${fix ? '<button class="linkb" data-tlopen="">Cancel</button>' : ''}</div>
         ${fix ? denGrid(DENOMS, 'op', openCounts || {}, w) : `<div class="dchips">${openCounts ? chip(openCounts) : ''}</div>`}
         ${fix ? '<input id="tlOpenWhy" placeholder="Reason for the correction *" style="flex-basis:100%">' : ''}</div>`}
       <div class="tally">
-        <div><h3 class="tmh">Change brought in <span class="sub">coins &amp; notes added to the purse (e.g. from the bank)</span></h3>${denGrid(CHG, 'ch', done && done.changeCounts, w)}
+        <div><h3 class="tmh">Change brought in</h3>${denGrid(CHG, 'ch', done && done.changeCounts, w)}
           <div class="payrow tsum"><span>Change brought in</span><b id="tlChangeV">₹0</b></div></div>
         <div><h3 class="tmh">Bank, expenses &amp; petty cash</h3>
           <div class="payrow"><span>+ Cash withdrawn from the bank / added</span><span>${w ? `<input type="number" class="tin" id="tlAdd" min="0" value="${done && +done.added || ''}" placeholder="0">` : inr(done && done.added)}</span></div>

@@ -79,7 +79,7 @@ function orgPeople(){
       <p class="stat" style="margin:8px 0 0"><b>Account Manager</b>: full admin of ${esc(oc.org.name)} · <b>Manager</b>: ${ZL.part('person', 'managerHint').join(', ') || 'helps run the team'} · <b>Employee</b>: their own ${ZL.part('person', 'employeeHint').concat(feat('agenda') ? ['planner'] : []).join(' and ') || 'account'}.</p>
       ${msgHtml(orgView.msg)}${shareHtml('pShare', orgView.share)}
     </div>`;
-    if (orgView.pending.length) top += `<div class="box legacy"><h3>Waiting to join <span class="sub">existing Zenvora Loop logins moved to your organization by Zenvora support</span></h3>
+    if (orgView.pending.length) top += `<div class="box legacy"><h3>Waiting to join</h3>
       ${orgView.pending.map(p => `<div class="req"><div class="rq"><b>${esc(p.name || p.email)}</b><span>${esc(p.email)}</span></div><button class="primary" data-pend="${esc(p.uid)}">Add to team</button></div>`).join('')}</div>`;
   }
   const rows = list.map(m => {
@@ -137,7 +137,7 @@ const durLabel = h => (DUR.find(d => d[0] === +h) || [0, `${h} hours`])[1];
 function orgPlanner(){
   const oc = orgCtx(), c = plannerCfg(), agenda = feat('agenda'), rem = ZL.list.filter(f => f.remHint && f.flags && f.flags.some(x => feat(x[0])));
   const sw = (k, on, title, sub, dis) => `<label class="psw${dis ? ' dis' : ''}"><input type="checkbox" data-pl="${k}"${on ? ' checked' : ''}${dis ? ' disabled' : ''}><span class="tg"></span><span class="pst"><b>${title}</b><small>${sub}</small></span></label>`;
-  return `<div class="sect"><div class="box"><h3>Planning Board for ${esc(oc.org.name)} <span class="sub">applies to everyone straight away</span></h3>
+  return `<div class="sect"><div class="box"><h3>Planning Board for ${esc(oc.org.name)}</h3>
     ${agenda ? '' : '<p class="stat" style="margin-top:0">The Planning Board is not part of your plan. Ask Zenvora Loop to add it.</p>'}
     <div class="psws">
       ${sw('board', c.board !== false, 'Planning Board for everyone', 'Off: only Account Managers keep the Planning Board. Everyone\'s tasks are kept and come back when you turn it on again.', !agenda)}
@@ -249,6 +249,7 @@ $('#orgBody').addEventListener('submit', async e => {
     { const mg = (orgView.members || []).find(m => m.uid === upd.reportsTo); upd.reportsToName = mg ? fullName(mg) : ''; upd.reportsToTitle = mg ? (mg.title || ROLE_LABEL[mg.role] || '') : ''; }
     const m0 = (orgView.members || []).find(m => m.uid === uid) || {};
     if (m0.role === 'owner' && upd.role && upd.role !== 'owner' && lastOwner(uid)) return info('This is the only Owner: make someone else Owner first.');
+    if (m0.role === 'owner' && uid !== cloud.uid && orgCtx().role !== 'owner') return info(`${fullName(m0)} is an Owner: only an Owner can change their details.`);
     try { await cloud.F.updateDoc(orgDoc('members', uid), upd); auditMember(m0, upd); if (upd.role === 'owner') markHasOwner(); orgView.edit = null; document.activeElement.blur(); renderOrg(); info('Saved.'); }
     catch(err){ info('Could not save: ' + errText(err)); }
   }

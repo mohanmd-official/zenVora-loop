@@ -22,8 +22,8 @@ ZL.add({
   },
   // Organization → People: work timing, Proxy attendance
   person:{
-    addHtml:() => feat('attendance') ? `<div class="full wtrow"><span class="fhead" style="margin:0">Work timing</span>${wtFields('paW', attCfg(null))}<span class="stat">time worked beyond these hours counts as overtime / extra hours</span></div>` : '',
-    editHtml:m => feat('attendance') ? `<div class="full cperm"><div class="fhead" style="margin:4px 0">Attendance · work timing</div><label class="ckl" style="color:var(--ink);margin-bottom:6px"><input type="checkbox" id="peAttReq"${attRequired(m) ? ' checked' : ''}> <b>Attendance required</b>&nbsp;<span class="stat">untick for people who don't check in (e.g. the Owner): never marked absent, full salary</span></label><div class="wtrow" style="margin-bottom:6px">${wtFields('peW', attCfg(m))}</div><label class="ckl" style="color:var(--ink)"><input type="checkbox" id="peProxy"${m.attProxy ? ' checked' : ''}> <b>Proxy attendance</b>&nbsp;<span class="stat">can check other staff in and out (e.g. reception)</span></label></div>` : '',
+    addHtml:() => feat('attendance') ? `<div class="full wtrow"><span class="fhead" style="margin:0">Work timing</span>${wtFields('paW', attCfg(null))}</div>` : '',
+    editHtml:m => feat('attendance') ? `<div class="full cperm"><div class="fhead" style="margin:4px 0">Attendance · work timing</div><label class="ckl" style="color:var(--ink);margin-bottom:6px"><input type="checkbox" id="peAttReq"${attRequired(m) ? ' checked' : ''}> <b>Attendance required</b>&nbsp;</label><div class="wtrow" style="margin-bottom:6px">${wtFields('peW', attCfg(m))}</div><label class="ckl" style="color:var(--ink)"><input type="checkbox" id="peProxy"${m.attProxy ? ' checked' : ''}> <b>Proxy attendance</b>&nbsp;</label></div>` : '',
     read(where, role, m){
       if (where === 'add') return $('#paWS') && !isAdminRole(role) ? {att:wtRead('paW')} : {};
       const o = {}; if ($('#peAttReq')) o.attRequired = $('#peAttReq').checked; if ($('#peProxy')) o.attProxy = $('#peProxy').checked; if ($('#peWS')) o.att = wtRead('peW', (m || {}).att); return o;

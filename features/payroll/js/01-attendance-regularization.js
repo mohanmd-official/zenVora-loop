@@ -22,14 +22,14 @@ function regLoad(force){
 const regPendingForMe = () => (regs.list || []).filter(r => r.status === 'pending' && r.uid !== cloud.uid && (r.approver === cloud.uid || (orgCtx() && isAdminRole(orgCtx().role))));
 const regApprover = () => !!(orgCtx() && (isAdminRole(orgCtx().role) || (regs.list || []).some(r => r.approver === cloud.uid)));
 function regForm(people){
-  return `<div class="box"><h3>Regularize attendance <span class="sub">forgot to check in or out? Ask for the missing time: the reporting manager approves it</span></h3>
+  return `<div class="box"><h3>Regularize attendance</h3>
     <form class="aform" id="attRegForm" novalidate>
       ${people ? `<label class="grow">Person<select id="rgWho">${people.map(a => `<option value="${esc(a.uid)}"${a.uid === cloud.uid ? ' selected' : ''}>${esc(fullName(a))}${a.uid === cloud.uid ? ' (you)' : ''}</option>`).join('')}</select></label>` : ''}
       <label>Date<input type="date" id="rgDate" value="${shiftDay(todayKey, -1)}" min="${shiftDay(todayKey, -31)}" max="${todayKey}"></label>
       <label>Check-in<input type="time" id="rgIn"></label><label>Check-out<input type="time" id="rgOut"></label>
       <label class="grow">Reason *<input id="rgWhy" placeholder="e.g. Forgot to check out, left at 6 PM"></label>
       <button class="primary" type="submit">Send for approval</button></form>
-    <p class="stat" style="margin:6px 0 0">Fill only what was missed: just Check-out if they forgot to check out, just Check-in if they forgot to check in, or both.</p></div>`;
+    </div>`;
 }
 function regTable(L, mode){
   if (!L.length) return '';
@@ -53,7 +53,7 @@ function attApprovals(){
   regLoad();
   if (!regs.list) return '<div class="empty">Loading…</div>';
   const P = regPendingForMe(), D = regs.list.filter(r => r.status !== 'pending' && (r.approver === cloud.uid || isAdminRole(orgCtx().role))).slice(0, 20);
-  return `<p class="stat" style="margin:0 0 8px">Regularization requests from the people who report to you. Approving adds the time to their attendance.</p>`
+  return ``
     + (P.length ? regTable(P, 'approve') : '<div class="empty">Nothing waiting for your approval. 👏</div>')
     + (D.length ? `<h3 style="font-size:13px;margin:16px 0 6px">Decided</h3>` + regTable(D, 'done') : '');
 }

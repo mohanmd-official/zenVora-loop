@@ -126,7 +126,7 @@ async function dtPlan(S){
 function dtBox(){
   if (!isOwner()) return '';
   const p = DT.plan, k = (l, v, s) => `<div class="kpi"><div class="kl">${l}</div><div class="kv">${v}</div><div class="ks">${s || ''}</div></div>`;
-  return `<div class="box" id="dtBox" style="margin-top:12px"><h3>Import from Dentee <span class="sub">bring in patients, appointments, treatments, medicines and payments from Dentee's Excel export</span></h3>
+  return `<div class="box" id="dtBox" style="margin-top:12px"><h3>Import from Dentee</h3>
     ${DT.busy ? `<div class="dtprog"><i style="width:${DT.busy.pct || 0}%"></i></div><p class="stat">${esc(DT.busy.msg || 'Working…')}</p>`
     : DT.done ? `<div class="nag" style="border-color:var(--done)">✓ Import finished: ${esc(DT.done)}</div><button id="dtAgain">Import another file</button>`
     : !p ? `<form class="aform" id="dtForm" novalidate><label class="grow">Dentee export (.xlsx)<input type="file" id="dtFile" accept=".xlsx,.xls"></label><button class="primary" type="submit">Check the file</button></form>

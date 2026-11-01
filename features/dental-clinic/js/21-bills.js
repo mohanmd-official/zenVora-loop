@@ -1,7 +1,7 @@
 /* ---------- Bills: a bill is its own record, separate from payments ----------
    bills/{id} {billNo B-00001, patientId, patientName, appointmentId, date, doctorId, items[{treatmentId, name, tooth, doctorId, cost, discount, net, legacy}],
    subtotal, discount, total, paid, status, ackBy, ackAt, lastPay, cancel{reason, by, at, payments}, replaces, replacedBy, createdBy, createdAt, history}
-   Status: draft → pending (Pending acknowledgement) → ack → partly → paid; any → cancelled (never deleted).
+   Status: draft → ack (Unpaid) → partly → paid; any → cancelled (never deleted). ('pending' = older bills awaiting acknowledgement: treated as Unpaid.)
    - A draft may be edited. Issuing it puts its treatments on the bill (treatments.billId): they are then locked until the bill is cancelled.
    - Each payment is its own record (payments, with billId) written in the same batch as the bill's new `paid` total and `lastPay`;
      the rules check paid = old paid + this payment and paid ≤ total, so a double click or a second screen can't record it twice.
@@ -11,7 +11,7 @@
    - The patient's balance is still treatments − payments (unchanged for old records); bills formalize visits from BILLS_SINCE on.
      Older unpaid treatments can be billed as one "Earlier balance" item. */
 const BILLS_SINCE = '2026-11-02';
-const BST = {draft:['Draft', 'pend'], pending:['Pending acknowledgement', 'pend'], ack:['Acknowledged', 'prog'], partly:['Partly paid', 'pend'], paid:['Paid', 'on'], cancelled:['Cancelled', 'gone']};
+const BST = {draft:['Draft', 'pend'], pending:['Unpaid', 'prog'], ack:['Unpaid', 'prog'], partly:['Partly paid', 'pend'], paid:['Paid', 'on'], cancelled:['Cancelled', 'gone']};
 const billBadge = b => `<span class="upill ${BST[b.status][1]}">${BST[b.status][0]}</span>`;
 const billLive = b => !!b && b.status !== 'cancelled';
 const billDue = b => Math.max(0, (+b.total || 0) - (+b.paid || 0));
@@ -20,7 +20,7 @@ const canCancelBill = b => canW('billing') && (!(+b.paid) || isAdminRole(orgCtx(
 const liveBillIds = B => new Set((B || []).filter(billLive).map(b => b.id));
 // a treatment is locked while it is on a live, issued bill
 const tLocked = (t, B) => !!t.billId && (B || []).some(b => b.id === t.billId && billLive(b) && b.status !== 'draft');
-const billItem = t => ({treatmentId:t.id, name:t.typeName || '', tooth:t.tooth || '', doctorId:t.doctorId || '', cost:+t.cost || 0, discount:+t.discount || 0, net:net(t), med:isMed(t)});
+const billItem = t => Object.assign({treatmentId:t.id, name:t.typeName || '', tooth:t.tooth || '', doctorId:t.doctorId || '', cost:+t.cost || 0, discount:+t.discount || 0, net:net(t), med:isMed(t)}, isMed(t) ? {qty:+t.qty || 0, unitPrice:+t.unitPrice || 0} : {});
 const billSums = items => { const subtotal = items.reduce((s, i) => s + (+i.cost || 0), 0), discount = items.reduce((s, i) => s + (+i.discount || 0), 0); return {subtotal, discount, total:Math.max(0, subtotal - discount)}; };
 // treatments that can go on a new bill: done, not on a live issued bill, from BILLS_SINCE (older ones are covered by "Earlier balance")
 const unbilledOf = (T, B) => (T || []).filter(t => t.status !== 'planned' && t.date >= BILLS_SINCE && !(t.billId && liveBillIds(B).has(t.billId)));
@@ -48,7 +48,7 @@ async function issueBill(bill, T){
   const {F, fs} = cloud, items = T.map(billItem).concat((bill.items || []).filter(i => i.legacy)), b = F.writeBatch(fs);
   if (!items.length) throw custom('There is nothing on this bill.');
   const sums = billSums(items), pd = +bill.paid || 0;
-  const upd = Object.assign({items, status:pd && pd >= sums.total ? 'paid' : pd ? 'partly' : 'pending', history:(bill.history || []).concat([{at:Date.now(), by:cloud.user.email || '', change:'issued'}])}, billSums(items));
+  const upd = Object.assign({items, status:pd && pd >= sums.total ? 'paid' : pd ? 'partly' : 'ack', history:(bill.history || []).concat([{at:Date.now(), by:cloud.user.email || '', change:'issued'}])}, billSums(items));
   if (upd.total < (+bill.paid || 0)) throw custom(`The total ${inr(upd.total)} is less than the ${inr(bill.paid)} already paid on it.`);
   b.update(cDoc('bills', bill.id), upd); T.forEach(t => b.update(cDoc('treatments', t.id), {billId:bill.id}));
   await b.commit(); return Object.assign(bill, upd);
@@ -109,13 +109,18 @@ async function cancelBill(bill, T){
   return {fresh, refund, how};
 }
 function printBill(bill, p, P){
-  const pays = (P || []).filter(x => x.billId === bill.id);
-  printDoc('Bill ' + bill.billNo, `<p><b>Patient:</b> ${esc(pName(p))} (${esc(p.code || '')}) · ${esc(p.phone || '')}<br><b>Bill date:</b> ${esc(fmtLong(bill.date))}${bill.appointmentId ? ' · visit' : ''}${bill.doctorId ? ` · <b>Doctor:</b> ${esc(dName(bill.doctorId))}` : ''}<br><b>Status:</b> ${BST[bill.status][0]}</p>
-    <table><tr><th>#</th><th>Treatment</th><th>Doctor</th><th class="n">Charge</th><th class="n">Discount</th><th class="n">Amount</th></tr>
-    ${(bill.items || []).map((i, n) => `<tr><td>${n + 1}</td><td>${esc(i.name)}${i.tooth ? ' (' + esc(i.tooth) + ')' : ''}</td><td>${esc(dName(i.doctorId) || '')}</td><td class="n">${inr(i.cost)}</td><td class="n">${inr(i.discount)}</td><td class="n">${inr(i.net)}</td></tr>`).join('')}
-    <tr class="tot"><td colspan="5">Total</td><td class="n">${inr(bill.total)}</td></tr></table>
-    ${pays.length ? `<h2>Payments</h2><table>${pays.map(x => `<tr><td>${esc(x.receiptNo)}</td><td>${esc(fmtShort(x.date))}</td><td>${esc((PMODES.find(m => m[0] === x.mode) || [0, x.mode])[1])}${x.txnRef ? ' · ' + esc(x.txnRef) : ''}</td><td class="n">${inr(x.amount)}</td></tr>`).join('')}</table>` : ''}
-    <p><b>Paid ${inr(bill.paid)} · Outstanding ${inr(billDue(bill))}</b></p>`);
+  const pays = (P || []).filter(x => x.billId === bill.id), I = bill.items || [], TR = I.filter(i => !i.med), MD = I.filter(i => i.med);
+  const sum = xs => xs.reduce((a, i) => a + (+i.net || 0), 0), trT = sum(TR), mdT = sum(MD);
+  printDoc('Bill ' + bill.billNo, `<p><b>Patient:</b> ${esc(pName(p))} (${esc(p.code || '')}) · ${esc(p.phone || '')}<br><b>Bill date:</b> ${esc(fmtLong(bill.date))}${bill.doctorId ? ` · <b>Doctor:</b> ${esc(dName(bill.doctorId))}` : ''}</p>
+    ${TR.length ? `<h2>Treatments</h2><table><tr><th>#</th><th>Treatment</th><th>Doctor</th><th class="n">Charge</th><th class="n">Discount</th><th class="n">Amount</th></tr>
+      ${TR.map((i, n) => `<tr><td>${n + 1}</td><td>${esc(i.name)}${i.tooth ? ' (' + esc(i.tooth) + ')' : ''}</td><td>${esc(dName(i.doctorId) || '')}</td><td class="n">${inr(i.cost)}</td><td class="n">${+i.discount ? inr(i.discount) : '—'}</td><td class="n">${inr(i.net)}</td></tr>`).join('')}
+      <tr class="tot"><td colspan="5">Treatments total</td><td class="n">${inr(trT)}</td></tr></table>` : ''}
+    ${MD.length ? `<h2>Medicines</h2><table><tr><th>#</th><th>Medicine</th><th class="n">Qty</th><th class="n">Price</th><th class="n">Amount</th></tr>
+      ${MD.map((i, n) => `<tr><td>${n + 1}</td><td>${esc(i.name)}</td><td class="n">${+i.qty || '—'}</td><td class="n">${i.unitPrice ? inr(i.unitPrice) : '—'}</td><td class="n">${inr(i.net)}</td></tr>`).join('')}
+      <tr class="tot"><td colspan="4">Medicines total</td><td class="n">${inr(mdT)}</td></tr></table>` : ''}
+    <h2>Summary</h2><table>${TR.length ? `<tr><td>Treatments</td><td class="n">${inr(trT)}</td></tr>` : ''}${MD.length ? `<tr><td>Medicines</td><td class="n">${inr(mdT)}</td></tr>` : ''}
+      <tr class="tot"><td>Total</td><td class="n">${inr(bill.total)}</td></tr><tr><td>Paid</td><td class="n">${inr(bill.paid)}</td></tr><tr class="tot"><td>Balance due</td><td class="n">${inr(billDue(bill))}</td></tr></table>
+    ${pays.length ? `<h2>Payments</h2><table>${pays.map(x => `<tr><td>${esc(x.receiptNo)}</td><td>${esc(fmtShort(x.date))}</td><td>${esc((PMODES.find(m => m[0] === x.mode) || [0, x.mode])[1])}${x.txnRef ? ' · ' + esc(x.txnRef) : ''}</td><td class="n">${inr(x.amount)}</td></tr>`).join('')}</table>` : ''}`);
 }
 // payment form for a bill (prefix vb: visit, py: patient's Bills tab)
 const payForm = (pre, b) => `<form class="aform payf" id="${pre === 'vb' ? 'clVBill' : 'clPayForm'}" data-bill="${esc(b.id)}" novalidate style="margin-top:8px">
@@ -132,7 +137,7 @@ function clBills(){
   const U = unbilledOf(cl.pT, cl.pB), ed = earlierDue(cl.pT, cl.pP, cl.pB), live = B.filter(billLive), open = cl.billOpen;
   const tot = live.reduce((s, b) => s + (+b.total || 0), 0), paid = live.reduce((s, b) => s + (+b.paid || 0), 0);
   return `<div class="sect"><div class="kpis">${kpi('Total billed', inr(tot), plural(live.length, 'bill'))}${kpi('Paid on bills', inr(paid), '')}${kpi('Outstanding on bills', inr(tot - paid), live.filter(b => billDue(b) > 0).length + ' open', tot - paid > 0 ? 'neg' : '')}</div>
-    ${w && (U.length || ed > 0) ? `<div class="box"><h3>New bill <span class="sub">done treatments not on a bill yet</span></h3><form id="clNewBill" novalidate>
+    ${w && (U.length || ed > 0) ? `<div class="box"><h3>New bill</h3><form id="clNewBill" novalidate>
       ${U.map(t => `<label class="ckl"><input type="checkbox" data-nbt="${esc(t.id)}" checked> ${esc(fmtShort(t.date))} · <b>${esc(t.typeName)}</b>${t.tooth ? ' (' + esc(t.tooth) + ')' : ''} · ${esc(dName(t.doctorId) || '')} · ${inr(net(t))}</label>`).join('')}
       ${ed > 0 ? `<label class="ckl"><input type="checkbox" id="nbLegacy"${U.length ? '' : ' checked'}> <b>Earlier balance (before bills)</b> · ${inr(ed)}</label>` : ''}
       <div class="btnrow"><button class="primary" type="submit">Generate bill</button><button type="button" data-nbdraft>Save as draft</button></div></form></div>` : ''}
@@ -148,11 +153,10 @@ function billDetail(b){
     ${(b.items || []).map(i => `<tr><td>${esc(i.name)}${i.tooth ? ' (' + esc(i.tooth) + ')' : ''}</td><td>${esc(dName(i.doctorId) || '')}</td><td class="num">${inr(i.cost)}</td><td class="num">${+i.discount ? inr(i.discount) : '—'}</td><td class="num">${inr(i.net)}</td></tr>`).join('')}
     <tr class="tot"><td colspan="4">Total</td><td class="num">${inr(b.total)}</td></tr></tbody></table></div>
     ${pays.length ? `<div class="stat">Payments: ${pays.map(x => `${esc(x.receiptNo)} ${esc(fmtShort(x.date))} ${inr(x.amount)} ${esc((PMODES.find(m => m[0] === x.mode) || [0, x.mode])[1])}`).join(' · ')}</div>` : ''}
-    ${b.ackBy ? `<div class="stat">Acknowledged ${esc(fmt(b.ackAt))} · ${esc(String(b.ackBy).split('@')[0])}</div>` : ''}
     <div class="btnrow" style="margin-top:6px"><button data-bprint>🖨 Print bill</button>
-      ${w && b.status === 'draft' ? '<button class="primary" data-bissue>Issue bill</button>' : ''}${w && b.status === 'pending' ? '<button class="primary" data-back>Patient acknowledged</button>' : ''}${w && ['pending', 'ack'].includes(b.status) && !+b.paid ? '<button data-breopen title="Back to a draft to correct the treatments (no payment yet)">Reopen to edit</button>' : ''}
+      ${w && b.status === 'draft' ? '<button class="primary" data-bissue>Issue bill</button>' : ''}${w && ['pending', 'ack'].includes(b.status) && !+b.paid ? '<button data-breopen title="Back to a draft to correct the treatments (no payment yet)">Reopen to edit</button>' : ''}
       ${billLive(b) && canCancelBill(b) ? '<span class="sp"></span><button class="danger" data-bcancel>Cancel bill…</button>' : ''}</div>
-    ${w && billPayable(b) ? payForm('py', b) : billLive(b) && b.status !== 'draft' && !billDue(b) ? '<p class="stat">Fully paid: this bill can no longer be changed. To correct it, cancel it and issue a fresh one.</p>' : ''}`;
+    ${w && billPayable(b) ? payForm('py', b) : billLive(b) && b.status !== 'draft' && !billDue(b) ? '' : ''}`;
 }
 function clPayments(){
   const P = (cl.pP || []).slice().sort((a, b) => String(b.date).localeCompare(String(a.date)) || (b.createdAt || 0) - (a.createdAt || 0)), B = cl.pB || [];
@@ -161,7 +165,7 @@ function clPayments(){
     <div class="awrap" style="margin-top:0"><table class="atbl"><thead><tr><th>Receipt</th><th>Bill</th><th>Date</th><th>Method</th><th>Transaction ref.</th><th>Note</th><th class="num">Amount</th><th></th></tr></thead><tbody>
       ${cl.pP === null ? '<tr><td colspan="8">Loading…</td></tr>' : P.map(x => `<tr data-pay="${esc(x.id)}"><td>${esc(x.receiptNo || '')}${x.kind === 'refund' ? ' <span class="upill gone">Refund</span>' : ''}</td><td>${esc(x.billNo || (B.find(b => b.id === x.billId) || {}).billNo || '—')}</td><td>${esc(fmtShort(x.date))}</td><td>${esc((PMODES.find(m => m[0] === x.mode) || [0, x.mode])[1])}</td><td>${esc(x.txnRef || '')}</td><td>${esc(x.note || '')}${x.cash ? `<span class="sub2">${esc(cashLine(x))}</span>` : ''}</td><td class="num"><b class="${x.amount < 0 ? 'neg' : ''}">${inr(x.amount)}</b></td>
         <td><button data-rcpt>🖨 Receipt</button></td></tr>`).join('') || '<tr><td colspan="8" class="stat">No payments yet.</td></tr>'}
-    </tbody></table></div><p class="stat">Payments are never deleted or edited. A wrong payment is corrected by cancelling its bill (move or refund).</p></div>`;
+    </tbody></table></div></div>`;
 }
 async function billAction(e){
   const t = e.target, row = t.closest('[data-bill]'); if (!row) return false;
@@ -169,7 +173,7 @@ async function billAction(e){
   const T = id => (cl.pT || []).filter(x => (b.items || []).some(i => i.treatmentId === x.id));
   try {
     if (t.closest('[data-bprint]')){ printBill(b, cl.p, cl.pP); return true; }
-    if (t.closest('[data-bissue]')){ await issueBill(b, T()); info(`${b.billNo} issued: waiting for the patient's acknowledgement.`); renderClinic(); return true; }
+    if (t.closest('[data-bissue]')){ await issueBill(b, T()); info(`${b.billNo} issued.`); renderClinic(); return true; }
     if (t.closest('[data-breopen]')){ await reopenBill(b); info(`${b.billNo} is a draft again: change the treatments, then Issue.`); renderClinic(); return true; }
     if (t.closest('[data-back]')){ await ackBill(b); info(`${b.billNo} acknowledged.`); renderClinic(); return true; }
     if (t.closest('[data-bcancel]')){ const r = await cancelBill(b, T()); if (r){ info(r.fresh ? `${b.billNo} cancelled: payments moved to ${r.fresh.billNo} (draft: correct the treatments, then Issue).` : r.refund ? `${b.billNo} cancelled and ${inr(-r.refund.amount)} refunded (${r.refund.receiptNo}).` : `${b.billNo} cancelled.`); if (r.fresh) cl.billOpen = r.fresh.id; renderClinic(); } return true; }
@@ -180,6 +184,6 @@ async function billAction(e){
 async function newBillSubmit(draft){
   const ids = [...document.querySelectorAll('[data-nbt]:checked')].map(c => c.dataset.nbt), T = (cl.pT || []).filter(t => ids.includes(t.id));
   const legacy = $('#nbLegacy') && $('#nbLegacy').checked ? earlierDue(cl.pT, cl.pP, cl.pB) : 0;
-  try { const b = await createBill({p:cl.p, appt:null, T, status:draft ? 'draft' : 'pending', legacy}); cl.billOpen = b.id; info(`${b.billNo} ${draft ? 'saved as a draft' : 'generated'} · ${inr(b.total)}`); renderClinic(); }
+  try { const b = await createBill({p:cl.p, appt:null, T, status:draft ? 'draft' : 'ack', legacy}); cl.billOpen = b.id; info(`${b.billNo} ${draft ? 'saved as a draft' : 'generated'} · ${inr(b.total)}`); renderClinic(); }
   catch(e){ info(errText(e)); }
 }

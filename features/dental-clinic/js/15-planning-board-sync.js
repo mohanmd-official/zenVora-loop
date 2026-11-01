@@ -180,7 +180,7 @@ function renderOrgRem(){
   const L = otList(), open = otOpen(), done = L.filter(t => t.status === 'done').sort((a, b) => (b.doneAt || 0) - (a.doneAt || 0)).slice(0, 30);
   host.innerHTML = `<div class="orgrem${orgRemOpen ? ' open' : ''}">
     <button class="orh" data-ortoggle><span class="chev">${orgRemOpen ? '▾' : '▸'}</span><b>Organization reminders</b><span class="orn${open.length ? ' on' : ''}">${open.length} open</span>
-      <span class="stat">shared by everyone in ${esc(oc.org.name)}: when one person closes it, it closes for all</span><span class="sp"></span>${done.length ? `<span class="stat">${done.length} closed recently</span>` : ''}</button>
+     <span class="sp"></span>${done.length ? `<span class="stat">${done.length} closed recently</span>` : ''}</button>
     ${orgRemOpen ? `<div class="orb"><div class="orcol"><div class="orct"><i class="dot s-todo"></i>Open · ${open.length}</div>${open.map(otRow).join('') || '<div class="empty">Nothing open. 🎉</div>'}</div>
       <div class="orcol"><div class="orct"><i class="dot s-done"></i>Closed · last 14 days</div>${done.map(otRow).join('') || '<div class="empty">Nothing closed yet.</div>'}</div></div>` : ''}</div>`;
 }

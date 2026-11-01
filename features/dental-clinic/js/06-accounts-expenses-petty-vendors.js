@@ -50,7 +50,7 @@ function accExpenses(d){
       ${w ? `<button class="primary" id="exAddBtn">${a.exAdd ? '✕ Close' : '+ Add expense'}</button>` : ''}</div>
     <div class="exbar">${bySrc.filter(([, v]) => v).map(([k, v]) => `<i style="flex:${v};background:${EXP_COL[k]}" title="${EXP_SRC[k][0]} ${inr(v)}"></i>`).join('') || '<i style="flex:1;background:var(--line)"></i>'}</div>
     <div class="exchips">${bySrc.map(([k, v]) => `<button class="exchip${f.src === k ? ' on' : ''}${v ? '' : ' zero'}" data-exsrc="${k}" style="--c:${EXP_COL[k]}" title="Show only ${EXP_SRC[k][0]}"><i></i>${EXP_SRC[k][0]}<b>${inr(v)}</b></button>`).join('')}</div>
-    ${w && a.exAdd ? `<div class="box exadd"><h3>Add an expense <span class="sub">rent, EB, clinic loan, internet, maintenance, miscellaneous … (lab, materials, consultants, salary and petty cash have their own pages)</span></h3>${expForm(a.pre)}</div>` : ''}
+    ${w && a.exAdd ? `<div class="box exadd"><h3>Add an expense</h3>${expForm(a.pre)}</div>` : ''}
     ${nOut ? `<details class="box exoutl"${overdue.length || a.exOutOpen ? ' open' : ''}><summary><b>Payments to make</b> <span class="stat">${plural(nOut, 'item')} · ${inr(outTot)}</span></summary>
       ${unpaid.map(x => `<div class="orow" data-led="${esc(x.id)}"><span class="cdot${payState(x) === 'overdue' ? ' late' : ''}"></span><div><b>${esc(x.category)}</b><span class="sub2">${esc([party(x), x.note].filter(Boolean).join(' · ').slice(0, 60))} · ${esc(monthLabel(svcMonth(x)))}</span></div><div class="opill">${payPill(x)}</div><b class="oamt">${inr(x.amount)}</b>${w ? '<button class="primary sm" data-billpay>Mark paid</button>' : '<span></span>'}</div>`).join('')}
       ${cons.map(x => outRow('', 'Consultant fees', esc(x.c.name) + ': not yet paid', `<a class="srcl" data-at="consultants" href="#/clinic/accounts/consultants">Pay in Consultants</a>`, inr(x.bal))).join('')}
@@ -66,7 +66,7 @@ function accExpenses(d){
         <td>${esc((PMODES.find(m => m[0] === x.mode) || [0, ''])[1])}</td><td>${x.src === 'fee' ? '<span class="stat">see Consultants</span>' : payPill(x)}</td><td class="num"><b>${inr(x.amount)}</b></td>
         <td class="nowrap">${x.src === 'ledger' ? billCell(x) : ''}${w && x.src === 'ledger' && x.paid === false ? ' <button class="primary sm" data-billpay>Mark paid</button>' : ''}${w && own ? ' <button class="ghost xdel" data-ldel title="Delete (a copy is kept in the audit log)">✕</button>' : ''}</td></tr>`; }).join('') || '<tr><td colspan="7" class="stat">No expenses for this selection.</td></tr>'}
     </tbody></table></div>
-    <p class="stat">Each expense is recorded once, on its own page; this page adds them up. Petty cash counts when the box is topped up (the spends are listed on the Petty cash page). Consultant payouts settle fees already counted; the Daily tally is a cash check, not an expense.</p>`;
+    `;
 }
 function accPetty(d){
   const a = cl.acc, owner = canW('accounts'), spend = canW('petty') || owner, inM = x => (x.date || '').slice(0, 7) === a.month;
@@ -78,9 +78,9 @@ function accPetty(d){
       ${kpi('Topped up this month', inr(tin), esc(monthLabel(a.month)))}${kpi('Spent this month', inr(tout), plural(L.filter(x => x.kind === 'pettyspend' && !x.change).length, 'spend') + (L.some(x => x.change) ? ` · ${inr(paidSum(L.filter(x => x.change)))} given as change` : ''))}</div>
     ${bal < 0 || !everIn ? `<div class="nag${bal < 0 ? ' late' : ''}">${bal < 0 ? `⚠ ${inr(-bal)} more has been recorded as spent than was ever topped up, so the balance can't be right.` : 'No top-up or opening balance has been recorded yet.'} ${owner ? 'Count the cash in the petty box and enter it below: that sets the correct balance.' : 'Ask the clinic owner to count the box and set the opening balance.'}</div>` : ''}
     <div class="acards">
-      ${owner ? `<div class="box"><h3>Count the box / opening balance <span class="sub">enter the cash in the petty box right now</span></h3><form class="aform" id="accPcountForm" novalidate>
+      ${owner ? `<div class="box"><h3>Count the box / opening balance</h3><form class="aform" id="accPcountForm" novalidate>
         <label>Cash in the box now (₹) *<input type="number" id="pcAmt" min="0" placeholder="e.g. 2000"></label><button class="primary" type="submit">Set balance</button></form>
-        <p class="stat" style="margin:6px 0 0">The difference is recorded as an opening balance (or a correction), so the balance shown always equals the cash you have.</p></div>` : ''}
+        </div>` : ''}
       ${owner ? `<div class="box"><h3>Top up petty cash <span class="sub">clinic owner / accounts</span></h3><form class="aform" id="accPinForm" novalidate>
         <label>Date<input type="date" id="piDate" value="${dflt}" max="${todayKey}"></label><label>Amount (₹) *<input type="number" id="piAmt" min="1"></label>
         <label>Taken from<select id="piSrc"><option value="drawer">Main cash drawer</option><option value="bank">Bank</option><option value="owner">Owner / other</option></select></label>

@@ -50,7 +50,7 @@ match /bills/{b} {
   function apptBefore() { return get(/databases/$(database)/documents/orgs/$(o)/appointments/$(nb().appointmentId)).data; }
   function payAfter() { return getAfter(/databases/$(database)/documents/orgs/$(o)/payments/$(nb().lastPay)).data; }
   allow read: if perm(o, 'billing') || perm(o, 'treatments') || perm(o, 'reports') || perm(o, 'accounts') || supportOpen(o);
-  allow create: if perm(o, 'billing') && nb().status in ['draft', 'pending'] && nb().total == nb().subtotal - nb().discount && nb().total >= 0 && nb().paid >= 0
+  allow create: if perm(o, 'billing') && nb().status in ['draft', 'ack'] && nb().total == nb().subtotal - nb().discount && nb().total >= 0 && nb().paid >= 0
     && (nb().paid == 0 || (nb().get('replaces', '') != '' && billAfter(nb().replaces).status == 'cancelled'
           && billAfter(nb().replaces).get('replacedBy', '') == b && billDoc(nb().replaces).paid == nb().paid))
     && (nb().get('appointmentId', '') == '' || (apptAfter().get('billId', '') == b
@@ -59,7 +59,7 @@ match /bills/{b} {
     && !changed().hasAny(['billNo', 'patientId', 'appointmentId', 'createdAt', 'createdBy', 'replaces']) && (
       // a draft is edited or issued
       (ob().status == 'draft' && nb().paid == ob().paid && nb().total == nb().subtotal - nb().discount && nb().total >= nb().paid
-          && (nb().status in ['draft', 'pending'] || (nb().paid > 0 && ((nb().paid == nb().total && nb().status == 'paid') || (nb().paid < nb().total && nb().status == 'partly')))))
+          && (nb().status in ['draft', 'ack'] || (nb().paid > 0 && ((nb().paid == nb().total && nb().status == 'paid') || (nb().paid < nb().total && nb().status == 'partly')))))
       // acknowledged by the patient
       || (ob().status == 'pending' && nb().status == 'ack' && changed().hasOnly(['status', 'ackBy', 'ackAt', 'history']))
       // a payment: paid rises by exactly the new payment's amount, never above the total

@@ -16,7 +16,7 @@ function accConsultants(d){
     ${sel ? consVisits(d, sel) : ''}
     ${sel ? `<details class="box" style="margin-top:12px"><summary><b>All fees &amp; payments · ${esc(dName(sel))} · ${esc(monthLabel(a.month))}</b></summary>
       ${tbl(['Date', 'Patient', 'For', 'Type', '₹Amount'], list.map(x => ({c:[esc(fmtShort(x.date)), esc(x.patient || '—'), esc(x.what), x.kind === 'Paid' ? '<span class="upill on">Paid</span>' : 'Fee', x.amt < 0 ? '− ' + inr(-x.amt) : inr(x.amt)]})))}</details>` : ''}
-    <p class="stat">A consultant's fee is entered on each treatment they do (or with + Fee) and counts as a clinic expense. "Pay" records money handed over, which reduces what you owe them.</p>`;
+    `;
 }
 /* consultant visits: the days a consultant came (from their appointments), each patient seen and what the clinic pays for that patient */
 function consRows(d, sel){
@@ -49,7 +49,7 @@ function consVisits(d, sel){
       <div class="kpi"><div class="kl">Month total</div><div class="kv" id="cvTot">${inr(tot)}</div></div><div class="kpi"><div class="kl">Cost not entered</div><div class="kv${open ? ' neg' : ''}" id="cvOpen">${open}</div></div></div>
     ${fd ? `<div class="stat">Showing ${esc(fmtLong(fd))} · <button class="linkb" data-cday="">show the whole month</button></div>` : ''}
     ${body}
-    <p class="stat">Visits come from the appointments booked with ${esc(dName(sel))} (cancelled ones are left out). ${w ? 'Enter what the clinic pays for each patient; it saves as you type and counts as a consultant fee.' : ''}</p></div>`;
+    </div>`;
 }
 function consTable(rows, w){
   let html = '', last = '';

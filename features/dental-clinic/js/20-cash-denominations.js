@@ -11,15 +11,15 @@ const cdChips = c => DENOMS.filter(v => +(c || {})[v]).map(v => `<span class="dc
 function cashPanel(pre, show){
   const n = CDX[pre] || 0;
   return `<div class="cashd" id="${pre}Cash"${show ? '' : ' hidden'}>
-    <div class="cdh"><b>💵 Cash denominations</b><span class="stat">count the notes: they go into the daily tally by themselves</span></div>
+    <div class="cdh"><b>💵 Cash denominations</b></div>
     <div class="cdsec"><div class="cdl">Received from the patient <b id="${pre}InT">₹0</b></div>${cdGrid(pre, 'In')}</div>
     <div class="cdchg" id="${pre}ChgL">Change to give back: <b id="${pre}ChgV">₹0</b></div>
-    <div class="cdsec" id="${pre}OutBox"><div class="cdl">Change from the purse <small>(cash drawer)</small> <b id="${pre}OutT">₹0</b></div>${cdGrid(pre, 'Out')}</div>
+    <div class="cdsec" id="${pre}OutBox"><div class="cdl">Change from the purse <b id="${pre}OutT">₹0</b></div>${cdGrid(pre, 'Out')}</div>
     <div class="cdxs">${[...Array(n)].map((_, i) => `<div class="cdx" data-cdx="${i}">
       <span class="cdl">Change from</span><select id="${pre}X${i}Src" data-cd="${pre}"><option value="petty">Petty cash</option><option value="other">Somewhere else…</option></select>
       <input id="${pre}X${i}Name" data-cd="${pre}" placeholder="Where? (e.g. Doctor's wallet)" hidden><input type="number" min="0" step="1" id="${pre}X${i}Amt" data-cd="${pre}" placeholder="₹ amount">
       <button type="button" class="ghost" data-cdrm="${pre}" title="Remove">✕</button></div>`).join('')}</div>
-    <button type="button" class="linkb" data-cdadd="${pre}">+ Take part of the change from another place (e.g. petty cash)</button>
+    <button type="button" class="linkb" data-cdadd="${pre}">+ Change from elsewhere (e.g. petty cash)</button>
     <div class="cdst" id="${pre}St"></div></div>`;
 }
 // read the panel; amount = the payment amount. Returns the figures (and fills in the totals on screen)

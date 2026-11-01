@@ -157,7 +157,7 @@ function markList(accts, ev){
 }
 function attMark(){
   if (!att.accts.length) return att.key ? '<div class="empty">No staff yet.</div>' : '<div class="empty">Loading team…</div>';
-  return `<p class="stat" style="margin:0 0 8px">Check staff in or out when they can't do it themselves. The time is taken from the server clock and the entry is marked as done by you.</p>` + markList(att.accts, att.ev)
+  return `` + markList(att.accts, att.ev)
     + '<div style="height:14px"></div>' + regProxyBox(att.accts.filter(a => a.active !== false));
 }
 async function proxyPunch(uid, type, btn){
@@ -257,7 +257,7 @@ function attDetail(){
           <label>Overtime rate<select id="cfOT">${[1, 1.5, 2].map(m => `<option value="${m}"${+c.otMult === m ? ' selected' : ''}>${m}× hourly</option>`).join('')}</select></label>` : ''}
           <button class="primary" type="submit">Save</button>
         </form>
-        <p class="stat" style="margin:8px 0 0">${OFFS_PER_MONTH} paid offs per month, shared by days off and short hours (a day more than ${SHORT_GRACE_MIN} min under the shift counts its shortfall; ${hm(S.sh)} short = 1 day). Beyond ${OFFS_PER_MONTH}: loss of pay. Offs left over and worked (e.g. Sundays) are paid as extra days. Every minute beyond the shift is overtime.</p>
+        
       </div>`}
       ${pay ? `<div class="box"><h3>Pay for ${esc(parseDay(att.month + '-01').toLocaleDateString([], {month:'long'}))}${S.done ? '' : ' (so far)'}</h3>
         ${pr(`Base: ${S.effMonth} days × ${inr(S.perDay)}/day`, inr(S.base))}
@@ -288,7 +288,7 @@ function attMonthEditor(S, a){
       <td class="num">${ss.length ? hm(r.worked || 0) + (r.ot ? `<div class="ot" style="font-size:11.5px">+${hm(r.ot)} OT</div>` : r.short ? `<div class="neg" style="font-size:11.5px">−${hm(r.short)} short</div>` : '') : '—'}</td>
       <td style="white-space:nowrap">${ss.length ? '' : `<button type="button" data-edshift title="Fill with the work timing: ${esc(shiftTxt(S.c))}">Fill shift</button> `}<button type="button" class="primary" data-edsave disabled>Save</button></td></tr>`;
   }
-  return `<div class="box" id="attEditor"><h3>Edit attendance for ${esc(parseDay(att.month + '-01').toLocaleDateString([], {month:'long', year:'numeric'}))} <span class="sub">add, change or remove check-ins and check-outs for any day; several sessions a day are fine (e.g. lunch break)</span></h3>
+  return `<div class="box" id="attEditor"><h3>Edit attendance for ${esc(parseDay(att.month + '-01').toLocaleDateString([], {month:'long', year:'numeric'}))}</h3>
     <div class="btnrow" style="margin:0 0 8px"><span class="stat">Change the times, then <b>Save</b> that day, or</span><button class="primary" id="edSaveAll" disabled>Save all changed days</button></div>
     <div class="awrap" style="margin-top:0"><table class="atbl edtbl"><thead><tr><th>Date</th><th>Status</th><th>Check-in → Check-out</th><th class="num">Worked</th><th></th></tr></thead><tbody>${html}</tbody></table></div></div>`;
 }

@@ -68,7 +68,7 @@ function orgsList(){
       <label>Temporary password<span class="pwgen"><input id="obPass" value="${esc(supers.tmp)}" autocomplete="off"><button type="button" id="obGen" title="Generate a new password">↻</button></span></label>
       <button class="primary" type="submit" id="obSubmit">Onboard</button><button type="button" id="obCancel">Cancel</button>
     </form>
-    <p class="stat" style="margin:8px 0 0">The Account Manager becomes the admin of this organization only: they add their own people and decide whether Zenvora Loop support may look inside.</p>
+    
     ${msgHtml(supers.msg)}</div>` : (supers.msg || supers.share ? `<div class="box">${msgHtml(supers.msg)}${shareHtml('obShare', supers.share)}</div>` : '');
   const rows = L.slice().sort((a, b) => (a.status !== 'active') - (b.status !== 'active') || String(a.name).localeCompare(String(b.name))).map(o => {
     const st = OST[o.status] || [o.status, 'off'], f = o.features || {};
@@ -82,7 +82,7 @@ function orgsList(){
       <td>${isSupportOpen(o) ? `<span class="upill on">Open until ${esc(fmt(o.supportUntil))}</span>` : '<span class="stat">Closed</span>'}</td></tr>`;
   }).join('');
   const lg = supers.legacy || [];
-  const legacy = lg.length && act.length ? `<div class="box legacy"><h3>Logins from before organizations <span class="sub">move each person into their organization; its Account Manager then clicks "Add to team"</span></h3>
+  const legacy = lg.length && act.length ? `<div class="box legacy"><h3>Logins from before organizations</h3>
     ${lg.map(a => `<div class="req" data-legacy="${esc(a.uid)}"><div class="rq"><b>${esc(a.name || a.email)}</b><span>${esc(a.email)}</span></div><select>${act.map(o => `<option value="${esc(o.id)}">${esc(o.name)}</option>`).join('')}</select><button data-mv>Move</button></div>`).join('')}</div>` : '';
   return `<div class="sect">
     <div class="kpis">
@@ -139,7 +139,7 @@ function orgsDetail(){
           <button type="submit">Assign</button>
         </form>
       </div>
-      <div class="box"><h3>Support access <span class="sub">read-only, only with the Account Manager's approval</span></h3>
+      <div class="box"><h3>Support access</h3>
         ${open ? `<div class="grant" style="margin-bottom:8px">✅ <span style="flex:1">Open until <b>${esc(fmt(o.supportUntil))}</b></span><button class="primary" data-enter="${esc(o.id)}">Open support view</button></div>`
           : pending ? `<p class="stat" style="margin:0 0 8px">Waiting for ${esc(o.adminEmail || 'the Account Manager')} to approve. They've been notified in the app.</p>`
           : `<form class="aform" id="rqForm" novalidate>
