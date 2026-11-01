@@ -9,7 +9,7 @@ ZL.add({
   supportView(){ if (!feat('attendance')) return null; att.mode = 'team'; return 'attendance'; },
   expose(z){ Object.defineProperty(z, 'att', {get:() => att}); Object.assign(z, {attSummary, sessionsOf}); },
   // what other features may use (Clinic → Accounts → Staff salary works from attendance)
-  api:{attSummary, sessionsOf, attCol, attCfg, canManageAtt, payOn, titleOf, OFFS_PER_MONTH},
+  api:{attSummary, sessionsOf, attCol, attCfg, canManageAtt, payOn, titleOf, OFFS_PER_MONTH, SHORT_GRACE_MIN},
   home:{
     load:attHomeLoad, reset:attHomeReset, after(){ attTick(); },
     defaults:() => ['checkin', 'mark'],

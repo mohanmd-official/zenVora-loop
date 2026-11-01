@@ -55,7 +55,7 @@ Each feature folder: `feature.json` (name, order, enabled) · `tab.html` · `vie
 | File | What's inside |
 |---|---|
 | 01-attendance-regularization | regularization requests & approvals (`regLoad`, `wRegs`) |
-| 02-attendance | Attendance (`att`, check-in/out `punch`, team, month editor, work timing `wtFields`/`wtRead`, `attSummary`, pay, Sundays, incentives) |
+| 02-attendance | Attendance (`att`, check-in/out `punch`, team, month editor, work timing `wtFields`/`wtRead`, `attSummary`, pay, Sundays, incentives). Pay rule: `OFFS_PER_MONTH` (4) covers days off + short hours (finished days more than `SHORT_GRACE_MIN` (15) under the shift; ÷ shift = days); beyond → `lop` (fractional days); offs worked − short days → `otDays`; overtime = every minute beyond the shift |
 | 03-home-widgets | Home: Check in / out, Mark attendance (`attHome`) |
 | 99-register | flags attendance + payroll, view `attendance` (key 5), Home widgets, person fields, `api` for other features |
 

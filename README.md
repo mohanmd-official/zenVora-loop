@@ -108,7 +108,7 @@ People created in the earlier single-admin version show up in **Organizations �
 
 Where: the **Attendance** page (top menu; in clinic organizations it's in the left menu, next to Clinic). Everyone can also check in and out from **Home**.
 
-**Pay (with Payroll on):** the Team table shows Present, offs, loss of pay, hours, **OT hours**, **OT days** (worked on paid offs), **Sundays** worked, Salary, **Extra hrs / days**, **Incentive** (approved patient assists, clinic organizations) and **Payable** = salary − loss of pay + extra hours / days + incentive. The same breakdown is in each person's page.
+**Pay (with Payroll on):** the Team table shows Present, offs, loss of pay, hours (with **short hours**), **OT hours**, **OT days** (worked on paid offs), **Sundays** worked, Salary, **Extra hrs / days**, **Incentive** (approved patient assists, clinic organizations) and **Payable** = salary − loss of pay + extra hours / days + incentive. The same breakdown is in each person's page.
 
 - **Account Managers don't check in:** attendance, payroll and the team lists are for staff only.
 - **Work timing:** set when adding a person (Organization → People → Add a person → **Work starts / Work ends**, and optionally **Break from / Break to**, e.g. 9:30 AM – 7:00 PM with a break 3:00 – 4:00 PM), or later in People → **Edit** or Attendance → person → shift settings. The day's hours are the timing minus the break (8h 30m in the example); anything worked beyond that shows as **OT hours** (per day in the month editor, and in the totals and pay). **Fill shift** in the month editor puts in the two sessions around the break.
@@ -116,7 +116,7 @@ Where: the **Attendance** page (top menu; in clinic organizations it's in the le
 - **Regularization (forgot to check in or out):** in **My attendance**, click **Regularize** next to a missed day (or use the **Regularize attendance** box), enter only the missed time and a reason, and **Send for approval**. A Proxy attendance person can do the same for anyone from **Mark attendance**. The request goes to the person's **immediate reporting manager** (the Account Manager if they report to no one), who sees it on **Home → Attendance approvals** and in **Attendance → Approvals**. On **Approve**, the time is added to their attendance; **Reject** changes nothing. People can't approve their own requests, and requests go back up to 31 days.
 
 
-- **Staff:** **Attendance** tab → **Check in** when arriving and **Check out** when leaving. They can check in and out again as often as needed in a day (e.g. lunch, errands). They see a live "worked today" timer, days present, offs used (out of 4), hours, overtime hours and overtime days, and a day-by-day list grouped by week.
+- **Staff:** **Attendance** tab → **Check in** when arriving and **Check out** when leaving. They can check in and out again as often as needed in a day (e.g. lunch, errands). They see a live "worked today" timer, days present, offs used (out of 4), hours, short hours, overtime hours and overtime days, and a day-by-day list grouped by week.
 - **Account Managers & Managers:** **Attendance → Team** shows who's in right now and each person's monthly totals. Click a person to:
   - set **shift timing** (plus **monthly salary** and **overtime rate** when the org has **Payroll**)
   - **add or fix entries** (forgotten check-in or check-out) and delete wrong ones
@@ -128,7 +128,9 @@ Where: the **Attendance** page (top menu; in clinic organizations it's in the le
 **How the numbers work**
 - **Hours worked** = the sum of all check-in → check-out pairs for the day.
 - **Overtime hours** = hours beyond the person's shift length that day.
-- **4 paid offs per month:** any day with no check-in counts as an off. More than 4 offs → each extra day is **loss of pay**. Working on offs (present more than *days in month − 4* days) → **overtime days**.
+- **Short hours** = on a finished day, time under the shift length (e.g. 8h 30m for 9:30–7:00 with a 1-hour break), counted only when it is more than **15 minutes** short (then the whole shortfall counts). Short hours turn into days: shift length = 1 day (e.g. 4h 15m = 0.5 day).
+- **4 paid offs per month, shared by days off and short hours:** any day with no check-in is an off, and short hours use up the same allowance. Up to 4 (e.g. 1 day off + 0.47 day short) → full salary. Beyond 4 → **loss of pay** for the extra (can be part of a day). Offs left over and worked (present more than *days in month − 4* days, e.g. Sundays) → **overtime days**, less any short hours not already covered by the offs.
+- Example (₹15,000, October): 1 day off, 4h 02m short (0.47 day), 4 Sundays worked → 1.47 of 4 used, no loss of pay; 3 offs worked − 0.47 = 2.53 extra days (₹1,222) + 2h overtime (₹114) → **₹16,336**.
 - **Pay** (Payroll) = salary ÷ days in month × days (from the joining date), − loss-of-pay days, + overtime days × day rate, + overtime hours × hourly rate × overtime multiplier.
 - A day with a check-in but no check-out shows **Missed check-out** and counts as present with 0 hours until a manager adds the check-out.
 - Check-in times come from Google's server clock, so staff can't type in or change times. Only managers can add or correct entries.

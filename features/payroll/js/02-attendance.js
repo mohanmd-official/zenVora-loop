@@ -1,5 +1,10 @@
 /* ================= attendance: check-in / check-out, team summary, pay ================= */
 const OFFS_PER_MONTH = 4;
+/* Short hours: a finished day under the work timing by more than SHORT_GRACE_MIN counts its full shortfall. Short hours turn into
+   days (÷ the shift length) and use the same monthly allowance as days off: leave + short days up to OFFS_PER_MONTH are paid, beyond
+   that is loss of pay. Unused allowance (offs worked, e.g. Sundays) is paid as extra days. Overtime is every minute beyond the shift. */
+const SHORT_GRACE_MIN = 15;
+const dfx = x => Math.round((+x || 0) * 100) / 100;                // days, 2 decimals (0.44 day)
 const att = {mode:null, month:todayKey.slice(0, 7), ev:{}, accts:[], detail:null, unsub:null, key:'', tick:null};
 const attCfg = a => Object.assign({shiftStart:'09:00', shiftEnd:'18:00', brk:0, salary:0, otMult:1}, (a && a.att) || {});
 const shiftTxt = c => c.brkS && c.brkE ? `${hm12(c.shiftStart)} – ${hm12(c.brkS)}, ${hm12(c.brkE)} – ${hm12(c.shiftEnd)}` : `${hm12(c.shiftStart)} – ${hm12(c.shiftEnd)}`;
@@ -44,7 +49,7 @@ function attSummary(events, mk, acc){
   let join = acc && acc.createdAt ? dayKey(acc.createdAt) : B.s; if (firstEv && firstEv < join) join = firstEv;
   const byDay = {};
   sessionsOf(events).forEach(s => (byDay[dayKey(s.in)] = byDay[dayKey(s.in)] || []).push(s));
-  const rows = []; let P = 0, L = 0, H = 0, OT = 0, effMonth = 0, sun = 0;
+  const rows = []; let P = 0, L = 0, H = 0, OT = 0, SH = 0, effMonth = 0, sun = 0;
   for (let k = B.s; k <= B.e; k = shiftDay(k, 1)){
     if (k >= join) effMonth++;
     const ss = byDay[k] || [];
@@ -56,15 +61,17 @@ function attSummary(events, mk, acc){
     if (ss.length){ st = open ? (k < todayKey ? 'missed' : 'in') : 'present'; P++; if (parseDay(k).getDay() === 0) sun++; }
     else st = k === todayKey ? 'notyet' : 'leave';
     if (st === 'leave') L++;
-    H += worked; OT += ot;
-    rows.push({k, st, ss, worked, ot});
+    const short = st === 'present' && k < todayKey && sh - worked > SHORT_GRACE_MIN * 60000 ? sh - worked : 0;   // finished days only
+    H += worked; OT += ot; SH += short;
+    rows.push({k, st, ss, worked, ot, short});
   }
-  const lop = Math.max(0, L - OFFS_PER_MONTH), otDays = Math.max(0, P - (effMonth - OFFS_PER_MONTH));
+  const shortD = SH / sh, used = L + shortD, offsLeft = Math.max(0, OFFS_PER_MONTH - used);
+  const lop = Math.max(0, used - OFFS_PER_MONTH), otDays = Math.max(0, Math.max(0, P - (effMonth - OFFS_PER_MONTH)) - shortD);
   const perDay = (+c.salary || 0) / B.days, perHour = perDay / (sh / 3600000), mult = +c.otMult || 1;
   const base = perDay * effMonth, lopAmt = lop * perDay, otDayPay = otDays * perDay, otHrPay = (OT / 3600000) * perHour * mult;
   const inc = acc && acc._inc != null ? +acc._inc || 0 : acc && att.inc && att.incM === mk && att.inc[acc.uid] != null ? +att.inc[acc.uid] || 0 : 0;
   const pay0 = base - lopAmt + otDayPay + otHrPay;
-  return {rows, c, sh, B, P, L, H, OT, lop, otDays, sun, offsUsed:Math.min(L, OFFS_PER_MONTH), perDay, perHour, mult, base, lopAmt, otDayPay, otHrPay, inc,
+  return {rows, c, sh, B, P, L, H, OT, SH, shortD, offsLeft, lop, otDays, sun, offsUsed:Math.min(used, OFFS_PER_MONTH), perDay, perHour, mult, base, lopAmt, otDayPay, otHrPay, inc,
           salary:base - lopAmt, extra:otDayPay + otHrPay, pay:pay0 + inc, done:B.e < todayKey, effMonth};
 }
 
@@ -167,10 +174,11 @@ function attKpis(S, pay){
   const k = (l, v, s, cls = '') => `<div class="kpi"><div class="kl">${l}</div><div class="kv ${cls}">${v}</div><div class="ks">${s}</div></div>`;
   return `<div class="kpis">
     ${k('Days present', S.P, S.done ? `of ${S.effMonth} days` : 'so far this month')}
-    ${k('Offs used', `${S.offsUsed}/${OFFS_PER_MONTH}`, S.lop ? `<span class="neg">${S.lop} day${S.lop > 1 ? 's' : ''} loss of pay</span>` : `${OFFS_PER_MONTH - S.offsUsed} paid off${OFFS_PER_MONTH - S.offsUsed === 1 ? '' : 's'} left`)}
+    ${k('Offs used', `${dfx(S.offsUsed)}/${OFFS_PER_MONTH}`, (S.SH ? `${S.L} leave + ${dfx(S.shortD)} short · ` : '') + (S.lop ? `<span class="neg">${dfx(S.lop)} day(s) loss of pay</span>` : `${dfx(S.offsLeft)} left`))}
     ${k('Hours worked', hm(S.H), `shift ${hm(S.sh)} / day`)}
+    ${k('Short hours', S.SH ? `<span class="neg">${hm(S.SH)}</span>` : '—', S.SH ? `= ${dfx(S.shortD)} day, taken from the offs` : `under the shift (${SHORT_GRACE_MIN} min grace)`)}
     ${k('Overtime hours', hm(S.OT), 'beyond shift timing')}
-    ${k('Overtime days', S.otDays, 'worked on paid offs')}
+    ${k('Overtime days', dfx(S.otDays), 'offs worked, less short hours')}
     ${pay ? k(S.done ? 'Payable' : 'Payable so far', inr(S.pay), (+S.c.salary ? `salary ${inr(S.c.salary)}/month` : 'set salary below')) : ''}
   </div>`;
 }
@@ -180,7 +188,7 @@ function attTable(S, edit, reg){
   const rows = S.rows.filter(r => r.st !== 'future' && r.st !== 'na').reverse();
   if (!rows.length) return '<div class="empty" style="margin-top:10px">No working days in this month yet.</div>';
   let html = '', wk = null;
-  const wkTot = w => { const rs = rows.filter(r => weekStart(r.k) === w); return `${hm(rs.reduce((a, r) => a + r.worked, 0))} worked · ${hm(rs.reduce((a, r) => a + r.ot, 0))} overtime · ${rs.filter(r => r.ss.length).length} day(s) present`; };
+  const wkTot = w => { const rs = rows.filter(r => weekStart(r.k) === w), sh = rs.reduce((a, r) => a + (r.short || 0), 0); return `${hm(rs.reduce((a, r) => a + r.worked, 0))} worked · ${hm(rs.reduce((a, r) => a + r.ot, 0))} overtime${sh ? ` · ${hm(sh)} short` : ''} · ${rs.filter(r => r.ss.length).length} day(s) present`; };
   rows.forEach(r => {
     const w = weekStart(r.k);
     if (w !== wk){ wk = w; html += `<tr class="wk"><td colspan="${edit ? 7 : 6}">Week of ${esc(fmtDM(w))} – ${esc(fmtDM(shiftDay(w, 6)))} · ${wkTot(w)}</td></tr>`; }
@@ -191,11 +199,11 @@ function attTable(S, edit, reg){
       <td>${first ? esc(timeOnly(first.in)) : '—'}</td>
       <td>${last && last.out ? esc(timeOnly(last.out)) : last ? '<span class="neg">—</span>' : '—'}</td>
       <td class="num">${r.ss.length ? hm(r.worked) : '—'}</td>
-      <td class="num ${r.ot ? 'ot' : ''}">${r.ot ? hm(r.ot) : '—'}</td>
+      <td class="num ${r.ot ? 'ot' : r.short ? 'neg' : ''}">${r.ot ? '+' + hm(r.ot) : r.short ? '−' + hm(r.short) + ' short' : '—'}</td>
       ${edit ? `<td>${r.ss.map(s => `<span class="sesx${s.m ? ' m' : ''}" title="${s.m ? 'Added by manager' : 'Staff check-in'}">${esc(timeOnly(s.in))}–${s.out ? esc(timeOnly(s.out)) : '…'}<button data-del="${s.ids.join(',')}" title="Delete this entry">✕</button></span>`).join('')}</td>` : ''}
     </tr>`;
   });
-  return `<div class="awrap"><table class="atbl"><thead><tr><th>Date</th><th>Status</th><th>First in</th><th>Last out</th><th class="num">Worked</th><th class="num">Overtime</th>${edit ? '<th>Entries</th>' : ''}</tr></thead><tbody>${html}</tbody></table></div>`;
+  return `<div class="awrap"><table class="atbl"><thead><tr><th>Date</th><th>Status</th><th>First in</th><th>Last out</th><th class="num">Worked</th><th class="num">Overtime / short</th>${edit ? '<th>Entries</th>' : ''}</tr></thead><tbody>${html}</tbody></table></div>`;
 }
 
 function attTeam(){
@@ -214,9 +222,9 @@ function attTeam(){
     totPay += S.pay;
     return `<tr class="clk" data-staff="${esc(a.uid)}">
       <td><b>${esc(fullName(a))}</b>${a.role !== 'employee' && ROLE_LABEL[a.role] ? `<em class="rtag">${ROLE_LABEL[a.role]}</em>` : ''}<div class="stat">${esc(titleOf(a) ? titleOf(a) + ' · ' : '')}${esc(shiftTxt(attCfg(a)))}</div></td>
-      <td>${today}</td><td class="num">${S.P}</td><td class="num">${S.offsUsed}/${OFFS_PER_MONTH}</td>
-      <td class="num ${S.lop ? 'neg' : ''}">${S.lop || '—'}</td><td class="num">${hm(S.H)}</td>
-      <td class="num ${S.OT ? 'ot' : ''}">${S.OT ? hm(S.OT) : '—'}</td><td class="num ${S.otDays ? 'ot' : ''}">${S.otDays || '—'}</td><td class="num">${S.sun || '—'}</td>
+      <td>${today}</td><td class="num">${S.P}</td><td class="num">${dfx(S.offsUsed)}/${OFFS_PER_MONTH}</td>
+      <td class="num ${S.lop ? 'neg' : ''}">${S.lop ? dfx(S.lop) : '—'}</td><td class="num">${hm(S.H)}${S.SH ? `<div class="neg" style="font-size:11.5px">−${hm(S.SH)} short</div>` : ''}</td>
+      <td class="num ${S.OT ? 'ot' : ''}">${S.OT ? hm(S.OT) : '—'}</td><td class="num ${S.otDays ? 'ot' : ''}">${S.otDays ? dfx(S.otDays) : '—'}</td><td class="num">${S.sun || '—'}</td>
       ${pay ? `<td class="num">${+S.c.salary ? inr(S.c.salary) : '<span class="stat">not set</span>'}</td><td class="num">${S.extra ? '+ ' + inr(S.extra) : '—'}</td>${feat('clinic') ? `<td class="num">${S.inc ? '+ ' + inr(S.inc) : '—'}</td>` : ''}<td class="num"><b>${inr(S.pay)}</b></td>` : ''}
       ${attRO() ? '' : `<td><button type="button" class="edbtn" data-staffed="${esc(a.uid)}" title="Mark or fix check-in / check-out times for any day of this month">✎ Edit times</button></td>`}</tr>`;
   }).join('');
@@ -247,12 +255,13 @@ function attDetail(){
           <label>Overtime rate<select id="cfOT">${[1, 1.5, 2].map(m => `<option value="${m}"${+c.otMult === m ? ' selected' : ''}>${m}× hourly</option>`).join('')}</select></label>` : ''}
           <button class="primary" type="submit">Save</button>
         </form>
-        <p class="stat" style="margin:8px 0 0">${OFFS_PER_MONTH} paid offs per month. Hours beyond the shift each day count as overtime; working on unused offs counts as overtime days.</p>
+        <p class="stat" style="margin:8px 0 0">${OFFS_PER_MONTH} paid offs per month, shared by days off and short hours (a day more than ${SHORT_GRACE_MIN} min under the shift counts its shortfall; ${hm(S.sh)} short = 1 day). Beyond ${OFFS_PER_MONTH}: loss of pay. Offs left over and worked (e.g. Sundays) are paid as extra days. Every minute beyond the shift is overtime.</p>
       </div>`}
       ${pay ? `<div class="box"><h3>Pay for ${esc(parseDay(att.month + '-01').toLocaleDateString([], {month:'long'}))}${S.done ? '' : ' (so far)'}</h3>
         ${pr(`Base: ${S.effMonth} days × ${inr(S.perDay)}/day`, inr(S.base))}
-        ${pr(`Loss of pay: ${S.lop} day(s) beyond ${OFFS_PER_MONTH} offs`, S.lop ? '− ' + inr(S.lopAmt) : inr(0))}
-        ${pr(`Overtime days: ${S.otDays} × ${inr(S.perDay)}`, '+ ' + inr(S.otDayPay))}
+        ${pr(`Offs used: ${S.L} day(s) leave + short hours ${hm(S.SH)} (${dfx(S.shortD)} day) = ${dfx(S.L + S.shortD)} of ${OFFS_PER_MONTH}`, '')}
+        ${pr(`Loss of pay: ${dfx(S.lop)} day(s) beyond ${OFFS_PER_MONTH} offs`, S.lop ? '− ' + inr(S.lopAmt) : inr(0))}
+        ${pr(`Overtime days: ${dfx(S.otDays)} × ${inr(S.perDay)}${S.SH && S.P > S.effMonth - OFFS_PER_MONTH ? ` (offs worked, less ${dfx(S.shortD)} short)` : ''}`, '+ ' + inr(S.otDayPay))}
         ${pr(`Overtime hours: ${hm(S.OT)} × ${inr(S.perHour)}/h × ${S.mult}`, '+ ' + inr(S.otHrPay))}
         ${feat('clinic') ? pr('Incentive (approved patient assists)', '+ ' + inr(S.inc)) : ''}
         ${pr(`Salary ${inr(S.salary)} + extra hours / days ${inr(S.extra)}${feat('clinic') ? ' + incentive ' + inr(S.inc) : ''} = <b>Payable</b>`, '<b>' + inr(S.pay) + '</b>')}
@@ -274,7 +283,7 @@ function attMonthEditor(S, a){
     html += `<tr data-ed="${k}" data-ids="${esc(ids)}"><td style="white-space:nowrap"><b>${esc(fmtShort(k))}</b></td>
       <td>${r.st === 'na' ? '<span class="stat">—</span>' : `<span class="astat ${r.st}">${ST_LABEL[r.st] || ''}</span>`}</td>
       <td class="edsc">${ss.map(x => edSess(hhmm(x.in), x.out ? hhmm(x.out) : '')).join('')}<button type="button" data-edadd title="Add a check-in / check-out">+ Session</button></td>
-      <td class="num">${ss.length ? hm(r.worked || 0) + (r.ot ? `<div class="ot" style="font-size:11.5px">+${hm(r.ot)} OT</div>` : '') : '—'}</td>
+      <td class="num">${ss.length ? hm(r.worked || 0) + (r.ot ? `<div class="ot" style="font-size:11.5px">+${hm(r.ot)} OT</div>` : r.short ? `<div class="neg" style="font-size:11.5px">−${hm(r.short)} short</div>` : '') : '—'}</td>
       <td style="white-space:nowrap">${ss.length ? '' : `<button type="button" data-edshift title="Fill with the work timing: ${esc(shiftTxt(S.c))}">Fill shift</button> `}<button type="button" class="primary" data-edsave disabled>Save</button></td></tr>`;
   }
   return `<div class="box" id="attEditor"><h3>Edit attendance for ${esc(parseDay(att.month + '-01').toLocaleDateString([], {month:'long', year:'numeric'}))} <span class="sub">add, change or remove check-ins and check-outs for any day; several sessions a day are fine (e.g. lunch break)</span></h3>
@@ -314,9 +323,9 @@ async function punch(type, btn){
 }
 function attCsv(){
   const pay = payOn();
-  const head = ['Staff', 'Email', 'Job title', 'Shift', 'Days present', 'Offs used', 'Loss of pay days', 'Hours worked', 'Overtime hours', 'Overtime days'].concat(pay ? ['Monthly salary', 'Payable'] : []);
+  const head = ['Staff', 'Email', 'Job title', 'Shift', 'Days present', 'Offs used', 'Loss of pay days', 'Hours worked', 'Short hours', 'Overtime hours', 'Overtime days'].concat(pay ? ['Monthly salary', 'Payable'] : []);
   const lines = [head].concat(att.accts.map(a => { const S = attSummary(att.ev[a.uid] || [], att.month, a);
-    return [fullName(a), a.email, a.title || '', `${S.c.shiftStart}-${S.c.shiftEnd}`, S.P, S.offsUsed, S.lop, (S.H / 3600000).toFixed(2), (S.OT / 3600000).toFixed(2), S.otDays].concat(pay ? [+S.c.salary || 0, Math.round(S.pay)] : []); }));
+    return [fullName(a), a.email, a.title || '', `${S.c.shiftStart}-${S.c.shiftEnd}`, S.P, dfx(S.offsUsed), dfx(S.lop), (S.H / 3600000).toFixed(2), (S.SH / 3600000).toFixed(2), (S.OT / 3600000).toFixed(2), dfx(S.otDays)].concat(pay ? [+S.c.salary || 0, Math.round(S.pay)] : []); }));
   download(new Blob([lines.map(r => r.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\n')], {type:'text/csv'}), `${slugify(orgCtx().org.name) || 'team'}-attendance-${att.month}.csv`);
 }
 function attStepMonth(n){ const d = parseDay(att.month + '-01'); d.setMonth(d.getMonth() + n); att.month = dayKey(d).slice(0, 7); renderAttendance(); }
