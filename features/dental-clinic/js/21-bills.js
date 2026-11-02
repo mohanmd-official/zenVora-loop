@@ -172,12 +172,12 @@ function payForm(pre, b, ctx){
   const od = otherDues(b, ctx || {}), bd = billDue(b);
   return `<form class="aform payf" id="${pre === 'vb' ? 'clVBill' : 'clPayForm'}" data-bill="${esc(b.id)}" novalidate style="margin-top:8px">
   <label>Date<input type="date" id="${pre}Date" value="${todayKey}" max="${todayKey}"></label>
-  <label>This bill (₹)<input type="number" id="${pre}Amt" min="0" max="${bd}" value="${bd}" data-paysum="${pre}"${bd ? '' : ' disabled'}></label>
+  <label>This bill (₹) <small class="stat">${inr(bd)} due</small><input type="number" id="${pre}Amt" min="0" max="${bd}" value="" placeholder="Amount" data-paysum="${pre}"${bd ? '' : ' disabled'}></label>
   ${od.total > 0 ? `<label>Earlier dues (₹) <small class="neg">${inr(od.total)} due</small><input type="number" id="${pre}Due" min="0" max="${od.total}" value="0" data-paysum="${pre}"></label>` : ''}
   <label>Method<select id="${pre}Mode">${PMODES.map(([k, l]) => `<option value="${k}">${l}</option>`).join('')}</select></label>
   <label>Ref.<input id="${pre}Ref" placeholder="UPI / card ref"></label>
   <label class="grow">Note<input id="${pre}Note"></label>
-  <button class="primary" type="submit">Save · <span id="${pre}Tot">${inr(bd)}</span></button>${cashPanel(pre, true)}</form>`;
+  <button class="primary" type="submit">Save payment</button>${cashPanel(pre, true)}</form>`;
 }
 document.addEventListener('input', e => { const p = e.target.dataset && e.target.dataset.paysum; if (!p) return; const t = $('#' + p + 'Tot'); if (t) t.textContent = inr((+($('#' + p + 'Amt') || {}).value || 0) + (+($('#' + p + 'Due') || {}).value || 0)); });
 /* ---------- patient card: Bills and Payments tabs ---------- */
