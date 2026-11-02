@@ -152,20 +152,7 @@ async function cancelBill(bill, T){
   await b.commit(); Object.assign(bill, upd);
   return {fresh, refund, how};
 }
-function printBill(bill, p, P){
-  const pays = (P || []).filter(x => x.billId === bill.id), I = bill.items || [], TR = I.filter(i => !i.med), MD = I.filter(i => i.med);
-  const sum = xs => xs.reduce((a, i) => a + (+i.net || 0), 0), trT = sum(TR), mdT = sum(MD);
-  printDoc('Bill ' + bill.billNo, `<p><b>Patient:</b> ${esc(pName(p))} (${esc(p.code || '')}) · ${esc(p.phone || '')}<br><b>Bill date:</b> ${esc(fmtLong(bill.date))}${bill.doctorId ? ` · <b>Doctor:</b> ${esc(dName(bill.doctorId))}` : ''}</p>
-    ${TR.length ? `<h2>Treatments</h2><table><tr><th>#</th><th>Treatment</th><th>Doctor</th><th class="n">Charge</th><th class="n">Discount</th><th class="n">Amount</th></tr>
-      ${TR.map((i, n) => `<tr><td>${n + 1}</td><td>${esc(i.name)}${i.tooth ? ' (' + esc(i.tooth) + ')' : ''}</td><td>${esc(dName(i.doctorId) || '')}</td><td class="n">${inr(i.cost)}</td><td class="n">${+i.discount ? inr(i.discount) : '—'}</td><td class="n">${inr(i.net)}</td></tr>`).join('')}
-      <tr class="tot"><td colspan="5">Treatments total</td><td class="n">${inr(trT)}</td></tr></table>` : ''}
-    ${MD.length ? `<h2>Medicines</h2><table><tr><th>#</th><th>Medicine</th><th class="n">Qty</th><th class="n">Price</th><th class="n">Amount</th></tr>
-      ${MD.map((i, n) => `<tr><td>${n + 1}</td><td>${esc(i.name)}</td><td class="n">${+i.qty || '—'}</td><td class="n">${i.unitPrice ? inr(i.unitPrice) : '—'}</td><td class="n">${inr(i.net)}</td></tr>`).join('')}
-      <tr class="tot"><td colspan="4">Medicines total</td><td class="n">${inr(mdT)}</td></tr></table>` : ''}
-    <h2>Summary</h2><table>${TR.length ? `<tr><td>Treatments</td><td class="n">${inr(trT)}</td></tr>` : ''}${MD.length ? `<tr><td>Medicines</td><td class="n">${inr(mdT)}</td></tr>` : ''}
-      <tr class="tot"><td>Total</td><td class="n">${inr(bill.total)}</td></tr><tr><td>Paid</td><td class="n">${inr(bill.paid)}</td></tr><tr class="tot"><td>Balance due</td><td class="n">${inr(billDue(bill))}</td></tr></table>
-    ${pays.length ? `<h2>Payments</h2><table>${pays.map(x => `<tr><td>${esc(x.receiptNo)}</td><td>${esc(fmtShort(x.date))}</td><td>${esc((PMODES.find(m => m[0] === x.mode) || [0, x.mode])[1])}${x.txnRef ? ' · ' + esc(x.txnRef) : ''}</td><td class="n">${inr(x.amount)}</td></tr>`).join('')}</table>` : ''}`);
-}
+// printBill: see 22-print-sheets.js
 // payment form for a bill (prefix vb: visit, py: patient's Bills tab)
 // payment form: this bill + (when the patient owes more) earlier dues, one total, one cash count
 function payForm(pre, b, ctx){

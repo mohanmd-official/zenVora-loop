@@ -227,12 +227,7 @@ function printDoc(title, inner){
     ${inner}<p class="muted" style="margin-top:28px">Generated with Zenvora Loop</p><button onclick="print()">Print</button></body></html>`);
   w.document.close(); setTimeout(() => { try { w.print(); } catch(e){} }, 300);
 }
-function printReceipt(x, c){
-  const p = (c && c.p) || cl.p, PT = (c && c.T) || cl.pT, P0 = (c && c.P) || cl.pP || [], P = P0.some(y => y.receiptNo === x.receiptNo) ? P0 : P0.concat([x]);
-  printDoc('Payment receipt ' + (x.receiptNo || ''), `<p><b>Received from:</b> ${esc(pName(p))} (${esc(p.code || '')}) · ${esc(p.phone || '')}<br><b>Date:</b> ${esc(fmtLong(x.date))}<br><b>Mode:</b> ${esc((PMODES.find(m => m[0] === x.mode) || [0, x.mode])[1])}${x.doctorId ? `<br><b>Doctor:</b> ${esc(dName(x.doctorId))}` : ''}</p>
-    <table><tr><th>Description</th><th class="n">Amount</th></tr><tr><td>${esc(x.note || 'Dental treatment')}</td><td class="n">${inr(x.amount)}</td></tr><tr class="tot"><td>Total received</td><td class="n">${inr(x.amount)}</td></tr></table>${x.cash ? `<p class="muted">Cash: ${esc(cashLine(x))}</p>` : ''}
-    <p class="muted">Treatment cost to date ${inr(billed(PT))} · paid ${inr(paidSum(P))} · balance ${inr(billed(PT) - paidSum(P))}</p>`);
-}
+// printReceipt: see 22-print-sheets.js
 /* patient's appointments */
 function clPAppts(){
   const A = (cl.pA || []).slice().sort((a, b) => String(b.date + b.time).localeCompare(String(a.date + a.time))), w = canW('appointments') || canW('treatments');

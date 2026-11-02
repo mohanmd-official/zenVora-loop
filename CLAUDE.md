@@ -63,7 +63,7 @@ Each feature folder: `feature.json` (name, order, enabled) · `tab.html` · `vie
 | File | What's inside |
 |---|---|
 | 01-core-patient-list | clinic data (`cl`, `can`/`canW`, `CSECS` pages, `CI` icons, `PAY()`), `renderClinic`, Patients list & search |
-| 02-patient-record | patient profile, treatments, medicines/Rx, billing tab, receipts (`printDoc`, `printReceipt`), visits, photos |
+| 02-patient-record | patient profile, treatments, medicines/Rx, billing tab, prescriptions and reports print (`printDoc`), visits, photos |
 | 03-appointments | Appointments day/week grid, doctor colours, status filters, booking, auto-missed |
 | 04-shared-ui | report date range bar, charts (`stackChart`, `hbarChart`) |
 | 05-accounts-core-overview | Accounts tabs + `clAccLoad`, payment-due helpers (`dueFor`, `svcMonth`, `payState`), audit (`withHist`, `auditDelete`), `expensesOf`, Overview |
@@ -81,7 +81,8 @@ Each feature folder: `feature.json` (name, order, enabled) · `tab.html` · `vie
 | 17-patient-assists | Patient assists: one record per assistant per treatment (`syncTreatmentAssists` from the visit's 👥 picker), treating-doctor approvals with filters, admin add / edit / void with reason + `history` + audit, incentives (`loadIncentives`, `asMoneySee`) |
 | 18-dentee-import | importing the Dentee Excel export |
 | 19-home-widgets | Home: Reminders, Today's appointments, Clinic today, quick actions (`clHome`) |
-| 21-bills | Bills separate from payments (`createBill`, `issueBill`, `ackBill`, `payBill`, `cancelBill`, `printBill`), patient tabs Bills / Payments (`clBills`, `clPayments`), `tLocked`, `earlierDue`, `BILLS_SINCE` |
+| 21-bills | Bills separate from payments (`createBill`, `issueBill`, `ackBill`, `payBill`, `cancelBill`), patient tabs Bills / Payments (`clBills`, `clPayments`), `tLocked`, `earlierDue`, `BILLS_SINCE` |
+| 22-print-sheets | printed **Bill** (`printBill`: treatments and medicines separate, totals, seal box, amount in words; no payments; also the visit estimate) and **Payment receipt** (`printReceipt`: what was done, payments on that bill so far, paid now / so far / balance, earlier dues); half A4 up to `SHEET_HALF_MAX` (6) lines else full A4, Half / Full buttons in the print window; org logo, colour `SHEET_INK` |
 | 20-cash-denominations | notes received / change given at billing (`cashPanel`, `cashCalc`, `cashRead`), `savePaymentDoc` / `deletePaymentDoc` (payment + petty `chg-<id>`), `cashLine` |
 | 99-register | flag clinic, view + left menu with pages, routes `#/clinic/...`, board panel, task links, Home, person fields |
 

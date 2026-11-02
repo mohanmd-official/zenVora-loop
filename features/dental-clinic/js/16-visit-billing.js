@@ -49,15 +49,9 @@ function visitBillHtml(B, visitT, w){
 }
 function printVisitBill(){
   if (cl.bill.bill) return printBill(cl.bill.bill, cl.bill.p, cl.bill.P);
-  const B = cl.bill, a = B.appt, visitT = B.T.filter(t => t.appointmentId === a.id && t.status !== 'planned'), visitPays = B.P.filter(x => x.appointmentId === a.id), due = billed(B.T) - paidSum(B.P);
-  printDoc('Bill', `<p><b>Patient:</b> ${esc(pName(B.p))} (${esc(B.p.code || '')}) · ${esc(B.p.phone || '')}<br><b>Visit:</b> ${esc(fmtLong(a.date))} · ${esc(dName(a.doctorId))}</p>
-    <h2>Treatments</h2><table><tr><th>#</th><th>Treatment</th><th>Doctor</th><th class="n">Cost</th><th class="n">Discount</th><th class="n">Amount</th></tr>
-    ${visitT.filter(t => !isMed(t)).map((t, i) => `<tr><td>${i + 1}</td><td>${esc(t.typeName)}${t.tooth ? ' (' + esc(t.tooth) + ')' : ''}</td><td>${esc(dName(t.doctorId))}</td><td class="n">${inr(t.cost)}</td><td class="n">${inr(t.discount)}</td><td class="n">${inr(net(t))}</td></tr>`).join('')}</table>
-    ${visitT.some(isMed) ? `<h2>Medicines</h2><table><tr><th>#</th><th>Medicine</th><th>M-A-E-N</th><th class="n">Days</th><th class="n">Qty</th><th class="n">Price</th><th class="n">Amount</th></tr>
-    ${visitT.filter(isMed).map((t, i) => `<tr><td>${i + 1}</td><td>${esc(t.typeName)}</td><td>${DOSE.some(([k]) => t.dose && t.dose[k]) ? doseTxt(t.dose) : '—'}</td><td class="n">${+t.days || '—'}</td><td class="n">${+t.qty || 0}</td><td class="n">${inr(t.unitPrice)}</td><td class="n">${inr(net(t))}</td></tr>`).join('')}</table>` : ''}
-    <table><tr class="tot"><td>Total for this visit</td><td class="n">${inr(visitT.reduce((s, t) => s + net(t), 0))}</td></tr></table>
-    ${visitPays.length ? `<h2>Payments</h2><table>${visitPays.map(x => `<tr><td>${esc(x.receiptNo)}</td><td>${esc((PMODES.find(m => m[0] === x.mode) || [0, x.mode])[1])}</td><td class="n">${inr(x.amount)}</td></tr>`).join('')}</table>` : ''}
-    <p><b>Balance due: ${inr(due)}</b></p>`);
+  // no bill yet: an estimate of this visit's treatments and medicines, on the same sheet
+  const B = cl.bill, a = B.appt, items = B.T.filter(t => t.appointmentId === a.id && t.status !== 'planned').map(billItem);
+  printBill(Object.assign({billNo:'', date:a.date, appointmentId:a.id, doctorId:a.doctorId, items}, billSums(items)), B.p, B.P, 'ESTIMATE');
 }
 async function saveVisitPayment(){
   const {F} = cloud, B = cl.bill, a = B.appt; if (!B.bill) return;
@@ -77,7 +71,7 @@ async function saveVisitPayment(){
 $('#clOv').addEventListener('click', async e => {
   if (!cl.bill || !e.target.closest('#clOvBody')) return;
   if (e.target.closest('[data-vbprint]')) return printVisitBill();
-  const rc = e.target.closest('[data-vbrcpt]'); if (rc){ const x = cl.bill.P.find(p => p.id === rc.dataset.vbrcpt); return printReceipt(x, {p:cl.bill.p, T:cl.bill.T, P:cl.bill.P}); }
+  const rc = e.target.closest('[data-vbrcpt]'); if (rc){ const x = cl.bill.P.find(p => p.id === rc.dataset.vbrcpt); return printReceipt(x, vbCtx()); }
   if (e.target.id === 'vbNoPay'){ cl.bill.noPay = e.target.checked; $('#vbDone').disabled = !(cl.bill.noPay || cl.bill.bill); return; }
   const B = cl.bill, vt = () => B.T.filter(t => t.appointmentId === B.appt.id && t.status !== 'planned');
   try {
