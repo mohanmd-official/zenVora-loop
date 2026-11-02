@@ -109,7 +109,7 @@ People created in the earlier single-admin version show up in **Organizations �
 
 Where: the **Attendance** page (top menu; in clinic organizations it's in the left menu, next to Clinic). Everyone can also check in and out from **Home**.
 
-**Reports → Treatment-wise payments:** money actually received in the period, split by treatment (each payment over its bill's items in proportion; payments from before bills shown separately), next to the cost of treatments done, so you see earned vs received per treatment.
+**Reports → Treatment-wise earnings** now also shows **Paid** and **Due** for each treatment (and Paid / Due / Collected at the top). A payment on a bill is shared over that bill's treatments in proportion to their amounts; payments from before bills (and Dentee) pay the patient's oldest unpaid treatments first.
 
 **Pay (with Payroll on):** the Team table shows Present, offs, loss of pay, hours (with **short hours**), **OT hours**, **OT days** (worked on paid offs), **Sundays** worked, Salary, **Extra hrs / days**, **Incentive** (approved patient assists, clinic organizations) and **Payable** = salary − loss of pay + extra hours / days + incentive. The same breakdown is in each person's page.
 

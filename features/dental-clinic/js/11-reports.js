@@ -1,5 +1,5 @@
 /* ---------- Reports ---------- */
-const REPORTS = [['collection', 'Collection', 'reports'], ['treatments', 'Treatment-wise earnings', 'reports'], ['treatpaid', 'Treatment-wise payments', 'reports'], ['doctors', 'Doctors & consultants', 'doctorReports'], ['outstanding', 'Outstanding balances', 'reports'], ['appointments', 'Appointments', 'reports'], ['newpatients', 'New patients', 'reports']];
+const REPORTS = [['collection', 'Collection', 'reports'], ['treatments', 'Treatment-wise earnings', 'reports'], ['doctors', 'Doctors & consultants', 'doctorReports'], ['outstanding', 'Outstanding balances', 'reports'], ['appointments', 'Appointments', 'reports'], ['newpatients', 'New patients', 'reports']];
 function clReports(){
   const r = cl.rep, avail = REPORTS.filter(x => can(x[2]));
   if (!avail.some(x => x[0] === r.kind)) r.kind = avail[0][0];
@@ -16,8 +16,8 @@ async function clRunReport(){
   try {
     let d = {};
     if (r.kind === 'collection') d.pay = docsOf(await F.getDocs(rq('payments')));
-    if (r.kind === 'treatments') d.t = docsOf(await F.getDocs(rq('treatments')));
-    if (r.kind === 'treatpaid'){ const [p, t, b] = await Promise.all([F.getDocs(rq('payments')), F.getDocs(rq('treatments')), F.getDocs(cCol('bills'))]); d.pay = docsOf(p); d.t = docsOf(t); d.b = docsOf(b); }
+    if (r.kind === 'treatments'){ const [t, at, ap, ab] = await Promise.all([F.getDocs(rq('treatments')), F.getDocs(cCol('treatments')), can('billing') || can('reports') ? F.getDocs(cCol('payments')) : null, F.getDocs(cCol('bills')).catch(() => null)]);
+      d.t = docsOf(t); if (ap){ d.paidBy = paidByTreatment(docsOf(at), docsOf(ap), ab ? docsOf(ab) : []); d.coll = docsOf(ap).filter(x => x.date >= r.from && x.date <= r.to).reduce((a, x) => a + (+x.amount || 0), 0); } }
     if (r.kind === 'doctors'){ d.t = docsOf(await F.getDocs(rq('treatments'))); d.a = docsOf(await F.getDocs(rq('appointments'))); }
     if (r.kind === 'appointments') d.a = docsOf(await F.getDocs(rq('appointments')));
     if (r.kind === 'newpatients'){        // a patient is "new" on their FIRST visit (first bill, treatment or completed appointment), not the day they were typed in
@@ -31,6 +31,20 @@ async function clRunReport(){
     if (r.key !== key) return;
     r.data = d; out();
   } catch(e){ r.key = ''; const el = $('#repOut'); if (el) el.innerHTML = `<div class="auth-err">${esc(errText(e))}</div>`; }
+}
+/* how much of each treatment has been paid, from all payments ever: a payment on a bill goes to that bill's treatments in proportion
+   to their amounts; payments with no bill (before bills, Dentee) and "earlier balance" lines pay the patient's oldest unpaid treatments
+   first. Cancellations / refunds (minus amounts) come off the same way. */
+function paidByTreatment(T, P, B){
+  const bills = Object.fromEntries(B.map(b => [b.id, b])), byId = Object.fromEntries(T.map(t => [t.id, t])), out = {}, pool = {};
+  P.forEach(x => { const a = +x.amount || 0, b = x.billId && bills[x.billId], items = b ? (b.items || []).filter(i => +i.net > 0) : [], tot = items.reduce((s, i) => s + (+i.net || 0), 0);
+    if (!b || !tot){ pool[x.patientId] = (pool[x.patientId] || 0) + a; return; }
+    items.forEach(i => { const part = a * (+i.net || 0) / tot; if (i.treatmentId && byId[i.treatmentId]) out[i.treatmentId] = (out[i.treatmentId] || 0) + part; else pool[x.patientId] = (pool[x.patientId] || 0) + part; }); });
+  const byP = {}; T.filter(t => t.status !== 'planned').forEach(t => (byP[t.patientId] = byP[t.patientId] || []).push(t));
+  Object.entries(pool).forEach(([pid, amt]) => { let left = amt; (byP[pid] || []).sort((a, b) => String(a.date).localeCompare(String(b.date)) || (a.createdAt || 0) - (b.createdAt || 0)).forEach(t => {
+    if (left <= 0) return; const room = Math.max(0, net(t) - (out[t.id] || 0)), take = Math.min(room, left); out[t.id] = (out[t.id] || 0) + take; left -= take; }); });
+  Object.keys(out).forEach(k => out[k] = Math.round(out[k]));
+  return out;
 }
 let repCsv = null;
 function clReportHtml(){
@@ -63,38 +77,21 @@ function clReportHtml(){
       html = bar(title) + kp + tbl([G === 'month' ? 'Month' : 'Year', '#Payments', ...used.map(u => '₹' + u[1]), '₹Total'], rows.map(({xs, pk}) => ({attr:drill(pk, perLabel(G, pk)), c:[`<b>${esc(perLabel(G, pk))}</b>`, xs.length, ...used.map(([m]) => inr(by(xs, m))), `<b>${inr(paidSum(xs))}</b>`]})), ['Total', P.length, ...used.map(([m]) => inr(by(P, m))), inr(tot)]);
     }
   }
-  if (r.kind === 'treatpaid'){
-    /* money actually received in the period, split over what it paid for: each payment over its bill's items in proportion to their
-       amounts (medicines as one group); payments with no bill (before bills, Dentee) under "Before bills". Next to it, what the
-       treatments done in the period cost, so earned vs received shows per treatment. */
-    const B = Object.fromEntries((d.b || []).map(b => [b.id, b])), G2 = {}, g = n => G2[n] = G2[n] || {rec:0, done:0, n:0, pays:0};
-    const nameOf = i => i.legacy ? 'Earlier balance (before bills)' : i.med ? 'Medicines (tablets)' : i.name;
-    d.pay.forEach(x => { const b = x.billId && B[x.billId], items = b ? (b.items || []).filter(i => +i.net > 0) : [], tot = items.reduce((a, i) => a + (+i.net || 0), 0);
-      if (!b || !tot){ g('Before bills (no bill)').rec += +x.amount || 0; return; }
-      items.forEach(i => { const e = g(nameOf(i)); e.rec += (+x.amount || 0) * (+i.net || 0) / tot; if (x.amount > 0) e.pays++; }); });
-    d.t.filter(t => t.status !== 'planned' && (!r.dfil || t.doctorId === r.dfil)).forEach(t => { const e = g(isMed(t) ? 'Medicines (tablets)' : t.typeName); e.done += net(t); e.n++; });
-    const R = Object.entries(G2).map(([n, e]) => [n, Object.assign(e, {rec:Math.round(e.rec)})]).filter(([, e]) => e.rec || e.done).sort((a, b) => b[1].rec - a[1].rec || b[1].done - a[1].done);
-    const rec = R.reduce((a, [, e]) => a + e.rec, 0), done = R.reduce((a, [, e]) => a + e.done, 0);
-    const rows = R.map(([n, e]) => ({c:[`<b>${esc(n)}</b>`, e.n || '—', inr(e.done), `<b>${inr(e.rec)}</b>`, `<span class="${e.done - e.rec > 0 ? 'neg' : ''}">${inr(e.done - e.rec)}</span>`, `<div class="rbar"><i style="width:${rec ? e.rec / rec * 100 : 0}%"></i></div>${rec ? Math.round(e.rec / rec * 100) : 0}%`]}));
-    repCsv = [['Treatment', 'Done', 'Cost of treatments done', 'Payments received', 'Difference']].concat(R.map(([n, e]) => [n, e.n, e.done, e.rec, e.done - e.rec]));
-    html = bar('Treatment-wise payments') + `<div class="kpis">${k('Received', inr(rec), plural(d.pay.filter(x => x.amount > 0).length, 'payment'))}${k('Treatments done', inr(done), 'cost after discount')}${k('Not yet received', inr(Math.max(0, done - rec)), 'done − received', done - rec > 0 ? 'neg' : '')}</div>`
-      + (chart ? hbarChart(R.filter(([, e]) => e.rec > 0).map(([n, e]) => ({label:n, v:e.rec})), true) : '')
-      + tbl(['Treatment', '#Done', '₹Done (cost)', '₹Received', '₹Difference', 'Share of received'], rows, ['Total', '', inr(done), inr(rec), inr(done - rec), '']);
-  }
   if (r.kind === 'treatments'){
-    const T = d.t.filter(t => t.status === 'completed' && (!r.dfil || t.doctorId === r.dfil)), groups = {};
-    T.forEach(t => { const g = groups[isMed(t) ? 'Medicines (tablets)' : t.typeName] = groups[isMed(t) ? 'Medicines (tablets)' : t.typeName] = groups[t.typeName] || {n:0, gross:0, disc:0, net:0, pts:new Set()}; g.n++; g.gross += +t.cost || 0; g.disc += +t.discount || 0; g.net += net(t); g.pts.add(t.patientId); });
-    const tot = Object.values(groups).reduce((a, g) => a + g.net, 0);
-    const rows = Object.entries(groups).sort((a, b) => b[1].net - a[1].net).map(([n, g]) => ({c:[`<b>${esc(n)}</b>`, g.n, g.pts.size, inr(g.gross), inr(g.disc), `<b>${inr(g.net)}</b>`, `<div class="rbar"><i style="width:${tot ? g.net / tot * 100 : 0}%"></i></div>${tot ? Math.round(g.net / tot * 100) : 0}%`], raw:[n, g.n, g.pts.size, g.gross, g.disc, g.net]}));
-    repCsv = [['Treatment', 'Done', 'Patients', 'Gross', 'Discount', 'Net']].concat(rows.map(x => x.raw));
-    html = bar('Treatment-wise earnings') + `<div class="kpis">${k('Earned', inr(tot), 'completed treatments')}${k('Treatments done', T.length, plural(new Set(T.map(t => t.patientId)).size, 'patient'))}${k('Planned / in progress', d.t.length - T.length, 'not counted yet')}</div>`
+    const T = d.t.filter(t => t.status === 'completed' && (!r.dfil || t.doctorId === r.dfil)), groups = {}, PB = d.paidBy, pd = t => PB ? Math.min(net(t), PB[t.id] || 0) : 0;
+    T.forEach(t => { const key = isMed(t) ? 'Medicines (tablets)' : t.typeName, g = groups[key] = groups[key] || {n:0, gross:0, disc:0, net:0, paid:0, pts:new Set()}; g.n++; g.gross += +t.cost || 0; g.disc += +t.discount || 0; g.net += net(t); g.paid += pd(t); g.pts.add(t.patientId); });
+    const tot = Object.values(groups).reduce((a, g) => a + g.net, 0), paid = Object.values(groups).reduce((a, g) => a + g.paid, 0);
+    const rows = Object.entries(groups).sort((a, b) => b[1].net - a[1].net).map(([n, g]) => ({c:[`<b>${esc(n)}</b>`, g.n, g.pts.size, inr(g.gross), inr(g.disc), `<b>${inr(g.net)}</b>`].concat(PB ? [`<b class="pos">${inr(g.paid)}</b>`, `<span class="${g.net - g.paid > 0 ? 'neg' : ''}">${inr(g.net - g.paid)}</span>`] : []).concat([`<div class="rbar"><i style="width:${tot ? g.net / tot * 100 : 0}%"></i></div>${tot ? Math.round(g.net / tot * 100) : 0}%`])}));
+    html = bar('Treatment-wise earnings') + `<div class="kpis">${k('Earned', inr(tot), 'treatments done')}${PB ? k('Paid', inr(paid), 'towards these treatments') + k('Due', inr(tot - paid), 'not paid yet') + k('Collected', inr(d.coll || 0), 'all payments in this period') : ''}${k('Treatments done', T.length, plural(new Set(T.map(t => t.patientId)).size, 'patient'))}</div>`
       + (chart ? `<h3 style="font-size:13px;margin:6px 0">Earnings by treatment</h3>` + hbarChart(Object.entries(groups).sort((a, b) => b[1].net - a[1].net).map(([n, g]) => ({label:n, v:g.net})), true)
+          + (PB ? `<h3 style="font-size:13px;margin:16px 0 6px">Paid by treatment</h3>` + hbarChart(Object.entries(groups).filter(([, g]) => g.paid > 0).sort((a, b) => b[1].paid - a[1].paid).map(([n, g]) => ({label:n, v:g.paid})), true) : '')
           + `<h3 style="font-size:13px;margin:16px 0 6px">Earnings by ${G === 'month' ? 'month' : G === 'year' ? 'year' : 'day'}</h3>` + stackChart(periodsIn(G, r.from, r.to).map(pk => ({label:perLabel(G, pk), short:G === 'day' ? fmtDM(pk) : G === 'month' ? parseDay(pk + '-01').toLocaleDateString([], {month:'short', year:'2-digit'}) : pk, parts:{net:T.filter(t => perOf(G, t.date) === pk).reduce((a, t) => a + net(t), 0)}})), ['net'], {net:'Net earned'}, true)
-        : (G !== 'day' ? tbl([G === 'month' ? 'Month' : 'Year', '#Treatments', '₹Net earned'], periodsIn(G, r.from, r.to).reverse().map(pk => { const xs = T.filter(t => perOf(G, t.date) === pk); return {attr:drill(pk, perLabel(G, pk)), c:[`<b>${esc(perLabel(G, pk))}</b>`, xs.length, `<b>${inr(xs.reduce((a, t) => a + net(t), 0))}</b>`], n:xs.length}; }).filter(x => x.n), ['Total', T.length, inr(tot)]) + '<div style="height:12px"></div>' : '')
-          + tbl(['Treatment', '#Done', '#Patients', '₹Gross', '₹Discount', '₹Net earned', 'Share'], rows, ['Total', T.length, '', '', '', inr(tot), '']))
-      + (chart ? '' : `<h3 style="font-size:13px;margin:16px 0 6px">Every treatment, with the patient</h3>` + tbl(['Date', 'Patient', 'Treatment', 'Doctor', '₹Net'], T.slice().sort((a, b) => String(b.date).localeCompare(String(a.date))).map(t => ({attr:` class="clk" data-openp="${esc(t.patientId)}"`, c:[esc(fmtShort(t.date)), `<b>${esc(t.patientName)}</b>`, esc(t.typeName + (t.tooth ? ' (' + t.tooth + ')' : '')), esc(dName(t.doctorId) || t.doctorName || ''), inr(net(t))]}))));
-    repCsv = [['Date', 'Patient', 'Treatment', 'Tooth', 'Doctor', 'Gross', 'Discount', 'Net']].concat(T.map(t => [t.date, t.patientName, t.typeName, t.tooth || '', dName(t.doctorId) || t.doctorName || '', +t.cost || 0, +t.discount || 0, net(t)]));
+        : (G !== 'day' ? tbl([G === 'month' ? 'Month' : 'Year', '#Treatments', '₹Net earned'].concat(PB ? ['₹Paid'] : []), periodsIn(G, r.from, r.to).reverse().map(pk => { const xs = T.filter(t => perOf(G, t.date) === pk); return {attr:drill(pk, perLabel(G, pk)), c:[`<b>${esc(perLabel(G, pk))}</b>`, xs.length, `<b>${inr(xs.reduce((a, t) => a + net(t), 0))}</b>`].concat(PB ? [inr(xs.reduce((a, t) => a + pd(t), 0))] : []), n:xs.length}; }).filter(x => x.n), ['Total', T.length, inr(tot)].concat(PB ? [inr(paid)] : [])) + '<div style="height:12px"></div>' : '')
+          + tbl(['Treatment', '#Done', '#Patients', '₹Gross', '₹Discount', '₹Net earned'].concat(PB ? ['₹Paid', '₹Due'] : []).concat(['Share']), rows, ['Total', T.length, '', '', '', inr(tot)].concat(PB ? [inr(paid), inr(tot - paid)] : []).concat([''])))
+      + (chart ? '' : `<h3 style="font-size:13px;margin:16px 0 6px">Every treatment, with the patient</h3>` + tbl(['Date', 'Patient', 'Treatment', 'Doctor', '₹Net'].concat(PB ? ['₹Paid'] : []), T.slice().sort((a, b) => String(b.date).localeCompare(String(a.date))).map(t => ({attr:` class="clk" data-openp="${esc(t.patientId)}"`, c:[esc(fmtShort(t.date)), `<b>${esc(t.patientName)}</b>`, esc(t.typeName + (t.tooth ? ' (' + t.tooth + ')' : '')), esc(dName(t.doctorId) || t.doctorName || ''), inr(net(t))].concat(PB ? [inr(pd(t))] : [])}))));
+    repCsv = [['Date', 'Patient', 'Treatment', 'Tooth', 'Doctor', 'Gross', 'Discount', 'Net'].concat(PB ? ['Paid'] : [])].concat(T.map(t => [t.date, t.patientName, t.typeName, t.tooth || '', dName(t.doctorId) || t.doctorName || '', +t.cost || 0, +t.discount || 0, net(t)].concat(PB ? [pd(t)] : [])));
   }
+
   const short = pk => G === 'day' ? fmtDM(pk) : G === 'month' ? parseDay(pk + '-01').toLocaleDateString([], {month:'short', year:'2-digit'}) : pk;
   const perTable = (title, keys, names, valOf, money) => { const ps = periodsIn(G, r.from, r.to).reverse(), cells = ps.map(pk => ({pk, v:keys.map(kk => valOf(pk, kk))})).filter(x => x.v.some(Boolean));
     return `<h3 style="font-size:13px;margin:4px 0 6px">${esc(title)}</h3>` + tbl([G === 'month' ? 'Month' : G === 'year' ? 'Year' : 'Date', ...keys.map(kk => (money ? '₹' : '#') + names[kk]), (money ? '₹' : '#') + 'Total'],
