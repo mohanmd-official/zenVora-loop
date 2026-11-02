@@ -69,8 +69,8 @@ async function deletePaymentDoc(id, x){
 const cashLine = x => x && x.cash ? `Received ${inr(x.cash.inTotal)}${x.cash.change ? ` · change ${inr(x.cash.change)}${x.cash.xs && x.cash.xs.length ? ' (' + x.cash.xs.map(s => inr(s.amount) + ' from ' + s.name).join(', ') + (x.cash.outTotal ? ', ' + inr(x.cash.outTotal) + ' from the purse' : '') + ')' : ''}` : ''}` : '';
 // show / recount while typing (Bill after a visit: prefix vb, patient's Billing tab: py)
 const CD_FORMS = {vb:['#vbAmt', '#vbMode'], py:['#pyAmt', '#pyMode']};
-function cashRefresh(pre){ const [a, m] = CD_FORMS[pre], box = $('#' + pre + 'Cash'); if (!box) return; box.hidden = ($(m) || {}).value !== 'cash'; if (!box.hidden) cashCalc(pre, Math.round(+($(a) || {}).value || 0)); }
-document.addEventListener('input', e => { const t = e.target; if (t.dataset && t.dataset.cd) return cashRefresh(t.dataset.cd); for (const p in CD_FORMS) if (t.matches(CD_FORMS[p].join(','))) return cashRefresh(p); });
+function cashRefresh(pre){ const [a, m] = CD_FORMS[pre], box = $('#' + pre + 'Cash'); if (!box) return; box.hidden = ($(m) || {}).value !== 'cash'; if (!box.hidden) cashCalc(pre, Math.round(+($(a) || {}).value || 0) + Math.round(+($('#' + pre + 'Due') || {}).value || 0)); }
+document.addEventListener('input', e => { const t = e.target; if (t.dataset && t.dataset.cd) return cashRefresh(t.dataset.cd); for (const p in CD_FORMS) if (t.matches(CD_FORMS[p].concat(['#' + p + 'Due']).join(','))) return cashRefresh(p); });
 document.addEventListener('change', e => { const t = e.target; if (t.dataset && t.dataset.cd) return cashRefresh(t.dataset.cd); for (const p in CD_FORMS) if (t.matches(CD_FORMS[p][1])) return cashRefresh(p); });
 document.addEventListener('click', e => {
   const ad = e.target.closest('[data-cdadd]'), rm = e.target.closest('[data-cdrm]'); if (!ad && !rm) return;
@@ -81,6 +81,6 @@ document.addEventListener('click', e => {
   else { CDX[pre] = n - 1; for (let i = gone; i < n - 1; i++) ['Src', 'Name', 'Amt'].forEach(k => { const nx = keep.find(([id]) => id === pre + 'X' + (i + 1) + k), cur = keep.find(([id]) => id === pre + 'X' + i + k); if (cur && nx) cur[1] = nx[1]; }); }
   box.outerHTML = cashPanel(pre, true);
   keep.forEach(([id, v]) => { const el = document.getElementById(id); if (el) el.value = v; });
-  if (ad){ const s = $('#' + pre + 'X' + n + 'Amt'); const c = cashCalc(pre, Math.round(+($(CD_FORMS[pre][0]) || {}).value || 0)); if (s && c && c.left > 0) s.value = c.left; s && s.focus(); }
+  if (ad){ const s = $('#' + pre + 'X' + n + 'Amt'); const c = cashCalc(pre, Math.round(+($(CD_FORMS[pre][0]) || {}).value || 0) + Math.round(+($('#' + pre + 'Due') || {}).value || 0)); if (s && c && c.left > 0) s.value = c.left; s && s.focus(); }
   cashRefresh(pre);
 });

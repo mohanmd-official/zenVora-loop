@@ -175,8 +175,8 @@ $('#clBody').addEventListener('submit', async e => {
     }
     if (id === 'clPayForm'){
       const b = (cl.pB || []).find(x => x.id === e.target.dataset.bill); if (!b) return;
-      const x = await payBill(b, 'py', $('#pyDate').value || todayKey); cl.clear = true;
-      info(`${inr(x.amount)} received on ${b.billNo} · ${x.receiptNo}`); printReceipt(x);
+      const xs = await payWithDues(b, 'py', {p:cl.p, T:cl.pT, P:cl.pP, B:cl.pB}); cl.clear = true;
+      info(xs.map(x => `${inr(x.amount)} on ${x.billNo} · ${x.receiptNo}`).join(' · ')); if (xs[0]) printReceipt(xs[0]);
     }
     if (id === 'clNewBill') return newBillSubmit(false);
     if (id === 'clBillEdit'){ const b = (cl.pB || []).find(x => x.id === e.target.dataset.bill); if (!b) return; const d = await saveBillEdit(b); cl.billEdit = null; info(`${b.billNo} changed: ${d}`); return renderClinic(); }
@@ -272,8 +272,7 @@ $('#clBody').addEventListener('click', async e => {
     if (t.closest('[data-tdel]')){ if (!confirm('Delete this treatment?')) return; await F.deleteDoc(cDoc('treatments', t.closest('[data-tid]').dataset.tid)); }
     if (t.closest('[data-nbdraft]')) return newBillSubmit(true);
     if (cl.ptab === 'billing' && await billAction(e)) return;
-    if (t.closest('[data-pedit]')){ cl.payEdit = t.closest('[data-pay]').dataset.pay; return renderClinic(); }
-    if (t.closest('[data-pedx]')){ cl.payEdit = null; return renderClinic(); }
+    if (t.closest('[data-pcancel]')){ const x = (cl.pP || []).find(y => y.id === t.closest('[data-pay]').dataset.pay); if (!x) return; const r = await cancelPayment(x, {B:cl.pB}); if (r) info(`${x.receiptNo} cancelled: ${inr(x.amount)} reversed.`); return renderClinic(); }
     if (t.closest('[data-rcpt]')){ const x = (cl.pP || []).find(p => p.id === t.closest('[data-pay]').dataset.pay); if (x) printReceipt(x); }
     if (t.closest('[data-ldel]')){ if (!confirm('Delete this entry? A copy is kept in the audit log.')) return; const id = t.closest('[data-led]').dataset.led, d = cl.acc.d;
       let x = ((d.expAll || []).concat(d.led || [], d.pin || [], d.pout || [], d.cpay || [])).find(y => y.id === id); if (!x){ const sn = await F.getDoc(cDoc('ledger', id)); x = sn.exists() ? sn.data() : {}; }
@@ -376,10 +375,12 @@ $('#clOv').addEventListener('input', medEv);
 function sumTotals(){
   const box = $('#smTotals'); if (!box) return;
   const noTr = $('#smNoTr') && $('#smNoTr').checked, noMed = $('#smNoMed') && $('#smNoMed').checked;
-  const tr = noTr ? 0 : [...document.querySelectorAll('#smRows [data-sr]')].reduce((t, r) => { const g = k => r.querySelector(`[data-sf="${k}"]`);
-    return g('type').value && g('status').value !== 'planned' ? t + Math.max(0, (+g('cost').value || 0) - (+g('disc').value || 0)) : t; }, 0);
-  const md = noMed ? 0 : medTotal();
-  box.querySelector('[data-tt=tr]').textContent = inr(tr); box.querySelector('[data-tt=md]').textContent = inr(md); box.querySelector('[data-tt=all]').textContent = inr(tr + md);
+  let cost = 0, disc = 0;
+  if (!noTr) document.querySelectorAll('#smRows [data-sr]').forEach(r => { const g = k => r.querySelector(`[data-sf="${k}"]`), c = +g('cost').value || 0, d = rowDisc(r), n = g('net');
+    if (n) n.textContent = d && c ? `${inr(c)} − ${inr(d)} = ${inr(c - d)}` : '';
+    if (g('type').value && g('status').value !== 'planned'){ cost += c; disc += d; } });
+  const md = noMed ? 0 : medTotal(), q = k => box.querySelector(`[data-tt=${k}]`);
+  q('cost').textContent = inr(cost); q('disc').textContent = disc ? '− ' + inr(disc) : inr(0); q('md').textContent = inr(md); q('all').textContent = inr(cost - disc + md);
 }
 ['input', 'change', 'click'].forEach(ev => $('#clOv').addEventListener(ev, () => setTimeout(sumTotals, 0)));
 $('#clOv').addEventListener('change', e => {

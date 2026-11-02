@@ -41,7 +41,7 @@ match /treatments/{t} {
     || (perm(o, 'patients') && changed().hasOnly(['docAttached']))
     || ((perm(o, 'treatments') || perm(o, 'billing')) && changed().hasOnly(['date']))
     // an edit of its (issued) bill changes the charge / discount, in the same write as the bill
-    || (moneyEditor() && changed().hasOnly(['cost', 'discount']) && billAfter(resource.data.billId).history.size() > billDoc(resource.data.billId).get('history', []).size())
+    || ((moneyEditor() || perm(o, 'billing')) && changed().hasOnly(['cost', 'discount']) && billDoc(resource.data.billId).paid == 0 && billAfter(resource.data.billId).history.size() > billDoc(resource.data.billId).get('history', []).size())
     // issuing a bill puts the treatment on it (the bill must exist after the write and list this bill's id)
     || ((perm(o, 'billing') || perm(o, 'treatments')) && changed().hasOnly(['billId']) && tFree()
         && billAfter(request.resource.data.billId).status in ['pending', 'ack', 'partly', 'paid']);
@@ -69,20 +69,18 @@ match /bills/{b} {
       // acknowledged by the patient
       || (ob().status == 'pending' && nb().status == 'ack' && changed().hasOnly(['status', 'ackBy', 'ackAt', 'history']))
       // a payment: paid rises by exactly the new payment's amount, never above the total
-      || (ob().status in ['pending', 'ack', 'partly'] && changed().hasOnly(['paid', 'status', 'lastPay', 'ackBy', 'ackAt'])
+      // a payment (or the reversal of a cancelled one): paid moves by exactly that record's amount, never above the total
+      || (ob().status in ['pending', 'ack', 'partly', 'paid'] && changed().hasOnly(['paid', 'status', 'lastPay', 'ackBy', 'ackAt', 'history'])
           && nb().lastPay != ob().get('lastPay', '') && !exists(/databases/$(database)/documents/orgs/$(o)/payments/$(nb().lastPay))
           && payAfter().billId == b && nb().paid == ob().paid + payAfter().amount && nb().paid <= ob().total
-          && ((nb().paid == ob().total && nb().status == 'paid') || (nb().paid < ob().total && nb().status == 'partly')))
+          && nb().paid >= 0 && ((nb().paid == ob().total && nb().status == 'paid') || (nb().paid > 0 && nb().paid < ob().total && nb().status == 'partly') || (nb().paid == 0 && nb().status == 'ack')))
       // reopen an issued bill with no payment back to draft
       || (ob().status in ['pending', 'ack'] && ob().paid == 0 && nb().status == 'draft' && changed().hasOnly(['status', 'history']))
       // an edit with a reason: date / charges / discounts (status follows paid vs total), or a payment's new amount (editPay)
-      || (moneyEditor() && ob().status != 'draft' && reasonAdded() && nb().total == nb().subtotal - nb().discount && nb().total >= 0
+      // an edit with a reason, only while nothing is paid on it (cancel its payments first)
+      || (perm(o, 'billing') && ob().status != 'draft' && ob().paid == 0 && reasonAdded() && nb().total == nb().subtotal - nb().discount && nb().total >= 0
           && changed().hasOnly(['items', 'subtotal', 'discount', 'total', 'date', 'status', 'history']) && nb().paid == ob().paid
           && ((nb().paid > 0 && nb().paid >= nb().total && nb().status == 'paid') || (nb().paid > 0 && nb().paid < nb().total && nb().status == 'partly') || (nb().paid == 0 && nb().status in ['ack', 'pending'])))
-      || (moneyEditor() && reasonAdded() && changed().hasOnly(['paid', 'status', 'editPay', 'history'])
-          && getAfter(/databases/$(database)/documents/orgs/$(o)/payments/$(nb().editPay)).data.billId == b
-          && nb().paid == ob().paid - get(/databases/$(database)/documents/orgs/$(o)/payments/$(nb().editPay)).data.amount + getAfter(/databases/$(database)/documents/orgs/$(o)/payments/$(nb().editPay)).data.amount
-          && nb().paid <= ob().total && ((nb().paid >= ob().total && nb().status == 'paid') || (nb().paid > 0 && nb().paid < ob().total && nb().status == 'partly') || (nb().paid == 0 && nb().status == 'ack')))
       // cancel, with a reason
       || (nb().status == 'cancelled' && changed().hasOnly(['status', 'cancel', 'replacedBy', 'history']) && nb().cancel.reason.size() > 0
           && (ob().paid == 0 || isOrgAdmin(o) || perm(o, 'cancelBills'))));
@@ -98,13 +96,18 @@ match /payments/{p} {
     || (request.resource.data.get('kind', '') == 'refund' && request.resource.data.amount < 0
       && billAfter(request.resource.data.billId).status == 'cancelled' && billAfter(request.resource.data.billId).cancel.payments == 'refunded'
       && request.resource.data.amount == 0 - billDoc(request.resource.data.billId).paid)
-    || (isOrgAdmin(o) && request.resource.data.get('imported', false) == true));
+    || (isOrgAdmin(o) && request.resource.data.get('imported', false) == true)
+    // the reversal of a cancelled payment: minus its amount, same bill, marking it in the same write
+    || (moneyEditor() && request.resource.data.get('kind', '') == 'reversal'
+      && request.resource.data.amount == 0 - get(/databases/$(database)/documents/orgs/$(o)/payments/$(request.resource.data.reverses)).data.amount
+      && get(/databases/$(database)/documents/orgs/$(o)/payments/$(request.resource.data.reverses)).data.get('reversedBy', '') == ''
+      && getAfter(/databases/$(database)/documents/orgs/$(o)/payments/$(request.resource.data.reverses)).data.reversedBy == p
+      && request.resource.data.billId == get(/databases/$(database)/documents/orgs/$(o)/payments/$(request.resource.data.reverses)).data.get('billId', '')
+      && (request.resource.data.billId == '' || billAfter(request.resource.data.billId).get('lastPay', '') == p)));
   // a repeated Dentee import may rewrite its own imported payments (never one on a bill)
-  allow update: if (moneyEditor() && resource.data.get('kind', 'payment') == 'payment' && request.resource.data.amount > 0 && reasonAdded()
-      && changed().hasOnly(['date', 'amount', 'mode', 'txnRef', 'note', 'cash', 'history'])
-      && (request.resource.data.amount == resource.data.amount || resource.data.get('billId', '') == ''
-          || (billAfter(resource.data.billId).get('editPay', '') == p
-              && billAfter(resource.data.billId).history.size() > billDoc(resource.data.billId).get('history', []).size())))
+  // cancelling a payment: it is marked with its reversal, written in the same batch, with a reason
+  allow update: if (moneyEditor() && resource.data.get('reversedBy', '') == '' && changed().hasOnly(['reversedBy', 'history']) && reasonAdded()
+      && getAfter(/databases/$(database)/documents/orgs/$(o)/payments/$(request.resource.data.reversedBy)).data.reverses == p)
     || isOrgAdmin(o) && resource.data.get('imported', false) == true && request.resource.data.get('imported', false) == true && resource.data.get('billId', '') == '';
   allow delete: if false;
 }

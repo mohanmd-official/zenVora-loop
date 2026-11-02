@@ -20,11 +20,11 @@ function tallyBase(){
   const dig = TMODES.map(([k, l, ms]) => { const ps = tPay.filter(x => ms.includes(x.mode)); return {k, l, ms, ps, sys:paidSum(ps)}; });
   const pet = (d.tPin || []).filter(x => x.source === 'drawer' && !x.opening);                      // petty cash top-ups taken out of this drawer
   // notes counted at billing: what came into the purse and what went out of it as change; change paid from petty cash / elsewhere
-  const withDen = pays.filter(x => x.cash), denIn = {}, denOut = {};
+  const withDen = pays.filter(x => x.cash && !x.reversedBy), denIn = {}, denOut = {};
   withDen.forEach(x => DENOMS.forEach(v => { denIn[v] = (denIn[v] || 0) + (+(x.cash.in || {})[v] || 0); denOut[v] = (denOut[v] || 0) + (+(x.cash.out || {})[v] || 0); }));
   const chPetty = withDen.reduce((s, x) => s + (+x.cash.petty || 0), 0), chOther = withDen.reduce((s, x) => s + (+x.cash.other || 0), 0);
   const first = !prev && (!done || !!done.start);                                // first tally: what is counted now is the starting point
-  return {day, tallies:all, done, prev, first, pays, dig, pet, withDen, denIn, denOut, noDen:pays.length - withDen.length, chPetty, chOther, toPetty:paidSum(pet), cashIn:paidSum(pays), cashExp:paidSum((d.tExp || []).filter(x => x.mode === 'cash' && x.paid !== false && (x.paidDate || x.date) === day))};
+  return {day, tallies:all, done, prev, first, pays, dig, pet, withDen, denIn, denOut, noDen:pays.filter(x => !x.cash && x.amount > 0 && !x.reversedBy).length, chPetty, chOther, toPetty:paidSum(pet), cashIn:paidSum(pays), cashExp:paidSum((d.tExp || []).filter(x => x.mode === 'cash' && x.paid !== false && (x.paidDate || x.date) === day))};
 }
 const denGrid = (L, pre, counts, w) => `<div class="denoms">${L.map(n => `<label><span>₹${n} ×</span><input type="number" min="0" id="${pre}${n}" data-den="${pre}" value="${+(counts || {})[n] || ''}" placeholder="0"${w ? '' : ' disabled'}><b id="${pre}T${n}">₹0</b></label>`).join('')}</div>`;
 function accTally(){

@@ -35,11 +35,11 @@ function earlierDue(T, P, B){
   return Math.max(0, old - paid - used);
 }
 // create a bill (draft or issued). appt optional. items from treatments (+ an optional earlier-balance item)
-async function createBill({p, appt, T, status, legacy, carry}){
+async function createBill({p, appt, T, status, legacy, carry, date}){
   const {F, fs} = cloud, by = cloud.user.email || '', items = T.map(billItem).concat(legacy ? [{treatmentId:'', name:'Earlier balance (before bills)', tooth:'', doctorId:'', cost:legacy, discount:0, net:legacy, legacy:true}] : []);
   if (!items.length) throw custom('Choose the treatments to bill.');
   const billNo = await nextNumber('bill', 'B-', 5), ref = F.doc(cCol('bills')), b = F.writeBatch(fs);
-  const x = Object.assign({billNo, patientId:p.id, patientName:pName(p), appointmentId:appt ? appt.id : '', date:appt ? (appt.date <= todayKey ? appt.date : todayKey) : todayKey, doctorId:appt ? appt.doctorId || '' : (T[0] || {}).doctorId || '',
+  const x = Object.assign({billNo, patientId:p.id, patientName:pName(p), appointmentId:appt ? appt.id : '', date:date || (appt ? (appt.date <= todayKey ? appt.date : todayKey) : todayKey), doctorId:appt ? appt.doctorId || '' : (T[0] || {}).doctorId || '',
     items, paid:carry ? carry.paid : 0, status, ackBy:'', ackAt:0, lastPay:'', replaces:carry ? carry.id : '', replacedBy:'', createdBy:by, createdAt:Date.now(), history:[]}, billSums(items));
   b.set(ref, x);
   if (status !== 'draft') T.forEach(t => b.update(cDoc('treatments', t.id), {billId:ref.id}));
@@ -67,25 +67,65 @@ async function ackBill(bill){
   const upd = {status:'ack', ackBy:cloud.user.email || '', ackAt:Date.now(), history:(bill.history || []).concat([{at:Date.now(), by:cloud.user.email || '', change:'acknowledged'}])};
   await cloud.F.updateDoc(cDoc('bills', bill.id), upd); return Object.assign(bill, upd);
 }
-// a payment against a bill (pending bills are acknowledged by taking the payment)
-async function payBill(bill, pre, date){
-  const amount = Math.round(+$('#' + pre + 'Amt').value || 0), mode = $('#' + pre + 'Mode').value, due = billDue(bill);
-  if (amount <= 0) throw custom('Enter the amount received.');
-  if (amount > due) throw custom(`That's more than the ${inr(due)} outstanding on ${bill.billNo}.`);
-  if ((date || todayKey) > todayKey) throw custom("The payment date can't be in the future.");
-  const cash = mode === 'cash' ? cashRead(pre, amount) : null, receiptNo = await nextNumber('receipt', 'R-', 5);
+// one payment record against a bill, its paid total moving in the same write
+async function recordPayment(bill, {amount, mode, date, txnRef, note, cash}){
+  const receiptNo = await nextNumber('receipt', 'R-', 5);
   const x = {patientId:bill.patientId, patientName:bill.patientName, appointmentId:bill.appointmentId || '', billId:bill.id, billNo:bill.billNo, kind:'payment', date:date || todayKey, amount, mode,
-    txnRef:(($('#' + pre + 'Ref') || {}).value || '').trim(), doctorId:bill.doctorId || '', note:(($('#' + pre + 'Note') || {}).value || '').trim(), receiptNo, createdAt:Date.now(), by:cloud.user.email || ''};
+    txnRef:txnRef || '', doctorId:bill.doctorId || '', note:note || '', receiptNo, createdAt:Date.now(), by:cloud.user.email || ''};
   if (cash) x.cash = cash;
   const paid = (+bill.paid || 0) + amount, upd = {paid, status:paid >= bill.total ? 'paid' : 'partly'};
   if (bill.status === 'pending') Object.assign(upd, {ackBy:cloud.user.email || '', ackAt:Date.now()});
-  const ref = await savePaymentDoc(x, bill.id, upd); CDX[pre] = 0;
+  const ref = await savePaymentDoc(x, bill.id, upd);
   Object.assign(bill, upd, {lastPay:ref.id});
   return Object.assign({id:ref.id}, x);
 }
+// what else this patient owes: other open bills (oldest first) + the earlier balance from before bills
+const otherDues = (bill, ctx) => { const open = (ctx.B || []).filter(b => b.id !== bill.id && billLive(b) && b.status !== 'draft' && billDue(b) > 0).sort((a, b) => String(a.date).localeCompare(String(b.date)));
+  const ed = earlierDue(ctx.T, ctx.P, ctx.B); return {open, ed, total:open.reduce((s, b) => s + billDue(b), 0) + ed}; };
+/* take a payment for this bill and, in the same go, towards earlier dues: other open bills first, then the earlier balance, which gets
+   its own bill for the amount paid, dated the same day as the payment. Cash notes are counted once, for the whole amount. */
+async function payWithDues(bill, pre, ctx){
+  const amt = Math.max(0, Math.round(+($('#' + pre + 'Amt') || {}).value || 0)), due = Math.max(0, Math.round(+($('#' + pre + 'Due') || {}).value || 0));
+  const mode = $('#' + pre + 'Mode').value, date = ($('#' + pre + 'Date') || {}).value || todayKey, txnRef = (($('#' + pre + 'Ref') || {}).value || '').trim(), note = (($('#' + pre + 'Note') || {}).value || '').trim();
+  const od = otherDues(bill, ctx);
+  if (amt + due <= 0) throw custom('Enter the amount received.');
+  if (amt > billDue(bill)) throw custom(`That's more than the ${inr(billDue(bill))} outstanding on ${bill.billNo}.`);
+  if (due > od.total) throw custom(`The earlier dues are ${inr(od.total)}.`);
+  if (date > todayKey) throw custom("The payment date can't be in the future.");
+  const cash = mode === 'cash' ? cashRead(pre, amt + due) : null, out = [];
+  if (amt) out.push(await recordPayment(bill, {amount:amt, mode, date, txnRef, note, cash}));
+  let rest = due, first = !amt;
+  for (const b of od.open){ if (!rest) break; const a = Math.min(rest, billDue(b)); out.push(await recordPayment(b, {amount:a, mode, date, txnRef, note:note || 'towards earlier dues', cash:first ? cash : null})); first = false; rest -= a; }
+  if (rest > 0){
+    const nb = await createBill({p:ctx.p, appt:null, T:[], status:'ack', legacy:rest, date});
+    (ctx.B || []).push(nb);
+    out.push(await recordPayment(nb, {amount:rest, mode, date, txnRef, note:note || 'earlier balance', cash:first ? cash : null}));
+  }
+  CDX[pre] = 0;
+  return out;
+}
+/* cancel a payment (reason required): the payment stays, marked cancelled, and a reversal record (−amount, same date) undoes it, so
+   collections, the tally and balances all net to zero. Its bill's paid total goes down in the same write; then the bill can be edited
+   (once nothing is paid on it) and the right payment taken again. */
+async function cancelPayment(x, ctx){
+  if (!canEditMoney()) throw custom('Only the Owner, Account Manager or someone with "Edit / cancel bills" may cancel a payment.');
+  if (x.reversedBy || x.kind !== 'payment' && x.kind) throw custom('This payment is already cancelled.');
+  const why = prompt(`Cancel payment ${x.receiptNo} (${inr(x.amount)})?\n\nIt stays on record, marked cancelled. Reason (required):`, ''); if (why === null) return null;
+  if (!why.trim()) throw custom('Enter the reason for cancelling.');
+  const {F, fs} = cloud, by = cloud.user.email || '', now = Date.now(), bt = F.writeBatch(fs), rref = F.doc(cCol('payments'));
+  const rev = {patientId:x.patientId, patientName:x.patientName, appointmentId:x.appointmentId || '', billId:x.billId || '', billNo:x.billNo || '', kind:'reversal', reverses:x.id, date:x.date, amount:-x.amount, mode:x.mode,
+    txnRef:'', doctorId:x.doctorId || '', note:`Cancelled ${x.receiptNo}: ${why.trim()}`, receiptNo:(x.receiptNo || '') + '-C', createdAt:now, by};
+  bt.set(rref, rev);
+  bt.update(cDoc('payments', x.id), {reversedBy:rref.id, history:(x.history || []).concat([{at:now, by, change:'cancelled', reason:why.trim()}])});
+  const b = x.billId ? (ctx.B || []).find(y => y.id === x.billId) : null;
+  if (b){ const paid = (+b.paid || 0) - x.amount; bt.update(cDoc('bills', b.id), {paid, status:billStatusFor(paid, b.total), lastPay:rref.id, history:(b.history || []).concat([{at:now, by, change:`payment ${x.receiptNo} cancelled`, reason:why.trim()}])}); }
+  if (x.cash && +x.cash.petty > 0) bt.delete(cDoc('ledger', 'chg-' + x.id));                   // the change taken from petty cash goes back
+  await bt.commit(); moneyAudit('payment', {id:x.id, receiptNo:x.receiptNo, billId:x.billId || '', patientId:x.patientId}, {amount:x.amount, status:'paid'}, {status:'cancelled'}, why.trim());
+  return rev;
+}
 // cancel: reason required; payments moved to a fresh draft bill, or refunded (negative payment)
 async function cancelBill(bill, T){
-  if (!canCancelBill(bill)) throw custom('Only the Owner, Account Manager or someone with "Cancel bills" may cancel a bill that has payments.');
+  if (+bill.paid) throw custom('Cancel its payments first.');
   const reason = prompt(`Cancel ${bill.billNo} (${inr(bill.total)})?\n\nThe bill is kept, marked Cancelled. Reason (required):`, ''); if (reason === null) return null;
   if (!reason.trim()) throw custom('Enter the reason for cancelling.');
   let how = 'none';
@@ -127,13 +167,19 @@ function printBill(bill, p, P){
     ${pays.length ? `<h2>Payments</h2><table>${pays.map(x => `<tr><td>${esc(x.receiptNo)}</td><td>${esc(fmtShort(x.date))}</td><td>${esc((PMODES.find(m => m[0] === x.mode) || [0, x.mode])[1])}${x.txnRef ? ' · ' + esc(x.txnRef) : ''}</td><td class="n">${inr(x.amount)}</td></tr>`).join('')}</table>` : ''}`);
 }
 // payment form for a bill (prefix vb: visit, py: patient's Bills tab)
-const payForm = (pre, b) => `<form class="aform payf" id="${pre === 'vb' ? 'clVBill' : 'clPayForm'}" data-bill="${esc(b.id)}" novalidate style="margin-top:8px">
-  <label>Payment date<input type="date" id="${pre}Date" value="${todayKey}" max="${todayKey}" title="The day this payment counts in collections and the daily tally"></label>
-  <label>Amount (₹)<input type="number" id="${pre}Amt" min="1" max="${billDue(b)}" value="${billDue(b)}"></label>
+// payment form: this bill + (when the patient owes more) earlier dues, one total, one cash count
+function payForm(pre, b, ctx){
+  const od = otherDues(b, ctx || {}), bd = billDue(b);
+  return `<form class="aform payf" id="${pre === 'vb' ? 'clVBill' : 'clPayForm'}" data-bill="${esc(b.id)}" novalidate style="margin-top:8px">
+  <label>Date<input type="date" id="${pre}Date" value="${todayKey}" max="${todayKey}"></label>
+  <label>This bill (₹)<input type="number" id="${pre}Amt" min="0" max="${bd}" value="${bd}" data-paysum="${pre}"${bd ? '' : ' disabled'}></label>
+  ${od.total > 0 ? `<label>Earlier dues (₹) <small class="neg">${inr(od.total)} due</small><input type="number" id="${pre}Due" min="0" max="${od.total}" value="0" data-paysum="${pre}"></label>` : ''}
   <label>Method<select id="${pre}Mode">${PMODES.map(([k, l]) => `<option value="${k}">${l}</option>`).join('')}</select></label>
-  <label>Transaction ref.<input id="${pre}Ref" placeholder="UPI / card ref (optional)"></label>
-  <label class="grow">Note<input id="${pre}Note" placeholder="e.g. first instalment"></label>
-  <button class="primary" type="submit">Save payment &amp; receipt</button>${cashPanel(pre, true)}</form>`;
+  <label>Ref.<input id="${pre}Ref" placeholder="UPI / card ref"></label>
+  <label class="grow">Note<input id="${pre}Note"></label>
+  <button class="primary" type="submit">Save · <span id="${pre}Tot">${inr(bd)}</span></button>${cashPanel(pre, true)}</form>`;
+}
+document.addEventListener('input', e => { const p = e.target.dataset && e.target.dataset.paysum; if (!p) return; const t = $('#' + p + 'Tot'); if (t) t.textContent = inr((+($('#' + p + 'Amt') || {}).value || 0) + (+($('#' + p + 'Due') || {}).value || 0)); });
 /* ---------- patient card: Bills and Payments tabs ---------- */
 function clBills(){
   if (cl.pB === null || cl.pT === null) return '<div class="empty">Loading…</div>';
@@ -158,19 +204,18 @@ function billDetail(b){
     <tr class="tot"><td colspan="4">Total</td><td class="num">${inr(b.total)}</td></tr></tbody></table></div>
     ${pays.length ? `<div class="stat">Payments: ${pays.map(x => `${esc(x.receiptNo)} ${esc(fmtShort(x.date))} ${inr(x.amount)} ${esc((PMODES.find(m => m[0] === x.mode) || [0, x.mode])[1])}`).join(' · ')}</div>` : ''}
     ${cl.billEdit === b.id ? billEditForm(b) : ''}
-    <div class="btnrow" style="margin-top:6px"><button data-bprint>🖨 Print bill</button>${billLive(b) && b.status !== 'draft' && canEditMoney() && cl.billEdit !== b.id ? '<button data-bedit>✎ Edit bill</button>' : ''}
+    <div class="btnrow" style="margin-top:6px"><button data-bprint>🖨 Print bill</button>${billLive(b) && b.status !== 'draft' && !+b.paid && canW('billing') && cl.billEdit !== b.id ? '<button data-bedit>✎ Edit bill</button>' : ''}
       ${w && b.status === 'draft' ? '<button class="primary" data-bissue>Issue bill</button>' : ''}${w && ['pending', 'ack'].includes(b.status) && !+b.paid ? '<button data-breopen title="Back to a draft to correct the treatments (no payment yet)">Reopen to edit</button>' : ''}
-      ${billLive(b) && canCancelBill(b) ? '<span class="sp"></span><button class="danger" data-bcancel>Cancel bill…</button>' : ''}</div>
-    ${w && billPayable(b) ? payForm('py', b) : billLive(b) && b.status !== 'draft' && !billDue(b) ? '' : ''}`;
+      ${billLive(b) && !+b.paid && canW('billing') ? '<span class="sp"></span><button class="danger" data-bcancel>Cancel bill</button>' : ''}${+b.paid && billLive(b) ? '<span class="sp"></span><span class="stat">Paid ' + inr(b.paid) + ': cancel its payments to change it</span>' : ''}</div>
+    ${w && billPayable(b) ? payForm('py', b, {p:cl.p, T:cl.pT, P:cl.pP, B:cl.pB}) : ''}`;
 }
 function clPayments(){
   const P = (cl.pP || []).slice().sort((a, b) => String(b.date).localeCompare(String(a.date)) || (b.createdAt || 0) - (a.createdAt || 0)), B = cl.pB || [];
   const bal = billed(cl.pT) - paidSum(cl.pP);
   return `<div class="sect"><div class="kpis">${kpi('Total paid', inr(paidSum(P)), plural(P.filter(x => x.amount > 0).length, 'payment'))}${kpi('Outstanding balance', inr(bal), 'all treatments − payments', bal > 0 ? 'neg' : '')}</div>
     <div class="awrap" style="margin-top:0"><table class="atbl"><thead><tr><th>Receipt</th><th>Bill</th><th>Date</th><th>Method</th><th>Transaction ref.</th><th>Note</th><th class="num">Amount</th><th></th></tr></thead><tbody>
-      ${cl.pP === null ? '<tr><td colspan="8">Loading…</td></tr>' : P.map(x => `<tr data-pay="${esc(x.id)}"><td>${esc(x.receiptNo || '')}${x.kind === 'refund' ? ' <span class="upill gone">Refund</span>' : ''}${editedTag(x)}</td><td>${esc(x.billNo || (B.find(b => b.id === x.billId) || {}).billNo || '—')}</td><td>${esc(fmtShort(x.date))}</td><td>${esc((PMODES.find(m => m[0] === x.mode) || [0, x.mode])[1])}</td><td>${esc(x.txnRef || '')}</td><td>${esc(x.note || '')}${x.cash ? `<span class="sub2">${esc(cashLine(x))}</span>` : ''}</td><td class="num"><b class="${x.amount < 0 ? 'neg' : ''}">${inr(x.amount)}</b></td>
-        <td style="white-space:nowrap"><button data-rcpt>🖨 Receipt</button>${canEditMoney() && x.kind !== 'refund' && x.amount > 0 ? ' <button data-pedit>✎ Edit</button>' : ''}</td></tr>
-        ${cl.payEdit === x.id ? `<tr class="asedrow"><td colspan="8">${payEditForm(x)}</td></tr>` : ''}`).join('') || '<tr><td colspan="8" class="stat">No payments yet.</td></tr>'}
+      ${cl.pP === null ? '<tr><td colspan="8">Loading…</td></tr>' : P.map(x => `<tr data-pay="${esc(x.id)}"><td${x.reversedBy ? ' class="gone"' : ''}>${esc(x.receiptNo || '')}${x.kind === 'refund' ? ' <span class="upill gone">Refund</span>' : x.kind === 'reversal' ? ' <span class="upill gone">Cancellation</span>' : x.reversedBy ? ` <span class="upill gone" title="${esc(histNote(x.history))}">Cancelled</span>` : ''}${editedTag(x)}</td><td>${esc(x.billNo || (B.find(b => b.id === x.billId) || {}).billNo || '—')}</td><td>${esc(fmtShort(x.date))}</td><td>${esc((PMODES.find(m => m[0] === x.mode) || [0, x.mode])[1])}</td><td>${esc(x.txnRef || '')}</td><td>${esc(x.note || '')}${x.cash ? `<span class="sub2">${esc(cashLine(x))}</span>` : ''}</td><td class="num"><b class="${x.amount < 0 ? 'neg' : ''}">${inr(x.amount)}</b></td>
+        <td style="white-space:nowrap"><button data-rcpt>🖨 Receipt</button>${canEditMoney() && (x.kind || 'payment') === 'payment' && x.amount > 0 && !x.reversedBy ? ' <button class="danger" data-pcancel>Cancel</button>' : ''}</td></tr>`).join('') || '<tr><td colspan="8" class="stat">No payments yet.</td></tr>'}
     </tbody></table></div></div>`;
 }
 function billEditForm(b){
@@ -229,7 +274,7 @@ async function billAction(e){
     if (t.closest('[data-bissue]')){ await issueBill(b, T()); info(`${b.billNo} issued.`); renderClinic(); return true; }
     if (t.closest('[data-breopen]')){ await reopenBill(b); info(`${b.billNo} is a draft again: change the treatments, then Issue.`); renderClinic(); return true; }
     if (t.closest('[data-back]')){ await ackBill(b); info(`${b.billNo} acknowledged.`); renderClinic(); return true; }
-    if (t.closest('[data-bcancel]')){ const r = await cancelBill(b, T()); if (r){ info(r.fresh ? `${b.billNo} cancelled: payments moved to ${r.fresh.billNo} (draft: correct the treatments, then Issue).` : r.refund ? `${b.billNo} cancelled and ${inr(-r.refund.amount)} refunded (${r.refund.receiptNo}).` : `${b.billNo} cancelled.`); if (r.fresh) cl.billOpen = r.fresh.id; renderClinic(); } return true; }
+    if (t.closest('[data-bcancel]')){ if (+b.paid) throw custom('Cancel its payments first.'); const r = await cancelBill(b, T()); if (r){ info(r.fresh ? `${b.billNo} cancelled: payments moved to ${r.fresh.billNo} (draft: correct the treatments, then Issue).` : r.refund ? `${b.billNo} cancelled and ${inr(-r.refund.amount)} refunded (${r.refund.receiptNo}).` : `${b.billNo} cancelled.`); if (r.fresh) cl.billOpen = r.fresh.id; renderClinic(); } return true; }
     if (row.matches('tr.clk[data-bill]') && !t.closest('form,button,input,select')){ cl.billOpen = cl.billOpen === b.id ? null : b.id; renderClinic(); return true; }
   } catch(err){ info(errText(err)); return true; }
   return false;

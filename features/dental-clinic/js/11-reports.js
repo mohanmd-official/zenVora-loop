@@ -1,5 +1,5 @@
 /* ---------- Reports ---------- */
-const REPORTS = [['collection', 'Collection', 'reports'], ['treatments', 'Treatment-wise earnings', 'reports'], ['doctors', 'Doctors & consultants', 'doctorReports'], ['outstanding', 'Outstanding balances', 'reports'], ['appointments', 'Appointments', 'reports'], ['newpatients', 'New patients', 'reports']];
+const REPORTS = [['collection', 'Collection', 'reports'], ['treatments', 'Treatment-wise earnings', 'reports'], ['treatpaid', 'Treatment-wise payments', 'reports'], ['doctors', 'Doctors & consultants', 'doctorReports'], ['outstanding', 'Outstanding balances', 'reports'], ['appointments', 'Appointments', 'reports'], ['newpatients', 'New patients', 'reports']];
 function clReports(){
   const r = cl.rep, avail = REPORTS.filter(x => can(x[2]));
   if (!avail.some(x => x[0] === r.kind)) r.kind = avail[0][0];
@@ -17,6 +17,7 @@ async function clRunReport(){
     let d = {};
     if (r.kind === 'collection') d.pay = docsOf(await F.getDocs(rq('payments')));
     if (r.kind === 'treatments') d.t = docsOf(await F.getDocs(rq('treatments')));
+    if (r.kind === 'treatpaid'){ const [p, t, b] = await Promise.all([F.getDocs(rq('payments')), F.getDocs(rq('treatments')), F.getDocs(cCol('bills'))]); d.pay = docsOf(p); d.t = docsOf(t); d.b = docsOf(b); }
     if (r.kind === 'doctors'){ d.t = docsOf(await F.getDocs(rq('treatments'))); d.a = docsOf(await F.getDocs(rq('appointments'))); }
     if (r.kind === 'appointments') d.a = docsOf(await F.getDocs(rq('appointments')));
     if (r.kind === 'newpatients'){        // a patient is "new" on their FIRST visit (first bill, treatment or completed appointment), not the day they were typed in
@@ -61,6 +62,24 @@ function clReportHtml(){
       repCsv = [[G === 'month' ? 'Month' : 'Year', 'Payments', ...used.map(u => u[1]), 'Total']].concat(rows.map(({xs, pk}) => [perLabel(G, pk), xs.length, ...used.map(([m]) => by(xs, m)), paidSum(xs)]));
       html = bar(title) + kp + tbl([G === 'month' ? 'Month' : 'Year', '#Payments', ...used.map(u => '₹' + u[1]), '₹Total'], rows.map(({xs, pk}) => ({attr:drill(pk, perLabel(G, pk)), c:[`<b>${esc(perLabel(G, pk))}</b>`, xs.length, ...used.map(([m]) => inr(by(xs, m))), `<b>${inr(paidSum(xs))}</b>`]})), ['Total', P.length, ...used.map(([m]) => inr(by(P, m))), inr(tot)]);
     }
+  }
+  if (r.kind === 'treatpaid'){
+    /* money actually received in the period, split over what it paid for: each payment over its bill's items in proportion to their
+       amounts (medicines as one group); payments with no bill (before bills, Dentee) under "Before bills". Next to it, what the
+       treatments done in the period cost, so earned vs received shows per treatment. */
+    const B = Object.fromEntries((d.b || []).map(b => [b.id, b])), G2 = {}, g = n => G2[n] = G2[n] || {rec:0, done:0, n:0, pays:0};
+    const nameOf = i => i.legacy ? 'Earlier balance (before bills)' : i.med ? 'Medicines (tablets)' : i.name;
+    d.pay.forEach(x => { const b = x.billId && B[x.billId], items = b ? (b.items || []).filter(i => +i.net > 0) : [], tot = items.reduce((a, i) => a + (+i.net || 0), 0);
+      if (!b || !tot){ g('Before bills (no bill)').rec += +x.amount || 0; return; }
+      items.forEach(i => { const e = g(nameOf(i)); e.rec += (+x.amount || 0) * (+i.net || 0) / tot; if (x.amount > 0) e.pays++; }); });
+    d.t.filter(t => t.status !== 'planned' && (!r.dfil || t.doctorId === r.dfil)).forEach(t => { const e = g(isMed(t) ? 'Medicines (tablets)' : t.typeName); e.done += net(t); e.n++; });
+    const R = Object.entries(G2).map(([n, e]) => [n, Object.assign(e, {rec:Math.round(e.rec)})]).filter(([, e]) => e.rec || e.done).sort((a, b) => b[1].rec - a[1].rec || b[1].done - a[1].done);
+    const rec = R.reduce((a, [, e]) => a + e.rec, 0), done = R.reduce((a, [, e]) => a + e.done, 0);
+    const rows = R.map(([n, e]) => ({c:[`<b>${esc(n)}</b>`, e.n || '—', inr(e.done), `<b>${inr(e.rec)}</b>`, `<span class="${e.done - e.rec > 0 ? 'neg' : ''}">${inr(e.done - e.rec)}</span>`, `<div class="rbar"><i style="width:${rec ? e.rec / rec * 100 : 0}%"></i></div>${rec ? Math.round(e.rec / rec * 100) : 0}%`]}));
+    repCsv = [['Treatment', 'Done', 'Cost of treatments done', 'Payments received', 'Difference']].concat(R.map(([n, e]) => [n, e.n, e.done, e.rec, e.done - e.rec]));
+    html = bar('Treatment-wise payments') + `<div class="kpis">${k('Received', inr(rec), plural(d.pay.filter(x => x.amount > 0).length, 'payment'))}${k('Treatments done', inr(done), 'cost after discount')}${k('Not yet received', inr(Math.max(0, done - rec)), 'done − received', done - rec > 0 ? 'neg' : '')}</div>`
+      + (chart ? hbarChart(R.filter(([, e]) => e.rec > 0).map(([n, e]) => ({label:n, v:e.rec})), true) : '')
+      + tbl(['Treatment', '#Done', '₹Done (cost)', '₹Received', '₹Difference', 'Share of received'], rows, ['Total', '', inr(done), inr(rec), inr(done - rec), '']);
   }
   if (r.kind === 'treatments'){
     const T = d.t.filter(t => t.status === 'completed' && (!r.dfil || t.doctorId === r.dfil)), groups = {};

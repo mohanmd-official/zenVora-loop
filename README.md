@@ -109,6 +109,8 @@ People created in the earlier single-admin version show up in **Organizations �
 
 Where: the **Attendance** page (top menu; in clinic organizations it's in the left menu, next to Clinic). Everyone can also check in and out from **Home**.
 
+**Reports → Treatment-wise payments:** money actually received in the period, split by treatment (each payment over its bill's items in proportion; payments from before bills shown separately), next to the cost of treatments done, so you see earned vs received per treatment.
+
 **Pay (with Payroll on):** the Team table shows Present, offs, loss of pay, hours (with **short hours**), **OT hours**, **OT days** (worked on paid offs), **Sundays** worked, Salary, **Extra hrs / days**, **Incentive** (approved patient assists, clinic organizations) and **Payable** = salary − loss of pay + extra hours / days + incentive. The same breakdown is in each person's page.
 
 - **Account Managers don't check in:** attendance, payroll and the team lists are for staff only.
@@ -188,9 +190,10 @@ Account Managers always have full access, and only Accounts (the owner) can top 
 **Bills and payments (separate):**
 - A **bill** is its own record: number, date, visit, treatments (charge, discount, amount), total, paid, outstanding and status **Draft → Unpaid → Partly paid → Paid**, or **Cancelled**. Patient → **Bills** lists them (click one for its items, payments and actions); **New bill** bills done treatments that aren't on a bill yet, plus any **Earlier balance (before bills)**.
 - **Payments** are separate records against a bill: full, partial, any number, any later day. Patient → **Payments** shows every payment with its bill, method and transaction ref.
-- Once a treatment is on an issued bill it is **locked** (🔒 in Treatments). A bill with payments is never edited: **Cancel bill…** (reason required; with payments: Owner, Account Manager or the **Cancel paid bills** permission) and choose **move** the payments to a fresh bill (new number, same treatments, edit then **Issue**) or **refund** them (a refund receipt with a minus amount: it shows in collections and the daily tally). The cancelled bill stays, with its reason. Bills and payments are never deleted.
+- Once a treatment is on an issued bill it is **locked** (🔒 in Treatments) until the bill is edited or cancelled.
 - Printed bills list **Treatments** and **Medicines** in separate tables with their totals, then the summary (total, paid, balance due).
-- **Editing (Owner, Account Manager, or the Edit / cancel bills permission):** open a bill → **✎ Edit bill** (date, each treatment's charge and discount) or Payments → **✎ Edit** (date, amount, method, ref., note). A **reason is required**; the old values, who and when are kept in the record's history (hover the *edited* tag) and the audit log. The treatments and the bill's paid total change with it, so balances stay right. Changing a cash payment's amount clears its counted notes.
+- **Correcting a paid bill:** Payments → **Cancel** each payment on it (reason required; Owner, Account Manager or the *Edit / cancel bills* permission). The payment stays, marked *Cancelled*, and a minus *Cancellation* record on the same date undoes it in collections, the tally and the balance. With nothing paid, the bill can be **✎ Edited** (date, each charge and discount; reason required, treatments updated too) or **Cancelled**; then take the right payment again. Bills and payments are never deleted or edited once paid.
+- **Paying today's bill and old dues together:** when the patient owes more, the payment form shows **This bill** and **Earlier dues** (with what's due) and one total, with one cash count. The dues part pays other open bills first, then the earlier balance from before bills, which gets its own bill for the amount paid, dated the same day as the payment.
 - One live bill per visit: a second bill for the same visit is refused until the first is cancelled.
 - The patient's **Outstanding** is still all done treatments − all payments, so balances from before bills are unchanged.
 
