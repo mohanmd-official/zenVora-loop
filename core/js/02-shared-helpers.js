@@ -15,9 +15,10 @@ const paidSum = ps => (ps || []).reduce((a, x) => a + (+x.amount || 0), 0);
 function numberTables(root){
   (root || document).querySelectorAll('table.atbl:not([data-num])').forEach(t => {
     t.dataset.num = '1';
-    const hr = t.querySelector('thead tr'); if (hr){ const th = document.createElement('th'); th.className = 'rn'; th.textContent = 'No.'; hr.prepend(th); }
+    // only this table's own rows, never those of a table nested inside it
+    const hr = t.querySelector(':scope > thead > tr'); if (hr){ const th = document.createElement('th'); th.className = 'rn'; th.textContent = 'No.'; hr.prepend(th); }
     let n = 0;
-    t.querySelectorAll('tbody tr').forEach(r => {
+    t.querySelectorAll(':scope > tbody > tr').forEach(r => {
       if (r.cells.length === 1){ r.cells[0].colSpan = (r.cells[0].colSpan || 1) + 1; return; }
       const td = document.createElement('td'); td.className = 'rn';
       if (!r.classList.contains('wk') && !r.classList.contains('tot')) td.textContent = ++n;
