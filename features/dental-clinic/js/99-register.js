@@ -30,7 +30,7 @@ ZL.add({
       return true;
     },
   },
-  onView(v, from){ if (v === 'home' && from !== 'home' && Date.now() - (window.__lastSync || 0) > 120000) clinicSync(true); },
+  onView(v, from){ if (v === 'home' && from !== 'home' && Date.now() - (window.__lastSync || 0) > 600000) clinicSync(true); },
   reset(){ cl.reset(); },
   start(){ setTimeout(() => clinicSync(), 1500); },
   // the Planning Board: organization reminders panel, and tasks that open a patient / an account page

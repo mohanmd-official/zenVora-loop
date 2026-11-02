@@ -2,6 +2,9 @@
    Clinic work that needs a person's attention becomes a task on their Planning Board, grouped by epic,
    and ticks itself off when the work is done in the clinic. Ids are stable so nothing is duplicated. */
 let syncBusy = false, syncTimer2 = null;
+// the reminders' bigger reads stay open as live queries (read once, then only changes; see 23-live-data.js)
+const syncT90 = () => liveQ('sync-t90', () => cloud.F.query(cCol('treatments'), cloud.F.where('date', '>=', shiftDay(todayKey, -90))));
+const syncA14 = () => liveQ('sync-a14', () => cloud.F.query(cCol('appointments'), cloud.F.where('date', '>=', shiftDay(todayKey, -14))));
 function clinicSync(soon){ clearTimeout(syncTimer2); syncTimer2 = setTimeout(clinicSyncNow, soon ? 1200 : 0); }
 async function clinicSyncNow(){
   const oc = orgCtx(); if (!oc || oc.support || !feat('clinic') || !appReady || syncBusy) return;
@@ -19,10 +22,10 @@ async function clinicSyncNow(){
     if (can('treatments') === true || can('appointments') === true){ cats.add('sum');
       (await q('appointments', W('summaryPending', '==', true))).forEach(a => opush('sum', 'sum-' + a.id, 'Treatment plan description', `Treatment plan description needs to be updated for ${a.patientName} (${fmtDM(a.date)}, ${dName(a.doctorId)})`, {priority:'high', link:{pid:a.patientId, tab:'appointments'}})); }
     if (can('treatments') === true || can('billing') === true){ cats.add('doc');
-      (await q('treatments', W('date', '>=', shiftDay(todayKey, -90)))).filter(t => !isMed(t) && typeNeeds(t) && !t.docAttached && t.status !== 'planned')
+      (await syncT90()).filter(t => t.date >= shiftDay(todayKey, -90) && !isMed(t) && typeNeeds(t) && !t.docAttached && t.status !== 'planned')
         .forEach(t => opush('doc', 'doc-' + t.id, 'Patient documents', `Upload ${typeNeeds(t)} for ${t.patientName} (${t.typeName}, ${fmtDM(t.date)})`, {link:{pid:t.patientId, tab:'docs'}})); }
     if (can('appointments') === true){ cats.add('fu'); cats.add('miss');
-      const recent = await q('appointments', W('date', '>=', shiftDay(todayKey, -14)), W('date', '<=', todayKey));
+      const recent = (await syncA14()).filter(a => a.date >= shiftDay(todayKey, -14) && a.date <= todayKey);
       if (canW('appointments')){                                   // a visit still "Scheduled" after its day is over becomes Missed (and gets a call-back reminder)
         const stale = recent.filter(a => a.date < todayKey && a.status === 'scheduled');
         for (const a of stale){ try { await F.updateDoc(cDoc('appointments', a.id), {status:'missed', autoMissed:true, missedAt:Date.now()}); Object.assign(a, {status:'missed', autoMissed:true}); const c = (cl.appts || []).find(x => x.id === a.id); if (c) Object.assign(c, {status:'missed', autoMissed:true}); } catch(_){} }
@@ -192,7 +195,7 @@ document.addEventListener('click', e => {
   if (e.target.closest('[data-otreopen]')) return otSet(t.src, t.id, false);
   if (e.target.closest('[data-otopen]') && t.link) return openLink(t.link);
 });
-setInterval(() => { if (orgCtx() && appReady) clinicSync(); }, 10 * 60000);
+setInterval(() => { if (orgCtx() && appReady && !document.hidden) clinicSync(); }, 10 * 60000);   // only the tab on screen; a tab in the background doesn't read
 function clOpenLink(link){             // core's openLink() comes here for clinic links (see 99-register.js)
   if (!link) return;
   setView('clinic');

@@ -355,3 +355,6 @@ some of them (in `build/`, not published).
 - **`firebase-config.js` is public by design.** Every Firebase website exposes these values. Security comes from sign-in plus `firestore.rules`.
 - **Offline desktop copy:** double-clicking `public/index.html` on your Mac still works as the local, no-login version.
 - **Hidden from search engines:** the page says `noindex`, Firebase sends `X-Robots-Tag: noindex`, and `robots.txt` disallows everything.
+
+### Keeping within Firebase's free daily reads
+The free (Spark) plan allows about 50,000 document reads a day; past that, saving fails with `resource-exhausted` until the reset at midnight US Pacific (1:30 PM IST). The app keeps one live copy of patients, treatments, payments, bills and appointments per signed-in session: the first time a report or the patient list opens, each record is read once; after that, reports reuse the copy and only new or changed records are read. Tabs left open in the background no longer refresh the Planning Board reminders. Check usage in the Firebase console → Firestore → Usage.

@@ -15,19 +15,19 @@ async function clRunReport(){
   const rq = c => F.query(cCol(c), F.where('date', '>=', r.from), F.where('date', '<=', r.to));
   try {
     let d = {};
-    if (r.kind === 'collection') d.pay = docsOf(await F.getDocs(rq('payments')));
-    if (r.kind === 'treatments'){ const [t, at, ap, ab] = await Promise.all([F.getDocs(rq('treatments')), F.getDocs(cCol('treatments')), can('billing') || can('reports') ? F.getDocs(cCol('payments')) : null, F.getDocs(cCol('bills')).catch(() => null)]);
-      d.t = docsOf(t); if (ap){ d.paidBy = paidByTreatment(docsOf(at), docsOf(ap), ab ? docsOf(ab) : []); d.coll = docsOf(ap).filter(x => x.date >= r.from && x.date <= r.to).reduce((a, x) => a + (+x.amount || 0), 0); } }
-    if (r.kind === 'doctors'){ d.t = docsOf(await F.getDocs(rq('treatments'))); d.a = docsOf(await F.getDocs(rq('appointments'))); }
+    if (r.kind === 'collection') d.pay = await inRange('payments', r.from, r.to);
+    if (r.kind === 'treatments'){ const [at, ap, ab] = await Promise.all([liveCol('treatments'), can('billing') || can('reports') ? liveCol('payments') : null, liveCol('bills').catch(() => [])]);
+      d.t = at.filter(t => t.date >= r.from && t.date <= r.to); if (ap){ d.paidBy = paidByTreatment(at, ap, ab); d.coll = ap.filter(x => x.date >= r.from && x.date <= r.to).reduce((a, x) => a + (+x.amount || 0), 0); } }
+    if (r.kind === 'doctors'){ d.t = await inRange('treatments', r.from, r.to); d.a = docsOf(await F.getDocs(rq('appointments'))); }
     if (r.kind === 'appointments') d.a = docsOf(await F.getDocs(rq('appointments')));
     if (r.kind === 'newpatients'){        // a patient is "new" on their FIRST visit (first bill, treatment or completed appointment), not the day they were typed in
-      const upto = c => F.getDocs(F.query(cCol(c), F.where('date', '<=', r.to))).then(docsOf);
-      const [pay, tr, ap, pts] = await Promise.all([upto('payments'), upto('treatments'), F.getDocs(F.query(cCol('appointments'), F.where('status', '==', 'completed'))).then(docsOf), F.getDocs(cCol('patients')).then(docsOf)]);
+      const upto = c => liveCol(c).then(xs => xs.filter(x => x.date <= r.to));
+      const [pay, tr, ap, pts] = await Promise.all([upto('payments'), upto('treatments'), liveCol('appointments').then(xs => xs.filter(a => a.status === 'completed')), liveCol('patients')]);
       const first = {}, seen = (id, day) => { if (id && day && day <= r.to && (!first[id] || day < first[id])) first[id] = day; };
       pay.forEach(x => seen(x.patientId, x.date)); tr.filter(t => t.status !== 'planned').forEach(t => seen(t.patientId, t.date)); ap.forEach(a => seen(a.patientId, a.date));
-      d.p = pts.map(p => Object.assign(p, {firstDay:first[p.id] || p.createdDay || ''})).filter(p => p.firstDay >= r.from && p.firstDay <= r.to);
+      d.p = pts.map(p => Object.assign({}, p, {firstDay:first[p.id] || p.createdDay || ''})).filter(p => p.firstDay >= r.from && p.firstDay <= r.to);
     }
-    if (r.kind === 'outstanding'){ const [t, p, pt] = await Promise.all([F.getDocs(cCol('treatments')), F.getDocs(cCol('payments')), F.getDocs(cCol('patients'))]); d.t = docsOf(t); d.pay = docsOf(p); d.pt = docsOf(pt); }
+    if (r.kind === 'outstanding'){ [d.t, d.pay, d.pt] = await Promise.all([liveCol('treatments'), liveCol('payments'), liveCol('patients')]); }
     if (r.key !== key) return;
     r.data = d; out();
   } catch(e){ r.key = ''; const el = $('#repOut'); if (el) el.innerHTML = `<div class="auth-err">${esc(errText(e))}</div>`; }

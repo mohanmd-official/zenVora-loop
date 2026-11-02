@@ -41,7 +41,7 @@ const cl = {sec:'patients', pid:null, ptab:'profile', doctors:[], types:[], sett
   aDate:todayKey, aMode:'day', aDoc:'', appts:null, aUnsub:null, aKey:'', book:null,
   acc:{month:'', tab:'overview', d:null, key:'', pre:null, tday:'', vf:'', vonly:'month', cf:''}, ameta:null, reminders:[], pD:null, sum:null,
   rep:{kind:'collection', preset:'today', from:'', to:'', data:null, key:'', doc:null, group:'day', view:'table', mode:'', dfil:''},
-  reset(){ [...this.unsub, ...this.pUnsub, ...(this.otUnsub || [])].forEach(u => { try { u(); } catch(e){} }); if (this.aUnsub) try { this.aUnsub(); } catch(e){} this.otUnsub = []; this.otKey = ''; this.orgT = null; this.ownT = null;
+  reset(){ liveStop(); [...this.unsub, ...this.pUnsub, ...(this.otUnsub || [])].forEach(u => { try { u(); } catch(e){} }); if (this.aUnsub) try { this.aUnsub(); } catch(e){} this.otUnsub = []; this.otKey = ''; this.orgT = null; this.ownT = null;
     Object.assign(this, {pid:null, doctors:[], types:[], settings:{}, recent:null, search:null, q:'', unsub:[], key:'', p:null, pT:null, pP:null, pA:null, pPh:null, pUnsub:[], pKey:'',
       newP:false, edit:{}, appts:null, aUnsub:null, aKey:'', book:null, ameta:null, allP:null, allBusy:false, members:null, mLoading:false, reminders:[], pD:null, sum:null, meds:null, asst:null, asKey:''}); this.acc.key = ''; this.rep.key = ''; this.rep.data = null; }};
 const cCol = (...p) => cloud.F.collection(cloud.fs, 'orgs', orgCtx().orgId, ...p);
@@ -129,9 +129,9 @@ const PSORT = {num:['Patient No. (1 → latest)', (a, b) => codeNo(a.code) - cod
   numd:['Patient No. (latest first)', (a, b) => codeNo(b.code) - codeNo(a.code) || String(b.code).localeCompare(String(a.code))],
   name:['Name A–Z', (a, b) => pName(a).localeCompare(pName(b))], reg:['Recently registered', (a, b) => (b.createdAt || 0) - (a.createdAt || 0)]};
 function loadAllPatients(force){
-  if (cl.allBusy || (cl.allP && !force)) return;
-  const {F} = cloud; cl.allBusy = true;
-  F.getDocs(cCol('patients')).then(qs => { cl.allP = docsOf(qs); cl.allBusy = false; bumpCounter(); if (cl.sec === 'patients' && !cl.pid && !cl.newP) renderClinic(); })
+  const L = liveDocs('patients'); if (L){ if (force || !cl.allP) cl.allP = L.slice(); return; }
+  if (cl.allBusy) return; cl.allBusy = true;
+  liveCol('patients').then(ps => { cl.allP = ps.slice(); cl.allBusy = false; bumpCounter(); if (cl.sec === 'patients' && !cl.pid && !cl.newP) renderClinic(); })
     .catch(e => { cl.allBusy = false; cl.allP = []; info('Patients could not load: ' + errText(e)); });
 }
 async function bumpCounter(){          // new patients continue after the highest imported patient number

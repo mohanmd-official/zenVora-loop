@@ -4570,7 +4570,7 @@ const cl = {sec:'patients', pid:null, ptab:'profile', doctors:[], types:[], sett
   aDate:todayKey, aMode:'day', aDoc:'', appts:null, aUnsub:null, aKey:'', book:null,
   acc:{month:'', tab:'overview', d:null, key:'', pre:null, tday:'', vf:'', vonly:'month', cf:''}, ameta:null, reminders:[], pD:null, sum:null,
   rep:{kind:'collection', preset:'today', from:'', to:'', data:null, key:'', doc:null, group:'day', view:'table', mode:'', dfil:''},
-  reset(){ [...this.unsub, ...this.pUnsub, ...(this.otUnsub || [])].forEach(u => { try { u(); } catch(e){} }); if (this.aUnsub) try { this.aUnsub(); } catch(e){} this.otUnsub = []; this.otKey = ''; this.orgT = null; this.ownT = null;
+  reset(){ liveStop(); [...this.unsub, ...this.pUnsub, ...(this.otUnsub || [])].forEach(u => { try { u(); } catch(e){} }); if (this.aUnsub) try { this.aUnsub(); } catch(e){} this.otUnsub = []; this.otKey = ''; this.orgT = null; this.ownT = null;
     Object.assign(this, {pid:null, doctors:[], types:[], settings:{}, recent:null, search:null, q:'', unsub:[], key:'', p:null, pT:null, pP:null, pA:null, pPh:null, pUnsub:[], pKey:'',
       newP:false, edit:{}, appts:null, aUnsub:null, aKey:'', book:null, ameta:null, allP:null, allBusy:false, members:null, mLoading:false, reminders:[], pD:null, sum:null, meds:null, asst:null, asKey:''}); this.acc.key = ''; this.rep.key = ''; this.rep.data = null; }};
 const cCol = (...p) => cloud.F.collection(cloud.fs, 'orgs', orgCtx().orgId, ...p);
@@ -4658,9 +4658,9 @@ const PSORT = {num:['Patient No. (1 → latest)', (a, b) => codeNo(a.code) - cod
   numd:['Patient No. (latest first)', (a, b) => codeNo(b.code) - codeNo(a.code) || String(b.code).localeCompare(String(a.code))],
   name:['Name A–Z', (a, b) => pName(a).localeCompare(pName(b))], reg:['Recently registered', (a, b) => (b.createdAt || 0) - (a.createdAt || 0)]};
 function loadAllPatients(force){
-  if (cl.allBusy || (cl.allP && !force)) return;
-  const {F} = cloud; cl.allBusy = true;
-  F.getDocs(cCol('patients')).then(qs => { cl.allP = docsOf(qs); cl.allBusy = false; bumpCounter(); if (cl.sec === 'patients' && !cl.pid && !cl.newP) renderClinic(); })
+  const L = liveDocs('patients'); if (L){ if (force || !cl.allP) cl.allP = L.slice(); return; }
+  if (cl.allBusy) return; cl.allBusy = true;
+  liveCol('patients').then(ps => { cl.allP = ps.slice(); cl.allBusy = false; bumpCounter(); if (cl.sec === 'patients' && !cl.pid && !cl.newP) renderClinic(); })
     .catch(e => { cl.allBusy = false; cl.allP = []; info('Patients could not load: ' + errText(e)); });
 }
 async function bumpCounter(){          // new patients continue after the highest imported patient number
@@ -5911,19 +5911,19 @@ async function clRunReport(){
   const rq = c => F.query(cCol(c), F.where('date', '>=', r.from), F.where('date', '<=', r.to));
   try {
     let d = {};
-    if (r.kind === 'collection') d.pay = docsOf(await F.getDocs(rq('payments')));
-    if (r.kind === 'treatments'){ const [t, at, ap, ab] = await Promise.all([F.getDocs(rq('treatments')), F.getDocs(cCol('treatments')), can('billing') || can('reports') ? F.getDocs(cCol('payments')) : null, F.getDocs(cCol('bills')).catch(() => null)]);
-      d.t = docsOf(t); if (ap){ d.paidBy = paidByTreatment(docsOf(at), docsOf(ap), ab ? docsOf(ab) : []); d.coll = docsOf(ap).filter(x => x.date >= r.from && x.date <= r.to).reduce((a, x) => a + (+x.amount || 0), 0); } }
-    if (r.kind === 'doctors'){ d.t = docsOf(await F.getDocs(rq('treatments'))); d.a = docsOf(await F.getDocs(rq('appointments'))); }
+    if (r.kind === 'collection') d.pay = await inRange('payments', r.from, r.to);
+    if (r.kind === 'treatments'){ const [at, ap, ab] = await Promise.all([liveCol('treatments'), can('billing') || can('reports') ? liveCol('payments') : null, liveCol('bills').catch(() => [])]);
+      d.t = at.filter(t => t.date >= r.from && t.date <= r.to); if (ap){ d.paidBy = paidByTreatment(at, ap, ab); d.coll = ap.filter(x => x.date >= r.from && x.date <= r.to).reduce((a, x) => a + (+x.amount || 0), 0); } }
+    if (r.kind === 'doctors'){ d.t = await inRange('treatments', r.from, r.to); d.a = docsOf(await F.getDocs(rq('appointments'))); }
     if (r.kind === 'appointments') d.a = docsOf(await F.getDocs(rq('appointments')));
     if (r.kind === 'newpatients'){        // a patient is "new" on their FIRST visit (first bill, treatment or completed appointment), not the day they were typed in
-      const upto = c => F.getDocs(F.query(cCol(c), F.where('date', '<=', r.to))).then(docsOf);
-      const [pay, tr, ap, pts] = await Promise.all([upto('payments'), upto('treatments'), F.getDocs(F.query(cCol('appointments'), F.where('status', '==', 'completed'))).then(docsOf), F.getDocs(cCol('patients')).then(docsOf)]);
+      const upto = c => liveCol(c).then(xs => xs.filter(x => x.date <= r.to));
+      const [pay, tr, ap, pts] = await Promise.all([upto('payments'), upto('treatments'), liveCol('appointments').then(xs => xs.filter(a => a.status === 'completed')), liveCol('patients')]);
       const first = {}, seen = (id, day) => { if (id && day && day <= r.to && (!first[id] || day < first[id])) first[id] = day; };
       pay.forEach(x => seen(x.patientId, x.date)); tr.filter(t => t.status !== 'planned').forEach(t => seen(t.patientId, t.date)); ap.forEach(a => seen(a.patientId, a.date));
-      d.p = pts.map(p => Object.assign(p, {firstDay:first[p.id] || p.createdDay || ''})).filter(p => p.firstDay >= r.from && p.firstDay <= r.to);
+      d.p = pts.map(p => Object.assign({}, p, {firstDay:first[p.id] || p.createdDay || ''})).filter(p => p.firstDay >= r.from && p.firstDay <= r.to);
     }
-    if (r.kind === 'outstanding'){ const [t, p, pt] = await Promise.all([F.getDocs(cCol('treatments')), F.getDocs(cCol('payments')), F.getDocs(cCol('patients'))]); d.t = docsOf(t); d.pay = docsOf(p); d.pt = docsOf(pt); }
+    if (r.kind === 'outstanding'){ [d.t, d.pay, d.pt] = await Promise.all([liveCol('treatments'), liveCol('payments'), liveCol('patients')]); }
     if (r.key !== key) return;
     r.data = d; out();
   } catch(e){ r.key = ''; const el = $('#repOut'); if (el) el.innerHTML = `<div class="auth-err">${esc(errText(e))}</div>`; }
@@ -6694,6 +6694,9 @@ async function openStoredFile(ref, title){
    Clinic work that needs a person's attention becomes a task on their Planning Board, grouped by epic,
    and ticks itself off when the work is done in the clinic. Ids are stable so nothing is duplicated. */
 let syncBusy = false, syncTimer2 = null;
+// the reminders' bigger reads stay open as live queries (read once, then only changes; see 23-live-data.js)
+const syncT90 = () => liveQ('sync-t90', () => cloud.F.query(cCol('treatments'), cloud.F.where('date', '>=', shiftDay(todayKey, -90))));
+const syncA14 = () => liveQ('sync-a14', () => cloud.F.query(cCol('appointments'), cloud.F.where('date', '>=', shiftDay(todayKey, -14))));
 function clinicSync(soon){ clearTimeout(syncTimer2); syncTimer2 = setTimeout(clinicSyncNow, soon ? 1200 : 0); }
 async function clinicSyncNow(){
   const oc = orgCtx(); if (!oc || oc.support || !feat('clinic') || !appReady || syncBusy) return;
@@ -6711,10 +6714,10 @@ async function clinicSyncNow(){
     if (can('treatments') === true || can('appointments') === true){ cats.add('sum');
       (await q('appointments', W('summaryPending', '==', true))).forEach(a => opush('sum', 'sum-' + a.id, 'Treatment plan description', `Treatment plan description needs to be updated for ${a.patientName} (${fmtDM(a.date)}, ${dName(a.doctorId)})`, {priority:'high', link:{pid:a.patientId, tab:'appointments'}})); }
     if (can('treatments') === true || can('billing') === true){ cats.add('doc');
-      (await q('treatments', W('date', '>=', shiftDay(todayKey, -90)))).filter(t => !isMed(t) && typeNeeds(t) && !t.docAttached && t.status !== 'planned')
+      (await syncT90()).filter(t => t.date >= shiftDay(todayKey, -90) && !isMed(t) && typeNeeds(t) && !t.docAttached && t.status !== 'planned')
         .forEach(t => opush('doc', 'doc-' + t.id, 'Patient documents', `Upload ${typeNeeds(t)} for ${t.patientName} (${t.typeName}, ${fmtDM(t.date)})`, {link:{pid:t.patientId, tab:'docs'}})); }
     if (can('appointments') === true){ cats.add('fu'); cats.add('miss');
-      const recent = await q('appointments', W('date', '>=', shiftDay(todayKey, -14)), W('date', '<=', todayKey));
+      const recent = (await syncA14()).filter(a => a.date >= shiftDay(todayKey, -14) && a.date <= todayKey);
       if (canW('appointments')){                                   // a visit still "Scheduled" after its day is over becomes Missed (and gets a call-back reminder)
         const stale = recent.filter(a => a.date < todayKey && a.status === 'scheduled');
         for (const a of stale){ try { await F.updateDoc(cDoc('appointments', a.id), {status:'missed', autoMissed:true, missedAt:Date.now()}); Object.assign(a, {status:'missed', autoMissed:true}); const c = (cl.appts || []).find(x => x.id === a.id); if (c) Object.assign(c, {status:'missed', autoMissed:true}); } catch(_){} }
@@ -6884,7 +6887,7 @@ document.addEventListener('click', e => {
   if (e.target.closest('[data-otreopen]')) return otSet(t.src, t.id, false);
   if (e.target.closest('[data-otopen]') && t.link) return openLink(t.link);
 });
-setInterval(() => { if (orgCtx() && appReady) clinicSync(); }, 10 * 60000);
+setInterval(() => { if (orgCtx() && appReady && !document.hidden) clinicSync(); }, 10 * 60000);   // only the tab on screen; a tab in the background doesn't read
 function clOpenLink(link){             // core's openLink() comes here for clinic links (see 99-register.js)
   if (!link) return;
   setView('clinic');
@@ -7878,6 +7881,40 @@ function printReceipt(x, c){
   const lines = Math.max((bill ? (bill.items || []).filter(i => !i.med).length + 1 : 1), list.length);
   return sheetWindow('Receipt ' + (x.receiptNo || ''), body, lines <= SHEET_HALF_MAX);
 }
+/* ---------- Live copies of the big collections: patients, treatments, payments, bills ----------
+   Firestore charges one read per document a query returns. Reports and the patient list used to fetch these whole
+   collections every time they opened (thousands of reads each, which used up the free plan's 50,000 reads a day).
+   liveCol(c) opens ONE listener per collection for the session: the first load reads each document once, after that only
+   added / changed documents are read, and every report or list reuses the copy in memory. With the offline cache on,
+   reopening the app within ~30 minutes resumes the listener and is charged only for what changed.
+   cl.reset() (sign-out / other organization / permissions changed) closes them. */
+function liveCol(c){ return liveQ(c, () => cCol(c)); }
+// the same for any query (key names it): one listener per session, then only changes are read
+function liveQ(key, make){
+  const L = cl.live || (cl.live = {});
+  if (L[key]) return L[key].ready.then(() => L[key] ? L[key].docs : []);   // always the latest copy, not the first one
+  const e = L[key] = {docs:null, unsub:null};
+  e.ready = new Promise((res, rej) => {
+    e.unsub = cloud.F.onSnapshot(make(), {includeMetadataChanges:true}, qs => {
+      const m = qs.metadata || {};
+      if (m.fromCache && !e.docs) return;                     // wait for the server's answer the first time (the offline cache may be partial)
+      e.docs = docsOf(qs); res(e.docs); liveChanged(key);
+    }, err => { if (L[key] === e) delete L[key]; rej(err); });
+  });
+  return e.ready;
+}
+const liveDocs = c => cl.live && cl.live[c] && cl.live[c].docs;
+function liveStop(){ Object.values(cl.live || {}).forEach(e => { try { e.unsub && e.unsub(); } catch(x){} }); cl.live = {}; }
+// a change arrived: the patient list follows it; reports work it out again next time they're shown
+function liveChanged(c){
+  if (c === 'patients'){ cl.allP = liveDocs('patients').slice(); if (state.settings.view === 'clinic' && cl.sec === 'patients' && !cl.pid && !cl.newP) renderSoon('clinic', renderClinic); }
+  if (cl.rep && cl.rep.data) cl.rep.key = '';            // a report already shown is worked out again (from memory) next time; one still loading isn't interrupted
+}
+// documents with date in [from, to]: from the live copy when it is already open, else a date-range query (reads only that range)
+async function inRange(c, from, to){
+  const L = liveDocs(c); if (L) return L.filter(x => x.date >= from && x.date <= to);
+  const {F} = cloud; return docsOf(await F.getDocs(F.query(cCol(c), F.where('date', '>=', from), F.where('date', '<=', to))));
+}
 /* ================= Dental Clinic: how this feature plugs into core (see core/js/03-feature-registry.js) ================= */
 ZL.add({
   id:'dental-clinic',
@@ -7910,7 +7947,7 @@ ZL.add({
       return true;
     },
   },
-  onView(v, from){ if (v === 'home' && from !== 'home' && Date.now() - (window.__lastSync || 0) > 120000) clinicSync(true); },
+  onView(v, from){ if (v === 'home' && from !== 'home' && Date.now() - (window.__lastSync || 0) > 600000) clinicSync(true); },
   reset(){ cl.reset(); },
   start(){ setTimeout(() => clinicSync(), 1500); },
   // the Planning Board: organization reminders panel, and tasks that open a patient / an account page
