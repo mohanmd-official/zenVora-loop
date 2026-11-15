@@ -28,6 +28,16 @@ function renderBoard(){
   buildColumns($('#board'), items.filter(whoMatch), {ro:past});
 }
 
+const DONE_SHOW = 5;
+// every completed task of the day in its own window (newest first); click one to open it
+function openDoneList(xs){
+  $('#teamModal').innerHTML = `<div class="tm-head"><b style="font-size:16px">✓ Completed · ${xs.length}</b><span class="sp"></span><button class="ghost tm-x" id="tmClose">✕</button></div>
+    <input id="dlQ" placeholder="Search completed tasks" autocomplete="off" style="width:100%;margin:6px 0 8px">
+    <div class="dlist">${xs.map(it => `<button class="dlrow" data-dl="${esc(it.id)}"><span class="dlt">${esc(it.title)}</span>${it.epic ? `<span class="epic">${esc(it.epic)}</span>` : ''}<span class="stat">${it.doneAt ? esc(fmt(it.doneAt)) : ''}</span></button>`).join('')}</div>`;
+  $('#teamOv').classList.add('on');
+  $('#dlQ').oninput = e => { const q = e.target.value.trim().toLowerCase(); $('#teamModal').querySelectorAll('.dlrow').forEach(r => r.hidden = q && !r.textContent.toLowerCase().includes(q)); };
+  $('#teamModal').querySelectorAll('[data-dl]').forEach(r => r.onclick = () => { $('#teamOv').classList.remove('on'); openModal(r.dataset.dl); });
+}
 function buildColumns(host, items, opt = {}){
   host.innerHTML = '';
   COLS.forEach(col => {
@@ -37,12 +47,16 @@ function buildColumns(host, items, opt = {}){
       list = od.concat(list.filter(i => !isOverdue(i)));
     }
     if (col.id === 'done' && opt.showDay) list.sort((a, b) => (b.doneAt || 0) - (a.doneAt || 0));
+    // Completed keeps the column tidy: the most recently finished few, the rest in a separate window
+    let more = [];
+    if (col.id === 'done' && !opt.ro && list.length > DONE_SHOW){ list = list.slice().sort((a, b) => (b.doneAt || 0) - (a.doneAt || 0)); more = list; list = list.slice(0, DONE_SHOW); }
     const el = document.createElement('section');
     el.className = 'col'; el.dataset.s = col.id;
-    el.innerHTML = `<h2><i class="dot s-${col.id}"></i>${col.name}<span class="n">${list.length}</span></h2><div class="list"></div>`;
+    el.innerHTML = `<h2><i class="dot s-${col.id}"></i>${col.name}<span class="n">${more.length || list.length}</span></h2><div class="list"></div>`;
     const L = el.querySelector('.list');
     if (!list.length) L.innerHTML = `<div class="empty">${opt.ro ? '—' : 'Drop tasks here'}</div>`;
     list.forEach(it => L.appendChild(cardEl(it, opt)));
+    if (more.length){ const bt = document.createElement('button'); bt.className = 'ghost doneall'; bt.textContent = `View all completed (${more.length}) →`; bt.onclick = () => openDoneList(more); L.appendChild(bt); }
     host.appendChild(el);
     if (opt.ro) return;
     el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('over'); });

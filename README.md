@@ -360,3 +360,12 @@ some of them (in `build/`, not published).
 
 ### Keeping within Firebase's free daily reads
 The free (Spark) plan allows about 50,000 document reads a day; past that, saving fails with `resource-exhausted` until the reset at midnight US Pacific (1:30 PM IST). The app keeps one live copy of patients, treatments, payments, bills and appointments per signed-in session: the first time a report or the patient list opens, each record is read once; after that, reports reuse the copy and only new or changed records are read. Tabs left open in the background no longer refresh the Planning Board reminders. Check usage in the Firebase console → Firestore → Usage.
+
+### Clinic updates (15 Nov)
+- **Payment amount filled in:** the amount is filled with what is due on the ticked bills and follows the tick boxes; type over it for a part payment.
+- **Medicine price at billing:** on the visit's Bill screen, before **Generate bill**, each medicine's **Qty** and **Price** can be changed (saved on the medicine).
+- **Change doctor** (Appointments → a visit that is waiting, in chair, at billing or completed; or Patient → Doctor history → ✎): pick the right doctor and a reason. The visit, its treatments, its bill, its payments and its pending assist approvals move to that doctor; the change shows in Doctor history.
+- **Completed visit moved back:** a completed visit has **↩ Back to billing** and **↩ Back to In chair**, to correct the bill, payment or treatments.
+- **Appointments day view:** a row every 15 minutes (hours in bold).
+- **Planning Board → Completed** shows the 5 most recently finished tasks; **View all completed (n)** opens all of them in a window (with search).
+- **Organization reminders** are a board with one column per kind of work: **Yesterday's visits · follow up**, **Notes to update** (treatment plan description missing), **Call-backs & older follow-ups**, **Documents to upload**, **Tally & month close**, **Expenses & payments due**. Closed ones are under *Closed in the last 14 days*.

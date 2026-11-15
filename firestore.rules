@@ -236,6 +236,10 @@ service cloud.firestore {
         allow update: if (perm(o, 'treatments') && tFree())
           || (perm(o, 'patients') && changed().hasOnly(['docAttached']))
           || ((perm(o, 'treatments') || perm(o, 'billing')) && changed().hasOnly(['date']))
+          // a visit's doctor corrected: its treatments follow (even when billed)
+          || ((perm(o, 'appointments') || perm(o, 'treatments') || perm(o, 'billing')) && changed().hasOnly(['doctorId', 'doctorName']))
+          // billing may set a medicine's quantity / price before it is on a bill
+          || (perm(o, 'billing') && tFree() && resource.data.get('kind', '') == 'medicine' && changed().hasOnly(['qty', 'unitPrice', 'cost']))
           // an edit of its (issued) bill changes the charge / discount, in the same write as the bill
           || ((moneyEditor() || perm(o, 'billing')) && changed().hasOnly(['cost', 'discount']) && billDoc(resource.data.billId).paid == 0 && billAfter(resource.data.billId).history.size() > billDoc(resource.data.billId).get('history', []).size())
           // issuing a bill puts the treatment on it (the bill must exist after the write and list this bill's id)
@@ -277,6 +281,8 @@ service cloud.firestore {
             || (perm(o, 'billing') && ob().status != 'draft' && ob().paid == 0 && reasonAdded() && nb().total == nb().subtotal - nb().discount && nb().total >= 0
                 && changed().hasOnly(['items', 'subtotal', 'discount', 'total', 'date', 'status', 'history']) && nb().paid == ob().paid
                 && ((nb().paid > 0 && nb().paid >= nb().total && nb().status == 'paid') || (nb().paid > 0 && nb().paid < nb().total && nb().status == 'partly') || (nb().paid == 0 && nb().status in ['ack', 'pending'])))
+            // the visit's doctor corrected
+            || changed().hasOnly(['doctorId'])
             // cancel, with a reason
             || (nb().status == 'cancelled' && changed().hasOnly(['status', 'cancel', 'replacedBy', 'history']) && nb().cancel.reason.size() > 0
                 && (ob().paid == 0 || isOrgAdmin(o) || perm(o, 'cancelBills'))));
@@ -304,7 +310,9 @@ service cloud.firestore {
         // cancelling a payment: it is marked with its reversal, written in the same batch, with a reason
         allow update: if (moneyEditor() && resource.data.get('reversedBy', '') == '' && changed().hasOnly(['reversedBy', 'history']) && reasonAdded()
             && getAfter(/databases/$(database)/documents/orgs/$(o)/payments/$(request.resource.data.reversedBy)).data.reverses == p)
-          || isOrgAdmin(o) && resource.data.get('imported', false) == true && request.resource.data.get('imported', false) == true && resource.data.get('billId', '') == '';
+          || (isOrgAdmin(o) && resource.data.get('imported', false) == true && request.resource.data.get('imported', false) == true && resource.data.get('billId', '') == '')
+          // the visit's doctor corrected
+          || ((perm(o, 'billing') || perm(o, 'appointments')) && changed().hasOnly(['doctorId']));
         allow delete: if false;
       }
       // Accounts ledger: income, expenses & bills, petty cash, consultant payments.
@@ -382,6 +390,8 @@ service cloud.firestore {
           // admins correct or void any record; a decided record that is corrected goes back to pending
           || (isOrgAdmin(o) && !changed().hasAny(['addedBy', 'at'])
             && (changed().hasOnly(['status', 'history']) || resource.data.status == 'pending' || request.resource.data.status == 'pending'))
+          // the visit's doctor corrected: a pending record goes to the new doctor for approval
+          || ((perm(o, 'treatments') || perm(o, 'appointments')) && resource.data.status == 'pending' && changed().hasOnly(['doctorId', 'approverUid']))
           // whoever added a pending record (or its assistant) may withdraw it, or the visit may re-sync it
           || (clinicMember(o) && resource.data.status == 'pending' && request.resource.data.status in ['pending', 'void']
             && (resource.data.uid == request.auth.uid || resource.data.get('addedBy', '') == request.auth.token.email || perm(o, 'treatments'))

@@ -173,13 +173,17 @@ function payForm(pre, ctx, sel){
     ${U.total > 0 ? `<label class="ckl"><input type="checkbox" id="${pre}NB" data-pb="${pre}" value=""${!sel ? ' checked' : ''}> <b>Not billed yet</b> · ${esc(U.T.map(t => t.typeName).join(', '))} · <span class="neg">${inr(U.total)}</span> <span class="stat">(ticked: a bill is made for them, dated the payment day)</span></label>` : ''}
     <div class="stat">Due on what is ticked: <b id="${pre}PDue">${inr(due)}</b></div></div>
   <label>Date<input type="date" id="${pre}Date" value="${todayKey}" max="${todayKey}"></label>
-  <label>Amount (₹)<input type="number" id="${pre}Amt" min="1" value="" placeholder="Amount received"></label>
+  <label>Amount (₹)<input type="number" id="${pre}Amt" min="1" value="${due || ''}" placeholder="Amount received" title="Filled with what is due on the ticked items; change it for a part payment"></label>
   <label>Method<select id="${pre}Mode">${PMODES.map(([k, l]) => `<option value="${k}">${l}</option>`).join('')}</select></label>
   <label>Ref.<input id="${pre}Ref" placeholder="UPI / card ref"></label>
   <label class="grow">Note<input id="${pre}Note"></label>
   <button class="primary" type="submit">Save payment</button>${cashPanel(pre, true)}</form>`;
 }
-document.addEventListener('change', e => { const p = e.target.dataset && e.target.dataset.pb; if (p && $('#' + p + 'PDue')) $('#' + p + 'PDue').textContent = inr(pbDue(p)); });
+// ticking a bill updates what is due, and the amount too until someone types their own amount
+document.addEventListener('change', e => { const p = e.target.dataset && e.target.dataset.pb; if (!p || !$('#' + p + 'PDue')) return;
+  const d = pbDue(p), am = $('#' + p + 'Amt'); $('#' + p + 'PDue').textContent = inr(d);
+  if (am && !am.dataset.typed){ am.value = d || ''; if (typeof cashRefresh === 'function' && $('#' + p + 'Cash')) cashRefresh(p); } });
+document.addEventListener('input', e => { if (/^(py|vb)Amt$/.test(e.target.id || '')) e.target.dataset.typed = '1'; });
 /* ---------- patient card: Bills ---------- */
 function clBills(){
   if (cl.pB === null || cl.pT === null) return '<div class="empty">Loading…</div>';

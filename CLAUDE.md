@@ -64,7 +64,7 @@ Each feature folder: `feature.json` (name, order, enabled) · `tab.html` · `vie
 |---|---|
 | 01-core-patient-list | clinic data (`cl`, `can`/`canW`, `CSECS` pages, `CI` icons, `PAY()`), `renderClinic`, Patients list & search |
 | 02-patient-record | patient profile, treatments, medicines/Rx, billing tab, prescriptions and reports print (`printDoc`), visits, photos |
-| 03-appointments | Appointments day/week grid, doctor colours, status filters, booking, auto-missed |
+| 03-appointments | Appointments day/week grid (15-minute rows), doctor colours, status filters, booking, auto-missed; completed → ↩ billing / in chair; `apptDocForm` / `saveDocFix` (correct a visit's doctor: visit + treatments + bill + payments + pending assists, logged in doctorLog) |
 | 04-shared-ui | report date range bar, charts (`stackChart`, `hbarChart`) |
 | 05-accounts-core-overview | Accounts tabs + `clAccLoad`, payment-due helpers (`dueFor`, `svcMonth`, `payState`), audit (`withHist`, `auditDelete`), `expensesOf`, Overview |
 | 06-accounts-expenses-petty-vendors | expense form, Clinic expenses overview, Petty cash, Lab / Materials vendors |
@@ -76,7 +76,7 @@ Each feature folder: `feature.json` (name, order, enabled) · `tab.html` · `vie
 | 12-setup | Clinic setup (doctors + colours, price lists, receipt details) |
 | 13-events | event handlers for all clinic pages, `clGoSec`, drag-to-reschedule, tooth chart, type-to-search, `clinicAccessHtml` |
 | 14-visit-summary-docs | "What happened in this appointment?", patient documents |
-| 15-planning-board-sync | `clinicSync` → Planning Board reminders, `payReminders`, `otMerge`, `renderOrgRem`, `clOpenLink` |
+| 15-planning-board-sync | `clinicSync` → Planning Board reminders (Organization reminders board: `OT_LANES` / `otLane` columns by kind), `payReminders`, `otMerge`, `renderOrgRem`, `clOpenLink` |
 | 16-visit-billing | bill after a visit |
 | 17-patient-assists | Patient assists: one record per assistant per treatment (`syncTreatmentAssists` from the visit's 👥 picker), treating-doctor approvals with filters, admin add / edit / void with reason + `history` + audit, incentives (`loadIncentives`, `asMoneySee`) |
 | 18-dentee-import | importing the Dentee Excel export |

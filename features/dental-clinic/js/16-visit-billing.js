@@ -24,7 +24,10 @@ function drawBill(){
     </tbody></table></div>
     ${visitT.some(isMed) ? `<div class="hh">Medicines</div>
     <div class="awrap" style="margin-top:4px"><table class="atbl"><thead><tr><th>Medicine</th><th>Morning – Afternoon – Evening – Night</th><th class="num">Days</th><th class="num">Qty</th><th class="num">Price</th><th class="num">Amount</th></tr></thead><tbody>
-      ${visitT.filter(isMed).map(t => `<tr><td><b>${esc(t.typeName)}</b>${t.unit && !/tablet|capsule/i.test(t.unit) ? `<span class="sub2">${esc(t.unit)}</span>` : ''}</td><td>${medDose(t)}</td><td class="num">${+t.days || '—'}</td><td class="num">${+t.qty || 0}</td><td class="num">${inr(t.unitPrice)}</td><td class="num"><b>${inr(net(t))}</b></td></tr>`).join('')}
+      ${visitT.filter(isMed).map(t => { const ed = canW('billing') && !tLocked(t, B.B);   // before the bill: quantity and price can be changed here
+        return `<tr><td><b>${esc(t.typeName)}</b>${t.unit && !/tablet|capsule/i.test(t.unit) ? `<span class="sub2">${esc(t.unit)}</span>` : ''}</td><td>${medDose(t)}</td><td class="num">${+t.days || '—'}</td>
+        <td class="num">${ed ? `<input type="number" class="mini" min="0" step="1" data-mq="${esc(t.id)}" value="${+t.qty || 0}">` : +t.qty || 0}</td>
+        <td class="num">${ed ? `<input type="number" class="mini" min="0" step="0.5" data-mp="${esc(t.id)}" value="${+t.unitPrice || 0}">` : inr(t.unitPrice)}</td><td class="num"><b>${inr(net(t))}</b></td></tr>`; }).join('')}
       <tr class="tot"><td colspan="5">Medicines total</td><td class="num">${inr(visitT.filter(isMed).reduce((s2, t) => s2 + net(t), 0))}</td></tr>
     </tbody></table></div>` : ''}
     <div class="box billbox" style="margin-top:10px">
@@ -89,3 +92,12 @@ $('#clOv').addEventListener('click', async e => {
 });
 $('#clOv').addEventListener('submit', e => { if (e.target.id === 'clVBill'){ e.preventDefault(); saveVisitPayment(); } });
 
+
+// medicine quantity / price changed on the bill screen (before the bill): saved on the medicine, the bill screen redrawn
+document.addEventListener('change', async e => {
+  const el = e.target; if (!el.matches || !el.matches('[data-mq],[data-mp]') || !cl.bill || !cl.bill.T) return;
+  const id = el.dataset.mq || el.dataset.mp, t = cl.bill.T.find(x => x.id === id); if (!t) return;
+  const qty = Math.max(0, Math.round(+(el.dataset.mq ? el.value : t.qty) || 0)), unitPrice = Math.max(0, +(el.dataset.mp ? el.value : t.unitPrice) || 0), cost = Math.round(qty * unitPrice * 100) / 100;
+  try { await cloud.F.updateDoc(cDoc('treatments', id), {qty, unitPrice, cost}); Object.assign(t, {qty, unitPrice, cost}); drawBill(); }
+  catch(x){ info('Could not save: ' + errText(x)); drawBill(); }
+});

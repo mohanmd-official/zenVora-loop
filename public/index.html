@@ -560,7 +560,8 @@ body.sidenav #tabs .ftab{display:none}   /* features live in the left menu */
 .ast.scheduled{color:var(--todo)} .ast.waiting{color:var(--prog)} .ast.engaged{color:#8b5cf6} .ast.completed{color:var(--done)} .ast.missed{color:var(--high)} .ast.cancelled{color:var(--muted);text-decoration:line-through}
 .agrid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:10px;align-items:start}
 .aslots{background:var(--paper);border:1px solid var(--line);border-radius:12px;overflow:hidden}
-.srow{display:grid;grid-template-columns:76px 1fr;border-bottom:1px solid var(--line);min-height:40px}
+.srow{display:grid;grid-template-columns:76px 1fr;border-bottom:1px solid color-mix(in srgb,var(--line) 55%,transparent);min-height:34px}
+.srow.hr{border-top:1px solid var(--line)}.srow.hr .stime{color:var(--ink,inherit);font-weight:600}
 .srow:last-child{border-bottom:none}
 .stime{font-size:11.5px;color:var(--muted);padding:6px 8px;border-right:1px solid var(--line);font-variant-numeric:tabular-nums}
 .scell{padding:4px;display:flex;flex-wrap:wrap;gap:4px;align-content:flex-start;cursor:copy}
@@ -640,6 +641,12 @@ input.srchin.bad{border-color:var(--high)}
 .orh{display:flex;align-items:center;gap:10px;width:100%;border:none;background:none;padding:11px 14px;text-align:left;cursor:pointer;flex-wrap:wrap}
 .orh .chev{color:var(--muted);width:12px}.orn{font-size:12px;font-weight:700;padding:2px 9px;border-radius:999px;background:color-mix(in srgb,var(--line) 60%,transparent);color:var(--muted)}
 .orn.on{background:color-mix(in srgb,var(--high) 14%,transparent);color:var(--high)}
+.orboard{display:flex;gap:12px;overflow-x:auto;padding:0 14px 14px;align-items:flex-start}
+.orlane{flex:1 0 270px;max-width:420px;background:color-mix(in srgb,var(--line) 35%,transparent);border-radius:12px;padding:10px;max-height:420px;overflow-y:auto}
+.orlane.wide{max-width:none}.orlane .otr{background:var(--paper)}
+.orct .n{margin-left:auto;background:var(--paper);border-radius:10px;padding:0 8px;font-size:11px}
+.orchip{font-size:11.5px;color:var(--muted);border:1px solid var(--line);border-radius:12px;padding:1px 8px;margin-left:4px;white-space:nowrap}
+.orchip b{color:var(--ink,inherit)}.ordone{padding:0 14px 12px}
 .orb{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 14px 14px}@media (max-width:800px){.orb{grid-template-columns:1fr}}
 .orct{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:2px 0 8px;display:flex;align-items:center;gap:6px}
 .otr{display:flex;gap:8px;align-items:center;padding:9px 10px;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:10px;margin-bottom:6px;background:var(--paper)}
@@ -657,6 +664,9 @@ td.pcodec{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;white-space:
 tr.dhmove td{background:var(--mint-soft)}
 .pover small{display:block}
 .atbl .pos{color:var(--done)}
+@media (max-width:900px){.orchip{display:none}}
+.orlane .otr{flex-wrap:wrap;justify-content:flex-end;gap:6px}.orlane .otm{flex:1 1 100%;min-width:0}
+.orlane .otm b{font-weight:600;font-size:13px;line-height:1.35}
 /* visits, summaries, documents, tally */
 .visit{background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--todo);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
 .visit.completed{border-left-color:var(--done)} .visit.missed{border-left-color:var(--high)} .visit.cancelled{opacity:.55} .visit.engaged{border-left-color:#8b5cf6} .visit.waiting{border-left-color:var(--prog)}
@@ -779,6 +789,8 @@ a.srcl0{text-decoration:none}.extbl td{vertical-align:middle}.nowrap{white-space
 .asadd summary{cursor:pointer}
 .asf{flex-wrap:wrap;gap:8px}
 .asedrow td{background:var(--paper2)}
+input.mini{width:72px;padding:3px 6px;text-align:right}
+button.mini2{padding:1px 7px;font-size:12px;margin-left:4px}
 /* ---------- toasts ---------- */
 .toasts{position:fixed;top:12px;right:12px;display:flex;flex-direction:column;gap:8px;z-index:40;width:min(340px,calc(100% - 24px))}
 .toast{background:var(--paper);border-left:4px solid var(--prog);border-radius:10px;padding:10px 12px;box-shadow:0 8px 28px rgba(0,0,0,.25);animation:slide .25s ease-out}
@@ -1039,6 +1051,13 @@ a.plink{color:inherit;text-decoration:none}a.plink:hover{text-decoration:underli
   .add #newDesc{flex-basis:100%}
   .psw{flex-wrap:wrap}
 }
+
+/* Completed column: a few cards + "View all"; cards never squeeze */
+.list > .card{flex-shrink:0}
+.doneall{margin:4px 2px 0;font-size:12.5px;align-self:flex-start}
+.dlist{display:flex;flex-direction:column;gap:6px;max-height:60vh;overflow-y:auto}
+.dlrow{display:flex;gap:8px;align-items:center;text-align:left;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--paper);cursor:pointer;font:inherit}
+.dlrow .dlt{flex:1;min-width:0}.dlrow .stat{white-space:nowrap}
 </style>
 </head>
 <body>
@@ -1740,6 +1759,16 @@ function renderBoard(){
   buildColumns($('#board'), items.filter(whoMatch), {ro:past});
 }
 
+const DONE_SHOW = 5;
+// every completed task of the day in its own window (newest first); click one to open it
+function openDoneList(xs){
+  $('#teamModal').innerHTML = `<div class="tm-head"><b style="font-size:16px">✓ Completed · ${xs.length}</b><span class="sp"></span><button class="ghost tm-x" id="tmClose">✕</button></div>
+    <input id="dlQ" placeholder="Search completed tasks" autocomplete="off" style="width:100%;margin:6px 0 8px">
+    <div class="dlist">${xs.map(it => `<button class="dlrow" data-dl="${esc(it.id)}"><span class="dlt">${esc(it.title)}</span>${it.epic ? `<span class="epic">${esc(it.epic)}</span>` : ''}<span class="stat">${it.doneAt ? esc(fmt(it.doneAt)) : ''}</span></button>`).join('')}</div>`;
+  $('#teamOv').classList.add('on');
+  $('#dlQ').oninput = e => { const q = e.target.value.trim().toLowerCase(); $('#teamModal').querySelectorAll('.dlrow').forEach(r => r.hidden = q && !r.textContent.toLowerCase().includes(q)); };
+  $('#teamModal').querySelectorAll('[data-dl]').forEach(r => r.onclick = () => { $('#teamOv').classList.remove('on'); openModal(r.dataset.dl); });
+}
 function buildColumns(host, items, opt = {}){
   host.innerHTML = '';
   COLS.forEach(col => {
@@ -1749,12 +1778,16 @@ function buildColumns(host, items, opt = {}){
       list = od.concat(list.filter(i => !isOverdue(i)));
     }
     if (col.id === 'done' && opt.showDay) list.sort((a, b) => (b.doneAt || 0) - (a.doneAt || 0));
+    // Completed keeps the column tidy: the most recently finished few, the rest in a separate window
+    let more = [];
+    if (col.id === 'done' && !opt.ro && list.length > DONE_SHOW){ list = list.slice().sort((a, b) => (b.doneAt || 0) - (a.doneAt || 0)); more = list; list = list.slice(0, DONE_SHOW); }
     const el = document.createElement('section');
     el.className = 'col'; el.dataset.s = col.id;
-    el.innerHTML = `<h2><i class="dot s-${col.id}"></i>${col.name}<span class="n">${list.length}</span></h2><div class="list"></div>`;
+    el.innerHTML = `<h2><i class="dot s-${col.id}"></i>${col.name}<span class="n">${more.length || list.length}</span></h2><div class="list"></div>`;
     const L = el.querySelector('.list');
     if (!list.length) L.innerHTML = `<div class="empty">${opt.ro ? '—' : 'Drop tasks here'}</div>`;
     list.forEach(it => L.appendChild(cardEl(it, opt)));
+    if (more.length){ const bt = document.createElement('button'); bt.className = 'ghost doneall'; bt.textContent = `View all completed (${more.length}) →`; bt.onclick = () => openDoneList(more); L.appendChild(bt); }
     host.appendChild(el);
     if (opt.ro) return;
     el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('over'); });
@@ -4779,9 +4812,9 @@ function clDoctorHistory(){
   const who = e => esc(String(e || '').split('@')[0]);
   return `<div class="sect"><div class="vbar" style="padding:0"><b>Doctor assignment history</b><span class="sp"></span><label class="stat">From <input type="date" data-dhf="from" value="${esc(f.from)}"></label><label class="stat">To <input type="date" data-dhf="to" value="${esc(f.to)}"></label></div>
     <div class="awrap" style="margin-top:6px"><table class="atbl"><thead><tr><th>Date</th><th>Appointment</th><th>Previous doctor</th><th>Doctor</th><th>Treatment</th><th>Transfer reason</th><th>Status</th><th>Assigned by</th></tr></thead><tbody>
-    ${rows.map(({a, prev, moved}) => `<tr${moved ? ' class="dhmove"' : ''}><td>${esc(fmtShort(a.date))} <span class="stat">${esc(hm12(a.time))}</span></td><td>${esc(a.reason || '—')}</td><td>${prev ? esc(dName(prev)) : '<span class="stat">first visit</span>'}</td>
+    ${rows.map(({a, prev, moved}) => `<tr data-appt="${esc(a.id)}"${moved ? ' class="dhmove"' : ''}><td>${esc(fmtShort(a.date))} <span class="stat">${esc(hm12(a.time))}</span></td><td>${esc(a.reason || '—')}</td><td>${prev ? esc(dName(prev)) : '<span class="stat">first visit</span>'}</td>
       <td><b>${esc(dName(a.doctorId) || '—')}</b>${moved ? ' <span class="fchip on">transferred</span>' : ''}${(a.doctorLog || []).map(l => `<span class="sub2">reassigned ${esc(dName(l.from))} → ${esc(dName(l.to))} · ${esc(fmt(l.at))} · ${who(l.by)}${l.reason ? ' · ' + esc(l.reason) : ''}</span>`).join('')}</td>
-      <td>${esc(tr(a.id) || '—')}</td><td>${esc(a.transferReason || ((a.doctorLog || []).slice(-1)[0] || {}).reason || '')}</td><td><span class="ast ${a.status}">${ASTATUS[a.status] || a.status}</span></td><td class="stat">${who(a.createdBy)}</td></tr>`).join('') || '<tr><td colspan="8" class="stat">No appointments in this period.</td></tr>'}
+      <td>${esc(tr(a.id) || '—')}</td><td>${esc(a.transferReason || ((a.doctorLog || []).slice(-1)[0] || {}).reason || '')}</td><td><span class="ast ${a.status}">${ASTATUS[a.status] || a.status}</span></td><td class="stat">${who(a.createdBy)}${canW('appointments') && a.status !== 'cancelled' ? ` <button class="mini2" data-adoc title="Correct the doctor of this visit">✎</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="8" class="stat">No appointments in this period.</td></tr>'}
     </tbody></table></div></div>`;
 }
 /* ---------- this patient's assists: per treatment, who assisted, approval and incentive eligibility (amounts only for Owner / Admin / Chief) ---------- */
@@ -5092,20 +5125,20 @@ function clAppointments(){
     return bar + legend + `<div class="aweek">${days.map(d => `<div class="aday${d === todayKey ? ' today' : ''}"${w ? ` data-dday="${d}"` : ''}><div class="adh" data-goday="${d}">${esc(fmtShort(d))} <span class="stat">${live.filter(a => a.date === d).length || ''}</span></div>${live.filter(a => a.date === d).map(chip).join('') || '<div class="stat" style="padding:6px">—</div>'}</div>`).join('')}</div>
       ${gone.length ? `<details class="acx"><summary>Cancelled / rescheduled this week (${gone.length})</summary>${gone.map(a => `<div class="acxr" data-appt="${esc(a.id)}"><s>${esc(fmtShort(a.date))} ${esc(hm12(a.time))} · ${esc(a.patientName)}</s> <span class="stat">${esc(dName(a.doctorId))}</span></div>`).join('')}</details>` : ''}`;
   }
-  const open = toMin(cl.settings.open || '09:00'), close = toMin(cl.settings.close || '21:00'), slot = 30;
+  const open = toMin(cl.settings.open || '09:00'), close = toMin(cl.settings.close || '21:00'), slot = 15;   // a row every 15 minutes
   let grid = '';
   for (let m = open; m < close; m += slot){
     const inSlot = live.filter(a => toMin(a.time) >= m && toMin(a.time) < m + slot);
-    grid += `<div class="srow"><div class="stime">${esc(hm12(toHM(m)))}</div><div class="scell"${w ? ` data-slot="${toHM(m)}"` : ''}>${inSlot.map(chip).join('')}</div></div>`;
+    grid += `<div class="srow${m % 60 ? '' : ' hr'}"><div class="stime">${esc(hm12(toHM(m)))}</div><div class="scell"${w ? ` data-slot="${toHM(m)}"` : ''}>${inSlot.map(chip).join('')}</div></div>`;
   }
   const outside = live.filter(a => toMin(a.time) < open || toMin(a.time) >= close);
   const st = cl.aStat || '';
   const SHORT = {billing:'Billing'};
   const counts = Object.keys(ASTATUS).filter(k => k !== 'cancelled').map(k => [k, ASTATUS[k], A.filter(a => a.status === k).length])
     .map(([k, l, n]) => `<button type="button" class="acnt ${k}${st === k ? ' on' : ''}" data-astat="${k}" title="${l}: ${st === k ? 'click to show all again' : 'click to show only these'}"><b>${n}</b><span>${SHORT[k] || l}</span></button>`).join('');
-  const NEXT = {scheduled:[['waiting', 'Check in'], ['missed', 'Missed']], waiting:[['engaged', 'In chair'], ['scheduled', '↩ Back']], engaged:[['completed', 'Done → summary'], ['waiting', '↩ Back']], billing:[['bill', 'Bill & print'], ['engaged', '↩ Back to In chair']], missed:[['scheduled', 'Re-open']], completed:[], cancelled:[['scheduled', 'Restore']]};
+  const NEXT = {scheduled:[['waiting', 'Check in'], ['missed', 'Missed']], waiting:[['engaged', 'In chair'], ['scheduled', '↩ Back']], engaged:[['completed', 'Done → summary'], ['waiting', '↩ Back']], billing:[['bill', 'Bill & print'], ['engaged', '↩ Back to In chair']], missed:[['scheduled', 'Re-open']], completed:[['billing', '↩ Back to billing'], ['engaged', '↩ Back to In chair']], cancelled:[['scheduled', 'Restore']]};
   const qcard = a => `<div class="aq ${a.status}" data-appt="${esc(a.id)}" style="--dc:${docColor(a.doctorId)}"><div class="aqm"><div class="aqh">${plink(a.patientId, a.patientName, 'lnk')}<span class="ast ${a.status}">${ASTATUS[a.status]}</span></div><span>${esc(hm12(a.time))} · ${esc(a.duration || 15)} min · ${esc(dName(a.doctorId))}</span></div>
-    ${w ? `<div class="aqa">${NEXT[a.status].map(([s, l]) => `<button data-ast="${s}"${/^↩/.test(l) ? ' class="aback" title="Go one step back"' : ['waiting', 'engaged', 'completed', 'bill'].includes(s) ? ' class="primary"' : ''}>${l}</button>`).join('')}${a.status === 'scheduled' ? '<button data-edit-appt>Reschedule / edit</button><button class="danger" data-ast="cancelled">Cancel</button>' : ''}</div>` : ''}</div>`;
+    ${w ? `<div class="aqa">${NEXT[a.status].map(([s, l]) => `<button data-ast="${s}"${/^↩/.test(l) ? ' class="aback" title="Go one step back"' : ['waiting', 'engaged', 'completed', 'bill'].includes(s) ? ' class="primary"' : ''}>${l}</button>`).join('')}${a.status === 'scheduled' ? '<button data-edit-appt>Reschedule / edit</button><button class="danger" data-ast="cancelled">Cancel</button>' : ['waiting', 'engaged', 'billing', 'completed'].includes(a.status) ? '<button data-adoc title="Correct the doctor of this visit">Change doctor</button>' : ''}</div>` : ''}</div>`;
   const shown = st ? live.filter(a => a.status === st) : live;
   const side = (shown.map(qcard).join('') || `<div class="empty" style="margin:0">No ${esc((ASTATUS[st] || '').toLowerCase())} appointments.</div>`) + (!st && gone.length ? `<details class="acx"><summary>Cancelled / rescheduled (${gone.length})</summary>${gone.map(qcard).join('')}</details>` : '');
   return bar + legend + `<div class="agrid"><div class="aslots">${outside.length ? `<div class="srow"><div class="stime">Other</div><div class="scell">${outside.map(chip).join('')}</div></div>` : ''}${grid}</div>
@@ -5181,6 +5214,34 @@ async function clSaveBook(){
   } catch(e){ info('Could not save: ' + errText(e)); }
 }
 
+
+/* ---------- correct the doctor of a visit (also after it is completed and billed) ----------
+   The visit, its treatments, its bill, its payments and its pending assists all move to the new doctor in one write;
+   the change is kept in the visit's doctorLog (shown in Patient → Doctor history). */
+function apptDocForm(a){
+  cl.docFix = a; $('#clOv').classList.add('on');
+  $('#clOvBody').innerHTML = `<div class="ah"><h2 style="font-size:16px;margin:0">Change doctor · ${esc(a.patientName || '')}</h2><span class="sp"></span><button data-ovclose>Close</button></div>
+    <p class="stat">Visit ${esc(fmtShort(a.date))} ${esc(hm12(a.time))} · now <b>${esc(dName(a.doctorId) || '—')}</b>. Its treatments, bill, payments and assist approvals move to the new doctor.</p>
+    <form class="aform" id="clDocFix" novalidate><label>New doctor<select id="dfDoc">${docOpts('', '— Select —')}</select></label>
+      <label class="grow">Reason<input id="dfWhy" placeholder="e.g. booked under the wrong doctor"></label><button class="primary" type="submit">Save</button></form>`;
+}
+async function saveDocFix(){
+  const a = cl.docFix, doc = $('#dfDoc').value, why = ($('#dfWhy').value || '').trim(), d = cl.doctors.find(x => x.id === doc);
+  if (!a) return; if (!d) return info('Pick the doctor.'); if (doc === a.doctorId) return info('That is already the doctor of this visit.'); if (!why) return info('Give the reason.');
+  const {F, fs} = cloud, by = cloud.user.email || '', Q = (c, f, v) => F.getDocs(F.query(cCol(c), F.where(f, '==', v))).then(docsOf).catch(() => []);
+  const [T, B, X] = await Promise.all([Q('treatments', 'appointmentId', a.id), can('billing') ? Q('bills', 'appointmentId', a.id) : [], Q('assists', 'appointmentId', a.id)]);
+  const bids = B.map(b => b.id), P = !can('billing') ? [] : (await Promise.all([Q('payments', 'appointmentId', a.id)].concat(bids.map(id => Q('payments', 'billId', id))))).flat();
+  const bt = F.writeBatch(fs), seen = new Set();
+  bt.update(cDoc('appointments', a.id), {doctorId:doc, doctorLog:(a.doctorLog || []).concat([{from:a.doctorId || '', to:doc, at:Date.now(), by, reason:why}])});
+  T.forEach(t => bt.update(cDoc('treatments', t.id), {doctorId:doc, doctorName:d.name || ''}));
+  B.filter(b => b.status !== 'cancelled').forEach(b => bt.update(cDoc('bills', b.id), {doctorId:doc}));
+  P.forEach(x => { if (!seen.has(x.id)){ seen.add(x.id); bt.update(cDoc('payments', x.id), {doctorId:doc}); } });
+  X.filter(x => (x.status || 'pending') === 'pending').forEach(x => bt.update(cDoc('assists', x.id), {doctorId:doc, approverUid:d.memberUid || ''}));
+  try { await bt.commit(); } catch(e){ return info('Could not save: ' + errText(e)); }
+  cl.docFix = null; $('#clOv').classList.remove('on');
+  info(`Doctor changed to ${d.name}: the visit, ${plural(T.length, 'treatment')}${B.length ? ', its bill' : ''}${seen.size ? ' and ' + plural(seen.size, 'payment') : ''}.`);
+  if (cl.rep) cl.rep.key = ''; renderClinic();
+}
 /* ---------- date range: Today or a custom From / To ---------- */
 function rangeBar(o, id){             // one compact line: group · ‹ Today › · from – to · filters (Table / Chart sits in the report header)
   const k = o.kind;
@@ -6428,6 +6489,7 @@ $('#clBody').addEventListener('click', async e => {
         : {kind:'cpayout', doctorId:docId, amount:amt, date:todayKey, mode:'bank', note, at:Date.now(), by:cloud.user.email || ''});
       info(cf ? `Fee of ${inr(amt)} added to Clinic expenses.` : `Payment of ${inr(amt)} to ${nm} recorded.`); cl.acc.key = ''; renderClinic();
     }
+    if (t.closest('[data-adoc]')){ const id = t.closest('[data-appt]').dataset.appt, a = (cl.appts || []).concat(cl.pA || []).find(x => x.id === id); if (a) apptDocForm(a); return; }
     const as = t.closest('[data-ast]');
     if (as){ const id = as.closest('[data-appt]').dataset.appt, upd = {status:as.dataset.ast};
       if (upd.status === 'completed'){ const a = (cl.appts || []).find(x => x.id === id); if (a) clOpenSummary(a, true); return; }
@@ -6504,7 +6566,7 @@ $('#clOv').addEventListener('input', e => {
     catch(err){ box.textContent = errText(err); }
   }, 250);
 });
-$('#clOv').addEventListener('submit', e => { e.preventDefault(); if (e.target.id === 'clBookForm') clSaveBook(); if (e.target.id === 'clSumForm') clSaveSummary(); });
+$('#clOv').addEventListener('submit', e => { e.preventDefault(); if (e.target.id === 'clDocFix') return saveDocFix(); if (e.target.id === 'clBookForm') clSaveBook(); if (e.target.id === 'clSumForm') clSaveSummary(); });
 const medEv = e => { const mr = e.target.closest('[data-mr]'); if (mr && e.target.matches('[data-mf]')){ medCalc(mr); const t = $('#smMedTot'); if (t) t.textContent = inr(medTotal()); } };
 $('#clOv').addEventListener('input', medEv);
 /* live totals on "What happened in this appointment?": treatments (cost − discount, planned ones not billed) + medicines */
@@ -6897,18 +6959,32 @@ function otRow(t){
     ${t.link ? '<button data-otopen>Open</button>' : ''}${open ? '<button class="primary" data-otdone>✓ Close</button>' : (t.doneHow === 'auto' ? '' : '<button data-otreopen title="Reopen for everyone">Reopen</button>')}</div>`;
 }
 let orgRemOpen = (() => { try { return localStorage.getItem('zl-orgrem') !== '0'; } catch(e){ return true; } })();
+/* Organization reminders, laid out like a Jira board: one column per kind of work, each with its own count.
+   Yesterday's visits are on their own; older follow-ups go with the call-backs for missed visits. */
+const OT_LANES = [
+  ['yday', "Yesterday's visits · follow up", t => t.cat === 'fu' && t.day === todayKey],
+  ['notes', 'Notes to update', t => t.cat === 'sum'],
+  ['calls', 'Call-backs & older follow-ups', t => t.cat === 'miss' || t.cat === 'fu'],
+  ['docs', 'Documents to upload', t => t.cat === 'doc'],
+  ['tally', 'Tally & month close', t => ['tally', 'close'].includes(t.cat)],
+  ['money', "Expenses & payments due", t => ['commit', 'vendor', 'lab', 'pay', 'paysum', 'salpay', 'conspay'].includes(t.cat)],
+  ['other', 'Other', () => true]];
+const otLane = t => (OT_LANES.find(l => l[2](t)) || OT_LANES[OT_LANES.length - 1])[0];
+let orgRemDone = false;
 function renderOrgRem(){
   const host = $('#orgRem'); if (!host) return;
   const oc = orgCtx(); if (!oc || oc.support || !feat('clinic') || !remOn()){ host.innerHTML = ''; return; }
   clLoad(); otWatch();
   const L = otList(), open = otOpen(), done = L.filter(t => t.status === 'done').sort((a, b) => (b.doneAt || 0) - (a.doneAt || 0)).slice(0, 30);
+  const lanes = OT_LANES.map(([k, name]) => ({k, name, xs:open.filter(t => otLane(t) === k)})).filter(l => l.xs.length);
   host.innerHTML = `<div class="orgrem${orgRemOpen ? ' open' : ''}">
     <button class="orh" data-ortoggle><span class="chev">${orgRemOpen ? '▾' : '▸'}</span><b>Organization reminders</b><span class="orn${open.length ? ' on' : ''}">${open.length} open</span>
-     <span class="sp"></span>${done.length ? `<span class="stat">${done.length} closed recently</span>` : ''}</button>
-    ${orgRemOpen ? `<div class="orb"><div class="orcol"><div class="orct"><i class="dot s-todo"></i>Open · ${open.length}</div>${open.map(otRow).join('') || '<div class="empty">Nothing open. 🎉</div>'}</div>
-      <div class="orcol"><div class="orct"><i class="dot s-done"></i>Closed · last 14 days</div>${done.map(otRow).join('') || '<div class="empty">Nothing closed yet.</div>'}</div></div>` : ''}</div>`;
+     <span class="sp"></span>${lanes.map(l => `<span class="orchip">${esc(l.name.split(' ·')[0])} <b>${l.xs.length}</b></span>`).join('')}</button>
+    ${orgRemOpen ? `<div class="orboard">${lanes.map(l => `<div class="orlane"><div class="orct"><i class="dot s-todo"></i>${esc(l.name)}<span class="n">${l.xs.length}</span></div>${l.xs.map(otRow).join('')}</div>`).join('') || '<div class="empty" style="margin:0 14px 14px">Nothing open. 🎉</div>'}</div>
+      <div class="ordone">${done.length ? `<button class="linkbtn" data-ordone>${orgRemDone ? '▾' : '▸'} Closed in the last 14 days (${done.length})</button>${orgRemDone ? `<div class="orboard"><div class="orlane wide">${done.map(otRow).join('')}</div></div>` : ''}` : ''}</div>` : ''}</div>`;
 }
 document.addEventListener('click', e => {
+  if (e.target.closest('[data-ordone]')){ orgRemDone = !orgRemDone; return renderOrgRem(); }
   if (e.target.closest('[data-ortoggle]')){ orgRemOpen = !orgRemOpen; try { localStorage.setItem('zl-orgrem', orgRemOpen ? '1' : '0'); } catch(_){} return renderOrgRem(); }
   const r = e.target.closest('[data-ot]'); if (!r) return;
   const t = otList().find(x => x.id === r.dataset.ot && x.src === r.dataset.otsrc); if (!t) return;
@@ -6952,7 +7028,10 @@ function drawBill(){
     </tbody></table></div>
     ${visitT.some(isMed) ? `<div class="hh">Medicines</div>
     <div class="awrap" style="margin-top:4px"><table class="atbl"><thead><tr><th>Medicine</th><th>Morning – Afternoon – Evening – Night</th><th class="num">Days</th><th class="num">Qty</th><th class="num">Price</th><th class="num">Amount</th></tr></thead><tbody>
-      ${visitT.filter(isMed).map(t => `<tr><td><b>${esc(t.typeName)}</b>${t.unit && !/tablet|capsule/i.test(t.unit) ? `<span class="sub2">${esc(t.unit)}</span>` : ''}</td><td>${medDose(t)}</td><td class="num">${+t.days || '—'}</td><td class="num">${+t.qty || 0}</td><td class="num">${inr(t.unitPrice)}</td><td class="num"><b>${inr(net(t))}</b></td></tr>`).join('')}
+      ${visitT.filter(isMed).map(t => { const ed = canW('billing') && !tLocked(t, B.B);   // before the bill: quantity and price can be changed here
+        return `<tr><td><b>${esc(t.typeName)}</b>${t.unit && !/tablet|capsule/i.test(t.unit) ? `<span class="sub2">${esc(t.unit)}</span>` : ''}</td><td>${medDose(t)}</td><td class="num">${+t.days || '—'}</td>
+        <td class="num">${ed ? `<input type="number" class="mini" min="0" step="1" data-mq="${esc(t.id)}" value="${+t.qty || 0}">` : +t.qty || 0}</td>
+        <td class="num">${ed ? `<input type="number" class="mini" min="0" step="0.5" data-mp="${esc(t.id)}" value="${+t.unitPrice || 0}">` : inr(t.unitPrice)}</td><td class="num"><b>${inr(net(t))}</b></td></tr>`; }).join('')}
       <tr class="tot"><td colspan="5">Medicines total</td><td class="num">${inr(visitT.filter(isMed).reduce((s2, t) => s2 + net(t), 0))}</td></tr>
     </tbody></table></div>` : ''}
     <div class="box billbox" style="margin-top:10px">
@@ -7017,6 +7096,15 @@ $('#clOv').addEventListener('click', async e => {
 });
 $('#clOv').addEventListener('submit', e => { if (e.target.id === 'clVBill'){ e.preventDefault(); saveVisitPayment(); } });
 
+
+// medicine quantity / price changed on the bill screen (before the bill): saved on the medicine, the bill screen redrawn
+document.addEventListener('change', async e => {
+  const el = e.target; if (!el.matches || !el.matches('[data-mq],[data-mp]') || !cl.bill || !cl.bill.T) return;
+  const id = el.dataset.mq || el.dataset.mp, t = cl.bill.T.find(x => x.id === id); if (!t) return;
+  const qty = Math.max(0, Math.round(+(el.dataset.mq ? el.value : t.qty) || 0)), unitPrice = Math.max(0, +(el.dataset.mp ? el.value : t.unitPrice) || 0), cost = Math.round(qty * unitPrice * 100) / 100;
+  try { await cloud.F.updateDoc(cDoc('treatments', id), {qty, unitPrice, cost}); Object.assign(t, {qty, unitPrice, cost}); drawBill(); }
+  catch(x){ info('Could not save: ' + errText(x)); drawBill(); }
+});
 /* ---------- Patient assists: who assisted on each treatment; the treating doctor (or the Chief doctor) approves for incentive ----------
    One record per assistant per treatment (id t-<treatmentId>-<uid>), so the same contribution can never be counted twice.
    Records are created when the treatments are saved at the visit ("Assisted by" per treatment), or logged by staff themselves.
@@ -7698,13 +7786,17 @@ function payForm(pre, ctx, sel){
     ${U.total > 0 ? `<label class="ckl"><input type="checkbox" id="${pre}NB" data-pb="${pre}" value=""${!sel ? ' checked' : ''}> <b>Not billed yet</b> · ${esc(U.T.map(t => t.typeName).join(', '))} · <span class="neg">${inr(U.total)}</span> <span class="stat">(ticked: a bill is made for them, dated the payment day)</span></label>` : ''}
     <div class="stat">Due on what is ticked: <b id="${pre}PDue">${inr(due)}</b></div></div>
   <label>Date<input type="date" id="${pre}Date" value="${todayKey}" max="${todayKey}"></label>
-  <label>Amount (₹)<input type="number" id="${pre}Amt" min="1" value="" placeholder="Amount received"></label>
+  <label>Amount (₹)<input type="number" id="${pre}Amt" min="1" value="${due || ''}" placeholder="Amount received" title="Filled with what is due on the ticked items; change it for a part payment"></label>
   <label>Method<select id="${pre}Mode">${PMODES.map(([k, l]) => `<option value="${k}">${l}</option>`).join('')}</select></label>
   <label>Ref.<input id="${pre}Ref" placeholder="UPI / card ref"></label>
   <label class="grow">Note<input id="${pre}Note"></label>
   <button class="primary" type="submit">Save payment</button>${cashPanel(pre, true)}</form>`;
 }
-document.addEventListener('change', e => { const p = e.target.dataset && e.target.dataset.pb; if (p && $('#' + p + 'PDue')) $('#' + p + 'PDue').textContent = inr(pbDue(p)); });
+// ticking a bill updates what is due, and the amount too until someone types their own amount
+document.addEventListener('change', e => { const p = e.target.dataset && e.target.dataset.pb; if (!p || !$('#' + p + 'PDue')) return;
+  const d = pbDue(p), am = $('#' + p + 'Amt'); $('#' + p + 'PDue').textContent = inr(d);
+  if (am && !am.dataset.typed){ am.value = d || ''; if (typeof cashRefresh === 'function' && $('#' + p + 'Cash')) cashRefresh(p); } });
+document.addEventListener('input', e => { if (/^(py|vb)Amt$/.test(e.target.id || '')) e.target.dataset.typed = '1'; });
 /* ---------- patient card: Bills ---------- */
 function clBills(){
   if (cl.pB === null || cl.pT === null) return '<div class="empty">Loading…</div>';

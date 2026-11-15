@@ -292,6 +292,7 @@ $('#clBody').addEventListener('click', async e => {
         : {kind:'cpayout', doctorId:docId, amount:amt, date:todayKey, mode:'bank', note, at:Date.now(), by:cloud.user.email || ''});
       info(cf ? `Fee of ${inr(amt)} added to Clinic expenses.` : `Payment of ${inr(amt)} to ${nm} recorded.`); cl.acc.key = ''; renderClinic();
     }
+    if (t.closest('[data-adoc]')){ const id = t.closest('[data-appt]').dataset.appt, a = (cl.appts || []).concat(cl.pA || []).find(x => x.id === id); if (a) apptDocForm(a); return; }
     const as = t.closest('[data-ast]');
     if (as){ const id = as.closest('[data-appt]').dataset.appt, upd = {status:as.dataset.ast};
       if (upd.status === 'completed'){ const a = (cl.appts || []).find(x => x.id === id); if (a) clOpenSummary(a, true); return; }
@@ -368,7 +369,7 @@ $('#clOv').addEventListener('input', e => {
     catch(err){ box.textContent = errText(err); }
   }, 250);
 });
-$('#clOv').addEventListener('submit', e => { e.preventDefault(); if (e.target.id === 'clBookForm') clSaveBook(); if (e.target.id === 'clSumForm') clSaveSummary(); });
+$('#clOv').addEventListener('submit', e => { e.preventDefault(); if (e.target.id === 'clDocFix') return saveDocFix(); if (e.target.id === 'clBookForm') clSaveBook(); if (e.target.id === 'clSumForm') clSaveSummary(); });
 const medEv = e => { const mr = e.target.closest('[data-mr]'); if (mr && e.target.matches('[data-mf]')){ medCalc(mr); const t = $('#smMedTot'); if (t) t.textContent = inr(medTotal()); } };
 $('#clOv').addEventListener('input', medEv);
 /* live totals on "What happened in this appointment?": treatments (cost − discount, planned ones not billed) + medicines */

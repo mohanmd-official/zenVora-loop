@@ -36,20 +36,20 @@ function clAppointments(){
     return bar + legend + `<div class="aweek">${days.map(d => `<div class="aday${d === todayKey ? ' today' : ''}"${w ? ` data-dday="${d}"` : ''}><div class="adh" data-goday="${d}">${esc(fmtShort(d))} <span class="stat">${live.filter(a => a.date === d).length || ''}</span></div>${live.filter(a => a.date === d).map(chip).join('') || '<div class="stat" style="padding:6px">—</div>'}</div>`).join('')}</div>
       ${gone.length ? `<details class="acx"><summary>Cancelled / rescheduled this week (${gone.length})</summary>${gone.map(a => `<div class="acxr" data-appt="${esc(a.id)}"><s>${esc(fmtShort(a.date))} ${esc(hm12(a.time))} · ${esc(a.patientName)}</s> <span class="stat">${esc(dName(a.doctorId))}</span></div>`).join('')}</details>` : ''}`;
   }
-  const open = toMin(cl.settings.open || '09:00'), close = toMin(cl.settings.close || '21:00'), slot = 30;
+  const open = toMin(cl.settings.open || '09:00'), close = toMin(cl.settings.close || '21:00'), slot = 15;   // a row every 15 minutes
   let grid = '';
   for (let m = open; m < close; m += slot){
     const inSlot = live.filter(a => toMin(a.time) >= m && toMin(a.time) < m + slot);
-    grid += `<div class="srow"><div class="stime">${esc(hm12(toHM(m)))}</div><div class="scell"${w ? ` data-slot="${toHM(m)}"` : ''}>${inSlot.map(chip).join('')}</div></div>`;
+    grid += `<div class="srow${m % 60 ? '' : ' hr'}"><div class="stime">${esc(hm12(toHM(m)))}</div><div class="scell"${w ? ` data-slot="${toHM(m)}"` : ''}>${inSlot.map(chip).join('')}</div></div>`;
   }
   const outside = live.filter(a => toMin(a.time) < open || toMin(a.time) >= close);
   const st = cl.aStat || '';
   const SHORT = {billing:'Billing'};
   const counts = Object.keys(ASTATUS).filter(k => k !== 'cancelled').map(k => [k, ASTATUS[k], A.filter(a => a.status === k).length])
     .map(([k, l, n]) => `<button type="button" class="acnt ${k}${st === k ? ' on' : ''}" data-astat="${k}" title="${l}: ${st === k ? 'click to show all again' : 'click to show only these'}"><b>${n}</b><span>${SHORT[k] || l}</span></button>`).join('');
-  const NEXT = {scheduled:[['waiting', 'Check in'], ['missed', 'Missed']], waiting:[['engaged', 'In chair'], ['scheduled', '↩ Back']], engaged:[['completed', 'Done → summary'], ['waiting', '↩ Back']], billing:[['bill', 'Bill & print'], ['engaged', '↩ Back to In chair']], missed:[['scheduled', 'Re-open']], completed:[], cancelled:[['scheduled', 'Restore']]};
+  const NEXT = {scheduled:[['waiting', 'Check in'], ['missed', 'Missed']], waiting:[['engaged', 'In chair'], ['scheduled', '↩ Back']], engaged:[['completed', 'Done → summary'], ['waiting', '↩ Back']], billing:[['bill', 'Bill & print'], ['engaged', '↩ Back to In chair']], missed:[['scheduled', 'Re-open']], completed:[['billing', '↩ Back to billing'], ['engaged', '↩ Back to In chair']], cancelled:[['scheduled', 'Restore']]};
   const qcard = a => `<div class="aq ${a.status}" data-appt="${esc(a.id)}" style="--dc:${docColor(a.doctorId)}"><div class="aqm"><div class="aqh">${plink(a.patientId, a.patientName, 'lnk')}<span class="ast ${a.status}">${ASTATUS[a.status]}</span></div><span>${esc(hm12(a.time))} · ${esc(a.duration || 15)} min · ${esc(dName(a.doctorId))}</span></div>
-    ${w ? `<div class="aqa">${NEXT[a.status].map(([s, l]) => `<button data-ast="${s}"${/^↩/.test(l) ? ' class="aback" title="Go one step back"' : ['waiting', 'engaged', 'completed', 'bill'].includes(s) ? ' class="primary"' : ''}>${l}</button>`).join('')}${a.status === 'scheduled' ? '<button data-edit-appt>Reschedule / edit</button><button class="danger" data-ast="cancelled">Cancel</button>' : ''}</div>` : ''}</div>`;
+    ${w ? `<div class="aqa">${NEXT[a.status].map(([s, l]) => `<button data-ast="${s}"${/^↩/.test(l) ? ' class="aback" title="Go one step back"' : ['waiting', 'engaged', 'completed', 'bill'].includes(s) ? ' class="primary"' : ''}>${l}</button>`).join('')}${a.status === 'scheduled' ? '<button data-edit-appt>Reschedule / edit</button><button class="danger" data-ast="cancelled">Cancel</button>' : ['waiting', 'engaged', 'billing', 'completed'].includes(a.status) ? '<button data-adoc title="Correct the doctor of this visit">Change doctor</button>' : ''}</div>` : ''}</div>`;
   const shown = st ? live.filter(a => a.status === st) : live;
   const side = (shown.map(qcard).join('') || `<div class="empty" style="margin:0">No ${esc((ASTATUS[st] || '').toLowerCase())} appointments.</div>`) + (!st && gone.length ? `<details class="acx"><summary>Cancelled / rescheduled (${gone.length})</summary>${gone.map(qcard).join('')}</details>` : '');
   return bar + legend + `<div class="agrid"><div class="aslots">${outside.length ? `<div class="srow"><div class="stime">Other</div><div class="scell">${outside.map(chip).join('')}</div></div>` : ''}${grid}</div>
@@ -125,3 +125,31 @@ async function clSaveBook(){
   } catch(e){ info('Could not save: ' + errText(e)); }
 }
 
+
+/* ---------- correct the doctor of a visit (also after it is completed and billed) ----------
+   The visit, its treatments, its bill, its payments and its pending assists all move to the new doctor in one write;
+   the change is kept in the visit's doctorLog (shown in Patient → Doctor history). */
+function apptDocForm(a){
+  cl.docFix = a; $('#clOv').classList.add('on');
+  $('#clOvBody').innerHTML = `<div class="ah"><h2 style="font-size:16px;margin:0">Change doctor · ${esc(a.patientName || '')}</h2><span class="sp"></span><button data-ovclose>Close</button></div>
+    <p class="stat">Visit ${esc(fmtShort(a.date))} ${esc(hm12(a.time))} · now <b>${esc(dName(a.doctorId) || '—')}</b>. Its treatments, bill, payments and assist approvals move to the new doctor.</p>
+    <form class="aform" id="clDocFix" novalidate><label>New doctor<select id="dfDoc">${docOpts('', '— Select —')}</select></label>
+      <label class="grow">Reason<input id="dfWhy" placeholder="e.g. booked under the wrong doctor"></label><button class="primary" type="submit">Save</button></form>`;
+}
+async function saveDocFix(){
+  const a = cl.docFix, doc = $('#dfDoc').value, why = ($('#dfWhy').value || '').trim(), d = cl.doctors.find(x => x.id === doc);
+  if (!a) return; if (!d) return info('Pick the doctor.'); if (doc === a.doctorId) return info('That is already the doctor of this visit.'); if (!why) return info('Give the reason.');
+  const {F, fs} = cloud, by = cloud.user.email || '', Q = (c, f, v) => F.getDocs(F.query(cCol(c), F.where(f, '==', v))).then(docsOf).catch(() => []);
+  const [T, B, X] = await Promise.all([Q('treatments', 'appointmentId', a.id), can('billing') ? Q('bills', 'appointmentId', a.id) : [], Q('assists', 'appointmentId', a.id)]);
+  const bids = B.map(b => b.id), P = !can('billing') ? [] : (await Promise.all([Q('payments', 'appointmentId', a.id)].concat(bids.map(id => Q('payments', 'billId', id))))).flat();
+  const bt = F.writeBatch(fs), seen = new Set();
+  bt.update(cDoc('appointments', a.id), {doctorId:doc, doctorLog:(a.doctorLog || []).concat([{from:a.doctorId || '', to:doc, at:Date.now(), by, reason:why}])});
+  T.forEach(t => bt.update(cDoc('treatments', t.id), {doctorId:doc, doctorName:d.name || ''}));
+  B.filter(b => b.status !== 'cancelled').forEach(b => bt.update(cDoc('bills', b.id), {doctorId:doc}));
+  P.forEach(x => { if (!seen.has(x.id)){ seen.add(x.id); bt.update(cDoc('payments', x.id), {doctorId:doc}); } });
+  X.filter(x => (x.status || 'pending') === 'pending').forEach(x => bt.update(cDoc('assists', x.id), {doctorId:doc, approverUid:d.memberUid || ''}));
+  try { await bt.commit(); } catch(e){ return info('Could not save: ' + errText(e)); }
+  cl.docFix = null; $('#clOv').classList.remove('on');
+  info(`Doctor changed to ${d.name}: the visit, ${plural(T.length, 'treatment')}${B.length ? ', its bill' : ''}${seen.size ? ' and ' + plural(seen.size, 'payment') : ''}.`);
+  if (cl.rep) cl.rep.key = ''; renderClinic();
+}

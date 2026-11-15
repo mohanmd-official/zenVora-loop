@@ -176,18 +176,32 @@ function otRow(t){
     ${t.link ? '<button data-otopen>Open</button>' : ''}${open ? '<button class="primary" data-otdone>✓ Close</button>' : (t.doneHow === 'auto' ? '' : '<button data-otreopen title="Reopen for everyone">Reopen</button>')}</div>`;
 }
 let orgRemOpen = (() => { try { return localStorage.getItem('zl-orgrem') !== '0'; } catch(e){ return true; } })();
+/* Organization reminders, laid out like a Jira board: one column per kind of work, each with its own count.
+   Yesterday's visits are on their own; older follow-ups go with the call-backs for missed visits. */
+const OT_LANES = [
+  ['yday', "Yesterday's visits · follow up", t => t.cat === 'fu' && t.day === todayKey],
+  ['notes', 'Notes to update', t => t.cat === 'sum'],
+  ['calls', 'Call-backs & older follow-ups', t => t.cat === 'miss' || t.cat === 'fu'],
+  ['docs', 'Documents to upload', t => t.cat === 'doc'],
+  ['tally', 'Tally & month close', t => ['tally', 'close'].includes(t.cat)],
+  ['money', "Expenses & payments due", t => ['commit', 'vendor', 'lab', 'pay', 'paysum', 'salpay', 'conspay'].includes(t.cat)],
+  ['other', 'Other', () => true]];
+const otLane = t => (OT_LANES.find(l => l[2](t)) || OT_LANES[OT_LANES.length - 1])[0];
+let orgRemDone = false;
 function renderOrgRem(){
   const host = $('#orgRem'); if (!host) return;
   const oc = orgCtx(); if (!oc || oc.support || !feat('clinic') || !remOn()){ host.innerHTML = ''; return; }
   clLoad(); otWatch();
   const L = otList(), open = otOpen(), done = L.filter(t => t.status === 'done').sort((a, b) => (b.doneAt || 0) - (a.doneAt || 0)).slice(0, 30);
+  const lanes = OT_LANES.map(([k, name]) => ({k, name, xs:open.filter(t => otLane(t) === k)})).filter(l => l.xs.length);
   host.innerHTML = `<div class="orgrem${orgRemOpen ? ' open' : ''}">
     <button class="orh" data-ortoggle><span class="chev">${orgRemOpen ? '▾' : '▸'}</span><b>Organization reminders</b><span class="orn${open.length ? ' on' : ''}">${open.length} open</span>
-     <span class="sp"></span>${done.length ? `<span class="stat">${done.length} closed recently</span>` : ''}</button>
-    ${orgRemOpen ? `<div class="orb"><div class="orcol"><div class="orct"><i class="dot s-todo"></i>Open · ${open.length}</div>${open.map(otRow).join('') || '<div class="empty">Nothing open. 🎉</div>'}</div>
-      <div class="orcol"><div class="orct"><i class="dot s-done"></i>Closed · last 14 days</div>${done.map(otRow).join('') || '<div class="empty">Nothing closed yet.</div>'}</div></div>` : ''}</div>`;
+     <span class="sp"></span>${lanes.map(l => `<span class="orchip">${esc(l.name.split(' ·')[0])} <b>${l.xs.length}</b></span>`).join('')}</button>
+    ${orgRemOpen ? `<div class="orboard">${lanes.map(l => `<div class="orlane"><div class="orct"><i class="dot s-todo"></i>${esc(l.name)}<span class="n">${l.xs.length}</span></div>${l.xs.map(otRow).join('')}</div>`).join('') || '<div class="empty" style="margin:0 14px 14px">Nothing open. 🎉</div>'}</div>
+      <div class="ordone">${done.length ? `<button class="linkbtn" data-ordone>${orgRemDone ? '▾' : '▸'} Closed in the last 14 days (${done.length})</button>${orgRemDone ? `<div class="orboard"><div class="orlane wide">${done.map(otRow).join('')}</div></div>` : ''}` : ''}</div>` : ''}</div>`;
 }
 document.addEventListener('click', e => {
+  if (e.target.closest('[data-ordone]')){ orgRemDone = !orgRemDone; return renderOrgRem(); }
   if (e.target.closest('[data-ortoggle]')){ orgRemOpen = !orgRemOpen; try { localStorage.setItem('zl-orgrem', orgRemOpen ? '1' : '0'); } catch(_){} return renderOrgRem(); }
   const r = e.target.closest('[data-ot]'); if (!r) return;
   const t = otList().find(x => x.id === r.dataset.ot && x.src === r.dataset.otsrc); if (!t) return;

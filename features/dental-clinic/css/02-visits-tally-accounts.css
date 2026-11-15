@@ -120,3 +120,5 @@ a.srcl0{text-decoration:none}.extbl td{vertical-align:middle}.nowrap{white-space
 .asadd summary{cursor:pointer}
 .asf{flex-wrap:wrap;gap:8px}
 .asedrow td{background:var(--paper2)}
+input.mini{width:72px;padding:3px 6px;text-align:right}
+button.mini2{padding:1px 7px;font-size:12px;margin-left:4px}
