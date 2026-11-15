@@ -197,6 +197,7 @@ Account Managers always have full access, and only Accounts (the owner) can top 
 - **Printed bill** (🖨): the clinic's logo, name, address, phone and GSTIN; **Treatment** and **Medicines** in separate tables with their totals; the grand total in words; a box for the **clinic seal**. No payments on it.
 - **Payment receipt** (🖨 on a payment): the treatments on that bill, the payments on it so far, **Paid now**, **Paid so far**, **Balance to pay**, and other bills still due.
 - Both print on **half A4** up to 6 lines, otherwise **full A4**; **Half A4 / Full A4** buttons at the top of the print window.
+- **Collection report** leaves out cancelled payments together with their cancellation lines (*-C*), so only money actually kept shows; the total is the same. Refunds (money given back) still show, as minus amounts. The patient's Payments tab keeps both, for the record.
 - **Correcting a paid bill:** Payments → **Cancel** each payment on it (reason required; Owner, Account Manager or the *Edit / cancel bills* permission), then Bills → **Edit** or **Cancel bill**, then take the right payment again.
 - **Old flow tidied:** the first time a patient's card (or their visit bill) is opened, drafts that were never issued and *Earlier balance* bills with nothing paid on them are cancelled automatically (kept on record with the reason "Billing simplified"). Their treatments then show as *Paid earlier* or *Not billed*.
 

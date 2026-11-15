@@ -15,7 +15,7 @@ async function clRunReport(){
   const rq = c => F.query(cCol(c), F.where('date', '>=', r.from), F.where('date', '<=', r.to));
   try {
     let d = {};
-    if (r.kind === 'collection') d.pay = await inRange('payments', r.from, r.to);
+    if (r.kind === 'collection') d.pay = (await inRange('payments', r.from, r.to)).filter(x => !x.reversedBy && x.kind !== 'reversal');   // a cancelled payment and its cancellation (−) leave the report together; refunds stay
     if (r.kind === 'treatments'){ const [at, ap, ab] = await Promise.all([liveCol('treatments'), can('billing') || can('reports') ? liveCol('payments') : null, liveCol('bills').catch(() => [])]);
       d.t = at.filter(t => t.date >= r.from && t.date <= r.to); if (ap){ d.paidBy = paidByTreatment(at, ap, ab); d.coll = ap.filter(x => x.date >= r.from && x.date <= r.to).reduce((a, x) => a + (+x.amount || 0), 0); } }
     if (r.kind === 'doctors'){ d.t = await inRange('treatments', r.from, r.to); d.a = docsOf(await F.getDocs(rq('appointments'))); }
