@@ -100,14 +100,14 @@ function printReceipt(x, c){
   soFar = bill ? list.reduce((s, y) => s + (+y.amount || 0), 0) : paidSum(P.filter(y => ord(y) <= ord(x)));
   const bal = Math.max(0, total - soFar);
   // what the patient still owes on other bills / from before bills (as of today)
-  const other = bill ? B.filter(b => billLive(b) && b.id !== bill.id).reduce((s, b) => s + billDue(b), 0) + earlierDue(T, P, B) : 0;
+  const other = bill ? B.filter(b => billLive(b) && b.id !== bill.id).reduce((s, b) => s + billDue(b), 0) : 0;
   const body = sheetHead('RECEIPT', x.receiptNo, x.date)
     + `<div class="meta"><div><span>Received from:</span> <b>${esc(pName(p))}</b>${p.code ? ` (${esc(p.code)})` : ''}</div><div><span>Phone:</span> ${esc(p.phone || '—')}</div><div>${bill ? `<span>Against bill:</span> ${esc(bill.billNo)}` : x.doctorId ? `<span>Doctor:</span> ${esc(dName(x.doctorId))}` : ''}</div></div>`
     + `<div class="row"><div style="flex:1.3">${left}</div><div style="flex:1"><h4>Payments</h4><table><tr><th>Date</th><th>Receipt</th><th>Mode</th><th class="n">Amount</th></tr>
       ${list.map(y => `<tr class="${y.id === x.id ? 'now' : ''}${y.reversedBy || y.kind === 'reversal' ? ' gone' : ''}"><td>${esc(sheetDate(y.date, false))}</td><td>${esc(y.receiptNo || '')}</td><td>${esc(y.kind === 'reversal' ? 'Cancelled' : y.kind === 'refund' ? 'Refund' : sheetMode(y.mode))}</td><td class="n">${inr(y.amount)}</td></tr>`).join('')}</table></div></div>`
     + sheetFoot('Received by', `<div><span>${bill ? 'Bill total' : 'Treatment cost'}</span><span>${inr(total)}</span></div><div><span>Paid now</span><span>${inr(x.amount)}</span></div><div><span>Paid so far</span><span>${inr(soFar)}</span></div>
       <div class="g${bal > 0 ? ' due' : ''}"><span>Balance to pay</span><span>${inr(bal)}</span></div>
-      ${other > 0 ? `<div><span>Earlier dues</span><span>${inr(other)}</span></div><div class="g due"><span>Total to pay</span><span>${inr(bal + other)}</span></div>` : ''}
+      ${other > 0 ? `<div><span>Other bills due</span><span>${inr(other)}</span></div><div class="g due"><span>Total to pay</span><span>${inr(bal + other)}</span></div>` : ''}
       <div class="words">Received with thanks ${esc(rupeesWords(x.amount))} (${esc(sheetMode(x.mode))}${x.txnRef ? ' · ' + esc(x.txnRef) : ''})</div>`);
   const lines = Math.max((bill ? (bill.items || []).filter(i => !i.med).length + 1 : 1), list.length);
   return sheetWindow('Receipt ' + (x.receiptNo || ''), body, lines <= SHEET_HALF_MAX);

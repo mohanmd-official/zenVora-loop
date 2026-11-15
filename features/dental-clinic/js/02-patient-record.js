@@ -2,14 +2,14 @@
 function clOpenPatient(pid){
   cl.pUnsub.forEach(u => { try { u(); } catch(e){} }); cl.pUnsub = [];
   Object.assign(cl, {pid, newP:!pid, p:null, pT:null, pP:null, pA:null, pPh:null, edit:{}});
-  if (pid && !['profile', 'treatments', 'rx', 'billing', 'payments', 'appointments', 'doctors', 'assists', 'docs', 'photos', 'history'].includes(cl.ptab)) cl.ptab = 'profile';
+  if (pid && !['profile', 'treatments', 'rx', 'billing', 'payments', 'ledger', 'appointments', 'doctors', 'assists', 'docs', 'photos', 'history'].includes(cl.ptab)) cl.ptab = 'profile';
   cl.pD = null; cl.pAs = null; cl.pB = null; cl.dhF = {from:'', to:''};
   if (!pid){ cl.ptab = 'profile'; return renderClinic(); }
   const {F} = cloud, again = () => { if (state.settings.view === 'clinic' && cl.pid === pid) renderClinic(); };
   cl.pUnsub.push(F.onSnapshot(cDoc('patients', pid), s => { cl.p = s.exists() ? Object.assign({id:pid}, s.data()) : {missing:true}; again(); }, e => info(errText(e))));
   if (can('treatments') || can('billing')) cl.pUnsub.push(F.onSnapshot(F.query(cCol('treatments'), F.where('patientId', '==', pid)), qs => { cl.pT = docsOf(qs); again(); }, () => { cl.pT = []; }));
   if (can('billing')) cl.pUnsub.push(F.onSnapshot(F.query(cCol('payments'), F.where('patientId', '==', pid)), qs => { cl.pP = docsOf(qs); again(); }, () => { cl.pP = []; }));
-  if (can('billing') || can('treatments')) cl.pUnsub.push(F.onSnapshot(F.query(cCol('bills'), F.where('patientId', '==', pid)), qs => { cl.pB = docsOf(qs); again(); }, () => { cl.pB = []; }));
+  if (can('billing') || can('treatments')) cl.pUnsub.push(F.onSnapshot(F.query(cCol('bills'), F.where('patientId', '==', pid)), qs => { cl.pB = docsOf(qs); again(); billCleanup(pid, cl.pB); }, () => { cl.pB = []; }));
   if (can('appointments') || can('treatments')) cl.pUnsub.push(F.onSnapshot(F.query(cCol('appointments'), F.where('patientId', '==', pid)), qs => { cl.pA = docsOf(qs); again(); }, () => { cl.pA = []; }));
   if (can('patients') || can('treatments')) cl.pUnsub.push(F.onSnapshot(cCol('patients', pid, 'docs'), qs => { cl.pD = docsOf(qs); again(); }, () => { cl.pD = []; }));
   if (asSeePatient()) cl.pUnsub.push(F.onSnapshot(F.query(cCol('assists'), F.where('patientId', '==', pid)), qs => { cl.pAs = docsOf(qs).filter(x => x.status !== 'void'); again(); }, () => { cl.pAs = []; }));
@@ -24,10 +24,10 @@ function clPatient(){
   if (p.missing) return '<button class="abk" id="clBack">← Patients</button><div class="empty">This patient no longer exists.</div>';
   const T = cl.pT || [], P = cl.pP || [], bill = billed(T), paid = paidSum(P);
   const docs = [...new Set([p.primaryDoctorId].concat(T.map(t => t.doctorId), (cl.pA || []).filter(a => a.status !== 'cancelled').map(a => a.doctorId)).filter(Boolean))];
-  const tabs = [['profile', 'Profile', true], ['doctors', 'Doctor history', can('appointments') || can('treatments')], ['assists', 'Assists', asSeePatient()], ['treatments', 'Treatments', can('treatments') || can('billing')], ['rx', 'Tablets / prescriptions', can('treatments') || can('billing')], ['billing', 'Bills', can('billing')], ['payments', 'Payments', can('billing')], ['appointments', 'Visits & summaries', can('appointments') || can('treatments')], ['docs', 'Documents', can('patients') || can('treatments')],
+  const tabs = [['profile', 'Profile', true], ['doctors', 'Doctor history', can('appointments') || can('treatments')], ['assists', 'Assists', asSeePatient()], ['treatments', 'Treatments', can('treatments') || can('billing')], ['rx', 'Tablets / prescriptions', can('treatments') || can('billing')], ['billing', 'Bills', can('billing')], ['payments', 'Payments', can('billing')], ['ledger', 'Patient ledger', can('billing')], ['appointments', 'Visits & summaries', can('appointments') || can('treatments')], ['docs', 'Documents', can('patients') || can('treatments')],
     ['photos', 'Pre / post-op photos', can('treatments')], ['history', 'History', true]].filter(t => t[2]);
   if (!tabs.some(t => t[0] === cl.ptab)) cl.ptab = 'profile';
-  const body = ({profile:() => clProfileForm(p), doctors:clDoctorHistory, assists:clPAssists, treatments:clTreatments, rx:clRx, billing:clBills, payments:clPayments, appointments:clPAppts, docs:clDocs, photos:clPhotos, history:clHistory})[cl.ptab]();
+  const body = ({profile:() => clProfileForm(p), doctors:clDoctorHistory, assists:clPAssists, treatments:clTreatments, rx:clRx, billing:clBills, payments:clPayments, ledger:clLedger, appointments:clPAppts, docs:clDocs, photos:clPhotos, history:clHistory})[cl.ptab]();
   return `<button class="abk" id="clBack">← Patients</button>
     <div class="phead">
       <div class="uav" style="width:46px;height:46px;font-size:19px">${initial(p.first)}</div>
@@ -36,7 +36,9 @@ function clPatient(){
         <div class="stat">Doctors: ${docs.length ? docs.map(id => `<span class="fchip on">${esc(dName(id) || 'Unknown')}${id === p.primaryDoctorId ? ' · primary' : ''}</span>`).join(' ') : '—'}</div>
         ${p.allergies ? `<div class="alert">⚠ Allergies / alerts: ${esc(p.allergies)}</div>` : ''}</div>
       ${pOverview(p)}
-      ${can('billing') ? `<div class="pmoney"><div><span>Treatment cost</span><b>${inr(bill)}</b></div><div><span>Billed</span><b>${inr((cl.pB || []).filter(billLive).reduce((s2, b) => s2 + (+b.total || 0), 0))}</b></div><div><span>Paid</span><b>${inr(paid)}</b></div><div><span>Outstanding</span><b class="${bill - paid > 0 ? 'neg' : ''}">${inr(bill - paid)}</b></div></div>` : ''}
+      ${can('billing') ? (() => { const LB = (cl.pB || []).filter(b => billLive(b) && b.status !== 'draft'), bt = LB.reduce((s2, b) => s2 + (+b.total || 0), 0), bd = LB.reduce((s2, b) => s2 + billDue(b), 0);
+        return `<div class="pmoney"><div><span>Treatment cost</span><b>${inr(bill)}</b></div><div><span>Paid</span><b>${inr(paid)}</b></div><div><span>Balance</span><b class="${bill - paid > 0 ? 'neg' : ''}">${inr(bill - paid)}</b></div>
+          <div class="pmsub">Billed ${inr(bt)} · Billed balance <b class="${bd > 0 ? 'neg' : ''}">${inr(bd)}</b></div></div>`; })() : ''}
     </div>
     <div class="htabs" data-ord="ptab" data-ordattr="pt" title="Drag a tab to put it where you like">${ordered('ptab', tabs).map(([k, l]) => `<a draggable="true" data-pt="${k}" href="#/clinic/patients/${esc(cl.pid)}/${k}" class="${k === cl.ptab ? 'on' : ''}">${l}</a>`).join('')}</div>
     <div style="margin-top:10px">${body}</div>`;
@@ -145,13 +147,13 @@ async function clSavePatient(){
 // "Assisted by" under a treatment (names + approval), from this patient's assist records
 const asNamesFor = tid => { const xs = (cl.pAs || []).filter(x => x.treatmentId === tid && x.status !== 'void'); return xs.length ? `<span class="sub2">👥 ${xs.map(x => `${esc(x.name)} <i class="upill ${AS_ST[x.status || 'pending'][1]}" style="font-style:normal;font-size:10.5px">${AS_ELIG[x.status || 'pending']}</i>`).join(', ')}</span>` : ''; };
 function clTreatments(){
-  const T = (cl.pT || []).filter(t => !isMed(t)).sort((a, b) => String(b.date).localeCompare(String(a.date)) || (b.createdAt || 0) - (a.createdAt || 0));
-  const w = canW('treatments'), money = can('billing') || can('treatments');
+  const T = (cl.pT || []).slice().sort((a, b) => String(b.date).localeCompare(String(a.date)) || isMed(a) - isMed(b) || (b.createdAt || 0) - (a.createdAt || 0));
+  const w = canW('treatments'), money = can('billing') || can('treatments'), wb = canW('billing') && cl.pB !== null, cov = wb || can('billing') ? treatCover(cl.pT, cl.pP, cl.pB) : {};
   const types = cl.types.filter(t => t.active !== false);
   const lastAppt = (cl.pA || []).filter(a => a.date <= todayKey && a.status !== 'cancelled').sort((a, b) => String(b.date + b.time).localeCompare(String(a.date + a.time)))[0];
   const defDoc = (lastAppt && lastAppt.doctorId) || cl.p.primaryDoctorId || '';
-  const add = w ? `<div class="box"><h3>Add treatment</h3>
-    <form class="aform" id="clTForm" novalidate>
+  const add = w ? `<details class="box"${cl.pT && cl.pT.length ? '' : ' open'}><summary><h3 style="display:inline">+ Add treatment</h3></summary>
+    <form class="aform" id="clTForm" novalidate style="margin-top:8px">
       <label>Date<input type="date" id="tfDate" value="${todayKey}"></label>
       <label class="grow">Treatment<select id="tfType" class="srch">${types.map(t => `<option value="${esc(t.id)}" data-cost="${+t.cost || 0}">${esc(t.name)}</option>`).join('')}</select></label>
       <label>Tooth / area<input id="tfTooth" data-teeth autocomplete="off" placeholder="🦷 click to pick" style="min-width:120px"></label>
@@ -162,20 +164,35 @@ function clTreatments(){
       <label>Status<select id="tfStatus"><option value="planned">Planned</option><option value="progress">In progress</option><option value="completed" selected>Completed</option></select></label>
       <label class="grow">Notes<input id="tfNotes" placeholder="clinical notes"></label>
       <button class="primary" type="submit">Add</button>
-    </form>${types.length ? '' : '<p class="stat">Add your treatment list first in Clinic setup.</p>'}</div>` : '';
-  let html = '', day = null;
-  T.forEach(t => {
-    const lk = tLocked(t, cl.pB), wl = w && !lk, bn = lk ? ((cl.pB || []).find(b => b.id === t.billId) || {}).billNo : '';
-    if (t.date !== day){ day = t.date; html += `<tr class="wk"><td colspan="${w ? 7 : 6}">${esc(fmtShort(t.date))} · ${esc([...new Set(T.filter(x => x.date === day).map(x => dName(x.doctorId) || x.doctorName))].join(', '))}</td></tr>`; }
-    html += `<tr data-tid="${esc(t.id)}"><td><b>${esc(t.typeName)}</b>${t.tooth ? `<span class="sub2">Tooth / area: ${esc(t.tooth)}</span>` : ''}${t.notes ? `<span class="sub2">${esc(t.notes)}</span>` : ''}${bn ? `<span class="sub2">🔒 on bill ${esc(bn)}</span>` : ''}${asNamesFor(t.id)}</td>
-      <td>${esc(dName(t.doctorId) || t.doctorName || '—')}${+t.consultantFee && money ? `<span class="sub2">consultant fee ${inr(t.consultantFee)}</span>` : ''}</td>
-      ${money ? `<td class="num">${inr(t.cost)}</td><td class="num">${+t.discount ? inr(t.discount) : '—'}</td><td class="num"><b>${inr(net(t))}</b></td>` : '<td></td><td></td><td></td>'}
-      <td>${wl ? `<select data-tst class="tst ${t.status}">${Object.entries(TSTATUS).map(([k, [l]]) => `<option value="${k}"${k === t.status ? ' selected' : ''}>${l}</option>`).join('')}</select>` : `<span class="upill ${TSTATUS[t.status][1]}">${TSTATUS[t.status][0]}</span>`}</td>
-      ${w ? `<td>${wl ? '<button class="danger" data-tdel title="Delete">✕</button>' : ''}</td>` : ''}</tr>`;
+    </form>${types.length ? '' : '<p class="stat">Add your treatment list first in Clinic setup.</p>'}</details>` : '';
+  const billCell = t => { const c = cov[t.id]; if (!money) return '';
+    if (!c) return '<span class="stat">—</span>';
+    if (c.state === 'bill') return `<a href="#/clinic/patients/${esc(cl.pid)}/billing" data-gobill="${esc(c.bill.id)}">${esc(c.bill.billNo)}</a> ${billBadge(c.bill)}`;
+    if (c.state === 'settled') return '<span class="upill on">Paid earlier</span>';
+    return `<span class="stat">Not billed${c.part > 0 ? ` · ${inr(c.part)} paid earlier` : ''}</span>`; };
+  const cols = 7 + (wb ? 1 : 0) + (money ? 1 : 0), groups = [];
+  T.forEach(t => { let g = groups.find(x => x.date === t.date); if (!g) groups.push(g = {date:t.date, items:[]}); g.items.push(t); });
+  let html = '';
+  groups.forEach(g => {
+    const open = g.items.filter(t => cov[t.id] && cov[t.id].state === 'open' && cov[t.id].due > 0);
+    html += `<tr class="wk"><td colspan="${cols}">${wb && open.length ? `<label class="ckl" style="display:inline"><input type="checkbox" data-gbd="${esc(g.date)}"> </label>` : ''}${esc(fmtShort(g.date))} · ${esc([...new Set(g.items.map(x => dName(x.doctorId) || x.doctorName).filter(Boolean))].join(', '))}</td></tr>`;
+    g.items.forEach(t => {
+      const lk = tLocked(t, cl.pB), wl = w && !lk && !isMed(t), c = cov[t.id], tick = wb && c && c.state === 'open' && c.due > 0;
+      html += `<tr data-tid="${esc(t.id)}">${wb ? `<td>${tick ? `<input type="checkbox" data-gbt="${esc(t.id)}" data-day="${esc(t.date)}" data-amt="${c.due}" title="Tick to bill">` : ''}</td>` : ''}
+        <td><b>${isMed(t) ? '💊 ' : ''}${esc(t.typeName)}</b>${isMed(t) && +t.qty ? `<span class="sub2">Qty ${+t.qty}</span>` : ''}${t.tooth ? `<span class="sub2">Tooth / area: ${esc(t.tooth)}</span>` : ''}${t.notes ? `<span class="sub2">${esc(t.notes)}</span>` : ''}${isMed(t) ? '' : asNamesFor(t.id)}</td>
+        <td>${esc(dName(t.doctorId) || t.doctorName || '—')}${+t.consultantFee && money ? `<span class="sub2">consultant fee ${inr(t.consultantFee)}</span>` : ''}</td>
+        ${money ? `<td class="num">${inr(t.cost)}</td><td class="num">${+t.discount ? inr(t.discount) : '—'}</td><td class="num"><b>${inr(net(t))}</b></td>` : '<td></td><td></td><td></td>'}
+        <td>${isMed(t) ? '<span class="stat">Medicine</span>' : wl ? `<select data-tst class="tst ${t.status}">${Object.entries(TSTATUS).map(([k, [l]]) => `<option value="${k}"${k === t.status ? ' selected' : ''}>${l}</option>`).join('')}</select>` : `<span class="upill ${TSTATUS[t.status][1]}">${TSTATUS[t.status][0]}</span>`}</td>
+        ${money ? `<td>${billCell(t)}</td>` : ''}
+        <td>${wl ? '<button class="danger" data-tdel title="Delete">✕</button>' : ''}</td></tr>`;
+    });
   });
-  return `<div class="sect">${add}
-    <div class="awrap" style="margin-top:0"><table class="atbl"><thead><tr><th>Treatment</th><th>Doctor</th><th class="num">Cost</th><th class="num">Discount</th><th class="num">Net</th><th>Status</th>${w ? '<th></th>' : ''}</tr></thead>
-    <tbody>${cl.pT === null ? '<tr><td colspan="7">Loading…</td></tr>' : html || '<tr><td colspan="7" class="stat">No treatments yet.</td></tr>'}</tbody></table></div>
+  const nOpen = T.filter(t => cov[t.id] && cov[t.id].state === 'open' && cov[t.id].due > 0).length;
+  const gen = wb && nOpen ? `<div class="box gbar"><b>Bill treatments</b><span class="stat">Tick the treatments and medicines to put on one bill</span><span class="sp"></span>
+      <label class="stat">Bill date <input type="date" id="gbDate" value="${todayKey}" max="${todayKey}"></label><button class="primary" id="gbGo" disabled>Generate bill (0)</button></div>` : '';
+  return `<div class="sect">${add}${gen}
+    <div class="awrap" style="margin-top:0"><table class="atbl"><thead><tr>${wb ? '<th></th>' : ''}<th>Treatment</th><th>Doctor</th><th class="num">Cost</th><th class="num">Discount</th><th class="num">Total cost</th><th>Status</th>${money ? '<th>Bill</th>' : ''}<th></th></tr></thead>
+    <tbody>${cl.pT === null ? `<tr><td colspan="${cols}">Loading…</td></tr>` : html || `<tr><td colspan="${cols}" class="stat">No treatments yet.</td></tr>`}</tbody></table></div>
     </div>`;
 }
 /* tablets / prescriptions */

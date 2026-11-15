@@ -180,30 +180,31 @@ Account Managers always have full access, and only Accounts (the owner) can top 
    - **Totals** (updated as you type): **Cost of treatment** (cost − discount; planned treatments aren't billed) + **Cost of medicines** = **Total cost**.
    - **Treatment plan description:** write it, or tick **Skip the description for now**: everyone in the clinic then gets a reminder "Treatment plan description needs to be updated for <patient>" until it's written (Patient → Visits & summaries).
    - Optionally book the next visit. **← Back** returns to the queue (the patient stays In chair).
-4. **Save & go to bill →** opens the visit's **Bill** screen: this visit's treatments, earlier balance, then **Generate bill** (bill number B-00001…, *Unpaid*; or **Save as draft**) → **Payment** (date, amount pre-filled with what's outstanding, method Cash · UPI / GPay · Debit card · Credit card · others, transaction ref., cash notes and change) → **Complete visit**. Payment is optional: **Complete visit · ₹X outstanding** leaves the bill open to pay later, in parts. A back-dated payment still offers to move the visit and its treatments to that day.
+4. **Save & go to bill →** opens the visit's **Bill** screen: this visit's treatments, then **Generate bill** (bill number B-00001…, *Unpaid*; final straight away, no draft step) → **Payment**: the patient's unpaid bills are listed with tick boxes (this visit's bill ticked); enter the amount received → **Save payment** → **Complete visit ✓**.
 5. If the person doing the summary has no Billing access, the patient waits in the queue as **At billing** (and a **Billing pending** task appears on the Planning Board) until the front desk opens **Bill & print**.
 
 **Patients list:** every patient, in patient-number order (or latest first, name A–Z, recently registered), scrollable with the header staying on top. Type in the filter box to narrow it instantly by **patient code** (e.g. `29`, `ADC00029`), name or phone; the exact patient number is listed first. ↻ reloads the list.
 
 **Deleting a patient (Owner / Account Manager only):** open the patient → Profile → **Delete patient…**. Only for patients with no bills or payments (money records are never deleted); it shows what will go (treatments, appointments, documents and photos) and asks twice. This cannot be undone.
 
-**Bills and payments (separate):**
-- A **bill** is its own record: number, date, visit, treatments (charge, discount, amount), total, paid, outstanding and status **Draft → Unpaid → Partly paid → Paid**, or **Cancelled**. Patient → **Bills** lists them (click one for its items, payments and actions); **New bill** bills done treatments that aren't on a bill yet, plus any **Earlier balance (before bills)**.
-- **Payments** are separate records against a bill: full, partial, any number, any later day. Patient → **Payments** shows every payment with its bill, method and transaction ref.
-- Once a treatment is on an issued bill it is **locked** (🔒 in Treatments) until the bill is edited or cancelled.
-- **Printed bill** (🖨 Print bill): the clinic's logo, name, address, phone and GSTIN at the top; **Treatment** and **Medicines** in separate tables with their totals; the grand total with the amount in words; a box for the **clinic seal** and a signature line. No payments on it. Before a bill exists, the visit prints the same sheet as an **Estimate**.
-- **Payment receipt** (🖨 on a payment): the treatments done on that bill, the payments made on it so far (this one in bold), then **Paid now**, **Paid so far**, **Balance to pay**, and the patient's other dues with the total still to pay.
-- Both open on **half A4** (210 × 148 mm) when they have up to 6 lines, otherwise **full A4**; the **Half A4 / Full A4** buttons at the top of the print window change it before printing.
-- **Correcting a paid bill:** Payments → **Cancel** each payment on it (reason required; Owner, Account Manager or the *Edit / cancel bills* permission). The payment stays, marked *Cancelled*, and a minus *Cancellation* record on the same date undoes it in collections, the tally and the balance. With nothing paid, the bill can be **✎ Edited** (date, each charge and discount; reason required, treatments updated too) or **Cancelled**; then take the right payment again. Bills and payments are never deleted or edited once paid.
-- **Paying today's bill and old dues together:** when the patient owes more, the payment form shows **This bill** and **Earlier dues** (with what's due) and one cash count; the amounts are typed in by hand (never pre-filled). The dues part pays other open bills first, then the earlier balance from before bills, which gets its own bill for the amount paid, dated the same day as the payment.
-- One live bill per visit: a second bill for the same visit is refused until the first is cancelled.
-- The patient's **Outstanding** is still all done treatments − all payments, so balances from before bills are unchanged.
+**Billing (works like Dentee):**
+- **Header:** **Treatment cost · Paid · Balance** for the patient, and under it *Billed · Billed balance*.
+- **Treatments tab:** treatments and medicines grouped by date and doctor, each with its **Bill** column: the bill number and its status, **Paid earlier** (paid before bills existed: payments without a bill pay the oldest treatments first), or **Not billed**. Tick the ones to bill (the box on a date ticks the whole day), choose the **Bill date** (today by default) → **Generate bill (n) · ₹…**. A treatment only partly paid earlier is billed for the rest, shown as "(balance)".
+- **Bills tab:** Bill date · Bill no. · Treatments · Amount · Paid · Balance · Status (*Unpaid / Partly paid / Paid*) with 🖨 and **Pay**. A bill is final when generated. Click a bill to see its items, **Edit** (only while nothing is paid on it, with a reason) or **Cancel bill**. Cancelled bills are hidden; **Show cancelled** lists them.
+- **Payments tab:** **Take a payment**: the unpaid bills with tick boxes (all ticked, or just the one you pressed **Pay** on), the amount → **Save payment**. The amount goes to the oldest ticked bill first; each bill gets its own receipt. Below, every payment with 🖨 Receipt and **Cancel** (reason required).
+- **Patient ledger tab:** everything charged (treatments and medicines on the day they were done, with their bill) and paid, by date, with the running balance. It ends at the header's Balance.
+- Once a treatment is on a bill it is **locked** until the bill is edited or cancelled.
+- **Printed bill** (🖨): the clinic's logo, name, address, phone and GSTIN; **Treatment** and **Medicines** in separate tables with their totals; the grand total in words; a box for the **clinic seal**. No payments on it.
+- **Payment receipt** (🖨 on a payment): the treatments on that bill, the payments on it so far, **Paid now**, **Paid so far**, **Balance to pay**, and other bills still due.
+- Both print on **half A4** up to 6 lines, otherwise **full A4**; **Half A4 / Full A4** buttons at the top of the print window.
+- **Correcting a paid bill:** Payments → **Cancel** each payment on it (reason required; Owner, Account Manager or the *Edit / cancel bills* permission), then Bills → **Edit** or **Cancel bill**, then take the right payment again.
+- **Old flow tidied:** the first time a patient's card (or their visit bill) is opened, drafts that were never issued and *Earlier balance* bills with nothing paid on them are cancelled automatically (kept on record with the reason "Billing simplified"). Their treatments then show as *Paid earlier* or *Not billed*.
 
 **Doctor history** (patient tab): every appointment with its doctor, the previous doctor, the treatment done, the **transfer reason** (Book / edit appointment → *Transfer reason*), status and who booked it; a change of doctor on an existing appointment is logged as *reassigned*, never overwritten. Filter by date.
 
 **Patient overview** (top of the patient): last visit, assigned doctor, last treatment, **Assisted by**, and Treatment cost · Billed · Paid · Outstanding. The Patients list has an **Assisted by** column.
 
-**Patient record tabs:** Profile · **Doctor history** · **Assists** · Treatments (with *Assisted by* per treatment) · Tablets / prescriptions · **Bills** · **Payments** · Visits & summaries · Documents · Pre/post-op photos · History.
+**Patient record tabs:** Profile · **Doctor history** · **Assists** · Treatments (with *Assisted by* per treatment) · Tablets / prescriptions · **Bills** · **Payments** · **Patient ledger** · Visits & summaries · Documents · Pre/post-op photos · History.
 
 **Clinic ↔ Planning Board (automatic, every sign-in and every 10 minutes)**
 

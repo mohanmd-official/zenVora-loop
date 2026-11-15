@@ -7,7 +7,8 @@ async function clOpenBill(appt){
     const [ps, ts, pays] = await Promise.all([F.getDoc(cDoc('patients', appt.patientId)), F.getDocs(F.query(cCol('treatments'), F.where('patientId', '==', appt.patientId))),
       can('billing') ? F.getDocs(F.query(cCol('payments'), F.where('patientId', '==', appt.patientId))) : Promise.resolve({docs:[]})]);
     Object.assign(cl.bill, {p:Object.assign({id:appt.patientId}, ps.exists() ? ps.data() : {first:appt.patientName}), T:docsOf(ts), P:docsOf(pays)});
-    cl.bill.B = can('billing') ? docsOf(await F.getDocs(F.query(cCol('bills'), F.where('patientId', '==', appt.patientId)))).filter(billLive) : [];
+    const AB = can('billing') ? docsOf(await F.getDocs(F.query(cCol('bills'), F.where('patientId', '==', appt.patientId)))) : [];
+    await billCleanup(appt.patientId, AB); cl.bill.B = AB.filter(billLive);
     cl.bill.bill = appt.billId ? cl.bill.B.find(b => b.id === appt.billId) || null : null;
     drawBill();
   } catch(e){ $('#clOvBody').innerHTML = `<div class="auth-err">${esc(errText(e))}</div><button data-ovclose>Close</button>`; }
@@ -28,7 +29,7 @@ function drawBill(){
     </tbody></table></div>` : ''}
     <div class="box billbox" style="margin-top:10px">
       <div class="payrow"><span>This visit</span><span>${inr(visitNet)}</span></div>
-      <div class="payrow"><span>Earlier balance</span><span>${inr(due - visitNet + paidSum(visitPays))}</span></div>
+      <div class="payrow"><span>Other balance</span><span>${inr(due - visitNet + paidSum(visitPays))}</span></div>
       <div class="payrow"><span>Paid in this visit</span><span>${visitPays.length ? '− ' + inr(paidSum(visitPays)) : inr(0)}</span></div>
       <div class="payrow"><span>Balance due now</span><span class="${due > 0 ? 'neg' : ''}">${inr(due)}</span></div></div>
     ${visitBillHtml(B, visitT, w)}`;
@@ -39,9 +40,9 @@ const vbCtx = () => ({p:cl.bill.p, T:cl.bill.T, P:cl.bill.P, B:cl.bill.B});
 function visitBillHtml(B, visitT, w){
   const b = B.bill, done = !!b || B.noPay, bp = b ? B.P.filter(x => x.billId === b.id) : [], billable = visitT.filter(t => t.status !== 'planned');
   const head = b ? `<div class="box billbox vbill"><div class="crow"><b>Bill ${esc(b.billNo)}</b> ${billBadge(b)}<span class="sp"></span><span>Total <b>${inr(b.total)}</b></span><span>Paid <b>${inr(b.paid)}</b></span><span>Outstanding <b class="${billDue(b) ? 'neg' : ''}">${inr(billDue(b))}</b></span></div>
-      <div class="btnrow" style="margin-top:8px">${w && b.status === 'draft' ? '<button class="primary" data-vbissue>Issue bill</button>' : ''}${w && ['pending', 'ack'].includes(b.status) && !+b.paid ? '<button data-vbreopen title="Back to a draft so the treatments can be corrected">Reopen to edit</button>' : ''}<button data-vbprint>🖨 Print bill</button></div>
-      ${w && (billPayable(b) || otherDues(b, vbCtx()).total > 0) ? payForm('vb', b, vbCtx()) : ''}</div>`
-    : w ? `<div class="box billbox vbill"><div class="crow"><b>No bill yet for this visit</b><span class="sp"></span>${billable.length ? '<button class="primary" data-vbgen>Generate bill</button><button data-vbdraft>Save as draft</button>' : '<span class="stat">no treatment to bill</span>'}</div></div>` : '';
+      <div class="btnrow" style="margin-top:8px">${w && b.status === 'draft' ? '<button class="primary" data-vbissue>Generate bill</button>' : ''}<button data-vbprint>🖨 Print bill</button></div>
+      ${w && b.status !== 'draft' ? payForm('vb', B.B, [b.id]) : ''}</div>`
+    : w ? `<div class="box billbox vbill"><div class="crow"><b>No bill yet for this visit</b><span class="sp"></span>${billable.length ? '<button class="primary" data-vbgen>Generate bill</button>' : '<span class="stat">no treatment to bill</span>'}</div></div>` : '';
   return head + (bp.length ? `<div class="hh">Receipts for this bill</div>${bp.map(x => `<div class="trow"><b>${esc(x.receiptNo)} · ${inr(x.amount)} · ${esc((PMODES.find(m => m[0] === x.mode) || [0, x.mode])[1])}</b>${x.cash ? `<span class="stat">${esc(cashLine(x))}</span>` : ''}<button data-vbrcpt="${esc(x.id)}">🖨 Print receipt</button></div>`).join('')}` : '')
     + `<div class="btnrow" style="margin-top:14px">${b ? '' : '<button data-vbprint>🖨 Print estimate</button>'}<span class="sp"></span>
       ${w ? `${b ? '' : `<label class="vbchk" title="Complete the visit without a bill"><input type="checkbox" id="vbNoPay"${B.noPay ? ' checked' : ''}> <b>No bill</b>&nbsp;(nothing to charge)</label>`}
@@ -50,13 +51,13 @@ function visitBillHtml(B, visitT, w){
 function printVisitBill(){
   if (cl.bill.bill) return printBill(cl.bill.bill, cl.bill.p, cl.bill.P);
   // no bill yet: an estimate of this visit's treatments and medicines, on the same sheet
-  const B = cl.bill, a = B.appt, items = B.T.filter(t => t.appointmentId === a.id && t.status !== 'planned').map(billItem);
+  const B = cl.bill, a = B.appt, items = B.T.filter(t => t.appointmentId === a.id && t.status !== 'planned').map(t => billItem(t));
   printBill(Object.assign({billNo:'', date:a.date, appointmentId:a.id, doctorId:a.doctorId, items}, billSums(items)), B.p, B.P, 'ESTIMATE');
 }
 async function saveVisitPayment(){
   const {F} = cloud, B = cl.bill, a = B.appt; if (!B.bill) return;
   try {
-    const xs = await payWithDues(B.bill, 'vb', vbCtx()), x = xs[0] || {};
+    const xs = await payBills('vb', B.B), x = xs[0] || {};
     xs.forEach(y => B.P.push(y)); drawBill(); info(xs.map(y => `${inr(y.amount)} on ${y.billNo} · ${y.receiptNo}`).join(' · '));
     // back-entry: the bill is dated earlier than the visit → offer to move the visit and its treatments to the bill date too,
     // so reports (collection, treatments, new patients, appointments) all show the same day

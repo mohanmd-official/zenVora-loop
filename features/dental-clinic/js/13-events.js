@@ -174,11 +174,9 @@ $('#clBody').addEventListener('submit', async e => {
       info(`${ty.name} added for ${dName(doctorId)}.`);
     }
     if (id === 'clPayForm'){
-      const b = (cl.pB || []).find(x => x.id === e.target.dataset.bill); if (!b) return;
-      const xs = await payWithDues(b, 'py', {p:cl.p, T:cl.pT, P:cl.pP, B:cl.pB}); cl.clear = true;
+      const xs = await payBills('py', cl.pB); cl.clear = true; cl.payPick = null;
       info(xs.map(x => `${inr(x.amount)} on ${x.billNo} · ${x.receiptNo}`).join(' · ')); if (xs[0]) printReceipt(xs[0]);
     }
-    if (id === 'clNewBill') return newBillSubmit(false);
     if (id === 'clBillEdit'){ const b = (cl.pB || []).find(x => x.id === e.target.dataset.bill); if (!b) return; const d = await saveBillEdit(b); cl.billEdit = null; info(`${b.billNo} changed: ${d}`); return renderClinic(); }
     if (id === 'clPayEdit'){ const x = (cl.pP || []).find(y => y.id === e.target.dataset.pay); if (!x) return; const d = await savePayEdit(x); cl.payEdit = null; info(`${x.receiptNo} changed: ${d}`); return renderClinic(); }
     if (id === 'clPhForm') return clUploadPhotos();
@@ -270,7 +268,9 @@ $('#clBody').addEventListener('click', async e => {
     if (t.closest('[data-asedx]')){ cl.asst.edit = null; return renderClinic(); }
     if (t.closest('.asadd summary')){ cl.asst.addOpen = !cl.asst.addOpen; return; }
     if (t.closest('[data-tdel]')){ if (!confirm('Delete this treatment?')) return; await F.deleteDoc(cDoc('treatments', t.closest('[data-tid]').dataset.tid)); }
-    if (t.closest('[data-nbdraft]')) return newBillSubmit(true);
+    if (t.closest('#gbGo')) return genBillSubmit();
+    if (t.closest('[data-bshowx]')){ cl.billShowX = !cl.billShowX; return renderClinic(); }
+    if (t.closest('[data-gobill]')){ cl.billOpen = t.closest('[data-gobill]').dataset.gobill; }
     if (cl.ptab === 'billing' && await billAction(e)) return;
     if (t.closest('[data-pcancel]')){ const x = (cl.pP || []).find(y => y.id === t.closest('[data-pay]').dataset.pay); if (!x) return; const r = await cancelPayment(x, {B:cl.pB}); if (r) info(`${x.receiptNo} cancelled: ${inr(x.amount)} reversed.`); return renderClinic(); }
     if (t.closest('[data-rcpt]')){ const x = (cl.pP || []).find(p => p.id === t.closest('[data-pay]').dataset.pay); if (x) printReceipt(x); }
