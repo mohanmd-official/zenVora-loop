@@ -174,7 +174,7 @@ $('#clBody').addEventListener('submit', async e => {
       info(`${ty.name} added for ${dName(doctorId)}.`);
     }
     if (id === 'clPayForm'){
-      const xs = await payBills('py', cl.pB); cl.clear = true; cl.payPick = null;
+      const xs = await payBills('py', {p:cl.p, T:cl.pT, P:cl.pP, B:cl.pB}); cl.clear = true; cl.payPick = null;
       info(xs.map(x => `${inr(x.amount)} on ${x.billNo} · ${x.receiptNo}`).join(' · ')); if (xs[0]) printReceipt(xs[0]);
     }
     if (id === 'clBillEdit'){ const b = (cl.pB || []).find(x => x.id === e.target.dataset.bill); if (!b) return; const d = await saveBillEdit(b); cl.billEdit = null; info(`${b.billNo} changed: ${d}`); return renderClinic(); }

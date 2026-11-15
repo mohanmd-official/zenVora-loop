@@ -6310,7 +6310,7 @@ $('#clBody').addEventListener('submit', async e => {
       info(`${ty.name} added for ${dName(doctorId)}.`);
     }
     if (id === 'clPayForm'){
-      const xs = await payBills('py', cl.pB); cl.clear = true; cl.payPick = null;
+      const xs = await payBills('py', {p:cl.p, T:cl.pT, P:cl.pP, B:cl.pB}); cl.clear = true; cl.payPick = null;
       info(xs.map(x => `${inr(x.amount)} on ${x.billNo} · ${x.receiptNo}`).join(' · ')); if (xs[0]) printReceipt(xs[0]);
     }
     if (id === 'clBillEdit'){ const b = (cl.pB || []).find(x => x.id === e.target.dataset.bill); if (!b) return; const d = await saveBillEdit(b); cl.billEdit = null; info(`${b.billNo} changed: ${d}`); return renderClinic(); }
@@ -6969,7 +6969,7 @@ function visitBillHtml(B, visitT, w){
   const b = B.bill, done = !!b || B.noPay, bp = b ? B.P.filter(x => x.billId === b.id) : [], billable = visitT.filter(t => t.status !== 'planned');
   const head = b ? `<div class="box billbox vbill"><div class="crow"><b>Bill ${esc(b.billNo)}</b> ${billBadge(b)}<span class="sp"></span><span>Total <b>${inr(b.total)}</b></span><span>Paid <b>${inr(b.paid)}</b></span><span>Outstanding <b class="${billDue(b) ? 'neg' : ''}">${inr(billDue(b))}</b></span></div>
       <div class="btnrow" style="margin-top:8px">${w && b.status === 'draft' ? '<button class="primary" data-vbissue>Generate bill</button>' : ''}<button data-vbprint>🖨 Print bill</button></div>
-      ${w && b.status !== 'draft' ? payForm('vb', B.B, [b.id]) : ''}</div>`
+      ${w && b.status !== 'draft' ? payForm('vb', vbCtx(), [b.id]) : ''}</div>`
     : w ? `<div class="box billbox vbill"><div class="crow"><b>No bill yet for this visit</b><span class="sp"></span>${billable.length ? '<button class="primary" data-vbgen>Generate bill</button>' : '<span class="stat">no treatment to bill</span>'}</div></div>` : '';
   return head + (bp.length ? `<div class="hh">Receipts for this bill</div>${bp.map(x => `<div class="trow"><b>${esc(x.receiptNo)} · ${inr(x.amount)} · ${esc((PMODES.find(m => m[0] === x.mode) || [0, x.mode])[1])}</b>${x.cash ? `<span class="stat">${esc(cashLine(x))}</span>` : ''}<button data-vbrcpt="${esc(x.id)}">🖨 Print receipt</button></div>`).join('')}` : '')
     + `<div class="btnrow" style="margin-top:14px">${b ? '' : '<button data-vbprint>🖨 Print estimate</button>'}<span class="sp"></span>
@@ -6985,7 +6985,7 @@ function printVisitBill(){
 async function saveVisitPayment(){
   const {F} = cloud, B = cl.bill, a = B.appt; if (!B.bill) return;
   try {
-    const xs = await payBills('vb', B.B), x = xs[0] || {};
+    const xs = await payBills('vb', vbCtx()), x = xs[0] || {};
     xs.forEach(y => B.P.push(y)); drawBill(); info(xs.map(y => `${inr(y.amount)} on ${y.billNo} · ${y.receiptNo}`).join(' · '));
     // back-entry: the bill is dated earlier than the visit → offer to move the visit and its treatments to the bill date too,
     // so reports (collection, treatments, new patients, appointments) all show the same day
@@ -7566,6 +7566,9 @@ function treatCover(T, P, B){
   });
   return out;
 }
+// the treatments not on a bill yet, what is still owed on them, and the part of each paid earlier
+const unbilledOf = (T, P, B) => { const c = treatCover(T, P, B), U = (T || []).filter(t => c[t.id] && c[t.id].state === 'open' && c[t.id].due > 0), part = {};
+  U.forEach(t => { if (c[t.id].part > 0) part[t.id] = c[t.id].part; }); return {T:U, part, total:U.reduce((s, t) => s + c[t.id].due, 0)}; };
 const billableOf = (T, P, B) => { const c = treatCover(T, P, B); return (T || []).filter(t => c[t.id] && c[t.id].state === 'open' && c[t.id].due > 0); };
 const BILLS_SINCE = '2026-11-02';
 // create a bill (draft or issued). appt optional. items from treatments (+ an optional earlier-balance item)
@@ -7617,14 +7620,17 @@ async function recordPayment(bill, {amount, mode, date, txnRef, note, cash}){
 const payableBills = B => (B || []).filter(billPayable).sort((a, b) => String(a.date).localeCompare(String(b.date)) || (a.createdAt || 0) - (b.createdAt || 0));
 /* one payment over the ticked bills: the amount goes to the oldest ticked bill first. Each bill gets its own payment record
    (and receipt number), written together with that bill's new paid total. Cash notes are counted once, for the whole amount. */
-async function payBills(pre, B){
-  const ids = [...document.querySelectorAll(`[data-pb="${pre}"]:checked`)].map(c => c.value), bills = payableBills(B).filter(b => ids.includes(b.id));
+async function payBills(pre, ctx){
+  const B = ctx.B || [], ids = [...document.querySelectorAll(`[data-pb="${pre}"]:checked`)].map(c => c.value).filter(Boolean), bills = payableBills(B).filter(b => ids.includes(b.id));
   const amt = Math.max(0, Math.round(+($('#' + pre + 'Amt') || {}).value || 0)), mode = $('#' + pre + 'Mode').value, date = ($('#' + pre + 'Date') || {}).value || todayKey;
-  const txnRef = (($('#' + pre + 'Ref') || {}).value || '').trim(), note = (($('#' + pre + 'Note') || {}).value || '').trim(), due = bills.reduce((s, b) => s + billDue(b), 0);
-  if (!bills.length) throw custom('Tick the bill(s) this payment is for.');
+  const txnRef = (($('#' + pre + 'Ref') || {}).value || '').trim(), note = (($('#' + pre + 'Note') || {}).value || '').trim(), U = unbilledOf(ctx.T, ctx.P, B), nb = !!($('#' + pre + 'NB') || {}).checked && U.total > 0;
+  const due = bills.reduce((s, b) => s + billDue(b), 0) + (nb ? U.total : 0);
+  if (!bills.length && !nb) throw custom('Tick what this payment is for.');
   if (amt <= 0) throw custom('Enter the amount received.');
-  if (amt > due) throw custom(`That's more than the ${inr(due)} due on the ticked bills.`);
+  if (amt > due) throw custom(`That's more than the ${inr(due)} due on what is ticked.` + (!nb && U.total > 0 ? ` ${inr(U.total)} of treatments isn't billed yet: tick "Not billed yet" to bill it now.` : ''));
   if (date > todayKey) throw custom("The payment date can't be in the future.");
+  if (nb){ const nbill = await createBill({p:ctx.p, appt:null, T:U.T, status:'ack', date, cover:U.part}); B.push(nbill); bills.push(nbill); info(`${nbill.billNo} generated · ${inr(nbill.total)}`); }
+  bills.sort((a, b) => String(a.date).localeCompare(String(b.date)) || (a.createdAt || 0) - (b.createdAt || 0));
   const cash = mode === 'cash' ? cashRead(pre, amt) : null, out = [];
   let rest = amt;
   for (const b of bills){ if (!rest) break; const a = Math.min(rest, billDue(b)); out.push(await recordPayment(b, {amount:a, mode, date, txnRef, note, cash:out.length ? null : cash})); rest -= a; }
@@ -7682,13 +7688,15 @@ async function cancelBill(bill, T){
 // printBill: see 22-print-sheets.js
 // payment form: the patient's unpaid bills with tick boxes (sel = bills ticked to start with; default all), one amount
 const itemsLine = b => (b.items || []).map(i => i.name).join(', ');
-const pbDue = pre => payableBills(pre === 'vb' ? (cl.bill || {}).B : cl.pB).filter(b => [...document.querySelectorAll(`[data-pb="${pre}"]:checked`)].some(c => c.value === b.id)).reduce((s, b) => s + billDue(b), 0);
-function payForm(pre, B, sel){
-  const PB = payableBills(B); if (!PB.length) return '';
-  const on = b => !sel || sel.includes(b.id), due = PB.filter(on).reduce((s, b) => s + billDue(b), 0);
+const pbDue = pre => { const ctx = pre === 'vb' ? vbCtx() : {T:cl.pT, P:cl.pP, B:cl.pB}, on = [...document.querySelectorAll(`[data-pb="${pre}"]:checked`)].map(c => c.value);
+  return payableBills(ctx.B).filter(b => on.includes(b.id)).reduce((s, b) => s + billDue(b), 0) + (($('#' + pre + 'NB') || {}).checked ? unbilledOf(ctx.T, ctx.P, ctx.B).total : 0); };
+function payForm(pre, ctx, sel){
+  const PB = payableBills(ctx.B), U = unbilledOf(ctx.T, ctx.P, ctx.B); if (!PB.length && !U.total) return '';
+  const on = b => !sel || sel.includes(b.id), due = PB.filter(on).reduce((s, b) => s + billDue(b), 0) + (!sel ? U.total : 0);
   return `<form class="aform payf" id="${pre === 'vb' ? 'clVBill' : 'clPayForm'}" novalidate style="margin-top:8px">
   <div class="full pbills">${PB.map(b => `<label class="ckl"><input type="checkbox" data-pb="${pre}" value="${esc(b.id)}"${on(b) ? ' checked' : ''}> <b>${esc(b.billNo)}</b> · ${esc(fmtShort(b.date))} · ${esc(itemsLine(b))} · <span class="neg">${inr(billDue(b))} due</span></label>`).join('')}
-    <div class="stat">Due on the ticked bills: <b id="${pre}PDue">${inr(due)}</b></div></div>
+    ${U.total > 0 ? `<label class="ckl"><input type="checkbox" id="${pre}NB" data-pb="${pre}" value=""${!sel ? ' checked' : ''}> <b>Not billed yet</b> · ${esc(U.T.map(t => t.typeName).join(', '))} · <span class="neg">${inr(U.total)}</span> <span class="stat">(ticked: a bill is made for them, dated the payment day)</span></label>` : ''}
+    <div class="stat">Due on what is ticked: <b id="${pre}PDue">${inr(due)}</b></div></div>
   <label>Date<input type="date" id="${pre}Date" value="${todayKey}" max="${todayKey}"></label>
   <label>Amount (₹)<input type="number" id="${pre}Amt" min="1" value="" placeholder="Amount received"></label>
   <label>Method<select id="${pre}Mode">${PMODES.map(([k, l]) => `<option value="${k}">${l}</option>`).join('')}</select></label>
@@ -7729,7 +7737,7 @@ function billDetail(b){
 /* ---------- patient card: Payments ---------- */
 function clPayments(){
   const P = (cl.pP || []).slice().sort((a, b) => String(b.date).localeCompare(String(a.date)) || (b.createdAt || 0) - (a.createdAt || 0)), B = cl.pB || [], w = canW('billing');
-  const form = w && cl.pB ? payForm('py', B, cl.payPick) : '', nb = w && cl.pT && cl.pB ? billableOf(cl.pT, cl.pP, cl.pB).length : 0;
+  const form = w && cl.pB && cl.pT && cl.pP ? payForm('py', {p:cl.p, T:cl.pT, P:cl.pP, B:B}, cl.payPick) : '', nb = 0;
   return `<div class="sect">${form ? `<div class="box"><h3>Take a payment</h3>${form}</div>` : nb ? `<div class="box stat">No unpaid bills. ${plural(nb, 'treatment')} not billed yet: <a href="#/clinic/patients/${esc(cl.pid)}/treatments">tick them in Treatments and Generate bill</a>, then take the payment here.</div>` : ''}
     <div class="awrap" style="margin-top:8px"><table class="atbl"><thead><tr><th>Date</th><th>Receipt</th><th>Bill</th><th>Method</th><th>Transaction ref.</th><th>Note</th><th class="num">Amount</th><th></th></tr></thead><tbody>
       ${cl.pP === null ? '<tr><td colspan="8">Loading…</td></tr>' : P.map(x => `<tr data-pay="${esc(x.id)}"><td>${esc(fmtShort(x.date))}</td><td${x.reversedBy ? ' class="gone"' : ''}>${esc(x.receiptNo || '')}${x.kind === 'refund' ? ' <span class="upill gone">Refund</span>' : x.kind === 'reversal' ? ' <span class="upill gone">Cancellation</span>' : x.reversedBy ? ` <span class="upill gone" title="${esc(histNote(x.history))}">Cancelled</span>` : ''}${editedTag(x)}</td><td>${esc(x.billNo || (B.find(b => b.id === x.billId) || {}).billNo || '—')}</td><td>${esc((PMODES.find(m => m[0] === x.mode) || [0, x.mode])[1])}</td><td>${esc(x.txnRef || '')}</td><td>${esc(x.note || '')}${x.cash ? `<span class="sub2">${esc(cashLine(x))}</span>` : ''}</td><td class="num"><b class="${x.amount < 0 ? 'neg' : ''}">${inr(x.amount)}</b></td>

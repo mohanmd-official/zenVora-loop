@@ -41,7 +41,7 @@ function visitBillHtml(B, visitT, w){
   const b = B.bill, done = !!b || B.noPay, bp = b ? B.P.filter(x => x.billId === b.id) : [], billable = visitT.filter(t => t.status !== 'planned');
   const head = b ? `<div class="box billbox vbill"><div class="crow"><b>Bill ${esc(b.billNo)}</b> ${billBadge(b)}<span class="sp"></span><span>Total <b>${inr(b.total)}</b></span><span>Paid <b>${inr(b.paid)}</b></span><span>Outstanding <b class="${billDue(b) ? 'neg' : ''}">${inr(billDue(b))}</b></span></div>
       <div class="btnrow" style="margin-top:8px">${w && b.status === 'draft' ? '<button class="primary" data-vbissue>Generate bill</button>' : ''}<button data-vbprint>🖨 Print bill</button></div>
-      ${w && b.status !== 'draft' ? payForm('vb', B.B, [b.id]) : ''}</div>`
+      ${w && b.status !== 'draft' ? payForm('vb', vbCtx(), [b.id]) : ''}</div>`
     : w ? `<div class="box billbox vbill"><div class="crow"><b>No bill yet for this visit</b><span class="sp"></span>${billable.length ? '<button class="primary" data-vbgen>Generate bill</button>' : '<span class="stat">no treatment to bill</span>'}</div></div>` : '';
   return head + (bp.length ? `<div class="hh">Receipts for this bill</div>${bp.map(x => `<div class="trow"><b>${esc(x.receiptNo)} · ${inr(x.amount)} · ${esc((PMODES.find(m => m[0] === x.mode) || [0, x.mode])[1])}</b>${x.cash ? `<span class="stat">${esc(cashLine(x))}</span>` : ''}<button data-vbrcpt="${esc(x.id)}">🖨 Print receipt</button></div>`).join('')}` : '')
     + `<div class="btnrow" style="margin-top:14px">${b ? '' : '<button data-vbprint>🖨 Print estimate</button>'}<span class="sp"></span>
@@ -57,7 +57,7 @@ function printVisitBill(){
 async function saveVisitPayment(){
   const {F} = cloud, B = cl.bill, a = B.appt; if (!B.bill) return;
   try {
-    const xs = await payBills('vb', B.B), x = xs[0] || {};
+    const xs = await payBills('vb', vbCtx()), x = xs[0] || {};
     xs.forEach(y => B.P.push(y)); drawBill(); info(xs.map(y => `${inr(y.amount)} on ${y.billNo} · ${y.receiptNo}`).join(' · '));
     // back-entry: the bill is dated earlier than the visit → offer to move the visit and its treatments to the bill date too,
     // so reports (collection, treatments, new patients, appointments) all show the same day
